@@ -72,3 +72,30 @@ footer {
   font-size: 0.9rem;
   margin-top: 60px;
 }
+
+.btn-add {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  background-color: #1a1a2e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btn-add:hover {
+  background-color: #e63946;
+}
+
+#cart-count {
+  margin-top: 10px;
+  background-color: #e63946;
+  color: white;
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
