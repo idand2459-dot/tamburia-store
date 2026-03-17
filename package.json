@@ -1,0 +1,24 @@
+{
+  "name": "tamburia-store",
+  "version": "1.0.0",
+  "description": "",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/idand2459-dot/tamburia-store.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/idand2459-dot/tamburia-store/issues"
+  },
+  "homepage": "https://github.com/idand2459-dot/tamburia-store#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
