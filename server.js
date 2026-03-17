@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const { Pool } = require('pg');
 
 const app = express();
@@ -13,6 +14,7 @@ const pool = new Pool({
 
 app.use(express.static('.'));
 app.use(express.json());
+app.use(cors());
 
 app.get('/api/products', async function(req, res) {
   const result = await pool.query('SELECT * FROM products');
