@@ -251,10 +251,10 @@ function App() {
     </>
   );
 
-  if (currentPage === 'about') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><About /><Footer onNavigate={handleNavigate} />{showCart && <CartModal />}<WhatsAppButton /></div>;
-  if (currentPage === 'contact') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Contact /><Footer onNavigate={handleNavigate} />{showCart && <CartModal />}<WhatsAppButton /></div>;
-  if (currentPage === 'returns') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Returns /><Footer onNavigate={handleNavigate} />{showCart && <CartModal />}<WhatsAppButton /></div>;
-  if (currentPage === '404') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><NotFound onNavigate={handleNavigate} /><Footer onNavigate={handleNavigate} />{showCart && <CartModal />}<WhatsAppButton /></div>;
+  if (currentPage === 'about') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><About /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal />}<WhatsAppButton /></div>;
+  if (currentPage === 'contact') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Contact /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal />}<WhatsAppButton /></div>;
+  if (currentPage === 'returns') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Returns /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal />}<WhatsAppButton /></div>;
+  if (currentPage === '404') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><NotFound onNavigate={handleNavigate} /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal />}<WhatsAppButton /></div>;
 
   if (!selectedCategory) return (
     <div className="App">
@@ -265,7 +265,7 @@ function App() {
       <WhyUs />
       <FeaturesBanner />
       <ReviewsCarousel />
-      <Footer onNavigate={handleNavigate} />
+      <Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />
       {showCart && <CartModal />}
       <WhatsAppButton />
     </div>
@@ -281,7 +281,7 @@ function App() {
         onAddToCart={(p) => { addToCart(p); }}
         onSelectProduct={setSelectedProduct}
       />
-      <Footer onNavigate={handleNavigate} />
+      <Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />
       {showCart && <CartModal />}
       <WhatsAppButton />
     </div>
@@ -330,7 +330,7 @@ function App() {
             ))}
         </div>
       </main>
-      <Footer onNavigate={handleNavigate} />
+      <Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />
       {showCart && <CartModal />}
       <WhatsAppButton />
     </div>

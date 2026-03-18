@@ -1,4 +1,4 @@
-function Footer({ onNavigate }) {
+function Footer({ onNavigate, onSelectCategory }) {
   const categories = [
     { id: 'painting', label: 'מוצרי צביעה' },
     { id: 'tools', label: 'כלי עבודה' },
@@ -10,6 +10,8 @@ function Footer({ onNavigate }) {
     { id: 'garden', label: 'גינה' },
     { id: 'bathroom', label: 'מוצרי אמבטיה' },
     { id: 'kitchen', label: 'מוצרי מטבח' },
+    { id: 'electrical', label: 'מוצרי חשמל' },
+    { id: 'home', label: 'בית' },
   ];
 
   const pages = [
@@ -60,7 +62,7 @@ function Footer({ onNavigate }) {
           <ul className="footer-links footer-links-2col">
             {categories.map(cat => (
               <li key={cat.id}>
-                <button onClick={() => onNavigate('home')} className="footer-link">
+                <button onClick={() => { onNavigate('home'); onSelectCategory && onSelectCategory(cat); }} className="footer-link">
                   {cat.label}
                 </button>
               </li>
