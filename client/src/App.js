@@ -11,21 +11,22 @@ import About from './About';
 import Contact from './Contact';
 import Returns from './Returns';
 import ProductPage from './ProductPage';
+import MarqueeBanner from './MarqueeBanner';
+import Footer from './Footer';
+import ReviewsCarousel from './ReviewsCarousel';
+import FeaturesBanner from './FeaturesBanner';
 
 function App() {
   const [products, setProducts] = useState([]);
 
-  // ===== זיכרון עגלה — נשמרת גם אחרי רענון =====
   const [cart, setCart] = useState(() => {
     try { return JSON.parse(localStorage.getItem('tamburia-cart')) || []; }
     catch { return []; }
   });
 
-  // שמירת העגלה בכל שינוי
   useEffect(() => {
     localStorage.setItem('tamburia-cart', JSON.stringify(cart));
   }, [cart]);
-  // =============================================
 
   const [showAdmin, setShowAdmin] = useState(false);
   const [adminLoggedIn, setAdminLoggedIn] = useState(false);
@@ -138,20 +139,17 @@ function App() {
   }
 
   const navbarProps = {
-    currentPage,
-    onNavigate: handleNavigate,
+    currentPage, onNavigate: handleNavigate,
     onSelectProduct: handleSelectProductFromSearch,
-    cartCount,
-    total,
-    onOpenCart: openCart,
+    cartCount, total, onOpenCart: openCart,
   };
 
   const SORT_OPTIONS = [
-    { value: 'default',    label: 'ברירת מחדל' },
-    { value: 'price-asc',  label: 'מחיר ↑' },
+    { value: 'default', label: 'ברירת מחדל' },
+    { value: 'price-asc', label: 'מחיר ↑' },
     { value: 'price-desc', label: 'מחיר ↓' },
-    { value: 'name',       label: 'א-ב' },
-    { value: 'instock',    label: 'במלאי קודם' },
+    { value: 'name', label: 'א-ב' },
+    { value: 'instock', label: 'במלאי קודם' },
   ];
 
   const CartModal = () => (
@@ -162,7 +160,6 @@ function App() {
           <button className="cart-close-btn" onClick={closeCart}>✕</button>
           <h3>{cartStep === 'cart' ? '🛒 העגלה שלי' : cartStep === 'details' ? '📋 פרטי הזמנה' : '✅ ההזמנה התקבלה!'}</h3>
         </div>
-
         {cartStep === 'cart' && (
           <>
             {cart.length === 0 ? (
@@ -216,7 +213,6 @@ function App() {
             )}
           </>
         )}
-
         {cartStep === 'details' && (
           <div className="order-form">
             <button className="order-back-btn" onClick={() => setCartStep('cart')}>← חזור לעגלה</button>
@@ -231,13 +227,10 @@ function App() {
             <button className={`checkout-btn ${(!customerName || !customerPhone || (deliveryMethod === 'delivery' && !deliveryAddress) || submittingOrder) ? 'disabled' : ''}`}
               disabled={!customerName || !customerPhone || (deliveryMethod === 'delivery' && !deliveryAddress) || submittingOrder}
               onClick={handlePlaceOrder}>
-              {submittingOrder
-                ? <span className="checkout-btn-loading"><Spinner size="small" color="white" /> שולח הזמנה...</span>
-                : '✅ שלח הזמנה'}
+              {submittingOrder ? <span className="checkout-btn-loading"><Spinner size="small" color="white" /> שולח הזמנה...</span> : '✅ שלח הזמנה'}
             </button>
           </div>
         )}
-
         {cartStep === 'success' && orderSuccess && (
           <div className="order-success">
             <span className="success-icon">🎉</span>
@@ -257,16 +250,20 @@ function App() {
     </>
   );
 
-  if (currentPage === 'about') return <div className="App"><Navbar {...navbarProps} /><About />{showCart && <CartModal />}<WhatsAppButton /></div>;
-  if (currentPage === 'contact') return <div className="App"><Navbar {...navbarProps} /><Contact />{showCart && <CartModal />}<WhatsAppButton /></div>;
-  if (currentPage === 'returns') return <div className="App"><Navbar {...navbarProps} /><Returns />{showCart && <CartModal />}<WhatsAppButton /></div>;
-  if (currentPage === '404') return <div className="App"><Navbar {...navbarProps} /><NotFound onNavigate={handleNavigate} />{showCart && <CartModal />}<WhatsAppButton /></div>;
+  if (currentPage === 'about') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><About /><Footer onNavigate={handleNavigate} />{showCart && <CartModal />}<WhatsAppButton /></div>;
+  if (currentPage === 'contact') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Contact /><Footer onNavigate={handleNavigate} />{showCart && <CartModal />}<WhatsAppButton /></div>;
+  if (currentPage === 'returns') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Returns /><Footer onNavigate={handleNavigate} />{showCart && <CartModal />}<WhatsAppButton /></div>;
+  if (currentPage === '404') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><NotFound onNavigate={handleNavigate} /><Footer onNavigate={handleNavigate} />{showCart && <CartModal />}<WhatsAppButton /></div>;
 
   if (!selectedCategory) return (
     <div className="App">
       <Navbar {...navbarProps} />
+      <MarqueeBanner />
       <div className="hero"><h2>כל מה שצריך לבית — במקום אחד</h2><p>מוצרי צביעה, אינסטלציה, כלי עבודה ועוד</p></div>
       <CategoryPage onSelectCategory={setSelectedCategory} />
+      <FeaturesBanner />
+      <ReviewsCarousel />
+      <Footer onNavigate={handleNavigate} />
       {showCart && <CartModal />}
       <WhatsAppButton />
     </div>
@@ -275,12 +272,14 @@ function App() {
   if (selectedProduct) return (
     <div className="App">
       <Navbar {...navbarProps} />
+      <MarqueeBanner />
       <ProductPage
         product={selectedProduct}
         onBack={() => setSelectedProduct(null)}
         onAddToCart={(p) => { addToCart(p); }}
         onSelectProduct={setSelectedProduct}
       />
+      <Footer onNavigate={handleNavigate} />
       {showCart && <CartModal />}
       <WhatsAppButton />
     </div>
@@ -291,6 +290,7 @@ function App() {
   return (
     <div className="App">
       <Navbar {...navbarProps} />
+      <MarqueeBanner />
       <div className="products-header">
         <button className="back-btn" onClick={() => setSelectedCategory(null)}>← קטגוריות</button>
       </div>
@@ -328,6 +328,7 @@ function App() {
             ))}
         </div>
       </main>
+      <Footer onNavigate={handleNavigate} />
       {showCart && <CartModal />}
       <WhatsAppButton />
     </div>

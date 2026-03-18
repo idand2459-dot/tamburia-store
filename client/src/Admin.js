@@ -46,10 +46,13 @@ function Admin({ onBack }) {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
 
-  useEffect(() => { fetchProducts(); fetchOrders(); }, []);
+  useEffect(() => { fetchProducts(); fetchOrders(); fetchReviews(); }, []);
 
   function fetchProducts() { fetch('/api/products').then(r => r.json()).then(setProducts); }
   function fetchOrders() { fetch('/api/orders').then(r => r.json()).then(setOrders); }
+  function fetchReviews() { fetch('/api/reviews/all').then(r => r.json()).then(setReviews).catch(() => {}); }
+
+  const [reviews, setReviews] = useState([]);
 
   function resetForm() {
     setName(''); setPrice(''); setInStock(true); setColors('');
@@ -261,6 +264,9 @@ function Admin({ onBack }) {
           {editingProduct ? '✏️ עריכה' : '➕ הוסף מוצר'}
         </button>
         <button className={`admin-tab ${activeTab === 'import' ? 'active' : ''}`} onClick={() => { setActiveTab('import'); setCsvPreview(null); setCsvErrors([]); setImportResult(null); }}>📥 ייבוא CSV</button>
+        <button className={`admin-tab ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
+          ⭐ ביקורות {reviews.filter(r => !r.approved).length > 0 && <span className="orders-new-badge">{reviews.filter(r => !r.approved).length}</span>}
+        </button>
       </div>
 
       {/* ===== STATS TAB ===== */}
@@ -577,6 +583,50 @@ function Admin({ onBack }) {
           )}
         </div>
       )}
+
+      {/* REVIEWS TAB */}
+      {activeTab === 'reviews' && (
+        <div>
+          <div className="admin-results-info" style={{marginBottom: 20}}>
+            סה"כ {reviews.length} ביקורות • {reviews.filter(r => !r.approved).length} ממתינות לאישור
+          </div>
+          {reviews.length === 0 ? <div className="admin-empty">אין ביקורות עדיין</div> : (
+            <div className="reviews-admin-list">
+              {reviews.map(review => (
+                <div key={review.id} className={`review-admin-card ${!review.approved ? 'pending' : ''}`}>
+                  <div className="review-admin-top">
+                    <div>
+                      <strong>{review.reviewer_name}</strong>
+                      <span className="review-admin-type">{review.type === 'store' ? '🏪 חנות' : `📦 ${review.product_name || 'מוצר'}`}</span>
+                      <span className="review-admin-date">{new Date(review.created_at).toLocaleDateString('he-IL')}</span>
+                    </div>
+                    <div className="stars">
+                      {[1,2,3,4,5].map(s => <span key={s} className={`star ${s <= review.rating ? 'filled' : ''}`}>★</span>)}
+                    </div>
+                  </div>
+                  <p className="review-admin-text">{review.text}</p>
+                  <div className="review-admin-actions">
+                    {!review.approved ? (
+                      <button className="review-approve-btn" onClick={async () => {
+                        await fetch(`/api/reviews/${review.id}/approve`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({approved: true}) });
+                        fetchReviews();
+                      }}>✅ אשר פרסום</button>
+                    ) : (
+                      <span className="review-approved-badge">✓ מפורסם</span>
+                    )}
+                    <button className="delete-btn" onClick={async () => {
+                      if (!window.confirm('למחוק ביקורת?')) return;
+                      await fetch(`/api/reviews/${review.id}`, { method: 'DELETE' });
+                      fetchReviews();
+                    }}>מחק</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }
