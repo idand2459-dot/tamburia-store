@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import './App.css';
+import Admin from './Admin';
 
 function App() {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   useEffect(() => {
     fetch('/api/products')
@@ -17,12 +19,17 @@ function App() {
 
   const total = cart.reduce((sum, item) => sum + item.price, 0);
 
+  if (showAdmin) {
+    return <Admin onBack={() => setShowAdmin(false)} />;
+  }
+
   return (
     <div className="App">
       <header>
         <h1>🎨 טמבוריה סטור</h1>
         <p>חנות צבעים וכלי בית</p>
         <div className="cart-badge">🛒 {cart.length} פריטים | ₪{total}</div>
+        <button className="admin-btn" onClick={() => setShowAdmin(true)}>ניהול</button>
       </header>
 
       <main>
