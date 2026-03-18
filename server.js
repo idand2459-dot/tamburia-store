@@ -41,10 +41,10 @@ app.post('/api/upload', upload.single('image'), function(req, res) {
 });
 
 app.post('/api/products', async function(req, res) {
-  const { name, price, stock, image_url, colors } = req.body;
+  const { name, price, stock, image_url, colors, category } = req.body;
   const result = await pool.query(
-    'INSERT INTO products (name, price, stock, image_url, colors) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-    [name, price, stock, image_url, colors]
+    'INSERT INTO products (name, price, stock, image_url, colors, category) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+    [name, price, stock, image_url, colors, category]
   );
   res.json(result.rows[0]);
 });

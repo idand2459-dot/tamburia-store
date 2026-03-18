@@ -6,6 +6,7 @@ function Admin({ onBack }) {
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [colors, setColors] = useState('');
+  const [category, setCategory] = useState('');
   const [image, setImage] = useState(null);
 
   useEffect(() => {
@@ -42,7 +43,8 @@ function Admin({ onBack }) {
         price: parseInt(price),
         stock: parseInt(stock),
         image_url: imageUrl,
-        colors: colors.split(',').map(c => c.trim()).filter(c => c !== '')
+        colors: colors.split(',').map(c => c.trim()).filter(c => c !== ''),
+        category
       })
     });
 
@@ -50,6 +52,7 @@ function Admin({ onBack }) {
     setPrice('');
     setStock('');
     setColors('');
+    setCategory('');
     setImage(null);
     fetchProducts();
   }
@@ -70,6 +73,19 @@ function Admin({ onBack }) {
         <input placeholder="מחיר" type="number" value={price} onChange={e => setPrice(e.target.value)} required />
         <input placeholder="כמות במלאי" type="number" value={stock} onChange={e => setStock(e.target.value)} required />
         <input placeholder="צבעים (מופרדים בפסיק: לבן, שחור, אפור)" value={colors} onChange={e => setColors(e.target.value)} />
+        <select value={category} onChange={e => setCategory(e.target.value)} required>
+          <option value="">בחר קטגוריה</option>
+          <option value="painting">מוצרי צביעה</option>
+          <option value="kitchen">מוצרי מטבח</option>
+          <option value="bathroom">מוצרי אמבטיה</option>
+          <option value="tools">כלי עבודה</option>
+          <option value="cleaning">ניקיון</option>
+          <option value="garden">גינה</option>
+          <option value="plumbing">אינסטלציה</option>
+          <option value="adhesives">דבקים</option>
+          <option value="locks">צילינדרים ומנעולים</option>
+          <option value="faucets">ברזים</option>
+        </select>
         <input type="file" accept="image/*" onChange={e => setImage(e.target.files[0])} />
         <button type="submit">הוסף מוצר</button>
       </form>

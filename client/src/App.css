@@ -151,8 +151,9 @@ main h2 {
 .admin {
   max-width: 900px;
   margin: 40px auto;
-  padding: 0 20px;
+  padding: 0 20px 60px 20px;
   direction: rtl;
+  overflow-y: auto;
 }
 
 .admin h1 {
@@ -281,4 +282,48 @@ main h2 {
   object-fit: cover;
   border-radius: 8px;
   margin-bottom: 12px;
+}
+
+.category-page {
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.category-page h2 {
+  font-size: 1.8rem;
+  margin-bottom: 30px;
+  color: #1a1a2e;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.category-card {
+  border-radius: 16px;
+  padding: 30px 20px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transition: transform 0.2s;
+}
+
+.category-card:hover {
+  transform: scale(1.05);
+}
+
+.category-icon {
+  font-size: 2.5rem;
+}
+
+.category-name {
+  color: white;
+  font-size: 1rem;
+  font-weight: 500;
 }
