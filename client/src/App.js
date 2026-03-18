@@ -8,13 +8,14 @@ function App() {
   const [cart, setCart] = useState([]);
   const [showAdmin, setShowAdmin] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
   fetch('/api/products')
     .then(res => res.json())
     .then(data => {
-      const filtered = data.filter(p => p.category === selectedCategory.id);
-      setProducts(filtered);
+      setProducts(data.filter(p => p.category === selectedCategory.id));
+      
     });
      }, [selectedCategory]);
 
@@ -57,9 +58,16 @@ function App() {
      </header>
 
       <main>
-        <h2>המוצרים שלנו</h2>
+  <div className="search-bar">
+    <input
+      placeholder="🔍 חפש מוצר..."
+      value={searchQuery}
+      onChange={e => setSearchQuery(e.target.value)}
+    />
+  </div>
+  <h2>המוצרים שלנו</h2>
         <div className="products-grid">
-          {products.map(product => (
+           {products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map(product => (
             <div key={product.id} className="product-card">
                {product.image_url && <img src={product.image_url} alt={product.name} />}
                <h3>{product.name}</h3>

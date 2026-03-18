@@ -425,3 +425,24 @@ main h2 {
     grid-template-columns: 1fr;
   }
 }
+
+.search-bar {
+  margin-bottom: 24px;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 12px 20px;
+  border: 1px solid #ddd;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-family: 'Segoe UI', sans-serif;
+  direction: rtl;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.search-bar input:focus {
+  border-color: #1a1a2e;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
