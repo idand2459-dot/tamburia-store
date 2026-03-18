@@ -35,6 +35,10 @@ function App() {
         <p>חנות צבעים וכלי בית</p>
         <button className="admin-btn" onClick={() => setShowAdmin(true)}>ניהול</button>
       </header>
+      <div className="hero">
+  <h2>כל מה שצריך לבית — במקום אחד</h2>
+  <p>מוצרי צביעה, אינסטלציה, כלי עבודה ועוד</p>
+</div>
       <CategoryPage onSelectCategory={setSelectedCategory} />
     </div>
   );
