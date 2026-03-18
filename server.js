@@ -1,6 +1,19 @@
 const express = require('express');
-const cors = require('cors');
 const { Pool } = require('pg');
+const cors = require('cors');
+const multer = require('multer');
+const path = require('path');
+
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function(req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
 
 const app = express();
 
@@ -21,11 +34,17 @@ app.get('/api/products', async function(req, res) {
   res.json(result.rows);
 });
 
+app.use('/uploads', express.static('uploads'));
+
+app.post('/api/upload', upload.single('image'), function(req, res) {
+  res.json({ imageUrl: '/uploads/' + req.file.filename });
+});
+
 app.post('/api/products', async function(req, res) {
-  const { name, price, stock } = req.body;
+  const { name, price, stock, image_url, colors } = req.body;
   const result = await pool.query(
-    'INSERT INTO products (name, price, stock) VALUES ($1, $2, $3) RETURNING *',
-    [name, price, stock]
+    'INSERT INTO products (name, price, stock, image_url, colors) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+    [name, price, stock, image_url, colors]
   );
   res.json(result.rows[0]);
 });
