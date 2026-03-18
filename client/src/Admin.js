@@ -7,6 +7,7 @@ function Admin({ onBack }) {
   const [stock, setStock] = useState('');
   const [colors, setColors] = useState('');
   const [category, setCategory] = useState('');
+  const [editingProduct, setEditingProduct] = useState(null);
   const [image, setImage] = useState(null);
 
   useEffect(() => {
@@ -21,39 +22,25 @@ function Admin({ onBack }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-
     let imageUrl = '';
-
     if (image) {
       const formData = new FormData();
       formData.append('image', image);
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      });
+      const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData });
       const uploadData = await uploadRes.json();
       imageUrl = uploadData.imageUrl;
     }
-
     await fetch('/api/products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name,
-        price: parseInt(price),
-        stock: parseInt(stock),
+        name, price: parseInt(price), stock: parseInt(stock),
         image_url: imageUrl,
         colors: colors.split(',').map(c => c.trim()).filter(c => c !== ''),
         category
       })
     });
-
-    setName('');
-    setPrice('');
-    setStock('');
-    setColors('');
-    setCategory('');
-    setImage(null);
+    setName(''); setPrice(''); setStock(''); setColors(''); setCategory(''); setImage(null);
     fetchProducts();
   }
 
@@ -62,13 +49,38 @@ function Admin({ onBack }) {
     fetchProducts();
   }
 
+  function handleEdit(product) {
+    setEditingProduct(product);
+    setName(product.name);
+    setPrice(product.price);
+    setStock(product.stock);
+    setColors(product.colors ? product.colors.join(', ') : '');
+    setCategory(product.category || '');
+  }
+
+  async function handleUpdate(e) {
+    e.preventDefault();
+    await fetch('/api/products/' + editingProduct.id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name, price: parseInt(price), stock: parseInt(stock),
+        colors: colors.split(',').map(c => c.trim()).filter(c => c !== ''),
+        category
+      })
+    });
+    setEditingProduct(null);
+    setName(''); setPrice(''); setStock(''); setColors(''); setCategory('');
+    fetchProducts();
+  }
+
   return (
     <div className="admin">
       <button className="back-btn" onClick={onBack}>← חזור לחנות</button>
       <h1>ניהול מוצרים</h1>
 
-      <form onSubmit={handleSubmit} className="admin-form">
-        <h2>הוסף מוצר חדש</h2>
+      <form onSubmit={editingProduct ? handleUpdate : handleSubmit} className="admin-form">
+        <h2>{editingProduct ? 'עריכת מוצר' : 'הוסף מוצר חדש'}</h2>
         <input placeholder="שם המוצר" value={name} onChange={e => setName(e.target.value)} required />
         <input placeholder="מחיר" type="number" value={price} onChange={e => setPrice(e.target.value)} required />
         <input placeholder="כמות במלאי" type="number" value={stock} onChange={e => setStock(e.target.value)} required />
@@ -87,7 +99,13 @@ function Admin({ onBack }) {
           <option value="faucets">ברזים</option>
         </select>
         <input type="file" accept="image/*" onChange={e => setImage(e.target.files[0])} />
-        <button type="submit">הוסף מוצר</button>
+        <button type="submit">{editingProduct ? 'שמור שינויים' : 'הוסף מוצר'}</button>
+        {editingProduct && (
+          <button type="button" onClick={() => {
+            setEditingProduct(null);
+            setName(''); setPrice(''); setStock(''); setColors(''); setCategory('');
+          }}>ביטול</button>
+        )}
       </form>
 
       <div className="admin-products">
@@ -101,6 +119,7 @@ function Admin({ onBack }) {
               <span>מלאי: {product.stock}</span>
               {product.colors && <span>צבעים: {product.colors.join(', ')}</span>}
             </div>
+            <button className="edit-btn" onClick={() => handleEdit(product)}>ערוך</button>
             <button className="delete-btn" onClick={() => handleDelete(product.id)}>מחק</button>
           </div>
         ))}

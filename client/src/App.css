@@ -446,3 +446,18 @@ main h2 {
   border-color: #1a1a2e;
   box-shadow: 0 2px 12px rgba(0,0,0,0.1);
 }
+
+.edit-btn {
+  padding: 8px 16px;
+  background-color: #1a1a2e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-left: 8px;
+}
+
+.edit-btn:hover {
+  background-color: #457b9d;
+}
