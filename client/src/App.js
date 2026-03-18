@@ -15,6 +15,7 @@ import MarqueeBanner from './MarqueeBanner';
 import Footer from './Footer';
 import ReviewsCarousel from './ReviewsCarousel';
 import FeaturesBanner from './FeaturesBanner';
+import WhyUs from './WhyUs';
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -261,6 +262,7 @@ function App() {
       <MarqueeBanner />
       <div className="hero"><h2>כל מה שצריך לבית — במקום אחד</h2><p>מוצרי צביעה, אינסטלציה, כלי עבודה ועוד</p></div>
       <CategoryPage onSelectCategory={setSelectedCategory} />
+      <WhyUs />
       <FeaturesBanner />
       <ReviewsCarousel />
       <Footer onNavigate={handleNavigate} />
