@@ -59,6 +59,18 @@ const categories = [
     icon: '🚰',
     color: '#48cae4'
   },
+  {
+    id: 'electrical',
+    name: 'מוצרי חשמל',
+    icon: '⚡',
+    color: '#f4a261'
+  },
+  {
+    id: 'home',
+    name: 'בית',
+    icon: '🏠',
+    color: '#8338ec'
+  },
 ];
 
 export default categories;

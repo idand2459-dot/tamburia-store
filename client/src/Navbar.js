@@ -114,6 +114,9 @@ function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, on
           <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>
             <span /><span /><span />
           </button>
+          <button className="navbar-home-btn" onClick={() => handleNav('home')} title="דף הבית">
+            🏠
+          </button>
         </div>
         <div className="navbar-center">
           <button className="navbar-brand" onClick={() => handleNav('home')}>🔧 <span>טכניק טמבור</span></button>

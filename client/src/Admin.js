@@ -11,6 +11,8 @@ const CATEGORIES = [
   { id: 'adhesives', label: 'דבקים', icon: '🗜️' },
   { id: 'locks', label: 'צילינדרים ומנעולים', icon: '🔐' },
   { id: 'faucets', label: 'ברזים', icon: '🚰' },
+  { id: 'electrical', label: 'מוצרי חשמל', icon: '⚡' },
+  { id: 'home', label: 'בית', icon: '🏠' },
 ];
 
 const STATUS_CONFIG = {
