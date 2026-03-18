@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "טכניק טמבור",
+  "name": "טכניק טמבור — כלי עבודה וחומרי בניין",
+  "description": "חנות מקצועית לכלי עבודה, צבעים ואינסטלציה בפתח תקווה",
   "icons": [
     {
       "src": "favicon.ico",
@@ -10,16 +11,38 @@
     {
       "src": "logo192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "orientation": "portrait",
+  "theme_color": "#1a1a2e",
+  "background_color": "#1a1a2e",
+  "lang": "he",
+  "dir": "rtl",
+  "categories": ["shopping", "business"],
+  "shortcuts": [
+    {
+      "name": "חנות",
+      "short_name": "חנות",
+      "description": "כניסה לחנות",
+      "url": "/",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "צור קשר",
+      "short_name": "קשר",
+      "description": "יצירת קשר עם החנות",
+      "url": "/?page=contact",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    }
+  ]
 }
