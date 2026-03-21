@@ -5343,3 +5343,727 @@ body {
   .category-banner-title { font-size: 1.4rem; }
   .category-banner-icon { font-size: 2.2rem; }
 }
+
+
+/* ===== כפתור חזור למעלה ===== */
+.scroll-to-top {
+  position: fixed;
+  bottom: 100px;
+  right: 28px;
+  width: 44px;
+  height: 44px;
+  background: #1a1a2e;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 998;
+  transition: background 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-in 0.3s ease;
+}
+
+.scroll-to-top:hover {
+  background: #e63946;
+  transform: translateY(-3px);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+  .scroll-to-top { bottom: 90px; right: 20px; }
+}
+
+
+/* ===== FAQ ===== */
+.faq-section {
+  background: #f8f8f6;
+  padding: 70px 40px;
+}
+
+.faq-content {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.faq-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.faq-tag {
+  display: inline-block;
+  background: rgba(230, 57, 70, 0.1);
+  color: #e63946;
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.faq-title {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+
+.faq-subtitle {
+  font-size: 1rem;
+  color: #888;
+}
+
+/* רשימת שאלות */
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 40px;
+}
+
+.faq-item {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s;
+  border: 1.5px solid transparent;
+}
+
+.faq-item.open {
+  border-color: #1a1a2e;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  text-align: right;
+  gap: 12px;
+  transition: background 0.15s;
+}
+
+.faq-question:hover {
+  background: #fafafa;
+}
+
+.faq-item.open .faq-question {
+  background: #f8f8f6;
+}
+
+.faq-arrow {
+  font-size: 1.4rem;
+  font-weight: 300;
+  color: #e63946;
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+  line-height: 1;
+}
+
+.faq-answer {
+  padding: 0 22px 18px;
+  animation: faq-open 0.2s ease;
+}
+
+.faq-answer p {
+  font-size: 0.93rem;
+  color: #555;
+  line-height: 1.8;
+  margin: 0;
+}
+
+@keyframes faq-open {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* כפתורי קשר */
+.faq-contact {
+  text-align: center;
+  background: white;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.faq-contact p {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 16px;
+}
+
+.faq-contact-btns {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.faq-btn {
+  padding: 10px 22px;
+  background: #1a1a2e;
+  color: white;
+  border-radius: 20px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: background 0.2s;
+}
+
+.faq-btn:hover { background: #e63946; }
+.faq-btn.whatsapp { background: #25d366; }
+.faq-btn.whatsapp:hover { background: #1ebe59; }
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .faq-section { background: #0f0f1a; }
+  .faq-title { color: #e0e0e0; }
+  .faq-item { background: #1a1a2e; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  .faq-item.open { border-color: #457b9d; }
+  .faq-question { color: #e0e0e0; }
+  .faq-question:hover { background: #0f0f1a; }
+  .faq-item.open .faq-question { background: #0f0f1a; }
+  .faq-answer p { color: #aaa; }
+  .faq-contact { background: #1a1a2e; }
+  .faq-contact p { color: #aaa; }
+}
+
+@media (max-width: 600px) {
+  .faq-section { padding: 50px 20px; }
+  .faq-title { font-size: 1.5rem; }
+}
+
+
+/* ===== שתף בוואטסאפ ===== */
+.product-share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: #f0fff4;
+  color: #25d366;
+  border: 2px solid #25d366;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+
+.product-share-btn:hover {
+  background: #25d366;
+  color: white;
+}
+
+/* ===== צפית לאחרונה ===== */
+.recently-viewed {
+  max-width: 1000px;
+  margin: 40px auto 0;
+  padding: 0 20px 0;
+  border-top: 2px solid #f0f0f0;
+  padding-top: 40px;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .product-share-btn {
+    background: #0d1f15;
+    border-color: #25d366;
+    color: #25d366;
+  }
+  .product-share-btn:hover {
+    background: #25d366;
+    color: white;
+  }
+  .recently-viewed {
+    border-top-color: #2d2d4e;
+  }
+}
+
+
+/* ===== PAINT CALCULATOR ===== */
+.paint-calc-section {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 70px 40px;
+}
+
+.paint-calc-content {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.paint-calc-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.paint-calc-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.paint-calc-subtitle {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.6);
+}
+
+/* Cards */
+.paint-calc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.paint-calc-card {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 22px 24px;
+}
+
+.paint-calc-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 16px;
+}
+
+/* קירות */
+.paint-walls-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.paint-wall-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.paint-wall-label {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.6);
+  min-width: 42px;
+}
+
+.paint-wall-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.paint-input-group {
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  flex: 1;
+}
+
+.paint-input-group input {
+  background: none;
+  border: none;
+  outline: none;
+  padding: 10px 12px;
+  font-size: 1rem;
+  color: white;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  width: 100%;
+  direction: ltr;
+  text-align: center;
+}
+
+.paint-input-group input::placeholder { color: rgba(255,255,255,0.3); }
+
+.paint-unit {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  padding: 0 10px 0 4px;
+  white-space: nowrap;
+}
+
+.paint-wall-x {
+  color: rgba(255,255,255,0.4);
+  font-size: 1rem;
+}
+
+.paint-remove-btn {
+  background: rgba(230,57,70,0.2);
+  border: none;
+  color: #e63946;
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.paint-remove-btn:hover { background: rgba(230,57,70,0.4); }
+
+.paint-add-wall-btn {
+  background: none;
+  border: 1px dashed rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.6);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: all 0.2s;
+  width: 100%;
+}
+.paint-add-wall-btn:hover { border-color: white; color: white; }
+
+/* חלונות ודלתות */
+.paint-openings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.paint-opening-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.8);
+  flex-wrap: wrap;
+}
+
+.paint-opening-row > span:first-child { flex: 1; min-width: 120px; }
+
+.paint-counter {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.paint-counter button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: monospace;
+}
+.paint-counter button:hover { background: rgba(255,255,255,0.15); }
+
+.paint-counter span {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  min-width: 32px;
+  text-align: center;
+}
+
+.paint-opening-note {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+}
+
+/* ציפויים */
+.paint-coats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.paint-coat-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 12px 8px;
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.paint-coat-btn span {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.4);
+}
+
+.paint-coat-btn:hover { border-color: rgba(255,255,255,0.4); color: white; }
+
+.paint-coat-btn.active {
+  background: #e63946;
+  border-color: #e63946;
+  color: white;
+}
+
+.paint-coat-btn.active span { color: rgba(255,255,255,0.7); }
+
+/* כפתור חישוב */
+.paint-calc-btn {
+  padding: 16px;
+  background: #e63946;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.paint-calc-btn:hover:not(.disabled) {
+  background: #c1121f;
+  transform: translateY(-2px);
+}
+
+.paint-calc-btn.disabled {
+  background: rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.4);
+  cursor: not-allowed;
+}
+
+/* תוצאות */
+.paint-results {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fade-in 0.3s ease;
+}
+
+.paint-results-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.paint-results-header span { font-size: 1.4rem; }
+
+.paint-results-header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.paint-results-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.paint-result-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #f8f8f6;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.paint-result-item.accent {
+  background: #fff0f1;
+  border: 1.5px solid #ffc0c0;
+}
+
+.paint-result-icon { font-size: 1.4rem; flex-shrink: 0; }
+
+.paint-result-value {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  line-height: 1.2;
+}
+
+.paint-result-item.accent .paint-result-value { color: #e63946; }
+
+.paint-result-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #555;
+  margin-top: 2px;
+}
+
+.paint-result-sub {
+  font-size: 0.72rem;
+  color: #aaa;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* טיפ */
+.paint-results-tip {
+  display: flex;
+  gap: 10px;
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 0.88rem;
+  color: #555;
+  line-height: 1.6;
+}
+
+.paint-results-tip span { font-size: 1.2rem; flex-shrink: 0; }
+.paint-results-tip strong { color: #1a1a2e; }
+
+/* CTA */
+.paint-results-cta {
+  display: block;
+  text-align: center;
+  padding: 14px;
+  background: #1a1a2e;
+  color: white;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: background 0.2s;
+}
+
+.paint-results-cta:hover { background: #e63946; }
+
+@media (max-width: 600px) {
+  .paint-calc-section { padding: 50px 20px; }
+  .paint-calc-title { font-size: 1.5rem; }
+  .paint-results-grid { grid-template-columns: 1fr; }
+  .paint-coats { flex-direction: column; }
+}
+
+/* ===== כפתור צף מחשבון צבע ===== */
+.paint-calc-float-btn {
+  position: fixed;
+  top: 80px;
+  right: 28px;
+  background: #e63946;
+  color: white;
+  border: none;
+  border-radius: 24px;
+  padding: 10px 14px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(230,57,70,0.4);
+  z-index: 997;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s, transform 0.2s;
+  animation: fade-in 0.3s ease;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+}
+
+.paint-calc-float-btn:hover {
+  background: #c1121f;
+  transform: translateY(-3px);
+}
+
+.paint-calc-float-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .paint-calc-float-btn {
+    top: 72px;
+    right: 16px;
+    padding: 8px 12px;
+  }
+  .paint-calc-float-label { display: none; }
+}
+
+/* כשהתפריט פתוח — ירד למטה */
+.paint-calc-float-btn.menu-open {
+  top: auto;
+  bottom: 155px;
+}
+
+/* ===== רווחים בין סקשנים בדף הבית ===== */
+.category-page       { margin-top: 48px; margin-bottom: 0; }
+.whyus-section       { margin-top: 60px; }
+.paint-calc-section  { margin-top: 60px; }
+.features-banner     { margin-top: 60px; }
+.reviews-section     { margin-top: 60px; margin-bottom: 0; }
+.faq-section         { margin-top: 60px; }
+.site-footer         { margin-top: 60px; }
+
+@media (max-width: 768px) {
+  .whyus-section,
+  .paint-calc-section,
+  .features-banner,
+  .reviews-section,
+  .faq-section      { margin-top: 40px; }
+  .site-footer      { margin-top: 40px; }
+}
+
+/* ===== כפתור מחשבון צבע בנאבאר ===== */
+.navbar-paint-calc-btn {
+  background: none;
+  border: none;
+  font-size: 1.15rem;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  line-height: 1;
+  margin-right: 2px;
+}
+
+.navbar-paint-calc-btn:hover {
+  background: rgba(255,255,255,0.15);
+}
+
