@@ -17,6 +17,7 @@ import ReviewsCarousel from './ReviewsCarousel';
 import FeaturesBanner from './FeaturesBanner';
 import WhyUs from './WhyUs';
 import CartModal from './CartModal';
+import CategoryBanner from './CategoryBanner';
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -147,7 +148,7 @@ function App() {
   };
 
   const cartModalProps = {
-    cart, cartStep, setCartStep, closeCart,
+    cart, setCart, cartStep, setCartStep, closeCart,
     deliveryMethod, setDeliveryMethod,
     subtotal, deliveryFee, total, cartCount,
     updateQuantity, removeFromCart,
@@ -210,9 +211,7 @@ function App() {
     <div className="App">
       <Navbar {...navbarProps} />
       <MarqueeBanner />
-      <div className="products-header">
-        <button className="back-btn" onClick={() => setSelectedCategory(null)}>← קטגוריות</button>
-      </div>
+      <CategoryBanner category={selectedCategory} onBack={() => setSelectedCategory(null)} />
       <main>
         <div className="products-toolbar">
           <div className="search-bar">
