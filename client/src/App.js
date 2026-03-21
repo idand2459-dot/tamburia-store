@@ -18,6 +18,10 @@ import FeaturesBanner from './FeaturesBanner';
 import WhyUs from './WhyUs';
 import CartModal from './CartModal';
 import CategoryBanner from './CategoryBanner';
+import ScrollToTop from './ScrollToTop';
+import FAQ from './FAQ';
+import PaintCalculator from './PaintCalculator';
+import PaintCalcBtn from './PaintCalcBtn';
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -44,6 +48,7 @@ function App() {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [submittingOrder, setSubmittingOrder] = useState(false);
   const [sortBy, setSortBy] = useState('default');
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -145,6 +150,7 @@ function App() {
     currentPage, onNavigate: handleNavigate,
     onSelectProduct: handleSelectProductFromSearch,
     cartCount, total, onOpenCart: openCart,
+    menuOpen, setMenuOpen,
   };
 
   const cartModalProps = {
@@ -169,10 +175,10 @@ function App() {
     { value: 'instock', label: 'במלאי קודם' },
   ];
 
-  if (currentPage === 'about') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><About /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /></div>;
-  if (currentPage === 'contact') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Contact /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /></div>;
-  if (currentPage === 'returns') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Returns /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /></div>;
-  if (currentPage === '404') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><NotFound onNavigate={handleNavigate} /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /></div>;
+  if (currentPage === 'about') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><About /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /><ScrollToTop /></div>;
+  if (currentPage === 'contact') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Contact /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /><ScrollToTop /></div>;
+  if (currentPage === 'returns') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Returns /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /><ScrollToTop /></div>;
+  if (currentPage === '404') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><NotFound onNavigate={handleNavigate} /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /><ScrollToTop /></div>;
 
   if (!selectedCategory) return (
     <div className="App">
@@ -181,11 +187,13 @@ function App() {
       <div className="hero"><h2>כל מה שצריך לבית — במקום אחד</h2><p>מוצרי צביעה, אינסטלציה, כלי עבודה ועוד</p></div>
       <CategoryPage onSelectCategory={setSelectedCategory} />
       <WhyUs />
+      <PaintCalculator />
       <FeaturesBanner />
       <ReviewsCarousel />
+      <FAQ />
       <Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />
       {showCart && <CartModal {...cartModalProps} />}
-      <WhatsAppButton />
+      <WhatsAppButton /><ScrollToTop /><PaintCalcBtn menuOpen={menuOpen} />
     </div>
   );
 
@@ -201,7 +209,7 @@ function App() {
       />
       <Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />
       {showCart && <CartModal {...cartModalProps} />}
-      <WhatsAppButton />
+      <WhatsAppButton /><ScrollToTop />
     </div>
   );
 
@@ -248,7 +256,7 @@ function App() {
       </main>
       <Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />
       {showCart && <CartModal {...cartModalProps} />}
-      <WhatsAppButton />
+      <WhatsAppButton /><ScrollToTop />
     </div>
   );
 }

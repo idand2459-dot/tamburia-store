@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, onOpenCart }) {
-  const [menuOpen, setMenuOpen] = useState(false);
+function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, onOpenCart, menuOpen, setMenuOpen }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
