@@ -5,7 +5,7 @@ import AdminLogin from './AdminLogin';
 import CategoryPage from './CategoryPage';
 import Navbar from './Navbar';
 import WhatsAppButton from './WhatsAppButton';
-import { ProductCardSkeleton, Spinner } from './LoadingStates';
+import { ProductCardSkeleton } from './LoadingStates';
 import NotFound from './NotFound';
 import About from './About';
 import Contact from './Contact';
@@ -16,6 +16,7 @@ import Footer from './Footer';
 import ReviewsCarousel from './ReviewsCarousel';
 import FeaturesBanner from './FeaturesBanner';
 import WhyUs from './WhyUs';
+import CartModal from './CartModal';
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -145,6 +146,20 @@ function App() {
     cartCount, total, onOpenCart: openCart,
   };
 
+  const cartModalProps = {
+    cart, cartStep, setCartStep, closeCart,
+    deliveryMethod, setDeliveryMethod,
+    subtotal, deliveryFee, total, cartCount,
+    updateQuantity, removeFromCart,
+    customerName, setCustomerName,
+    customerPhone, setCustomerPhone,
+    customerEmail, setCustomerEmail,
+    deliveryAddress, setDeliveryAddress,
+    orderNotes, setOrderNotes,
+    submittingOrder, handlePlaceOrder,
+    orderSuccess
+  };
+
   const SORT_OPTIONS = [
     { value: 'default', label: 'ברירת מחדל' },
     { value: 'price-asc', label: 'מחיר ↑' },
@@ -153,108 +168,10 @@ function App() {
     { value: 'instock', label: 'במלאי קודם' },
   ];
 
-  const CartModal = () => (
-    <>
-      <div className="cart-overlay" onClick={closeCart} />
-      <div className="cart-modal">
-        <div className="cart-modal-header">
-          <button className="cart-close-btn" onClick={closeCart}>✕</button>
-          <h3>{cartStep === 'cart' ? '🛒 העגלה שלי' : cartStep === 'details' ? '📋 פרטי הזמנה' : '✅ ההזמנה התקבלה!'}</h3>
-        </div>
-        {cartStep === 'cart' && (
-          <>
-            {cart.length === 0 ? (
-              <div className="cart-empty"><span>🛒</span><p>העגלה ריקה</p></div>
-            ) : (
-              <>
-                <ul className="cart-items-list">
-                  {cart.map((item, index) => (
-                    <li key={index} className="cart-item">
-                      <div className="cart-item-info">
-                        <span className="cart-item-name">{item.name}{item.selectedColor ? ` — ${item.selectedColor}` : ''}</span>
-                        <span className="cart-item-price">₪{item.price * (item.quantity || 1)}</span>
-                      </div>
-                      <div className="cart-item-qty">
-                        <button onClick={() => updateQuantity(index, -1)}>−</button>
-                        <span>{item.quantity || 1}</span>
-                        <button onClick={() => updateQuantity(index, 1)}>+</button>
-                      </div>
-                      <button className="cart-item-remove" onClick={() => removeFromCart(index)}>✕</button>
-                    </li>
-                  ))}
-                </ul>
-                <div className="delivery-section">
-                  <h4>אופן קבלת ההזמנה</h4>
-                  <div className="delivery-options">
-                    <div className={`delivery-option ${deliveryMethod === 'pickup' ? 'selected' : ''}`} onClick={() => setDeliveryMethod('pickup')}>
-                      <div className="delivery-option-top"><span className="delivery-icon">🏪</span><div><strong>איסוף עצמי</strong><span className="delivery-free">חינם</span></div></div>
-                      <p className="delivery-desc">בר כוכבא 52, פתח תקווה</p>
-                      <p className="delivery-desc">באותו יום בשעות הפעילות</p>
-                    </div>
-                    <div className={`delivery-option ${deliveryMethod === 'delivery' ? 'selected' : ''}`} onClick={() => setDeliveryMethod('delivery')}>
-                      <div className="delivery-option-top"><span className="delivery-icon">🚚</span><div><strong>שליח עד הבית</strong><span className="delivery-price">₪20</span></div></div>
-                      <p className="delivery-desc">עד 2 ימי עסקים</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="cart-summary">
-                  <div className="cart-summary-row"><span>סכום מוצרים</span><span>₪{subtotal}</span></div>
-                  {deliveryMethod === 'delivery' && <div className="cart-summary-row"><span>משלוח</span><span>₪20</span></div>}
-                  {deliveryMethod === 'pickup' && <div className="cart-summary-row green"><span>משלוח</span><span>חינם</span></div>}
-                  <div className="cart-summary-total"><span>סה"כ לתשלום</span><span>₪{total}</span></div>
-                </div>
-                <div className="cart-actions">
-                  <button className={`checkout-btn ${!deliveryMethod ? 'disabled' : ''}`} disabled={!deliveryMethod}
-                    onClick={() => deliveryMethod && setCartStep('details')}>
-                    {!deliveryMethod ? 'בחר אופן קבלה לפני המשך' : 'המשך למילוי פרטים →'}
-                  </button>
-                  <button className="clear-btn" onClick={() => { setCart([]); setDeliveryMethod(null); }}>רוקן עגלה</button>
-                </div>
-              </>
-            )}
-          </>
-        )}
-        {cartStep === 'details' && (
-          <div className="order-form">
-            <button className="order-back-btn" onClick={() => setCartStep('cart')}>← חזור לעגלה</button>
-            <div className="order-summary-mini"><span>{cartCount} פריטים</span><span className="order-total-mini">סה"כ: ₪{total}</span></div>
-            <div className="order-fields">
-              <div className="order-field"><label>שם מלא *</label><input placeholder="ישראל ישראלי" value={customerName} onChange={e => setCustomerName(e.target.value)} /></div>
-              <div className="order-field"><label>טלפון *</label><input placeholder="050-0000000" type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} /></div>
-              <div className="order-field"><label>אימייל</label><input placeholder="example@email.com" type="email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} /></div>
-              {deliveryMethod === 'delivery' && <div className="order-field"><label>כתובת למשלוח *</label><input placeholder="רחוב, מספר, עיר" value={deliveryAddress} onChange={e => setDeliveryAddress(e.target.value)} /></div>}
-              <div className="order-field"><label>הערות להזמנה</label><textarea placeholder="הערות מיוחדות..." value={orderNotes} onChange={e => setOrderNotes(e.target.value)} rows={2} /></div>
-            </div>
-            <button className={`checkout-btn ${(!customerName || !customerPhone || (deliveryMethod === 'delivery' && !deliveryAddress) || submittingOrder) ? 'disabled' : ''}`}
-              disabled={!customerName || !customerPhone || (deliveryMethod === 'delivery' && !deliveryAddress) || submittingOrder}
-              onClick={handlePlaceOrder}>
-              {submittingOrder ? <span className="checkout-btn-loading"><Spinner size="small" color="white" /> שולח הזמנה...</span> : '✅ שלח הזמנה'}
-            </button>
-          </div>
-        )}
-        {cartStep === 'success' && orderSuccess && (
-          <div className="order-success">
-            <span className="success-icon">🎉</span>
-            <h3>ההזמנה התקבלה!</h3>
-            <p>מספר הזמנה: <strong>#{orderSuccess.id}</strong></p>
-            <p>ניצור איתך קשר בהקדם לאישור.</p>
-            <div className="success-details">
-              <div><span>שם:</span> {orderSuccess.customer_name}</div>
-              <div><span>טלפון:</span> {orderSuccess.customer_phone}</div>
-              <div><span>אופן קבלה:</span> {orderSuccess.delivery_method === 'pickup' ? '🏪 איסוף עצמי' : '🚚 משלוח'}</div>
-              <div><span>סה"כ:</span> ₪{orderSuccess.total}</div>
-            </div>
-            <button className="checkout-btn" onClick={closeCart}>סגור</button>
-          </div>
-        )}
-      </div>
-    </>
-  );
-
-  if (currentPage === 'about') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><About /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal />}<WhatsAppButton /></div>;
-  if (currentPage === 'contact') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Contact /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal />}<WhatsAppButton /></div>;
-  if (currentPage === 'returns') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Returns /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal />}<WhatsAppButton /></div>;
-  if (currentPage === '404') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><NotFound onNavigate={handleNavigate} /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal />}<WhatsAppButton /></div>;
+  if (currentPage === 'about') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><About /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /></div>;
+  if (currentPage === 'contact') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Contact /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /></div>;
+  if (currentPage === 'returns') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Returns /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /></div>;
+  if (currentPage === '404') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><NotFound onNavigate={handleNavigate} /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /></div>;
 
   if (!selectedCategory) return (
     <div className="App">
@@ -266,7 +183,7 @@ function App() {
       <FeaturesBanner />
       <ReviewsCarousel />
       <Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />
-      {showCart && <CartModal />}
+      {showCart && <CartModal {...cartModalProps} />}
       <WhatsAppButton />
     </div>
   );
@@ -282,7 +199,7 @@ function App() {
         onSelectProduct={setSelectedProduct}
       />
       <Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />
-      {showCart && <CartModal />}
+      {showCart && <CartModal {...cartModalProps} />}
       <WhatsAppButton />
     </div>
   );
@@ -331,7 +248,7 @@ function App() {
         </div>
       </main>
       <Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />
-      {showCart && <CartModal />}
+      {showCart && <CartModal {...cartModalProps} />}
       <WhatsAppButton />
     </div>
   );

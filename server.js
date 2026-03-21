@@ -3,6 +3,7 @@ const { Pool } = require('pg');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
+const nodemailer = require('nodemailer');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
@@ -16,6 +17,286 @@ const pool = new Pool({ user: 'postgres', host: 'localhost', database: 'tamburia
 app.use(express.static('.'));
 app.use(express.json());
 app.use(cors());
+
+// ===== הגדרת שליחת מייל =====
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'anridvir@gmail.com',
+    pass: 'rufgiitbplggbtgk'
+  }
+});
+
+function buildOrderEmail(order) {
+  const deliveryText = order.delivery_method === 'pickup'
+    ? '🏪 איסוף עצמי — בר כוכבא 52, פתח תקווה'
+    : `🚚 משלוח לכתובת: ${order.delivery_address}`;
+
+  const itemsRows = order.items.map(item =>
+    `<tr>
+      <td style="padding:8px;border-bottom:1px solid #eee">${item.name}${item.selectedColor ? ` (${item.selectedColor})` : ''}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${item.quantity}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee;text-align:left">₪${item.price * item.quantity}</td>
+    </tr>`
+  ).join('');
+
+  return `
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head><meta charset="UTF-8"></head>
+<body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:20px">
+  <div style="max-width:600px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1)">
+    
+    <!-- כותרת -->
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:28px 32px;text-align:center">
+      <h1 style="color:white;margin:0;font-size:22px">🔧 טכניק טמבור</h1>
+      <p style="color:#e63946;margin:8px 0 0;font-size:16px;font-weight:bold">הזמנה חדשה #${order.id}</p>
+    </div>
+
+    <!-- פרטי לקוח -->
+    <div style="padding:24px 32px">
+      <h2 style="color:#1a1a2e;margin:0 0 16px;font-size:16px;border-bottom:2px solid #e63946;padding-bottom:8px">פרטי לקוח</h2>
+      <table style="width:100%;border-collapse:collapse">
+        <tr><td style="padding:6px 0;color:#666;width:120px">שם:</td><td style="padding:6px 0;font-weight:bold">${order.customer_name}</td></tr>
+        <tr><td style="padding:6px 0;color:#666">טלפון:</td><td style="padding:6px 0;font-weight:bold">${order.customer_phone}</td></tr>
+        ${order.customer_email ? `<tr><td style="padding:6px 0;color:#666">אימייל:</td><td style="padding:6px 0">${order.customer_email}</td></tr>` : ''}
+        <tr><td style="padding:6px 0;color:#666">אופן קבלה:</td><td style="padding:6px 0">${deliveryText}</td></tr>
+        ${order.notes ? `<tr><td style="padding:6px 0;color:#666">הערות:</td><td style="padding:6px 0">${order.notes}</td></tr>` : ''}
+      </table>
+    </div>
+
+    <!-- פריטים -->
+    <div style="padding:0 32px 24px">
+      <h2 style="color:#1a1a2e;margin:0 0 16px;font-size:16px;border-bottom:2px solid #e63946;padding-bottom:8px">פריטים שהוזמנו</h2>
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:#f8f8f8">
+            <th style="padding:10px 8px;text-align:right;color:#555">מוצר</th>
+            <th style="padding:10px 8px;text-align:center;color:#555">כמות</th>
+            <th style="padding:10px 8px;text-align:left;color:#555">מחיר</th>
+          </tr>
+        </thead>
+        <tbody>${itemsRows}</tbody>
+      </table>
+    </div>
+
+    <!-- סיכום -->
+    <div style="padding:0 32px 28px">
+      <div style="background:#f8f8f8;border-radius:8px;padding:16px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;color:#666">
+          <span>סכום מוצרים:</span><span>₪${order.subtotal}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px;color:#666">
+          <span>משלוח:</span><span>${order.delivery_fee > 0 ? `₪${order.delivery_fee}` : 'חינם'}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:bold;color:#1a1a2e;border-top:2px solid #e63946;padding-top:12px">
+          <span>סה"כ לתשלום:</span><span>₪${order.total}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- כפתור -->
+    <div style="padding:0 32px 32px;text-align:center">
+      <a href="http://localhost:3001/admin" style="background:#e63946;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px">
+        כניסה לאדמין לניהול ההזמנה
+      </a>
+    </div>
+
+    <!-- תחתית -->
+    <div style="background:#f0f0f0;padding:16px 32px;text-align:center;color:#999;font-size:12px">
+      טכניק טמבור • בר כוכבא 52, פתח תקווה • 03-9315750
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+async function sendOrderEmail(order) {
+  try {
+    await transporter.sendMail({
+      from: '"טכניק טמבור 🔧" <anridvir@gmail.com>',
+      to: 'anridvir@gmail.com',
+      subject: `📦 הזמנה חדשה #${order.id} — ${order.customer_name} — ₪${order.total}`,
+      html: buildOrderEmail(order)
+    });
+    console.log(`מייל נשלח עבור הזמנה #${order.id} ✓`);
+  } catch (err) {
+    console.error('שגיאה בשליחת מייל:', err.message);
+  }
+}
+
+// מייל אישור ללקוח עם שליחת ההזמנה
+function buildCustomerConfirmEmail(order) {
+  const deliveryText = order.delivery_method === 'pickup'
+    ? '🏪 איסוף עצמי — בר כוכבא 52, פתח תקווה'
+    : `🚚 משלוח לכתובת: ${order.delivery_address}`;
+
+  const itemsRows = order.items.map(item =>
+    `<tr>
+      <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${item.name}${item.selectedColor ? ` (${item.selectedColor})` : ''}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${item.quantity}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee;text-align:left">₪${item.price * item.quantity}</td>
+    </tr>`
+  ).join('');
+
+  return `
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head><meta charset="UTF-8"></head>
+<body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:20px">
+  <div style="max-width:600px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1)">
+
+    <!-- כותרת -->
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:28px 32px;text-align:center">
+      <h1 style="color:white;margin:0;font-size:22px">🔧 טכניק טמבור</h1>
+      <p style="color:#e63946;margin:8px 0 0;font-size:16px;font-weight:bold">אישור קבלת הזמנה — מספר #${order.id}</p>
+    </div>
+
+    <!-- הבהרה חשובה -->
+    <div style="background:#fff8e1;border-right:4px solid #f4c430;padding:12px 20px;margin:0">
+      <p style="margin:0;font-size:0.82rem;color:#666">⚠️ מסמך זה הוא <strong>אישור הזמנה בלבד</strong> ואינו חשבונית מס. חשבונית מס תוצא בנפרד.</p>
+    </div>
+
+    <!-- ברכה -->
+    <div style="padding:28px 32px 0">
+      <p style="font-size:1.1rem;color:#1a1a2e;margin:0 0 12px">שלום ${order.customer_name},</p>
+      <p style="font-size:1rem;color:#555;line-height:1.7;margin:0 0 8px">
+        ההזמנה שלך התקבלה אצלנו בהצלחה! 🎉<br/>
+        אנחנו נטפל בה בהקדם האפשרי וניצור איתך קשר לאישור.
+      </p>
+    </div>
+
+    <!-- פרטי הזמנה -->
+    <div style="padding:20px 32px">
+      <div style="background:#f8f8f8;border-radius:8px;padding:16px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <span style="color:#666">מספר הזמנה:</span><strong>#${order.id}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:#666">אופן קבלה:</span><span>${deliveryText}</span>
+        </div>
+      </div>
+
+      <!-- פריטים -->
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:#f8f8f8">
+            <th style="padding:10px 8px;text-align:right;color:#555">מוצר</th>
+            <th style="padding:10px 8px;text-align:center;color:#555">כמות</th>
+            <th style="padding:10px 8px;text-align:left;color:#555">מחיר</th>
+          </tr>
+        </thead>
+        <tbody>${itemsRows}</tbody>
+      </table>
+
+      <!-- סיכום -->
+      <div style="background:#f8f8f8;border-radius:8px;padding:16px;margin-top:16px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;color:#666">
+          <span>סכום מוצרים:</span><span>₪${order.subtotal}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px;color:#666">
+          <span>משלוח:</span><span>${order.delivery_fee > 0 ? `₪${order.delivery_fee}` : 'חינם'}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:bold;color:#1a1a2e;border-top:2px solid #e63946;padding-top:12px">
+          <span>סה"כ לתשלום:</span><span>₪${order.total}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- פרטי קשר -->
+    <div style="padding:0 32px 28px;text-align:center">
+      <p style="color:#666;font-size:0.9rem;margin-bottom:12px">לכל שאלה אנחנו כאן בשבילך:</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <a href="tel:039315750" style="background:#1a1a2e;color:white;padding:10px 18px;border-radius:20px;text-decoration:none;font-size:0.85rem;font-weight:bold">📞 03-9315750</a>
+        <a href="tel:0506735040" style="background:#1a1a2e;color:white;padding:10px 18px;border-radius:20px;text-decoration:none;font-size:0.85rem;font-weight:bold">📱 050-6735040</a>
+        <a href="https://wa.me/972506735040" style="background:#25d366;color:white;padding:10px 18px;border-radius:20px;text-decoration:none;font-size:0.85rem;font-weight:bold">💬 וואטסאפ</a>
+      </div>
+    </div>
+
+    <!-- תחתית -->
+    <div style="background:#f0f0f0;padding:16px 32px;text-align:center;color:#999;font-size:12px">
+      טכניק טמבור • בר כוכבא 52, פתח תקווה • א׳-ה׳ 7:00-20:00 • ו׳ 7:00-15:00
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+async function sendCustomerConfirmEmail(order) {
+  if (!order.customer_email) return;
+  try {
+    await transporter.sendMail({
+      from: '"טכניק טמבור 🔧" <anridvir@gmail.com>',
+      to: order.customer_email,
+      subject: `✅ ההזמנה שלך התקבלה! מספר הזמנה #${order.id} — טכניק טמבור`,
+      html: buildCustomerConfirmEmail(order)
+    });
+    console.log(`מייל אישור נשלח ללקוח ${order.customer_email} ✓`);
+  } catch (err) {
+    console.error('שגיאה בשליחת מייל אישור:', err.message);
+  }
+}
+const STATUS_LABELS = {
+  processing: { label: 'בטיפול',  emoji: '⚙️', desc: 'קיבלנו את הזמנתך ואנחנו מתחילים לטפל בה. נעדכן אותך כשהיא תהיה מוכנה.' },
+  shipped:    { label: 'נשלחה',   emoji: '🚚', desc: 'ההזמנה שלך יצאה לדרך ותגיע אליך בקרוב. תודה על הסבלנות!' },
+  completed:  { label: 'הושלמה', emoji: '🎉', desc: 'ההזמנה שלך הושלמה בהצלחה!\n\nתודה שבחרת בטכניק טמבור — זה לא מובן מאליו עבורנו ואנחנו שמחים שיכולנו לעזור.\n\nנשמח לראותך שוב! 😊' },
+};
+
+function buildStatusEmail(order, status) {
+  const cfg = STATUS_LABELS[status];
+  if (!cfg) return null;
+  return `
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head><meta charset="UTF-8"></head>
+<body style="font-family:Arial,sans-serif;background:#f5f5f5;margin:0;padding:20px">
+  <div style="max-width:600px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1)">
+    <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:28px 32px;text-align:center">
+      <h1 style="color:white;margin:0;font-size:22px">🔧 טכניק טמבור</h1>
+      <p style="color:#e63946;margin:8px 0 0;font-size:16px;font-weight:bold">${cfg.emoji} עדכון הזמנה #${order.id}</p>
+    </div>
+    <div style="padding:32px">
+      <p style="font-size:1.1rem;color:#1a1a2e">שלום ${order.customer_name},</p>
+      <p style="font-size:1rem;color:#555">${cfg.desc}</p>
+      <div style="background:#f8f8f8;border-radius:8px;padding:16px;margin:20px 0">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <span style="color:#666">מספר הזמנה:</span><strong>#${order.id}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+          <span style="color:#666">סטטוס:</span>
+          <strong style="color:#e63946">${cfg.emoji} ${cfg.label}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between">
+          <span style="color:#666">סה"כ:</span><strong>₪${order.total}</strong>
+        </div>
+      </div>
+      <p style="color:#999;font-size:0.85rem">שאלות? צרו קשר: 03-9315750 | 050-6735040</p>
+    </div>
+    <div style="background:#f0f0f0;padding:16px 32px;text-align:center;color:#999;font-size:12px">
+      טכניק טמבור • בר כוכבא 52, פתח תקווה
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+async function sendStatusEmail(order, status) {
+  if (!order.customer_email) return; // אין מייל ללקוח
+  const html = buildStatusEmail(order, status);
+  if (!html) return; // סטטוס שלא שולחים עליו מייל (new)
+  try {
+    await transporter.sendMail({
+      from: '"טכניק טמבור 🔧" <anridvir@gmail.com>',
+      to: order.customer_email,
+      subject: `${STATUS_LABELS[status]?.emoji} עדכון הזמנה #${order.id} — טכניק טמבור`,
+      html
+    });
+    console.log(`מייל סטטוס נשלח ללקוח ${order.customer_email} ✓`);
+  } catch (err) {
+    console.error('שגיאה בשליחת מייל סטטוס:', err.message);
+  }
+}
+// ============================
 
 async function initDB() {
   await pool.query(`
@@ -44,7 +325,6 @@ async function initDB() {
     )
   `);
 
-  // טבלת ביקורות
   await pool.query(`
     CREATE TABLE IF NOT EXISTS reviews (
       id SERIAL PRIMARY KEY,
@@ -114,12 +394,22 @@ app.post('/api/orders', async (req, res) => {
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'new') RETURNING *`,
     [customer_name, customer_phone, customer_email||null, delivery_method, delivery_address||null, notes||null, JSON.stringify(items), subtotal, delivery_fee, total]
   );
-  res.json(result.rows[0]);
+  const order = result.rows[0];
+
+  // מייל לאבא
+  await sendOrderEmail({ ...order, items });
+  // מייל אישור ללקוח
+  await sendCustomerConfirmEmail({ ...order, items });
+
+  res.json(order);
 });
 
 app.put('/api/orders/:id/status', async (req, res) => {
   const result = await pool.query('UPDATE orders SET status=$1 WHERE id=$2 RETURNING *', [req.body.status, req.params.id]);
-  res.json(result.rows[0]);
+  const order = result.rows[0];
+  console.log(`סטטוס הזמנה #${order.id} שונה ל-${req.body.status} | מייל לקוח: ${order.customer_email || 'אין'}`);
+  await sendStatusEmail(order, req.body.status);
+  res.json(order);
 });
 
 app.delete('/api/orders/:id', async (req, res) => {
@@ -128,7 +418,6 @@ app.delete('/api/orders/:id', async (req, res) => {
 });
 
 // REVIEWS
-// קבלת ביקורות מאושרות (לאתר)
 app.get('/api/reviews', async (req, res) => {
   const { type, product_id } = req.query;
   let query = 'SELECT * FROM reviews WHERE approved=true';
@@ -140,7 +429,6 @@ app.get('/api/reviews', async (req, res) => {
   res.json(result.rows);
 });
 
-// קבלת כל הביקורות (לאדמין)
 app.get('/api/reviews/all', async (req, res) => {
   const result = await pool.query(`
     SELECT r.*, p.name as product_name
@@ -151,7 +439,6 @@ app.get('/api/reviews/all', async (req, res) => {
   res.json(result.rows);
 });
 
-// הוספת ביקורת
 app.post('/api/reviews', async (req, res) => {
   const { reviewer_name, rating, text, type, product_id } = req.body;
   if (!reviewer_name || !rating || !text) return res.status(400).json({ error: 'חסרים שדות' });
@@ -162,7 +449,6 @@ app.post('/api/reviews', async (req, res) => {
   res.json(result.rows[0]);
 });
 
-// אישור/דחיית ביקורת (אדמין)
 app.put('/api/reviews/:id/approve', async (req, res) => {
   const result = await pool.query(
     'UPDATE reviews SET approved=$1 WHERE id=$2 RETURNING *',
@@ -171,18 +457,9 @@ app.put('/api/reviews/:id/approve', async (req, res) => {
   res.json(result.rows[0]);
 });
 
-// מחיקת ביקורת (אדמין)
 app.delete('/api/reviews/:id', async (req, res) => {
   await pool.query('DELETE FROM reviews WHERE id=$1', [req.params.id]);
   res.json({ message: 'נמחק' });
 });
 
 app.listen(3000, () => console.log('השרת עובד על פורט 3000 ✓'));
-
-
-
-
-
-
-
-
