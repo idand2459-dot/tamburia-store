@@ -11,7 +11,7 @@ function checkAllowedCity(address) {
 }
 
 function CartModal({
-  cart, cartStep, setCartStep, closeCart,
+  cart, setCart, cartStep, setCartStep, closeCart,
   deliveryMethod, setDeliveryMethod,
   subtotal, deliveryFee, total, cartCount,
   updateQuantity, removeFromCart,
@@ -98,7 +98,7 @@ function CartModal({
                     onClick={() => deliveryMethod && setCartStep('details')}>
                     {!deliveryMethod ? 'בחר אופן קבלה לפני המשך' : 'המשך למילוי פרטים →'}
                   </button>
-                  <button className="clear-btn" onClick={() => { setDeliveryMethod(null); }}>רוקן עגלה</button>
+                  <button className="clear-btn" onClick={() => { setCart([]); setDeliveryMethod(null); }}>רוקן עגלה</button>
                 </div>
               </>
             )}

@@ -5272,3 +5272,74 @@ body {
   margin-top: 4px;
   padding-right: 4px;
 }
+
+
+/* ===== CATEGORY BANNER ===== */
+.category-banner {
+  padding: 36px 40px 32px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.category-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.15);
+  pointer-events: none;
+}
+
+.category-banner-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.category-banner-back {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: background 0.2s;
+  margin-bottom: 20px;
+  display: inline-block;
+}
+.category-banner-back:hover { background: rgba(255,255,255,0.25); }
+
+.category-banner-main {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.category-banner-icon {
+  font-size: 3rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+}
+
+.category-banner-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0 0 6px;
+  color: white;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.category-banner-desc {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.8);
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .category-banner { padding: 24px 20px 20px; }
+  .category-banner-title { font-size: 1.4rem; }
+  .category-banner-icon { font-size: 2.2rem; }
+}
