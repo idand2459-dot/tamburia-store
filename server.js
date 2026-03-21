@@ -381,6 +381,16 @@ app.delete('/api/products/:id', async (req, res) => {
   res.json({ message: 'נמחק' });
 });
 
+// הזמנות לפי טלפון (ללקוח)
+app.get('/api/orders/by-phone/:phone', async (req, res) => {
+  const phone = req.params.phone.replace(/\D/g, ''); // רק ספרות
+  const result = await pool.query(
+    `SELECT * FROM orders WHERE REGEXP_REPLACE(customer_phone, '[^0-9]', '', 'g') = $1 ORDER BY created_at DESC`,
+    [phone]
+  );
+  res.json(result.rows);
+});
+
 // ORDERS
 app.get('/api/orders', async (req, res) => {
   const result = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');

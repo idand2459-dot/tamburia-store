@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, onOpenCart, menuOpen, setMenuOpen }) {
+function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, onOpenCart, menuOpen, setMenuOpen, onOpenOrderHistory, onOpenWishlist }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -104,6 +104,12 @@ function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, on
               <span className="nav-item-icon">{item.icon}</span>{item.label}
             </button>
           ))}
+          <button className="nav-drawer-item" onClick={() => { onOpenOrderHistory(); setMenuOpen(false); }}>
+            <span className="nav-item-icon">📋</span>ההזמנות שלי
+          </button>
+          <button className="nav-drawer-item" onClick={() => { onOpenWishlist(); setMenuOpen(false); }}>
+            <span className="nav-item-icon">❤️</span>רשימת המשאלות שלי
+          </button>
         </nav>
       </div>
 
@@ -122,6 +128,8 @@ function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, on
         </div>
         <div className="navbar-left">
           <button className="navbar-search-btn" onClick={() => setSearchOpen(true)} title="חיפוש">🔍</button>
+          <button className="navbar-link" onClick={onOpenOrderHistory} title="ההזמנות שלי">📋 ההזמנות שלי</button>
+          <button className="navbar-wishlist-btn" onClick={onOpenWishlist} title="רשימת משאלות">🤍</button>
           <button className={`navbar-link ${currentPage === 'about' ? 'active' : ''}`} onClick={() => handleNav('about')}>אודות</button>
           <button className={`navbar-link ${currentPage === 'contact' ? 'active' : ''}`} onClick={() => handleNav('contact')}>צור קשר</button>
           <button className={`navbar-link ${currentPage === 'returns' ? 'active' : ''}`} onClick={() => handleNav('returns')}>החזרים</button>

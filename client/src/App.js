@@ -22,6 +22,8 @@ import ScrollToTop from './ScrollToTop';
 import FAQ from './FAQ';
 import PaintCalculator from './PaintCalculator';
 import PaintCalcBtn from './PaintCalcBtn';
+import OrderHistory from './OrderHistory';
+import Wishlist from './Wishlist';
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -49,6 +51,8 @@ function App() {
   const [submittingOrder, setSubmittingOrder] = useState(false);
   const [sortBy, setSortBy] = useState('default');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showOrderHistory, setShowOrderHistory] = useState(false);
+  const [showWishlist, setShowWishlist] = useState(false);
 
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -151,6 +155,8 @@ function App() {
     onSelectProduct: handleSelectProductFromSearch,
     cartCount, total, onOpenCart: openCart,
     menuOpen, setMenuOpen,
+    onOpenOrderHistory: () => setShowOrderHistory(true),
+    onOpenWishlist: () => setShowWishlist(true),
   };
 
   const cartModalProps = {
@@ -175,10 +181,10 @@ function App() {
     { value: 'instock', label: 'במלאי קודם' },
   ];
 
-  if (currentPage === 'about') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><About /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /><ScrollToTop /></div>;
-  if (currentPage === 'contact') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Contact /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /><ScrollToTop /></div>;
-  if (currentPage === 'returns') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Returns /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /><ScrollToTop /></div>;
-  if (currentPage === '404') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><NotFound onNavigate={handleNavigate} /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /><ScrollToTop /></div>;
+  if (currentPage === 'about') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><About /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /><ScrollToTop />{showOrderHistory && <OrderHistory onClose={() => setShowOrderHistory(false)} />}{showWishlist && <Wishlist onClose={() => setShowWishlist(false)} onSelectProduct={handleSelectProductFromSearch} />}</div>;
+  if (currentPage === 'contact') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Contact /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /><ScrollToTop />{showOrderHistory && <OrderHistory onClose={() => setShowOrderHistory(false)} />}{showWishlist && <Wishlist onClose={() => setShowWishlist(false)} onSelectProduct={handleSelectProductFromSearch} />}</div>;
+  if (currentPage === 'returns') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Returns /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /><ScrollToTop />{showOrderHistory && <OrderHistory onClose={() => setShowOrderHistory(false)} />}{showWishlist && <Wishlist onClose={() => setShowWishlist(false)} onSelectProduct={handleSelectProductFromSearch} />}</div>;
+  if (currentPage === '404') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><NotFound onNavigate={handleNavigate} /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /><ScrollToTop />{showOrderHistory && <OrderHistory onClose={() => setShowOrderHistory(false)} />}{showWishlist && <Wishlist onClose={() => setShowWishlist(false)} onSelectProduct={handleSelectProductFromSearch} />}</div>;
 
   if (!selectedCategory) return (
     <div className="App">
@@ -193,7 +199,7 @@ function App() {
       <FAQ />
       <Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />
       {showCart && <CartModal {...cartModalProps} />}
-      <WhatsAppButton /><ScrollToTop /><PaintCalcBtn menuOpen={menuOpen} />
+      <WhatsAppButton /><ScrollToTop />{showOrderHistory && <OrderHistory onClose={() => setShowOrderHistory(false)} />}{showWishlist && <Wishlist onClose={() => setShowWishlist(false)} onSelectProduct={handleSelectProductFromSearch} />}<PaintCalcBtn menuOpen={menuOpen} />
     </div>
   );
 
@@ -209,7 +215,7 @@ function App() {
       />
       <Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />
       {showCart && <CartModal {...cartModalProps} />}
-      <WhatsAppButton /><ScrollToTop />
+      <WhatsAppButton /><ScrollToTop />{showOrderHistory && <OrderHistory onClose={() => setShowOrderHistory(false)} />}{showWishlist && <Wishlist onClose={() => setShowWishlist(false)} onSelectProduct={handleSelectProductFromSearch} />}
     </div>
   );
 
@@ -256,7 +262,7 @@ function App() {
       </main>
       <Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />
       {showCart && <CartModal {...cartModalProps} />}
-      <WhatsAppButton /><ScrollToTop />
+      <WhatsAppButton /><ScrollToTop />{showOrderHistory && <OrderHistory onClose={() => setShowOrderHistory(false)} />}{showWishlist && <Wishlist onClose={() => setShowWishlist(false)} onSelectProduct={handleSelectProductFromSearch} />}
     </div>
   );
 }

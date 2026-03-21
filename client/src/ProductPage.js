@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toggleWishlist, isInWishlist } from './wishlistUtils';
 
 const MAX_RECENT = 6;
 
@@ -23,6 +24,7 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
   const [reviewForm, setReviewForm] = useState({ reviewer_name: '', rating: 5, text: '' });
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
+  const [inWishlist, setInWishlist] = useState(false);
 
   const allImages = [];
   if (product.image_url) allImages.push(product.image_url);
@@ -40,6 +42,7 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
     // שמור בהיסטוריה וטען
     addToRecentlyViewed(product);
     setRecentlyViewed(getRecentlyViewed().filter(p => p.id !== product.id));
+    setInWishlist(isInWishlist(product.id));
 
     fetch('/api/products').then(r => r.json()).then(data => {
       setRelatedProducts(data.filter(p => p.category === product.category && p.id !== product.id).slice(0, 3));
@@ -193,11 +196,19 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
             </div>
           )}
 
-          <button
-            className={`product-page-add-btn ${!inStock ? 'disabled' : ''} ${addedToCart ? 'added' : ''}`}
-            onClick={handleAddToCart} disabled={!inStock}>
-            {!inStock ? 'אזל מהמלאי' : addedToCart ? '✓ נוסף לעגלה!' : '🛒 הוסף לעגלה'}
-          </button>
+          <div className="product-page-actions">
+            <button
+              className={`product-page-add-btn ${!inStock ? 'disabled' : ''} ${addedToCart ? 'added' : ''}`}
+              onClick={handleAddToCart} disabled={!inStock}>
+              {!inStock ? 'אזל מהמלאי' : addedToCart ? '✓ נוסף לעגלה!' : '🛒 הוסף לעגלה'}
+            </button>
+            <button
+              className={`product-wishlist-btn ${inWishlist ? 'active' : ''}`}
+              onClick={() => { const added = toggleWishlist(product); setInWishlist(added); }}
+              title={inWishlist ? 'הסר מרשימת המשאלות' : 'הוסף לרשימת המשאלות'}>
+              {inWishlist ? '❤️' : '🤍'}
+            </button>
+          </div>
 
           {/* שתף בוואטסאפ */}
           <button className="product-share-btn" onClick={handleShare}>
