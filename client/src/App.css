@@ -5186,3 +5186,89 @@ body {
 .navbar-home-btn:hover {
   background: rgba(255,255,255,0.15);
 }
+
+
+/* ===== מסך הצלחה משופר ===== */
+.success-order-num {
+  font-size: 0.95rem;
+  color: #666;
+  margin: 4px 0 16px;
+}
+
+.success-message {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  text-align: right;
+}
+
+.success-message p {
+  margin: 4px 0;
+  font-size: 0.9rem;
+  color: #166534;
+}
+
+.success-contact {
+  background: #f8f8f8;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  text-align: center;
+}
+
+.success-contact p {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.success-contact-btns {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.success-contact-btn {
+  padding: 8px 14px;
+  background: #1a1a2e;
+  color: white;
+  border-radius: 20px;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: background 0.2s;
+}
+
+.success-contact-btn:hover { background: #e63946; }
+.success-contact-btn.whatsapp { background: #25d366; }
+.success-contact-btn.whatsapp:hover { background: #1ebe59; }
+
+
+/* ===== בדיקת אזור משלוח ===== */
+.input-error {
+  border-color: #e63946 !important;
+  background: #fff5f5 !important;
+}
+
+.delivery-area-error {
+  background: #fff5f5;
+  border: 1px solid #e63946;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: #c1121f;
+  line-height: 1.5;
+  margin-top: 6px;
+}
+
+.delivery-area-ok {
+  font-size: 0.82rem;
+  color: #2d6a4f;
+  font-weight: 600;
+  margin-top: 4px;
+  padding-right: 4px;
+}
