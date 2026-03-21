@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import Confetti from './Confetti';
 
 const CATEGORIES = [
   { id: 'painting', label: 'מוצרי צביעה', icon: '🎨' },
@@ -48,10 +49,32 @@ function Admin({ onBack }) {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
 
+  const [showConfetti, setShowConfetti] = useState(false);
+  const prevOrdersCount = useRef(null);
+
   useEffect(() => { fetchProducts(); fetchOrders(); fetchReviews(); }, []);
 
+  // polling כל 30 שניות לבדיקת הזמנות חדשות
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const res = await fetch('/api/orders');
+      const fresh = await res.json();
+      if (prevOrdersCount.current !== null && fresh.length > prevOrdersCount.current) {
+        setShowConfetti(true);
+      }
+      prevOrdersCount.current = fresh.length;
+      setOrders(fresh);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   function fetchProducts() { fetch('/api/products').then(r => r.json()).then(setProducts); }
-  function fetchOrders() { fetch('/api/orders').then(r => r.json()).then(setOrders); }
+  function fetchOrders() {
+    fetch('/api/orders').then(r => r.json()).then(data => {
+      if (prevOrdersCount.current === null) prevOrdersCount.current = data.length;
+      setOrders(data);
+    });
+  }
   function fetchReviews() { fetch('/api/reviews/all').then(r => r.json()).then(setReviews).catch(() => {}); }
 
   const [reviews, setReviews] = useState([]);
@@ -236,6 +259,40 @@ function Admin({ onBack }) {
     setImporting(false); setImportResult({ success, failed }); setCsvPreview(null); fetchProducts();
   }
 
+  function exportOrdersToExcel() {
+    // בנה נתונים לייצוא
+    const rows = orders.map(o => ({
+      'מספר הזמנה': `#${o.id}`,
+      'תאריך': formatDate(o.created_at),
+      'שם לקוח': o.customer_name,
+      'טלפון': o.customer_phone,
+      'אימייל': o.customer_email || '',
+      'אופן קבלה': o.delivery_method === 'pickup' ? 'איסוף עצמי' : 'משלוח',
+      'כתובת': o.delivery_address || '',
+      'פריטים': o.items.map(i => `${i.name} x${i.quantity}`).join(' | '),
+      'סכום מוצרים': o.subtotal,
+      'משלוח': o.delivery_fee,
+      'סה"כ': o.total,
+      'סטטוס': STATUS_CONFIG[o.status]?.label || o.status,
+      'הערות': o.notes || '',
+    }));
+
+    // בנה CSV עם BOM לעברית
+    const headers = Object.keys(rows[0]);
+    const csvLines = [
+      headers.join(','),
+      ...rows.map(row => headers.map(h => `"${String(row[h]).replace(/"/g, '""')}"`).join(','))
+    ];
+    const csv = '\ufeff' + csvLines.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tamburia-orders-${new Date().toLocaleDateString('he-IL').replace(/\//g, '-')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const filteredProducts = products.filter(p => {
     const matchCat = filterCategory === 'all' || p.category === filterCategory;
     const matchSearch = !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()) || (p.sku && p.sku.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -250,6 +307,7 @@ function Admin({ onBack }) {
 
   return (
     <div className="admin">
+      {showConfetti && <Confetti onDone={() => setShowConfetti(false)} />}
       <div className="admin-header">
         <button className="back-btn" onClick={onBack}>← חזור לחנות</button>
         <h1>ניהול טכניק טמבור</h1>
@@ -274,6 +332,10 @@ function Admin({ onBack }) {
       {/* ===== STATS TAB ===== */}
       {activeTab === 'stats' && (
         <div className="stats-page">
+          {/* כפתור בדיקת confetti */}
+          <div style={{textAlign:'left', marginBottom: 8}}>
+            <button onClick={() => setShowConfetti(true)} style={{background:'none', border:'none', cursor:'pointer', fontSize:'0.8rem', color:'#aaa'}}>🎉 בדוק אנימציה</button>
+          </div>
           {/* כרטיסי מכירות */}
           <div className="stats-grid">
             <div className="stats-card">
@@ -387,6 +449,11 @@ function Admin({ onBack }) {
                 {cfg.label} <span className="admin-cat-count">{orders.filter(o => o.status === key).length}</span>
               </button>
             ))}
+            {orders.length > 0 && (
+              <button className="export-orders-btn" onClick={exportOrdersToExcel} title="ייצא לאקסל">
+                📊 ייצא לאקסל
+              </button>
+            )}
           </div>
           {filteredOrders.length === 0 ? <div className="admin-empty">אין הזמנות עדיין</div> : (
             <div className="orders-list">
