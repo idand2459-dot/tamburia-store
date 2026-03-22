@@ -54,6 +54,21 @@ function App() {
   const [showOrderHistory, setShowOrderHistory] = useState(false);
   const [showWishlist, setShowWishlist] = useState(false);
 
+  const [wishlistIds, setWishlistIds] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('tamburia-wishlist'))?.map(p => p.id) || []; }
+    catch { return []; }
+  });
+
+  function toggleCardWishlist(product) {
+    try {
+      const current = JSON.parse(localStorage.getItem('tamburia-wishlist')) || [];
+      const exists = current.find(p => p.id === product.id);
+      const updated = exists ? current.filter(p => p.id !== product.id) : [...current, { id: product.id, name: product.name, price: product.price, image_url: product.image_url, in_stock: product.in_stock }];
+      localStorage.setItem('tamburia-wishlist', JSON.stringify(updated));
+      setWishlistIds(updated.map(p => p.id));
+    } catch {}
+  }
+
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
@@ -252,10 +267,20 @@ function App() {
                 <p className={`stock ${product.in_stock !== false ? '' : 'out-of-stock-label'}`}>
                   {product.in_stock !== false ? '✓ יש במלאי' : '✗ אזל מהמלאי'}
                 </p>
-                <button onClick={e => { e.stopPropagation(); if (product.in_stock !== false) addToCart(product); }}
-                  disabled={product.in_stock === false} className={product.in_stock === false ? 'btn-disabled' : ''}>
-                  {product.in_stock !== false ? 'הוסף לעגלה' : 'אזל מהמלאי'}
-                </button>
+                <div className="card-bottom-actions">
+                  <button
+                    className={`card-add-btn ${product.in_stock === false ? 'btn-disabled' : ''}`}
+                    onClick={e => { e.stopPropagation(); if (product.in_stock !== false) addToCart(product); }}
+                    disabled={product.in_stock === false}>
+                    {product.in_stock !== false ? 'הוסף לעגלה' : 'אזל מהמלאי'}
+                  </button>
+                  <button
+                    className={`card-wishlist-btn ${wishlistIds.includes(product.id) ? 'active' : ''}`}
+                    onClick={e => { e.stopPropagation(); toggleCardWishlist(product); }}
+                    title={wishlistIds.includes(product.id) ? 'הסר' : 'הוסף למשאלות'}>
+                    {wishlistIds.includes(product.id) ? '❤️' : '🤍'}
+                  </button>
+                </div>
               </div>
             ))}
         </div>
