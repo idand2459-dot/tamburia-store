@@ -5963,11 +5963,153 @@ body {
 
 .paint-results-cta:hover { background: #e63946; }
 
+/* ── Pigment card ─────────────────────────────────────────────────────────── */
+.paint-pigment-card { border-top: 3px solid rgba(255,255,255,0.25); }
+
+.paint-pigment-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.paint-color-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.paint-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.25);
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+}
+.paint-swatch:hover   { transform: scale(1.2); border-color: rgba(255,255,255,0.7); }
+.paint-swatch.active  { transform: scale(1.25); border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,0.4); }
+
+.paint-color-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.9);
+  font-weight: 600;
+}
+.paint-color-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.4);
+  flex-shrink: 0;
+}
+
+/* ── Shade selector ───────────────────────────────────────────────────────── */
+.paint-shade-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.paint-shade-label {
+  color: rgba(255,255,255,0.7);
+  font-size: 0.88rem;
+  flex-shrink: 0;
+}
+.paint-shade-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.paint-shade-btn {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1.5px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.8);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.paint-shade-btn:hover  { border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.15); color: #fff; }
+.paint-shade-btn.active { background: rgba(255,255,255,0.9); color: #1a1a2e; border-color: #fff; font-weight: 700; }
+
+/* ── Live preview swatch ──────────────────────────────────────────────────── */
+.paint-preview-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.paint-preview-swatch {
+  height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: background 0.5s ease;
+}
+.paint-preview-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.7;
+}
+.paint-preview-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.paint-preview-note {
+  background: rgba(0,0,0,0.25);
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.7);
+  text-align: center;
+}
+
+/* ── Results — preview bar ────────────────────────────────────────────────── */
+.paint-result-preview-bar {
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+  margin-bottom: 16px;
+  font-size: 1rem;
+  transition: background 0.5s ease;
+}
+
+/* ── Bundle button ────────────────────────────────────────────────────────── */
+.paint-bundle-btn {
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #2a9d8f, #1a7a6e);
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: all 0.2s;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  direction: rtl;
+}
+.paint-bundle-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #21867a, #155f56);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(42,157,143,0.4);
+}
+.paint-bundle-btn.added {
+  background: linear-gradient(135deg, #2d6a4f, #1b4332);
+  cursor: default;
+}
+
 @media (max-width: 600px) {
   .paint-calc-section { padding: 50px 20px; }
   .paint-calc-title { font-size: 1.5rem; }
   .paint-results-grid { grid-template-columns: 1fr; }
   .paint-coats { flex-direction: column; }
+  .paint-shade-row { flex-direction: column; align-items: flex-start; }
+  .paint-swatch { width: 26px; height: 26px; }
 }
 
 /* ===== כפתור צף מחשבון צבע ===== */

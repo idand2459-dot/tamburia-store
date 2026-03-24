@@ -213,7 +213,22 @@ function App() {
       <div className="hero"><h2>כל מה שצריך לבית — במקום אחד</h2><p>מוצרי צביעה, אינסטלציה, כלי עבודה ועוד</p></div>
       <CategoryPage onSelectCategory={setSelectedCategory} />
       <WhyUs />
-      <PaintCalculator />
+      <PaintCalculator addBundleToCart={items => {
+        setCart(prev => {
+          let updated = [...prev];
+          for (const item of items) {
+            const exists = updated.find(i => i.id === item.id);
+            if (exists) {
+              updated = updated.map(i => i.id === item.id ? { ...i, quantity: (i.quantity || 1) + item.quantity } : i);
+            } else {
+              updated = [...updated, { ...item, selectedColor: null }];
+            }
+          }
+          return updated;
+        });
+        setShowCart(true);
+        setCartStep('cart');
+      }} />
       <FeaturesBanner />
       <ReviewsCarousel />
       <FAQ />

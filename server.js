@@ -472,4 +472,60 @@ app.delete('/api/reviews/:id', async (req, res) => {
   res.json({ message: 'נמחק' });
 });
 
+// ── PIGMENT FORMULAS ─────────────────────────────────────────────────────────
+async function initPigmentFormulas() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pigment_formulas (
+      id                  SERIAL PRIMARY KEY,
+      color_code          VARCHAR(50) NOT NULL UNIQUE,
+      color_name_he       VARCHAR(100) NOT NULL,
+      hex                 VARCHAR(7)  NOT NULL,
+      ml_per_liter_light  INTEGER     NOT NULL DEFAULT 30,
+      ml_per_liter_medium INTEGER     NOT NULL DEFAULT 60,
+      ml_per_liter_dark   INTEGER     NOT NULL DEFAULT 120,
+      sort_order          INTEGER     NOT NULL DEFAULT 0
+    )
+  `);
+  const { rows } = await pool.query('SELECT COUNT(*) AS cnt FROM pigment_formulas');
+  if (parseInt(rows[0].cnt) > 0) return;
+
+  const colors = [
+    ['cream',      'שמנת',      '#F5E6C8', 30, 65, 130,  1],
+    ['yellow',     'צהוב',      '#FFD700', 35, 70, 140,  2],
+    ['mustard',    'חרדל',      '#C8960C', 30, 65, 130,  3],
+    ['orange',     'כתום',      '#FF6B35', 30, 60, 120,  4],
+    ['red',        'אדום',      '#DC2626', 25, 55, 110,  5],
+    ['pink',       'ורוד',      '#FF69B4', 30, 60, 120,  6],
+    ['terracotta', 'טרקוטה',    '#C2674E', 25, 55, 110,  7],
+    ['lilac',      'לילך',      '#C084FC', 30, 60, 120,  8],
+    ['purple',     'סגול',      '#7B2FBE', 25, 50, 100,  9],
+    ['sky_blue',   'תכלת',      '#38BDF8', 30, 60, 120, 10],
+    ['blue',       'כחול',      '#1D4ED8', 25, 50, 100, 11],
+    ['turquoise',  'טורקיז',    '#0D9488', 25, 55, 110, 12],
+    ['green',      'ירוק',      '#16A34A', 25, 55, 110, 13],
+    ['olive',      'ירוק זית',  '#6B7C2E', 25, 55, 110, 14],
+    ['beige',      "בז'",       '#D4A96A', 30, 65, 130, 15],
+    ['khaki',      'חאקי',      '#8B8456', 25, 55, 115, 16],
+    ['brown',      'חום',       '#92400E', 20, 45,  95, 17],
+    ['chocolate',  'שוקולד',    '#5C3317', 20, 40,  85, 18],
+    ['gray',       'אפור',      '#6B7280', 20, 45,  95, 19],
+    ['black',      'שחור',      '#1C1C1C', 15, 35,  80, 20],
+  ];
+
+  for (const [code, name, hex, light, medium, dark, sort] of colors) {
+    await pool.query(
+      `INSERT INTO pigment_formulas (color_code,color_name_he,hex,ml_per_liter_light,ml_per_liter_medium,ml_per_liter_dark,sort_order)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT DO NOTHING`,
+      [code, name, hex, light, medium, dark, sort]
+    );
+  }
+  console.log('✅ pigment_formulas table seeded');
+}
+initPigmentFormulas().catch(console.error);
+
+app.get('/api/pigment-formulas', async (req, res) => {
+  const result = await pool.query('SELECT * FROM pigment_formulas ORDER BY sort_order');
+  res.json(result.rows);
+});
+
 app.listen(3000, () => console.log('השרת עובד על פורט 3000 ✓'));
