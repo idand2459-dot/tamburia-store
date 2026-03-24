@@ -359,19 +359,19 @@ app.post('/api/upload-multiple', upload.array('images', 5), (req, res) => {
 });
 
 app.post('/api/products', async (req, res) => {
-  const { name, price, image_url, images, colors, category, sku, description, in_stock } = req.body;
+  const { name, price, image_url, images, colors, category, subcategory, sku, description, in_stock } = req.body;
   const result = await pool.query(
-    'INSERT INTO products (name, price, stock, image_url, images, colors, category, sku, description, in_stock) VALUES ($1,$2,0,$3,$4,$5,$6,$7,$8,$9) RETURNING *',
-    [name, price, image_url||'', JSON.stringify(images||[]), colors, category, sku||null, description||null, in_stock !== false]
+    'INSERT INTO products (name, price, stock, image_url, images, colors, category, subcategory, sku, description, in_stock) VALUES ($1,$2,0,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *',
+    [name, price, image_url||'', JSON.stringify(images||[]), colors, category, subcategory||null, sku||null, description||null, in_stock !== false]
   );
   res.json(result.rows[0]);
 });
 
 app.put('/api/products/:id', async (req, res) => {
-  const { name, price, colors, category, sku, description, images, in_stock, image_url } = req.body;
+  const { name, price, colors, category, subcategory, sku, description, images, in_stock, image_url } = req.body;
   const result = await pool.query(
-    'UPDATE products SET name=$1,price=$2,colors=$3,category=$4,sku=$5,description=$6,images=$7,in_stock=$8,image_url=$9 WHERE id=$10 RETURNING *',
-    [name, price, colors, category, sku||null, description||null, JSON.stringify(images||[]), in_stock !== false, image_url||'', req.params.id]
+    'UPDATE products SET name=$1,price=$2,colors=$3,category=$4,subcategory=$5,sku=$6,description=$7,images=$8,in_stock=$9,image_url=$10 WHERE id=$11 RETURNING *',
+    [name, price, colors, category, subcategory||null, sku||null, description||null, JSON.stringify(images||[]), in_stock !== false, image_url||'', req.params.id]
   );
   res.json(result.rows[0]);
 });
