@@ -3,7 +3,7 @@ const CATEGORY_CONFIG = {
   tools:      { name: 'כלי עבודה',              icon: '🔧', gradient: 'linear-gradient(135deg, #1a1a2e 0%, #2d3561 50%, #457b9d 100%)', desc: 'פטישים, מברגים, מסורים וכלי עבודה מקצועיים' },
   plumbing:   { name: 'אינסטלציה',              icon: '🔩', gradient: 'linear-gradient(135deg, #0077b6 0%, #0096c7 50%, #48cae4 100%)', desc: 'צינורות, חיבורים וכל פתרונות האינסטלציה' },
   faucets:    { name: 'ברזים',                  icon: '🚰', gradient: 'linear-gradient(135deg, #023e8a 0%, #0077b6 50%, #48cae4 100%)', desc: 'ברזים, מחברים ואביזרי מים איכותיים' },
-  locks:      { name: 'צילינדרים ומנעולים',     icon: '🔐', gradient: 'linear-gradient(135deg, #212529 0%, #343a40 50%, #495057 100%)', desc: 'מנעולים, צילינדרים וכל פתרונות האבטחה' },
+  locks:      { name: 'פירזול צילינדרים ומנעולים', icon: '🔐', gradient: 'linear-gradient(135deg, #212529 0%, #343a40 50%, #495057 100%)', desc: 'מנעולים, צילינדרים וכל פתרונות האבטחה' },
   adhesives:  { name: 'דבקים',                  icon: '🗜️', gradient: 'linear-gradient(135deg, #e76f51 0%, #f4a261 50%, #ffd166 100%)', desc: 'דבקים, סיליקון, טייץ וחומרי איטום' },
   cleaning:   { name: 'ניקיון',                 icon: '🧹', gradient: 'linear-gradient(135deg, #6a4c93 0%, #9b5de5 50%, #c77dff 100%)', desc: 'חומרי ניקוי, ספוגים ומוצרי ניקיון לבית' },
   garden:     { name: 'גינה',                   icon: '🌿', gradient: 'linear-gradient(135deg, #1b4332 0%, #2d6a4f 50%, #52b788 100%)', desc: 'זרנוקים, כלי גינון ומוצרים לגינה' },

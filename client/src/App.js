@@ -18,6 +18,7 @@ import FeaturesBanner from './FeaturesBanner';
 import WhyUs from './WhyUs';
 import CartModal from './CartModal';
 import CategoryBanner from './CategoryBanner';
+import categories from './categories';
 import ScrollToTop from './ScrollToTop';
 import FAQ from './FAQ';
 import PaintCalculator from './PaintCalculator';
@@ -53,6 +54,7 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showOrderHistory, setShowOrderHistory] = useState(false);
   const [showWishlist, setShowWishlist] = useState(false);
+  const [selectedSubcategory, setSelectedSubcategory] = useState(null);
 
   const [wishlistIds, setWishlistIds] = useState(() => {
     try { return JSON.parse(localStorage.getItem('tamburia-wishlist'))?.map(p => p.id) || []; }
@@ -83,6 +85,7 @@ function App() {
     if (!selectedCategory) return;
     setLoadingProducts(true);
     setSortBy('default');
+    setSelectedSubcategory(null);
     fetch('/api/products').then(r => r.json())
       .then(data => { setProducts(data.filter(p => p.category === selectedCategory.id)); setLoadingProducts(false); })
       .catch(() => setLoadingProducts(false));
@@ -150,7 +153,9 @@ function App() {
   }
 
   function getSortedProducts(list) {
-    const filtered = list.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    const filtered = list
+      .filter(p => !selectedSubcategory || p.subcategory === selectedSubcategory)
+      .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
     switch (sortBy) {
       case 'price-asc':  return [...filtered].sort((a, b) => a.price - b.price);
       case 'price-desc': return [...filtered].sort((a, b) => b.price - a.price);
@@ -241,6 +246,27 @@ function App() {
       <Navbar {...navbarProps} />
       <MarqueeBanner />
       <CategoryBanner category={selectedCategory} onBack={() => setSelectedCategory(null)} />
+      {(() => {
+        const catDef = categories.find(c => c.id === selectedCategory?.id);
+        if (!catDef?.subcategories?.length) return null;
+        return (
+          <div className="subcategory-chips">
+            <button
+              className={`subcategory-chip ${!selectedSubcategory ? 'active' : ''}`}
+              onClick={() => setSelectedSubcategory(null)}>
+              הכל
+            </button>
+            {catDef.subcategories.map(sub => (
+              <button
+                key={sub.id}
+                className={`subcategory-chip ${selectedSubcategory === sub.id ? 'active' : ''}`}
+                onClick={() => setSelectedSubcategory(selectedSubcategory === sub.id ? null : sub.id)}>
+                {sub.name}
+              </button>
+            ))}
+          </div>
+        );
+      })()}
       <main>
         <div className="products-toolbar">
           <div className="search-bar">

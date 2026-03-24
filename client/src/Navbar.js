@@ -44,7 +44,8 @@ function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, on
   const CATEGORY_LABELS = {
     painting: 'מוצרי צביעה', kitchen: 'מוצרי מטבח', bathroom: 'מוצרי אמבטיה',
     tools: 'כלי עבודה', cleaning: 'ניקיון', garden: 'גינה',
-    plumbing: 'אינסטלציה', adhesives: 'דבקים', locks: 'צילינדרים ומנעולים', faucets: 'ברזים'
+    plumbing: 'אינסטלציה', adhesives: 'דבקים', locks: 'פירזול צילינדרים ומנעולים', faucets: 'ברזים',
+    electrical: 'מוצרי חשמל', home: 'בית'
   };
 
   return (
