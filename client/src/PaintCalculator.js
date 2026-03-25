@@ -15,8 +15,10 @@ function blendWithWhite(hex, factor) {
 
 // Perceive luminance to decide text color on the preview swatch
 function isLight(rgb) {
-  const match = rgb.match(/\d+/g).map(Number);
-  return (0.299 * match[0] + 0.587 * match[1] + 0.114 * match[2]) > 160;
+  const match = rgb.match(/\d+/g);
+  if (!match || match.length < 3) return true;
+  const [r, g, b] = match.map(Number);
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 160;
 }
 
 function PaintCalculator({ addBundleToCart }) {
@@ -35,8 +37,9 @@ function PaintCalculator({ addBundleToCart }) {
     fetch('/api/pigment-formulas')
       .then(r => r.json())
       .then(data => {
-        setFormulas(data);
-        if (data.length > 0) setSelectedColor(data[0].color_code);
+        const arr = Array.isArray(data) ? data : [];
+        setFormulas(arr);
+        if (arr.length > 0) setSelectedColor(arr[0].color_code);
       })
       .catch(() => {});
   }, []);

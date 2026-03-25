@@ -22,9 +22,11 @@ import categories from './categories';
 import ScrollToTop from './ScrollToTop';
 import FAQ from './FAQ';
 import PaintCalculator from './PaintCalculator';
+import ProjectCalculator from './ProjectCalculator';
 import PaintCalcBtn from './PaintCalcBtn';
 import OrderHistory from './OrderHistory';
 import Wishlist from './Wishlist';
+import CategoryAmbience from './CategoryAmbience';
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -87,14 +89,14 @@ function App() {
     setSortBy('default');
     setSelectedSubcategory(null);
     fetch('/api/products').then(r => r.json())
-      .then(data => { setProducts(data.filter(p => p.category === selectedCategory.id)); setLoadingProducts(false); })
+      .then(data => { setProducts((Array.isArray(data) ? data : []).filter(p => p.category === selectedCategory.id)); setLoadingProducts(false); })
       .catch(() => setLoadingProducts(false));
   }, [selectedCategory]);
 
   function addToCart(product) {
-    const existing = cart.find(i => i.id === product.id && i.selectedColor === product.selectedColor);
+    const existing = cart.find(i => i.id === product.id && i.selectedColor === product.selectedColor && i.selectedSize === product.selectedSize);
     if (existing) {
-      setCart(cart.map(i => i.id === product.id && i.selectedColor === product.selectedColor
+      setCart(cart.map(i => i.id === product.id && i.selectedColor === product.selectedColor && i.selectedSize === product.selectedSize
         ? { ...i, quantity: (i.quantity || 1) + 1 } : i));
     } else {
       setCart([...cart, { ...product, quantity: 1 }]);
@@ -140,7 +142,7 @@ function App() {
       customer_email: customerEmail, delivery_method: deliveryMethod,
       delivery_address: deliveryMethod === 'delivery' ? deliveryAddress : null,
       notes: orderNotes,
-      items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1, selectedColor: i.selectedColor || null })),
+      items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1, selectedColor: i.selectedColor || null, selectedSize: i.selectedSize || null })),
       subtotal, delivery_fee: deliveryFee, total
     };
     const res = await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) });
@@ -210,10 +212,41 @@ function App() {
     <div className="App">
       <Navbar {...navbarProps} />
       <MarqueeBanner />
-      <div className="hero"><h2>כל מה שצריך לבית — במקום אחד</h2><p>מוצרי צביעה, אינסטלציה, כלי עבודה ועוד</p></div>
+      <div className="hero">
+        <div className="hero-inner">
+          <div className="hero-badge">✦ מאז 1991 · פתח תקווה</div>
+          <h1 className="hero-title">כל מה שצריך לבית<br/><span className="hero-accent">במקום אחד</span></h1>
+          <p className="hero-sub">מוצרי צביעה · אינסטלציה · כלי עבודה · ממנעולים ועד גינה</p>
+          <div className="hero-stats">
+            <div className="hero-stat"><b>400+</b><span>מוצרים</span></div>
+            <div className="hero-stat-div"></div>
+            <div className="hero-stat"><b>12</b><span>קטגוריות</span></div>
+            <div className="hero-stat-div"></div>
+            <div className="hero-stat"><b>30+</b><span>שנות ניסיון</span></div>
+            <div className="hero-stat-div"></div>
+            <div className="hero-stat"><b>★ 4.9</b><span>לקוחות מרוצים</span></div>
+          </div>
+        </div>
+      </div>
       <CategoryPage onSelectCategory={setSelectedCategory} />
       <WhyUs />
       <PaintCalculator addBundleToCart={items => {
+        setCart(prev => {
+          let updated = [...prev];
+          for (const item of items) {
+            const exists = updated.find(i => i.id === item.id);
+            if (exists) {
+              updated = updated.map(i => i.id === item.id ? { ...i, quantity: (i.quantity || 1) + item.quantity } : i);
+            } else {
+              updated = [...updated, { ...item, selectedColor: null }];
+            }
+          }
+          return updated;
+        });
+        setShowCart(true);
+        setCartStep('cart');
+      }} />
+      <ProjectCalculator addBundleToCart={items => {
         setCart(prev => {
           let updated = [...prev];
           for (const item of items) {
@@ -257,9 +290,10 @@ function App() {
   const sortedProducts = getSortedProducts(products);
 
   return (
-    <div className="App">
+    <div className={`App cat-bg cat-bg-${selectedCategory?.id}`}>
       <Navbar {...navbarProps} />
       <MarqueeBanner />
+      <CategoryAmbience categoryId={selectedCategory?.id} />
       <CategoryBanner category={selectedCategory} onBack={() => setSelectedCategory(null)} />
       {(() => {
         const catDef = categories.find(c => c.id === selectedCategory?.id);
@@ -282,7 +316,7 @@ function App() {
           </div>
         );
       })()}
-      <main>
+      <main style={{ '--cat-color': selectedCategory?.color }}>
         <div className="products-toolbar">
           <div className="search-bar">
             <input placeholder="🔍 חפש מוצר..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
@@ -301,10 +335,22 @@ function App() {
             ? Array(6).fill(0).map((_, i) => <ProductCardSkeleton key={i} />)
             : sortedProducts.map(product => (
               <div key={product.id} className="product-card" onClick={() => setSelectedProduct(product)} style={{ cursor: 'pointer' }}>
-                {product.image_url && <img src={product.image_url} alt={product.name} />}
+                <div className="product-img-wrap">
+                  <div className="product-img-placeholder" data-icon={selectedCategory?.icon}>
+                    <span className="product-img-initial">{product.name.charAt(0)}</span>
+                  </div>
+                  {product.image_url && (
+                    <img src={product.image_url} alt={product.name} onError={e => { e.currentTarget.style.display = 'none'; }} />
+                  )}
+                </div>
                 <h3>{product.name}</h3>
                 {product.sku && <p className="product-sku">מק"ט: {product.sku}</p>}
-                <p className="price">₪{product.price}</p>
+                <p className="price">
+                  {Array.isArray(product.variants) && product.variants.length > 0
+                    ? <>מ-₪{Math.min(...product.variants.map(v => v.price))} <span className="price-variants-hint">· {product.variants.length} גרסאות</span></>
+                    : <>₪{product.price}</>
+                  }
+                </p>
                 <p className={`stock ${product.in_stock !== false ? '' : 'out-of-stock-label'}`}>
                   {product.in_stock !== false ? '✓ יש במלאי' : '✗ אזל מהמלאי'}
                 </p>

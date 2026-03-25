@@ -15,7 +15,10 @@ function addToRecentlyViewed(product) {
 }
 
 function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
+  const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
   const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState(hasVariants ? product.variants[0] : null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -36,7 +39,8 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
   const hasMultipleImages = allImages.length > 1;
 
   useEffect(() => {
-    setSelectedColor(null); setCurrentImageIndex(0); setAddedToCart(false);
+    setSelectedColor(null); setSelectedSize(null); setCurrentImageIndex(0); setAddedToCart(false);
+    setSelectedVariant(hasVariants ? product.variants[0] : null);
     setReviewSubmitted(false); setShowReviewForm(false);
 
     // שמור בהיסטוריה וטען
@@ -45,8 +49,8 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
     setInWishlist(isInWishlist(product.id));
 
     fetch('/api/products').then(r => r.json()).then(data => {
-      setRelatedProducts(data.filter(p => p.category === product.category && p.id !== product.id).slice(0, 3));
-    });
+      setRelatedProducts((Array.isArray(data) ? data : []).filter(p => p.category === product.category && p.id !== product.id).slice(0, 3));
+    }).catch(() => {});
 
     fetch(`/api/reviews?type=product&product_id=${product.id}`)
       .then(r => r.json()).then(setReviews).catch(() => {});
@@ -56,10 +60,18 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
   function nextImage() { setCurrentImageIndex(i => i === allImages.length - 1 ? 0 : i + 1); }
 
   function handleAddToCart() {
+    if (hasVariants && !selectedVariant) {
+      alert('אנא בחר גרסה לפני ההוספה לעגלה'); return;
+    }
     if (product.colors && product.colors.length > 0 && !selectedColor) {
       alert('אנא בחר צבע לפני ההוספה לעגלה'); return;
     }
-    onAddToCart({ ...product, selectedColor });
+    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+      alert('אנא בחר מידה לפני ההוספה לעגלה'); return;
+    }
+    const effectivePrice = selectedVariant ? selectedVariant.price : product.price;
+    const variantLabel = selectedVariant ? selectedVariant.label : null;
+    onAddToCart({ ...product, price: effectivePrice, selectedColor, selectedSize, selectedVariant: variantLabel });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   }
@@ -168,12 +180,32 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
             </div>
           )}
 
-          <p className="product-page-price">₪{product.price}</p>
+          <p className="product-page-price">
+            ₪{selectedVariant ? selectedVariant.price : product.price}
+            {hasVariants && !selectedVariant && <span className="price-from"> (בחר גרסה)</span>}
+          </p>
 
           <div className={`product-page-stock ${inStock ? 'in-stock' : 'out-of-stock'}`}>
             <span className="stock-dot" />
             {inStock ? 'יש במלאי' : 'אזל מהמלאי'}
           </div>
+
+          {hasVariants && (
+            <div className="product-page-variants">
+              <h3>בחר גרסה / גודל</h3>
+              <div className="variant-chips">
+                {product.variants.map((v, i) => (
+                  <button
+                    key={i}
+                    className={`variant-chip ${selectedVariant === v ? 'selected' : ''}`}
+                    onClick={() => setSelectedVariant(v)}>
+                    <span className="variant-chip-label">{v.label}</span>
+                    <span className="variant-chip-price">₪{v.price}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {product.description && (
             <div className="product-page-description">
@@ -193,6 +225,21 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
                     onClick={() => setSelectedColor(color)} title={color} />
                 ))}
               </div>
+            </div>
+          )}
+
+          {product.sizes && product.sizes.length > 0 && (
+            <div className="product-page-sizes">
+              <h3>בחר מידה {selectedSize && <span className="selected-color-name">— {selectedSize}</span>}</h3>
+              <select
+                className="size-select"
+                value={selectedSize || ''}
+                onChange={e => setSelectedSize(e.target.value || null)}>
+                <option value="">-- בחר מידה --</option>
+                {product.sizes.map(size => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
             </div>
           )}
 

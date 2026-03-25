@@ -14,6 +14,11 @@ function CategoryPage({ onSelectCategory }) {
           >
             <span className="category-icon">{category.icon}</span>
             <span className="category-name">{category.name}</span>
+            {category.subcategories?.length > 0 && (
+              <span className="category-sub-hint">
+                {category.subcategories.slice(0, 3).map(s => s.name).join(' · ')}
+              </span>
+            )}
           </div>
         ))}
       </div>

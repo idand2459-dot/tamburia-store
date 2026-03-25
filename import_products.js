@@ -155,7 +155,7 @@ async function importProducts(csvFile) {
   console.log(`📋 Found ${rows.length} product rows\n`);
 
   // Load all existing products once for name/description matching
-  const { rows: existingProducts } = await pool.query('SELECT id, sku, name, description, colors FROM products');
+  const { rows: existingProducts } = await pool.query('SELECT id, sku, name, description, colors, sizes FROM products');
 
   let inserted = 0;
   let merged   = 0;
@@ -171,6 +171,7 @@ async function importProducts(csvFile) {
     const descRaw     = row['Description']?.trim()     || '';
     const description = descRaw || generateDescription(name, category);
     const colorsRaw   = row['Colors']?.trim()          || '';
+    const sizesRaw    = row['Sizes']?.trim()           || '';
     const inStock     = (row['In_Stock']?.trim().toLowerCase() !== 'false');
 
     // Build images array from the 5 image columns
@@ -185,8 +186,9 @@ async function importProducts(csvFile) {
     const primaryImage = imageFilenames.length > 0 ? imageUrl(imageFilenames[0]) : '';
     const allImages    = imageFilenames.map(imageUrl);
 
-    // Colors: pipe-separated in CSV → JS array (pg driver maps this to TEXT[])
+    // Colors / Sizes: pipe-separated in CSV → JS array (pg driver maps to TEXT[])
     const colors = colorsRaw ? colorsRaw.split('|').map(c => c.trim()).filter(Boolean) : [];
+    const sizes  = sizesRaw  ? sizesRaw.split('|').map(s => s.trim()).filter(Boolean)  : [];
 
     // ── Validation ────────────────────────────────────────────────────────────
     if (!name) {
@@ -233,52 +235,60 @@ async function importProducts(csvFile) {
       const priceNote = (price === 0) ? ' ⚠️  price=0 (fill in price later)' : '';
 
       if (match) {
-        // ── MERGE colors only — never overwrite name/price/description ────────
+        // ── MERGE colors + sizes — never overwrite name/price/description ─────
         const existingColors = match.colors || [];
+        const existingSizes  = match.sizes  || [];
         const mergedColors   = [...new Set([...existingColors, ...colors])];
+        const mergedSizes    = [...new Set([...existingSizes,  ...sizes])];
         const addedColors    = colors.filter(c => !existingColors.includes(c));
+        const addedSizes     = sizes.filter(s => !existingSizes.includes(s));
 
-        if (addedColors.length === 0 && match.matchType !== 'sku') {
+        if (addedColors.length === 0 && addedSizes.length === 0 && match.matchType !== 'sku') {
           // Nothing new to add — skip silently
-          console.log(`  ⏭️  SKIP     [${sku || '—'}] "${name}" — already exists, no new colors`);
+          console.log(`  ⏭️  SKIP     [${sku || '—'}] "${name}" — already exists, no new colors/sizes`);
           skipped++;
         } else {
           if (match.matchType === 'sku') {
             // Full update (price, description, images may have changed)
             await pool.query(
               `UPDATE products
-               SET name=$1, price=$2, category=$3, subcategory=$4, description=$5, colors=$6,
-                   in_stock=$7, image_url=$8, images=$9
-               WHERE id=$10`,
-              [name, price, category, subcategory, description, mergedColors, effectiveInStock,
-               primaryImage, JSON.stringify(allImages), match.id]
+               SET name=$1, price=$2, category=$3, subcategory=$4, description=$5, colors=$6, sizes=$7,
+                   in_stock=$8, image_url=$9, images=$10
+               WHERE id=$11`,
+              [name, price, category, subcategory, description, mergedColors, mergedSizes,
+               effectiveInStock, primaryImage, JSON.stringify(allImages), match.id]
             );
             const colorNote = addedColors.length > 0 ? `  +🎨 ${addedColors.join(', ')}` : '';
-            console.log(`  ✏️  UPDATED  [${sku}] ${name}${colorNote}${priceNote}`);
+            const sizeNote  = addedSizes.length  > 0 ? `  +📏 ${addedSizes.join(', ')}`  : '';
+            console.log(`  ✏️  UPDATED  [${sku}] ${name}${colorNote}${sizeNote}${priceNote}`);
             updated++;
           } else {
-            // Color-only merge — preserve everything else
+            // Color+size merge — preserve everything else
             await pool.query(
-              'UPDATE products SET colors=$1 WHERE id=$2',
-              [mergedColors, match.id]
+              'UPDATE products SET colors=$1, sizes=$2 WHERE id=$3',
+              [mergedColors, mergedSizes, match.id]
             );
             const reason = match.matchType === 'name' ? 'same name' : 'similar description';
-            console.log(`  🎨  MERGED   [${sku || '—'}→${match.sku || match.id}] "${name}" (${reason})  +🎨 ${addedColors.join(', ')}`);
+            const colorNote = addedColors.length > 0 ? `  +🎨 ${addedColors.join(', ')}` : '';
+            const sizeNote  = addedSizes.length  > 0 ? `  +📏 ${addedSizes.join(', ')}`  : '';
+            console.log(`  🔀  MERGED   [${sku || '—'}→${match.sku || match.id}] "${name}" (${reason})${colorNote}${sizeNote}`);
             merged++;
           }
           // Keep existingProducts in sync so later rows in the same CSV benefit
           match.colors = mergedColors;
+          match.sizes  = mergedSizes;
         }
       } else {
         // ── INSERT new product ────────────────────────────────────────────────
         const result = await pool.query(
-          `INSERT INTO products (name, price, stock, image_url, images, colors, category, subcategory, sku, description, in_stock)
-           VALUES ($1, $2, 0, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, sku, name, description, colors`,
+          `INSERT INTO products (name, price, stock, image_url, images, colors, sizes, category, subcategory, sku, description, in_stock)
+           VALUES ($1, $2, 0, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, sku, name, description, colors, sizes`,
           [name, price, primaryImage, JSON.stringify(allImages),
-           colors, category, subcategory, sku, description, effectiveInStock]
+           colors, sizes, category, subcategory, sku, description, effectiveInStock]
         );
         existingProducts.push(result.rows[0]); // register for subsequent rows
-        console.log(`  ✅  INSERTED [${sku || 'no-sku'}] ${name}${priceNote}`);
+        const sizeNote = sizes.length > 0 ? `  📏 ${sizes.join(', ')}` : '';
+        console.log(`  ✅  INSERTED [${sku || 'no-sku'}] ${name}${sizeNote}${priceNote}`);
         inserted++;
       }
     } catch (err) {

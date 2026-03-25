@@ -14,6 +14,16 @@ const app = express();
 
 const pool = new Pool({ user: 'postgres', host: 'localhost', database: 'tamburia', password: '1234', port: 5432 });
 
+// No-cache for HTML — always serve fresh page, never stale
+app.use((req, res, next) => {
+  if (req.path === '/' || req.path.endsWith('.html')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  next();
+});
+
 app.use(express.static('.'));
 app.use(express.json());
 app.use(cors());
@@ -34,7 +44,7 @@ function buildOrderEmail(order) {
 
   const itemsRows = order.items.map(item =>
     `<tr>
-      <td style="padding:8px;border-bottom:1px solid #eee">${item.name}${item.selectedColor ? ` (${item.selectedColor})` : ''}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee">${item.name}${item.selectedColor ? ` (${item.selectedColor})` : ''}${item.selectedSize ? ` — ${item.selectedSize}` : ''}</td>
       <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${item.quantity}</td>
       <td style="padding:8px;border-bottom:1px solid #eee;text-align:left">₪${item.price * item.quantity}</td>
     </tr>`
@@ -133,7 +143,7 @@ function buildCustomerConfirmEmail(order) {
 
   const itemsRows = order.items.map(item =>
     `<tr>
-      <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${item.name}${item.selectedColor ? ` (${item.selectedColor})` : ''}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${item.name}${item.selectedColor ? ` (${item.selectedColor})` : ''}${item.selectedSize ? ` — ${item.selectedSize}` : ''}</td>
       <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${item.quantity}</td>
       <td style="padding:8px;border-bottom:1px solid #eee;text-align:left">₪${item.price * item.quantity}</td>
     </tr>`
@@ -304,7 +314,9 @@ async function initDB() {
     ADD COLUMN IF NOT EXISTS sku VARCHAR(100),
     ADD COLUMN IF NOT EXISTS description TEXT,
     ADD COLUMN IF NOT EXISTS images JSONB DEFAULT '[]',
-    ADD COLUMN IF NOT EXISTS in_stock BOOLEAN DEFAULT true
+    ADD COLUMN IF NOT EXISTS in_stock BOOLEAN DEFAULT true,
+    ADD COLUMN IF NOT EXISTS sizes TEXT[] DEFAULT '{}',
+    ADD COLUMN IF NOT EXISTS variants JSONB DEFAULT '[]'
   `);
 
   await pool.query(`
@@ -359,19 +371,27 @@ app.post('/api/upload-multiple', upload.array('images', 5), (req, res) => {
 });
 
 app.post('/api/products', async (req, res) => {
-  const { name, price, image_url, images, colors, category, subcategory, sku, description, in_stock } = req.body;
+  const { name, price, image_url, images, colors, sizes, category, subcategory, sku, description, in_stock, variants } = req.body;
+  const parsedVariants = Array.isArray(variants) ? variants : [];
+  const effectivePrice = parsedVariants.length > 0
+    ? Math.min(...parsedVariants.map(v => Number(v.price) || 0))
+    : (price || 0);
   const result = await pool.query(
-    'INSERT INTO products (name, price, stock, image_url, images, colors, category, subcategory, sku, description, in_stock) VALUES ($1,$2,0,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *',
-    [name, price, image_url||'', JSON.stringify(images||[]), colors, category, subcategory||null, sku||null, description||null, in_stock !== false]
+    'INSERT INTO products (name, price, stock, image_url, images, colors, sizes, category, subcategory, sku, description, in_stock, variants) VALUES ($1,$2,0,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *',
+    [name, effectivePrice, image_url||'', JSON.stringify(images||[]), colors, sizes||[], category, subcategory||null, sku||null, description||null, in_stock !== false, JSON.stringify(parsedVariants)]
   );
   res.json(result.rows[0]);
 });
 
 app.put('/api/products/:id', async (req, res) => {
-  const { name, price, colors, category, subcategory, sku, description, images, in_stock, image_url } = req.body;
+  const { name, price, colors, sizes, category, subcategory, sku, description, images, in_stock, image_url, variants } = req.body;
+  const parsedVariants = Array.isArray(variants) ? variants : [];
+  const effectivePrice = parsedVariants.length > 0
+    ? Math.min(...parsedVariants.map(v => Number(v.price) || 0))
+    : (price || 0);
   const result = await pool.query(
-    'UPDATE products SET name=$1,price=$2,colors=$3,category=$4,subcategory=$5,sku=$6,description=$7,images=$8,in_stock=$9,image_url=$10 WHERE id=$11 RETURNING *',
-    [name, price, colors, category, subcategory||null, sku||null, description||null, JSON.stringify(images||[]), in_stock !== false, image_url||'', req.params.id]
+    'UPDATE products SET name=$1,price=$2,colors=$3,sizes=$4,category=$5,subcategory=$6,sku=$7,description=$8,images=$9,in_stock=$10,image_url=$11,variants=$12 WHERE id=$13 RETURNING *',
+    [name, effectivePrice, colors, sizes||[], category, subcategory||null, sku||null, description||null, JSON.stringify(images||[]), in_stock !== false, image_url||'', JSON.stringify(parsedVariants), req.params.id]
   );
   res.json(result.rows[0]);
 });

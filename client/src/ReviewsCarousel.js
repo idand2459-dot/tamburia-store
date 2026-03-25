@@ -12,7 +12,7 @@ function ReviewsCarousel() {
   useEffect(() => {
     fetch('/api/reviews?type=store')
       .then(r => r.json())
-      .then(data => setReviews(data))
+      .then(data => setReviews(Array.isArray(data) ? data : []))
       .catch(() => {});
   }, []);
 
