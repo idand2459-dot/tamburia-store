@@ -61,7 +61,7 @@ function CartModal({
                   {cart.map((item, index) => (
                     <li key={index} className="cart-item">
                       <div className="cart-item-info">
-                        <span className="cart-item-name">{item.name}{item.selectedColor ? ` — ${item.selectedColor}` : ''}</span>
+                        <span className="cart-item-name">{item.name}{item.selectedVariant ? ` — ${item.selectedVariant}` : ''}{item.selectedColor ? ` — ${item.selectedColor}` : ''}{item.selectedSize ? ` — ${item.selectedSize}` : ''}</span>
                         <span className="cart-item-price">₪{item.price * (item.quantity || 1)}</span>
                       </div>
                       <div className="cart-item-qty">

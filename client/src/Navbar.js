@@ -15,7 +15,7 @@ function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, on
   ];
 
   useEffect(() => {
-    fetch('/api/products').then(r => r.json()).then(setAllProducts);
+    fetch('/api/products').then(r => r.json()).then(data => setAllProducts(Array.isArray(data) ? data : [])).catch(() => {});
   }, []);
 
   useEffect(() => {

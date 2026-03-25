@@ -43,6 +43,7 @@ function Admin({ onBack }) {
   const [images, setImages] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [variants, setVariants] = useState([]);
 
   const [csvPreview, setCsvPreview] = useState(null);
   const [csvErrors, setCsvErrors] = useState([]);
@@ -68,14 +69,15 @@ function Admin({ onBack }) {
     return () => clearInterval(interval);
   }, []);
 
-  function fetchProducts() { fetch('/api/products').then(r => r.json()).then(setProducts); }
+  function fetchProducts() { fetch('/api/products').then(r => r.json()).then(data => setProducts(Array.isArray(data) ? data : [])).catch(() => {}); }
   function fetchOrders() {
     fetch('/api/orders').then(r => r.json()).then(data => {
-      if (prevOrdersCount.current === null) prevOrdersCount.current = data.length;
-      setOrders(data);
-    });
+      const arr = Array.isArray(data) ? data : [];
+      if (prevOrdersCount.current === null) prevOrdersCount.current = arr.length;
+      setOrders(arr);
+    }).catch(() => {});
   }
-  function fetchReviews() { fetch('/api/reviews/all').then(r => r.json()).then(setReviews).catch(() => {}); }
+  function fetchReviews() { fetch('/api/reviews/all').then(r => r.json()).then(data => setReviews(Array.isArray(data) ? data : [])).catch(() => {}); }
 
   const [reviews, setReviews] = useState([]);
 
@@ -83,6 +85,7 @@ function Admin({ onBack }) {
     setName(''); setPrice(''); setInStock(true); setColors('');
     setCategory(''); setSku(''); setDescription('');
     setImages([]); setExistingImages([]);
+    setVariants([]);
     setEditingProduct(null);
   }
 
@@ -93,13 +96,21 @@ function Admin({ onBack }) {
     return (await res.json()).imageUrls || [];
   }
 
+  const validVariants = variants.filter(v => v.label.trim() && v.price !== '');
+
   async function handleSubmit(e) {
     e.preventDefault();
     setUploadingImages(true);
     let allImageUrls = images.length > 0 ? await uploadImages(images) : [];
     await fetch('/api/products', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, price: parseInt(price), in_stock: inStock, image_url: allImageUrls[0] || '', images: allImageUrls.slice(1), colors: colors.split(',').map(c => c.trim()).filter(Boolean), category, sku, description })
+      body: JSON.stringify({
+        name, price: parseInt(price) || 0, in_stock: inStock,
+        image_url: allImageUrls[0] || '', images: allImageUrls.slice(1),
+        colors: colors.split(',').map(c => c.trim()).filter(Boolean),
+        category, sku, description,
+        variants: validVariants.map(v => ({ label: v.label.trim(), price: parseFloat(v.price) }))
+      })
     });
     setUploadingImages(false); resetForm(); fetchProducts(); setActiveTab('products');
   }
@@ -111,7 +122,13 @@ function Admin({ onBack }) {
     const allUrls = [...existingImages, ...newUrls];
     await fetch('/api/products/' + editingProduct.id, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, price: parseInt(price), in_stock: inStock, image_url: allUrls[0] || '', images: allUrls.slice(1), colors: colors.split(',').map(c => c.trim()).filter(Boolean), category, sku, description })
+      body: JSON.stringify({
+        name, price: parseInt(price) || 0, in_stock: inStock,
+        image_url: allUrls[0] || '', images: allUrls.slice(1),
+        colors: colors.split(',').map(c => c.trim()).filter(Boolean),
+        category, sku, description,
+        variants: validVariants.map(v => ({ label: v.label.trim(), price: parseFloat(v.price) }))
+      })
     });
     setUploadingImages(false); resetForm(); fetchProducts(); setActiveTab('products');
   }
@@ -121,6 +138,9 @@ function Admin({ onBack }) {
     setInStock(product.in_stock !== false);
     setColors(product.colors ? product.colors.join(', ') : '');
     setCategory(product.category || ''); setSku(product.sku || ''); setDescription(product.description || '');
+    setVariants(Array.isArray(product.variants) && product.variants.length > 0
+      ? product.variants.map(v => ({ label: v.label, price: String(v.price) }))
+      : []);
     const existing = [];
     if (product.image_url) existing.push(product.image_url);
     if (product.images && Array.isArray(product.images)) existing.push(...product.images);
@@ -194,7 +214,7 @@ function Admin({ onBack }) {
     // קטגוריות פופולריות
     const catCount = {};
     orders.forEach(o => {
-      o.items.forEach(item => {
+      (Array.isArray(o.items) ? o.items : []).forEach(item => {
         const p = products.find(p => p.id === item.id);
         if (p?.category) catCount[p.category] = (catCount[p.category] || 0) + item.quantity;
       });
@@ -567,7 +587,9 @@ function Admin({ onBack }) {
           <h2>{editingProduct ? `עריכת: ${editingProduct.name}` : 'מוצר חדש'}</h2>
           <div className="admin-form-grid">
             <div className="admin-form-group full"><label>שם המוצר *</label><input placeholder="שם המוצר" value={name} onChange={e => setName(e.target.value)} required /></div>
-            <div className="admin-form-group"><label>מחיר (₪) *</label><input placeholder="0" type="number" value={price} onChange={e => setPrice(e.target.value)} required /></div>
+            {variants.length === 0 && (
+              <div className="admin-form-group"><label>מחיר (₪) *</label><input placeholder="0" type="number" value={price} onChange={e => setPrice(e.target.value)} required={variants.length === 0} /></div>
+            )}
             <div className="admin-form-group">
               <label>מלאי</label>
               <div className="instock-toggle-wrap">
@@ -586,6 +608,44 @@ function Admin({ onBack }) {
             </div>
             <div className="admin-form-group full"><label>צבעים</label><input placeholder="לבן, שחור, אפור" value={colors} onChange={e => setColors(e.target.value)} /></div>
             <div className="admin-form-group full"><label>תיאור</label><textarea value={description} onChange={e => setDescription(e.target.value)} rows={3} /></div>
+
+            {/* ── Variants ── */}
+            <div className="admin-form-group full">
+              <label>גרסאות מוצר עם מחיר שונה <span className="admin-label-hint">(גדלים / נפחים / סוגים)</span></label>
+              {variants.length > 0 && (
+                <div className="variants-list">
+                  {variants.map((v, i) => (
+                    <div key={i} className="variant-row">
+                      <input
+                        className="variant-label-input"
+                        placeholder="תיאור (למשל: 1 ליטר, 5 ליטר, 20 ליטר)"
+                        value={v.label}
+                        onChange={e => setVariants(variants.map((x, j) => j === i ? { ...x, label: e.target.value } : x))}
+                      />
+                      <span className="variant-price-symbol">₪</span>
+                      <input
+                        className="variant-price-input"
+                        type="number"
+                        placeholder="מחיר"
+                        value={v.price}
+                        onChange={e => setVariants(variants.map((x, j) => j === i ? { ...x, price: e.target.value } : x))}
+                      />
+                      <button type="button" className="variant-remove-btn" onClick={() => setVariants(variants.filter((_, j) => j !== i))}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                className="variant-add-btn"
+                onClick={() => setVariants([...variants, { label: '', price: '' }])}>
+                + הוסף גרסה
+              </button>
+              {variants.length > 0 && (
+                <p className="variant-hint">המחיר הנמוך ביותר יוצג בכרטיס המוצר. לחץ ✕ להסרת גרסה.</p>
+              )}
+            </div>
+
             <div className="admin-form-group full">
               <label>תמונות (עד 5) {totalImagesSelected > 0 && <span className="images-count-badge">{totalImagesSelected}/5</span>}</label>
               {existingImages.length > 0 && (
