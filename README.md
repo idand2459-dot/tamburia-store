@@ -1,82 +1,85 @@
-# טכניק טמבור — חנות אונליין
+# Technik Tambour — Online Store
 
-חנות אונליין מלאה לחנות כלי עבודה וחומרי בניין בפתח תקווה: קטלוג של מעל 400 מוצרים,
-עגלת קניות, הזמנות עם התראות במייל, חוות דעת עם מודרציה, ושני מחשבונים ייעודיים לתחום —
-מחשבון צבע עם סימולציית גוון פיגמנט, ומחשבון פרויקט שממיר סוג עבודה לרשימת מוצרים.
+A full e-commerce application for a hardware and building-supplies store in Petah Tikva:
+a catalog of over 400 products, a shopping cart, orders with email notifications, moderated
+customer reviews, and two domain-specific calculators — a paint calculator with pigment
+shade simulation, and a project calculator that turns a type of job into a shopping list.
 
-בצד השני יש מסך ניהול מוגן שדרכו בעל החנות מנהל את הקטלוג, ההזמנות וחוות הדעת.
+Behind it sits a protected admin panel where the owner manages the catalog, orders and reviews.
 
----
-
-## מה יש כאן
-
-**חנות**
-- קטלוג לפי קטגוריות ותתי-קטגוריות, חיפוש, מיון וסימון מלאי
-- עמוד מוצר עם גלריה, וריאנטים (גדלים ומחירים), צבעים וחוות דעת
-- עגלה נשמרת מקומית, איסוף עצמי או משלוח עם בדיקת אזור חלוקה
-- מועדפים, היסטוריית הזמנות לפי טלפון, וחוות דעת על החנות ועל מוצרים
-
-**מחשבון צבע**
-- חישוב שטח לפי קירות, חלונות ודלתות, ומספר שכבות
-- 20 גווני פיגמנט עם תצוגה מקדימה של הגוון בשלוש רמות עומק
-- הוספת כל המוצרים הדרושים לעגלה בלחיצה אחת
-
-**ניהול**
-- ניהול מוצרים כולל העלאת תמונות וייבוא CSV
-- מעקב הזמנות, שינוי סטטוס ומייל אוטומטי ללקוח בכל שינוי
-- אישור ומחיקה של חוות דעת לפני שהן מתפרסמות
-- סטטיסטיקות וייצוא הזמנות
-
-**מיילים**
-- הודעה לחנות על כל הזמנה חדשה
-- אישור הזמנה ללקוח
-- עדכון בכל שינוי סטטוס
+The storefront is in Hebrew and right-to-left.
 
 ---
 
-## טכנולוגיות
+## Features
 
-| שכבה | טכנולוגיה |
+**Storefront**
+- Catalog by category and subcategory, with search, sorting and stock status
+- Product pages with an image gallery, variants (sizes and prices), colors and reviews
+- Cart persisted locally, pickup or delivery with a delivery-area check
+- Wishlist, order lookup by phone number, and reviews for both the store and individual products
+
+**Paint calculator**
+- Computes surface area from walls, windows and doors, across any number of coats
+- 20 pigment shades with a live preview at three depth levels
+- Adds every product the job needs to the cart in one click
+
+**Admin panel**
+- Product management, including image upload and CSV import
+- Order tracking with status changes that email the customer automatically
+- Review moderation — nothing is published before approval
+- Statistics and order export
+
+**Email**
+- New-order notification to the store
+- Order confirmation to the customer
+- An update on every status change
+
+---
+
+## Tech stack
+
+| Layer | Technology |
 |---|---|
-| שרת | Node.js, Express 5 |
-| מסד נתונים | PostgreSQL (דרך `pg`, בלי ORM) |
-| קליינט | React 19 (Create React App) |
-| מיילים | Nodemailer |
-| העלאת קבצים | Multer |
-| אימות | אסימוני HMAC חתומים בעוגיית httpOnly |
+| Server | Node.js, Express 5 |
+| Database | PostgreSQL (via `pg`, no ORM) |
+| Client | React 19 (Create React App) |
+| Email | Nodemailer |
+| File uploads | Multer |
+| Authentication | Signed HMAC tokens in an httpOnly cookie |
 
-בלי ORM ובלי ספריות אימות חיצוניות — שכבת הגישה למסד והאימות נכתבו ישירות,
-כדי שהזרימה תהיה מפורשת וקריאה.
+No ORM and no third-party auth library — the data access layer and the authentication
+were written directly, so the flow stays explicit and readable.
 
 ---
 
-## מבנה הפרויקט
+## Project structure
 
 ```
 server/
-  config/        טעינת סביבה ואימותה, ו-Pool יחיד למסד
-  db/            מיגרציות SQL והרצתן
-  models/        כל ה-SQL. עמודות מפורשות, בלי SELECT *
-  controllers/   ללא SQL וללא try/catch — שגיאות עולות למטפל אחד
-  validators/    כל גוף בקשה וכל פרמטר חיפוש עוברים אימות והגבלה
-  routes/        ראוטר לכל דומיין, עם סימון מה ציבורי ומה מוגן
-  services/      אימות אדמין ושליחת מיילים
-  middleware/    טיפול בשגיאות, העלאות, כותרות אבטחה והגבלת קצב
+  config/        environment loading and validation, single database pool
+  db/            SQL migrations and the runner
+  models/        all SQL lives here, explicit columns, never SELECT *
+  controllers/   no SQL, no try/catch — errors bubble to one handler
+  validators/    every request body and query parameter is checked and bounded
+  routes/        one router per domain, marking what is public and what is guarded
+  services/      admin authentication and email
+  middleware/    error handling, uploads, security headers, rate limiting
 
-client/          אפליקציית React
-test/            חבילות בדיקה מקצה לקצה
-scripts/         כלי ייבוא מוצרים מ-CSV
-legacy/          ארכיון אב-הטיפוס הראשון, אינו מוגש
+client/          React application
+test/            end-to-end test suites
+scripts/         CSV product import tool
+legacy/          archived first prototype, not served
 ```
 
-השרת מגיש גם את ה-API וגם את אפליקציית React מאותו מקור,
-כך שבפרודקשן רץ תהליך אחד בלבד.
+The server serves both the API and the React application from the same origin,
+so production runs a single process.
 
 ---
 
-## התקנה והרצה
+## Getting started
 
-**דרישות:** Node.js 18 ומעלה, PostgreSQL עם מסד בשם `tamburia`.
+**Requirements:** Node.js 18+, PostgreSQL with a database named `tamburia`.
 
 ```bash
 git clone https://github.com/idand2459-dot/tamburia-store.git
@@ -85,105 +88,112 @@ cd tamburia-store
 npm install
 npm install --prefix client
 
-cp .env.example .env      # מלא את הערכים
+cp .env.example .env      # fill in the values
 npm run build:client
 npm start
 ```
 
-האתר עולה על **http://localhost:3000**, וממשק הניהול על **/admin**.
-המיגרציות רצות אוטומטית בעליית השרת, לפני שהפורט נפתח.
+The site comes up at **http://localhost:3000**, and the admin panel at **/admin**.
+Migrations run automatically on startup, before the port opens.
 
-### פקודות
+### Commands
 
-| פקודה | מה היא עושה |
+| Command | What it does |
 |---|---|
-| `npm start` | מריץ את השרת על פורט 3000 |
-| `npm test` | מריץ את כל חבילות הבדיקה |
-| `npm run build:client` | בונה את אפליקציית React |
-| `npm run dev:client` | שרת פיתוח של React עם רענון חם |
-| `npm run migrate` | מריץ מיגרציות בלי להעלות את השרת |
+| `npm start` | Runs the server on port 3000 |
+| `npm test` | Runs every test suite |
+| `npm run build:client` | Builds the React application |
+| `npm run dev:client` | React dev server with hot reload |
+| `npm run migrate` | Runs migrations without starting the server |
 
-בפיתוח מול הקליינט צריך להעלות את שני התהליכים, ולתת ל-React פורט אחר:
+For client development, run both processes and give React a different port:
 
 ```bash
-npm start                              # שרת, פורט 3000
-$env:PORT=3001; npm start --prefix client   # React, פורט 3001
+npm start                                    # server, port 3000
+$env:PORT=3001; npm start --prefix client    # React, port 3001
 ```
 
-> **שים לב:** `client/build` אינו נכנס לגיט. אחרי כל שינוי ב-`client/src`
-> צריך להריץ `npm run build:client`, אחרת הדפדפן ימשיך להציג את הגרסה הישנה.
+> **Note:** `client/build` is not committed. After any change under `client/src`,
+> run `npm run build:client` or the browser will keep serving the previous version.
 
 ---
 
-## משתני סביבה
+## Environment variables
 
-הרשימה המלאה נמצאת ב-[`.env.example`](.env.example). העיקריים:
+The full list lives in [`.env.example`](.env.example). The main ones:
 
-| משתנה | ברירת מחדל | תיאור |
+| Variable | Default | Description |
 |---|---|---|
-| `PORT` | `3000` | פורט השרת |
-| `DB_PASSWORD` | — | **חובה.** סיסמת PostgreSQL |
-| `MAIL_USER` / `MAIL_PASS` | — | **חובה.** חשבון Gmail לשליחת מיילים |
-| `MAIL_ENABLED` | `true` | `false` רושם מיילים ללוג במקום לשלוח |
-| `ADMIN_PASSWORD` | — | **חובה.** סיסמת הכניסה לניהול |
-| `SESSION_SECRET` | — | סוד חתימת האסימונים. חובה בפרודקשן |
-| `DELIVERY_FEE` | `20` | דמי משלוח בשקלים |
-| `CSP_ENABLED` | `false` | מדיניות תוכן. ראה הערה למטה |
+| `PORT` | `3000` | Server port |
+| `DB_PASSWORD` | — | **Required.** PostgreSQL password |
+| `MAIL_USER` / `MAIL_PASS` | — | **Required.** Gmail account used to send mail |
+| `MAIL_ENABLED` | `true` | `false` logs emails instead of sending them |
+| `ADMIN_PASSWORD` | — | **Required.** Admin panel password |
+| `SESSION_SECRET` | — | Token signing secret. Required in production |
+| `DELIVERY_FEE` | `20` | Delivery fee, in shekels |
+| `CSP_ENABLED` | `false` | Content Security Policy — see the note below |
 
 ---
 
 ## API
 
-כל הנתיבים תחת `/api`. הנתיבים המסומנים 🔒 דורשים התחברות כמנהל.
+Everything is under `/api`. Routes marked 🔒 require an admin session.
 
-| דומיין | נתיבים |
+| Domain | Routes |
 |---|---|
-| **אימות** | `POST /auth/login` · `POST /auth/logout` · 🔒 `GET /auth/me` |
-| **מוצרים** | `GET /products` · `GET /products/:id` · `GET /products/categories` · 🔒 `POST` `PUT /:id` `DELETE /:id` |
-| **הזמנות** | `POST /orders` · `GET /orders/by-phone/:phone` · 🔒 `GET /orders` `GET /:id` `GET /stats` `PUT /:id` `PUT /:id/status` `DELETE /:id` |
-| **חוות דעת** | `GET /reviews` · `GET /reviews/stats` · `POST /reviews` · 🔒 `GET /reviews/all` `GET /:id` `PUT /:id` `PUT /:id/approve` `DELETE /:id` |
-| **גווני פיגמנט** | `GET /pigment-formulas` · `GET /pigment-formulas/:id` · `GET /pigment-formulas/code/:code` · 🔒 `POST` `PUT /:id` `DELETE /:id` |
-| **העלאות** | 🔒 `POST /upload` · 🔒 `POST /upload-multiple` |
-| **בריאות** | `GET /health` |
+| **Auth** | `POST /auth/login` · `POST /auth/logout` · 🔒 `GET /auth/me` |
+| **Products** | `GET /products` · `GET /products/:id` · `GET /products/categories` · 🔒 `POST` `PUT /:id` `DELETE /:id` |
+| **Orders** | `POST /orders` · `GET /orders/by-phone/:phone` · 🔒 `GET /orders` `GET /:id` `GET /stats` `PUT /:id` `PUT /:id/status` `DELETE /:id` |
+| **Reviews** | `GET /reviews` · `GET /reviews/stats` · `POST /reviews` · 🔒 `GET /reviews/all` `GET /:id` `PUT /:id` `PUT /:id/approve` `DELETE /:id` |
+| **Pigment formulas** | `GET /pigment-formulas` · `GET /pigment-formulas/:id` · `GET /pigment-formulas/code/:code` · 🔒 `POST` `PUT /:id` `DELETE /:id` |
+| **Uploads** | 🔒 `POST /upload` · 🔒 `POST /upload-multiple` |
+| **Health** | `GET /health` |
 
-נתיבי הרשימה תומכים ב-`limit`, `offset`, `sort`, `order` וסינון לפי דומיין.
-בלי `limit`/`offset` הם מחזירים מערך שטוח.
-
----
-
-## אבטחה
-
-- **סיסמת הניהול נבדקת בשרת בלבד**, ומושווית בזמן קבוע. האסימון נשלח כעוגיית
-  `httpOnly` עם `SameSite=Strict`, ולכן אינו נגיש ל-JavaScript בדף.
-- **הגבלת קצב על ההתחברות** — 10 ניסיונות ברבע שעה לכל כתובת.
-- **סכומי ההזמנה מחושבים בשרת** מתוך הפריטים ואינם נלקחים מגוף הבקשה.
-- **חוות דעת נשמרות כלא-מאושרות** תמיד, והנתיב הציבורי אינו ניתן לשכנוע להציג אחרת.
-- **כל קלט עובר ולידציה** לפני שהוא מגיע למסד, וכל שאילתה משתמשת בפרמטרים.
-- **העלאות מוגבלות** לסוגי תמונה מותרים ולגודל מרבי, עם שם קובץ אקראי.
-- **ערכי משתמש במיילים עוברים בריחת תווים**.
-- כותרות `nosniff`, `X-Frame-Options`, `Referrer-Policy` ו-`Permissions-Policy`
-  בכל תשובה. CORS נסגר בפרודקשן למקורות מוגדרים בלבד.
-
-CSP כתוב ומוכן אך כבוי כברירת מחדל: `index.html` הבנוי מכיל תגית
-`application/ld+json` לנתונים מובנים, שנחסמת תחת `script-src 'self'`.
-ההשפעה היא על SEO בלבד. הדלקה: `CSP_ENABLED=true`.
+List endpoints accept `limit`, `offset`, `sort`, `order` and per-domain filters.
+Without `limit` or `offset` they return a flat array.
 
 ---
 
-## בדיקות
+## Security
+
+- **The admin password is only ever checked on the server**, using a constant-time
+  comparison. The session token is delivered in an `httpOnly`, `SameSite=Strict`
+  cookie, so page JavaScript cannot read it.
+- **Login is rate limited** — 10 attempts per 15 minutes per address.
+- **Order totals are computed server-side** from the line items and ignored from the
+  request body, so a crafted request cannot set its own price.
+- **Reviews are always stored unapproved**, and the public endpoint cannot be
+  persuaded to return anything else.
+- **Every input is validated** before it reaches the database, and every query is
+  parameterised.
+- **Uploads are restricted** to allowed image types and a maximum size, and stored
+  under a randomised filename.
+- **User-supplied values in emails are escaped**.
+- `nosniff`, `X-Frame-Options`, `Referrer-Policy` and `Permissions-Policy` on every
+  response. CORS is closed in production to explicitly configured origins.
+
+A Content Security Policy is written and ready but off by default: the built
+`index.html` contains an `application/ld+json` block for structured data, which
+browsers block under `script-src 'self'`. The impact is limited to SEO.
+Enable it with `CSP_ENABLED=true`.
+
+---
+
+## Tests
 
 ```bash
 npm test
 ```
 
-224 בדיקות בחמש חבילות, שמעלות שרת משלהן על פורט 3100 — כך שאפשר להריץ
-אותן גם כשהשרת האמיתי עובד. הן פונות למסד האמיתי, יוצרות רשומות זמניות
-ומוחקות אותן בסוף. חבילת הגוונים מאמתת במפורש שהנתונים הקיימים לא זזו.
+224 checks across five suites. They start their own server on port 3100, so they can
+run while the real one is serving. They talk to the real database, create temporary
+records and remove them afterwards. The pigment suite explicitly asserts that the
+existing data was left untouched.
 
-| חבילה | מכסה |
+| Suite | Covers |
 |---|---|
-| `smoke-static` | הגשת הקליינט, מטמון, כותרות אבטחה ואי-חשיפת קבצים פנימיים |
-| `smoke-orders` | מחזור החיים של הזמנה, כולל חישוב הסכומים בשרת |
-| `smoke-reviews` | מודרציה וההפרדה בין הרשימה הציבורית לרשימת הניהול |
-| `smoke-pigments` | הגוונים וכלל עליית כמות הפיגמנט |
-| `smoke-auth` | התחברות, הגנה על הנתיבים והגבלת הקצב |
+| `smoke-static` | Client serving, caching, security headers, and that no internal file is exposed |
+| `smoke-orders` | The order lifecycle, including server-side total calculation |
+| `smoke-reviews` | Moderation and the split between the public and admin listings |
+| `smoke-pigments` | The shades and the ascending-pigment rule |
+| `smoke-auth` | Login, route protection and rate limiting |
