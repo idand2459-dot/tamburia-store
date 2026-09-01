@@ -1,16 +1,18 @@
+/**
+ * מאמת ומנרמל את גוף הבקשה ואת פרמטרי החיפוש של גווני הפיגמנט,
+ * כולל הכלל שכמות הפיגמנט חייבת לעלות מגוון בהיר לכהה.
+ */
 const { badRequest } = require('../utils/AppError');
 
-/** שדות הכמות, לפי סדר עולה של עומק הגוון */
 const ML_FIELDS = ['ml_per_liter_light', 'ml_per_liter_medium', 'ml_per_liter_dark'];
 
-/** color_code אינו כאן: הוא המפתח הטבעי ואינו משתנה אחרי היצירה */
 const EDITABLE = ['color_name_he', 'hex', ...ML_FIELDS, 'sort_order'];
 
 const MAX = { color_code: 50, color_name_he: 100 };
 
-/** מיליליטר לליטר — גבול עליון שמרני, רק כדי לתפוס טעויות הקלדה */
 const MAX_ML = 1000;
 
+/** מוודא שהערך טקסט, מקצץ רווחים ובודק אורך מרבי. */
 function asTrimmedString(value, field, { maxLength } = {}) {
   if (typeof value !== 'string') throw badRequest(`השדה ${field} חייב להיות טקסט`);
   const trimmed = value.trim();
@@ -20,10 +22,7 @@ function asTrimmedString(value, field, { maxLength } = {}) {
   return trimmed;
 }
 
-/**
- * המפתח הטבעי. אותיות קטנות, ספרות וקו תחתון בלבד —
- * הוא מופיע ב-URL ובקוד הקליינט, ולכן חייב להישאר צפוי.
- */
+/** מאמת את הקוד הטבעי: אותיות אנגליות קטנות, ספרות וקו תחתון. */
 function asColorCode(value) {
   const code = asTrimmedString(value ?? '', 'color_code', { maxLength: MAX.color_code }).toLowerCase();
   if (!code) throw badRequest('חסר color_code');
@@ -33,7 +32,7 @@ function asColorCode(value) {
   return code;
 }
 
-/** צבע HEX בן 6 ספרות. נשמר באותיות גדולות, כמו כל הערכים הקיימים. */
+/** מאמת צבע בפורמט #RRGGBB ומחזיר אותו באותיות גדולות. */
 function asHex(value) {
   const hex = asTrimmedString(value ?? '', 'hex');
   if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) {
@@ -42,6 +41,7 @@ function asHex(value) {
   return hex.toUpperCase();
 }
 
+/** מוודא שכמות הפיגמנט היא מספר שלם בטווח סביר. */
 function asMl(value, field) {
   const ml = Number(value);
   if (!Number.isInteger(ml) || ml < 1 || ml > MAX_ML) {
@@ -50,6 +50,7 @@ function asMl(value, field) {
   return ml;
 }
 
+/** מוודא שסדר התצוגה הוא מספר שלם אי-שלילי. */
 function asSortOrder(value) {
   const sortOrder = Number(value);
   if (!Number.isInteger(sortOrder) || sortOrder < 0) {
@@ -59,9 +60,8 @@ function asSortOrder(value) {
 }
 
 /**
- * גוון כהה דורש יותר פיגמנט מגוון בהיר.
- * בלי הבדיקה הזו, טעות הקלדה במסד מייצרת מחשבון שנותן
- * תוצאה נמוכה יותר לגוון עמוק יותר — שגיאה שקטה שקשה לשים לב אליה.
+ * מוודא שכמות הפיגמנט עולה מבהיר לבינוני לכהה.
+ * בלי הבדיקה, טעות הקלדה מייצרת מחשבון שנותן פחות פיגמנט לגוון עמוק יותר.
  */
 function assertAscending(formula) {
   const [light, medium, dark] = ML_FIELDS.map((field) => formula[field]);
@@ -72,6 +72,7 @@ function assertAscending(formula) {
   }
 }
 
+/** ממיר שדה בודד לערך המוכן למסד, לפי הכללים של אותו שדה. */
 function parseField(field, value) {
   switch (field) {
     case 'color_code':    return asColorCode(value);
@@ -82,11 +83,11 @@ function parseField(field, value) {
     }
     case 'hex':        return asHex(value);
     case 'sort_order': return asSortOrder(value);
-    default:           return asMl(value, field);   // שלושת שדות ה-ml
+    default:           return asMl(value, field);
   }
 }
 
-/** יצירה: כל השדות חובה חוץ מ-sort_order. */
+/** מאמת גוף בקשה ליצירת גוון. כל השדות חובה פרט ל-sort_order. */
 function parseCreate(body = {}) {
   const data = {
     color_code: parseField('color_code', body.color_code),
@@ -103,9 +104,8 @@ function parseCreate(body = {}) {
 }
 
 /**
- * עדכון חלקי, כמו בשאר הדומיינים.
- * existing נדרש כדי לבדוק את סדר הכמויות על המצב המשולב —
- * עדכון של ml_per_liter_dark לבדו חייב להישקל מול light ו-medium שכבר ב-DB.
+ * מאמת גוף בקשה לעדכון גוון ומחזיר רק את השדות שנשלחו.
+ * מקבל את הרשומה הקיימת כדי לבדוק את סדר הכמויות על המצב המשולב.
  */
 function parseUpdate(body = {}, existing) {
   const data = {};
@@ -126,7 +126,7 @@ function parseUpdate(body = {}, existing) {
 
 const SORTABLE = ['id', 'color_code', 'color_name_he', 'sort_order'];
 
-/** פרמטרים של ה-List — כולם אופציונליים */
+/** מאמת את פרמטרי החיפוש, המיון והדפדוף של רשימת הגוונים. */
 function parseListQuery(query = {}) {
   const options = {};
 

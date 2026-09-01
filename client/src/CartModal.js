@@ -1,15 +1,19 @@
+/**
+ * חלון העגלה: הפריטים, פרטי הלקוח ואופן הקבלה עד לשליחת ההזמנה.
+ */
 import { useState } from 'react';
 import { Spinner } from './LoadingStates';
 
-// ערים מורשות למשלוח
 const ALLOWED_CITIES = ['פתח תקווה', 'פתח-תקווה', 'גני תקווה', 'גני-תקווה', 'קריית אונו', 'קרית אונו', 'קריית-אונו', 'קרית-אונו'];
 
+/** בודק אם הכתובת נמצאת באזור החלוקה. */
 function checkAllowedCity(address) {
-  if (!address) return true; // לא בודק אם ריק
+  if (!address) return true;
   const lower = address.toLowerCase();
   return ALLOWED_CITIES.some(city => lower.includes(city.toLowerCase()));
 }
 
+/** מציג את חלון העגלה ואת שלבי ההזמנה. */
 function CartModal({
   cart, setCart, cartStep, setCartStep, closeCart,
   deliveryMethod, setDeliveryMethod,
@@ -25,11 +29,13 @@ function CartModal({
 }) {
   const [addressError, setAddressError] = useState('');
 
+  /** מעדכן את הכתובת ובודק אם היא באזור החלוקה. */
   function handleAddressChange(e) {
     setDeliveryAddress(e.target.value);
     setAddressError('');
   }
 
+  /** שולח את הטופס לשרת. */
   function handleSubmit() {
     if (deliveryMethod === 'delivery') {
       if (!checkAllowedCity(deliveryAddress)) {

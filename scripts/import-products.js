@@ -1,22 +1,21 @@
 /**
- * import_products.js
+ * מייבא מוצרים מקובץ CSV ומעדכן את המסד, עם מיזוג חכם מול מה שכבר קיים.
+ * החיבור למסד נלקח מהקונפיגורציה המשותפת של השרת.
  *
- * Reads products_import_template.csv and inserts/updates products in the DB.
+ * הרצה:
+ *   node scripts/import-products.js                      (products_import_template.csv)
+ *   node scripts/import-products.js other.csv            (קובץ אחר, יחסית ל-scripts/)
  *
- * Usage:
- *   node import_products.js                         (uses products_import_template.csv)
- *   node import_products.js my_other_file.csv       (uses a different CSV file)
+ * כללי המיזוג, לפי הסדר:
+ *   1. אותו SKU במסד                → עדכון ומיזוג צבעים
+ *   2. אותו שם במסד                 → מיזוג צבעים בלבד
+ *   3. תיאור דומה ב-90% ומעלה        → מיזוג צבעים בלבד
+ *   4. מוצר חדש לגמרי               → הוספה
  *
- * Merge rules (checked in order):
- *   1. Same SKU in DB               → UPDATE + merge colors
- *   2. Same Name in DB              → merge colors only (no other fields overwritten)
- *   3. Name not found but description ≥90% similar to an existing product → merge colors only
- *   4. Truly new product            → INSERT
- *   - Colors: separate multiple colors with a pipe "|" in the CSV (e.g. "לבן|שחור|אדום")
- *   - Images: put all image files in the /uploads/ folder, then just write the filename in the CSV
+ * צבעים מופרדים בקו אנכי, ותמונות מונחות בתיקיית uploads/ ונרשמות
+ * ב-CSV בשם הקובץ בלבד.
  */
 
-const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
@@ -58,14 +57,7 @@ function similarity(a, b) {
   return 1 - dp[a.length][b.length] / Math.max(a.length, b.length);
 }
 
-// ── Database connection (same as server.js) ──────────────────────────────────
-const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'tamburia',
-  password: '1234',
-  port: 5432,
-});
+const { pool } = require('../server/config/db');
 
 // ── Valid categories (from categories.js) ────────────────────────────────────
 const VALID_CATEGORIES = new Set([
@@ -306,7 +298,7 @@ async function importProducts(csvFile) {
   console.log('─────────────────────────────────────\n');
 
   // ── Missing Images Report ───────────────────────────────────────────────────
-  const uploadsDir = path.join(__dirname, 'uploads');
+  const uploadsDir = path.join(__dirname, '..', 'uploads');
   const { rows: allProducts } = await pool.query('SELECT sku, name, image_url FROM products ORDER BY id');
   const missing = [];
 

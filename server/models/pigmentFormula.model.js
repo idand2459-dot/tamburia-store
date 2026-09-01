@@ -1,3 +1,7 @@
+/**
+ * גישה לטבלת pigment_formulas: שליפת גווני הפיגמנט למחשבון הצבע,
+ * חיפוש לפי מזהה או לפי הקוד הטבעי, ויצירה, עדכון ומחיקה.
+ */
 const { query } = require('../config/db');
 
 const FIELDS = [
@@ -8,7 +12,7 @@ const FIELDS = [
 
 const COLUMNS = FIELDS.join(', ');
 
-/** בונה WHERE משותף ל-list ול-count */
+/** בונה את תנאי ה-WHERE והפרמטרים המשותפים לשליפה ולספירה. */
 function buildFilters(options = {}) {
   const { search } = options;
   const conditions = [];
@@ -23,15 +27,11 @@ function buildFilters(options = {}) {
   return { where, params };
 }
 
-/**
- * רשימת הגוונים. ברירת המחדל היא sort_order, כמו בשרת הישן —
- * זה הסדר שבו הם מוצגים במחשבון הצבע.
- */
+/** מחזיר גוונים לפי הסינון והמיון, לפי sort_order כברירת מחדל. */
 async function list(options = {}) {
   const { sort = 'sort_order', order = 'ASC', limit, offset } = options;
   const { where, params } = buildFilters(options);
 
-  // sort ו-order עברו ולידציה מול whitelist — לא ניתן להזריק דרכם
   let sql = `SELECT ${COLUMNS} FROM pigment_formulas ${where} ORDER BY ${sort} ${order}, id ASC`;
 
   if (limit !== undefined) {
@@ -47,29 +47,26 @@ async function list(options = {}) {
   return rows;
 }
 
-/** ספירה לאותם תנאי סינון — בשביל pagination */
+/** סופר גוונים לפי אותם תנאי סינון, לצורך דפדוף. */
 async function count(options = {}) {
   const { where, params } = buildFilters(options);
   const { rows } = await query(`SELECT COUNT(*)::int AS total FROM pigment_formulas ${where}`, params);
   return rows[0].total;
 }
 
-/** גוון בודד לפי מזהה, או null */
+/** מחזיר גוון לפי מזהה, או null אם אינו קיים. */
 async function findById(id) {
   const { rows } = await query(`SELECT ${COLUMNS} FROM pigment_formulas WHERE id = $1`, [id]);
   return rows[0] || null;
 }
 
-/**
- * גוון לפי color_code — המפתח הטבעי.
- * זה מה שהקליינט מחזיק בידיו (selectedColor במחשבון), לא ה-id.
- */
+/** מחזיר גוון לפי color_code, המפתח שבו הקליינט משתמש. */
 async function findByCode(code) {
   const { rows } = await query(`SELECT ${COLUMNS} FROM pigment_formulas WHERE color_code = $1`, [code]);
   return rows[0] || null;
 }
 
-/** יוצר גוון ומחזיר אותו כפי שנשמר */
+/** יוצר גוון חדש ומחזיר אותו כפי שנשמר. */
 async function create(data) {
   const columns = Object.keys(data);
   const placeholders = columns.map((_, i) => `$${i + 1}`);
@@ -83,10 +80,7 @@ async function create(data) {
   return rows[0];
 }
 
-/**
- * מעדכן רק את השדות שנמצאים ב-data.
- * מחזיר null אם הגוון אינו קיים.
- */
+/** מעדכן את השדות שנשלחו בלבד, ומחזיר null אם הגוון אינו קיים. */
 async function update(id, data) {
   const columns = Object.keys(data);
   if (columns.length === 0) return findById(id);
@@ -104,7 +98,7 @@ async function update(id, data) {
   return rows[0] || null;
 }
 
-/** מוחק ומחזיר את הגוון שנמחק, או null אם לא היה קיים */
+/** מוחק גוון ומחזיר אותו, או null אם לא היה קיים. */
 async function remove(id) {
   const { rows } = await query(
     `DELETE FROM pigment_formulas WHERE id = $1 RETURNING ${COLUMNS}`,

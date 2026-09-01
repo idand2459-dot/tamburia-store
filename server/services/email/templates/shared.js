@@ -1,12 +1,9 @@
 /**
- * חלקים משותפים לכל מיילי המערכת.
- * ה-HTML הועבר כפי שהיה, למעט הוספת בריחת תווים (escape).
+ * בונה את החלקים המשותפים לכל מיילי המערכת: מסגרת, כותרת,
+ * תחתית, טבלת הפריטים והסיכום. כל ערך מהמשתמש עובר בריחת תווים.
  */
 
-/**
- * חוסם HTML injection: שם לקוch או הערה שמכילים < או & היו שוברים
- * את מבנה המייל, ובמקרה גרוע מזריקים תוכן זר.
- */
+/** מחליף תווי HTML בערך טקסט, כדי שלא ישברו את מבנה המייל. */
 function escapeHtml(value) {
   if (value == null) return '';
   return String(value)
@@ -17,24 +14,21 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-/** תיאור אופן הקבלה — זהה בכל המיילים */
+/** מחזיר את תיאור אופן הקבלה: איסוף עצמי או משלוח לכתובת. */
 function deliveryText(order) {
   return order.delivery_method === 'pickup'
     ? '🏪 איסוף עצמי — בר כוכבא 52, פתח תקווה'
     : `🚚 משלוח לכתובת: ${escapeHtml(order.delivery_address)}`;
 }
 
-/** תיאור פריט: שם + גוון + מידה */
+/** מחזיר את תיאור הפריט: שם, גוון ומידה. */
 function itemLabel(item) {
   const color = item.selectedColor ? ` (${escapeHtml(item.selectedColor)})` : '';
   const size = item.selectedSize ? ` — ${escapeHtml(item.selectedSize)}` : '';
   return `${escapeHtml(item.name)}${color}${size}`;
 }
 
-/**
- * שורות טבלת הפריטים.
- * alignFirst קיים כי מייל החנות ומייל הלקוח נבדלו בפרט הזה בלבד.
- */
+/** בונה את שורות טבלת הפריטים. */
 function itemsRows(items, { alignFirst = false } = {}) {
   const align = alignFirst ? ';text-align:right' : '';
   return items.map((item) =>
@@ -46,7 +40,7 @@ function itemsRows(items, { alignFirst = false } = {}) {
   ).join('');
 }
 
-/** כותרת הטבלה — זהה בשני מיילי ההזמנה */
+/** בונה את כותרת טבלת הפריטים. */
 function itemsTableHead() {
   return `<thead>
           <tr style="background:#f8f8f8">
@@ -57,7 +51,7 @@ function itemsTableHead() {
         </thead>`;
 }
 
-/** שלוש שורות הסיכום — זהות בשני מיילי ההזמנה */
+/** בונה את שורות הסיכום: סכום מוצרים, משלוח וסך הכל. */
 function summaryRows(order) {
   return `<div style="display:flex;justify-content:space-between;margin-bottom:8px;color:#666">
           <span>סכום מוצרים:</span><span>₪${order.subtotal}</span>
@@ -70,7 +64,7 @@ function summaryRows(order) {
         </div>`;
 }
 
-/** באנר הכותרת — זהה בכל המיילים, משתנה רק בשורת המשנה */
+/** בונה את באנר הכותרת עם שורת משנה משתנה. */
 function header(subtitle) {
   return `<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:28px 32px;text-align:center">
       <h1 style="color:white;margin:0;font-size:22px">🔧 טכניק טמבור</h1>
@@ -78,14 +72,14 @@ function header(subtitle) {
     </div>`;
 }
 
-/** תחתית — מבנה זהה, טקסט משתנה */
+/** בונה את תחתית המייל עם טקסט משתנה. */
 function footer(text) {
   return `<div style="background:#f0f0f0;padding:16px 32px;text-align:center;color:#999;font-size:12px">
       ${text}
     </div>`;
 }
 
-/** המסגרת החיצונית — זהה בכל המיילים */
+/** עוטף את תוכן המייל במסמך HTML מלא בכיווניות ימין לשמאל. */
 function layout(inner) {
   return `
 <!DOCTYPE html>

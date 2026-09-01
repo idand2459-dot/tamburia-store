@@ -1,4 +1,7 @@
 /* eslint-disable no-restricted-globals */
+/**
+ * נקודת הכניסה של הקליינט: מרכיב את האפליקציה ומבטל Service Workers ישנים.
+ */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
@@ -11,7 +14,6 @@ root.render(
   </React.StrictMode>
 );
 
-// Unregister any previously installed Service Workers
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(registrations => {
     registrations.forEach(reg => reg.unregister());

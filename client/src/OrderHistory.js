@@ -1,3 +1,6 @@
+/**
+ * חלון ההזמנות שלי — חיפוש הזמנות לפי מספר טלפון.
+ */
 import { useState } from 'react';
 
 const STATUS_CONFIG = {
@@ -7,6 +10,7 @@ const STATUS_CONFIG = {
   completed:  { label: 'הושלמה', emoji: '✅', color: '#16a34a', bg: '#f0fdf4' },
 };
 
+/** מציג את חלון חיפוש ההזמנות של הלקוח. */
 function OrderHistory({ onClose }) {
   const [phone, setPhone] = useState('');
   const [orders, setOrders] = useState(null);
@@ -14,6 +18,7 @@ function OrderHistory({ onClose }) {
   const [searched, setSearched] = useState(false);
   const [expandedOrder, setExpandedOrder] = useState(null);
 
+  /** מחפש בשרת הזמנות לפי מספר הטלפון שהוזן. */
   async function handleSearch(e) {
     e.preventDefault();
     if (!phone.trim()) return;
@@ -30,6 +35,7 @@ function OrderHistory({ onClose }) {
     setSearched(true);
   }
 
+  /** ממיר תאריך לתצוגה בעברית. */
   function formatDate(d) {
     return new Date(d).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
   }

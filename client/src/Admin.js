@@ -1,4 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+/**
+ * מסך הניהול: מוצרים, הזמנות, חוות דעת, ייבוא CSV וסטטיסטיקות.
+ */
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Confetti from './Confetti';
 
 const CATEGORIES = [
@@ -23,7 +26,18 @@ const STATUS_CONFIG = {
   completed:  { label: 'הושלמה', color: '#16a34a', bg: '#f0fdf4' },
 };
 
-function Admin({ onBack }) {
+/** מציג את מסך הניהול על כל לשוניותיו. */
+function Admin({ onBack, onExpired }) {
+  const expiredRef = useRef(onExpired);
+  expiredRef.current = onExpired;
+
+  /** קורא ל-API ומחזיר למסך הסיסמה אם ההתחברות פגה. */
+  const api = useCallback(async (url, options) => {
+    const res = await fetch(url, options);
+    if (res.status === 401) expiredRef.current?.();
+    return res;
+  }, []);
+
   const [activeTab, setActiveTab] = useState('stats');
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -55,10 +69,9 @@ function Admin({ onBack }) {
 
   useEffect(() => { fetchProducts(); fetchOrders(); fetchReviews(); }, []);
 
-  // polling כל 30 שניות לבדיקת הזמנות חדשות
   useEffect(() => {
     const interval = setInterval(async () => {
-      const res = await fetch('/api/orders');
+      const res = await api('/api/orders');
       const fresh = await res.json();
       if (prevOrdersCount.current !== null && fresh.length > prevOrdersCount.current) {
         setShowConfetti(true);
@@ -69,18 +82,22 @@ function Admin({ onBack }) {
     return () => clearInterval(interval);
   }, []);
 
-  function fetchProducts() { fetch('/api/products').then(r => r.json()).then(data => setProducts(Array.isArray(data) ? data : [])).catch(() => {}); }
+  /** טוען את רשימת המוצרים מהשרת. */
+  function fetchProducts() { api('/api/products').then(r => r.json()).then(data => setProducts(Array.isArray(data) ? data : [])).catch(() => {}); }
+  /** טוען את ההזמנות ומזהה הזמנות חדשות מאז הטעינה הקודמת. */
   function fetchOrders() {
-    fetch('/api/orders').then(r => r.json()).then(data => {
+    api('/api/orders').then(r => r.json()).then(data => {
       const arr = Array.isArray(data) ? data : [];
       if (prevOrdersCount.current === null) prevOrdersCount.current = arr.length;
       setOrders(arr);
     }).catch(() => {});
   }
-  function fetchReviews() { fetch('/api/reviews/all').then(r => r.json()).then(data => setReviews(Array.isArray(data) ? data : [])).catch(() => {}); }
+  /** טוען את כל חוות הדעת, כולל אלה שטרם אושרו. */
+  function fetchReviews() { api('/api/reviews/all').then(r => r.json()).then(data => setReviews(Array.isArray(data) ? data : [])).catch(() => {}); }
 
   const [reviews, setReviews] = useState([]);
 
+  /** מנקה את טופס המוצר וחוזר למצב הוספה. */
   function resetForm() {
     setName(''); setPrice(''); setInStock(true); setColors('');
     setCategory(''); setSku(''); setDescription('');
@@ -89,20 +106,22 @@ function Admin({ onBack }) {
     setEditingProduct(null);
   }
 
+  /** מעלה קבצי תמונה ומחזיר את כתובותיהם. */
   async function uploadImages(files) {
     const formData = new FormData();
     files.forEach(f => formData.append('images', f));
-    const res = await fetch('/api/upload-multiple', { method: 'POST', body: formData });
+    const res = await api('/api/upload-multiple', { method: 'POST', body: formData });
     return (await res.json()).imageUrls || [];
   }
 
   const validVariants = variants.filter(v => v.label.trim() && v.price !== '');
 
+  /** שולח את הטופס לשרת. */
   async function handleSubmit(e) {
     e.preventDefault();
     setUploadingImages(true);
     let allImageUrls = images.length > 0 ? await uploadImages(images) : [];
-    await fetch('/api/products', {
+    await api('/api/products', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name, price: parseInt(price) || 0, in_stock: inStock,
@@ -115,12 +134,13 @@ function Admin({ onBack }) {
     setUploadingImages(false); resetForm(); fetchProducts(); setActiveTab('products');
   }
 
+  /** שומר את השינויים במוצר הנערך. */
   async function handleUpdate(e) {
     e.preventDefault();
     setUploadingImages(true);
     let newUrls = images.length > 0 ? await uploadImages(images) : [];
     const allUrls = [...existingImages, ...newUrls];
-    await fetch('/api/products/' + editingProduct.id, {
+    await api('/api/products/' + editingProduct.id, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name, price: parseInt(price) || 0, in_stock: inStock,
@@ -133,6 +153,7 @@ function Admin({ onBack }) {
     setUploadingImages(false); resetForm(); fetchProducts(); setActiveTab('products');
   }
 
+  /** טוען מוצר קיים לתוך הטופס לעריכה. */
   function handleEdit(product) {
     setEditingProduct(product); setName(product.name); setPrice(product.price);
     setInStock(product.in_stock !== false);
@@ -148,38 +169,44 @@ function Admin({ onBack }) {
     setActiveTab('add');
   }
 
+  /** מסיר תמונה קיימת מהמוצר הנערך. */
   function removeExistingImage(index) { setExistingImages(existingImages.filter((_, i) => i !== index)); }
 
+  /** מוחק מוצר לאחר אישור המשתמש. */
   async function handleDelete(id) {
     if (!window.confirm('למחוק את המוצר?')) return;
-    await fetch('/api/products/' + id, { method: 'DELETE' });
+    await api('/api/products/' + id, { method: 'DELETE' });
     fetchProducts();
   }
 
+  /** מחליף את סימון המלאי של המוצר. */
   async function toggleStock(product) {
-    await fetch('/api/products/' + product.id, {
+    await api('/api/products/' + product.id, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: product.name, price: product.price, in_stock: !product.in_stock, image_url: product.image_url || '', images: product.images || [], colors: product.colors || [], category: product.category, sku: product.sku || '', description: product.description || '' })
     });
     fetchProducts();
   }
 
+  /** משנה את סטטוס ההזמנה. */
   async function handleStatusChange(orderId, status) {
-    await fetch(`/api/orders/${orderId}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+    await api(`/api/orders/${orderId}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
     fetchOrders();
   }
 
+  /** מוחק הזמנה לאחר אישור המשתמש. */
   async function handleDeleteOrder(id) {
     if (!window.confirm('למחוק את ההזמנה?')) return;
-    await fetch('/api/orders/' + id, { method: 'DELETE' });
+    await api('/api/orders/' + id, { method: 'DELETE' });
     fetchOrders();
   }
 
+  /** ממיר תאריך לתצוגה בעברית. */
   function formatDate(d) {
     return new Date(d).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
   }
 
-  // ===== סטטיסטיקות =====
+  /** מחשב את נתוני לשונית הסטטיסטיקות. */
   function getStats() {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -195,7 +222,6 @@ function Admin({ onBack }) {
     const revenueMonth = monthOrders.reduce((s, o) => s + o.total, 0);
     const revenueTotal = orders.reduce((s, o) => s + o.total, 0);
 
-    // הזמנות לפי יום — 7 ימים אחרונים
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(todayStart);
       d.setDate(d.getDate() - (6 - i));
@@ -211,7 +237,6 @@ function Admin({ onBack }) {
       return { day: day.toLocaleDateString('he-IL', { weekday: 'short', day: 'numeric' }), count };
     });
 
-    // קטגוריות פופולריות
     const catCount = {};
     orders.forEach(o => {
       (Array.isArray(o.items) ? o.items : []).forEach(item => {
@@ -223,7 +248,6 @@ function Admin({ onBack }) {
       .sort((a, b) => b[1] - a[1]).slice(0, 5)
       .map(([id, count]) => ({ ...CATEGORIES.find(c => c.id === id), count }));
 
-    // מוצרים אזל
     const outOfStock = products.filter(p => p.in_stock === false);
 
     return { todayOrders, weekOrders, monthOrders, revenueToday, revenueWeek, revenueMonth, revenueTotal, dailyOrders, topCategories, outOfStock };
@@ -231,6 +255,7 @@ function Admin({ onBack }) {
 
   const CSV_IDS = CATEGORIES.map(c => c.id);
 
+  /** מוריד קובץ CSV לדוגמה לייבוא מוצרים. */
   function downloadTemplate() {
     const csv = ['name,price,in_stock,sku,category,colors,description', 'מברשת צבע 3 אינץ\',25,true,TT-001,painting,"לבן,שחור",מברשת איכותית'].join('\n');
     const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -238,6 +263,7 @@ function Admin({ onBack }) {
     const a = document.createElement('a'); a.href = url; a.download = 'tamburia-template.csv'; a.click();
   }
 
+  /** מפרק טקסט CSV לשורות מוצרים ומאתר שגיאות. */
   function parseCSV(text) {
     const lines = text.trim().split('\n'); if (lines.length < 2) return { rows: [], errors: ['קובץ ריק'] };
     const errors = [], rows = [];
@@ -259,6 +285,7 @@ function Admin({ onBack }) {
     return { rows, errors };
   }
 
+  /** קורא את קובץ ה-CSV שנבחר ומציג תצוגה מקדימה. */
   function handleCsvFile(e) {
     const file = e.target.files[0]; if (!file) return;
     setCsvPreview(null); setCsvErrors([]); setImportResult(null);
@@ -267,20 +294,21 @@ function Admin({ onBack }) {
     reader.readAsText(file, 'UTF-8'); e.target.value = '';
   }
 
+  /** מייבא לשרת את המוצרים שנקראו מה-CSV. */
   async function handleImport() {
     if (!csvPreview?.length) return;
     setImporting(true); let success = 0, failed = 0;
     for (const row of csvPreview) {
       try {
-        const r = await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...row, image_url: '', images: [] }) });
+        const r = await api('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...row, image_url: '', images: [] }) });
         if (r.ok) success++; else failed++;
       } catch { failed++; }
     }
     setImporting(false); setImportResult({ success, failed }); setCsvPreview(null); fetchProducts();
   }
 
+  /** מייצא את ההזמנות לקובץ CSV. */
   function exportOrdersToExcel() {
-    // בנה נתונים לייצוא
     const rows = orders.map(o => ({
       'מספר הזמנה': `#${o.id}`,
       'תאריך': formatDate(o.created_at),
@@ -297,7 +325,6 @@ function Admin({ onBack }) {
       'הערות': o.notes || '',
     }));
 
-    // בנה CSV עם BOM לעברית
     const headers = Object.keys(rows[0]);
     const csvLines = [
       headers.join(','),
@@ -737,7 +764,7 @@ function Admin({ onBack }) {
                   <div className="review-admin-actions">
                     {!review.approved ? (
                       <button className="review-approve-btn" onClick={async () => {
-                        await fetch(`/api/reviews/${review.id}/approve`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({approved: true}) });
+                        await api(`/api/reviews/${review.id}/approve`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({approved: true}) });
                         fetchReviews();
                       }}>✅ אשר פרסום</button>
                     ) : (
@@ -745,7 +772,7 @@ function Admin({ onBack }) {
                     )}
                     <button className="delete-btn" onClick={async () => {
                       if (!window.confirm('למחוק ביקורת?')) return;
-                      await fetch(`/api/reviews/${review.id}`, { method: 'DELETE' });
+                      await api(`/api/reviews/${review.id}`, { method: 'DELETE' });
                       fetchReviews();
                     }}>מחק</button>
                   </div>

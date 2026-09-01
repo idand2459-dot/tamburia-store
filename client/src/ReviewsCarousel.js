@@ -1,5 +1,9 @@
+/**
+ * קרוסלת חוות דעת על החנות, עם טופס הוספה.
+ */
 import { useState, useEffect, useRef } from 'react';
 
+/** מציג את קרוסלת חוות הדעת ואת טופס ההוספה. */
 function ReviewsCarousel() {
   const [reviews, setReviews] = useState([]);
   const [current, setCurrent] = useState(0);
@@ -16,7 +20,6 @@ function ReviewsCarousel() {
       .catch(() => {});
   }, []);
 
-  // גלילה אוטומטית
   useEffect(() => {
     if (reviews.length <= 1) return;
     intervalRef.current = setInterval(() => {
@@ -25,16 +28,19 @@ function ReviewsCarousel() {
     return () => clearInterval(intervalRef.current);
   }, [reviews.length]);
 
+  /** עובר לחוות הדעת הקודמת. */
   function prev() {
     clearInterval(intervalRef.current);
     setCurrent(c => (c === 0 ? reviews.length - 1 : c - 1));
   }
 
+  /** עובר לחוות הדעת הבאה. */
   function next() {
     clearInterval(intervalRef.current);
     setCurrent(c => (c + 1) % reviews.length);
   }
 
+  /** שולח את הטופס לשרת. */
   async function handleSubmit(e) {
     e.preventDefault();
     if (!formData.reviewer_name || !formData.text) return;
@@ -50,6 +56,7 @@ function ReviewsCarousel() {
     setFormData({ reviewer_name: '', rating: 5, text: '', type: 'store' });
   }
 
+  /** מציג דירוג בכוכבים, ואופציונלית מאפשר לדרג. */
   function renderStars(rating, interactive = false, onRate = null) {
     return (
       <div className="stars">
@@ -64,11 +71,11 @@ function ReviewsCarousel() {
     );
   }
 
+  /** ממיר תאריך לתצוגה בעברית. */
   function formatDate(d) {
     return new Date(d).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
   }
 
-  // ממוצע דירוגים
   const avgRating = reviews.length > 0
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : null;

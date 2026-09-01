@@ -1,13 +1,8 @@
 /**
- * בדיקת עשן זמנית לדומיין גווני הפיגמנט מול השרת החדש.
- * למחיקה אחרי המעבר.
- *
- * בשונה משאר הדומיינים, כאן יש נתונים אמיתיים ב-DB —
- * הבדיקה נוגעת אך ורק ברשומות שהיא עצמה יצרה, ומאמתת בסוף
- * שעשרים הגוונים הקיימים לא זזו.
- *
- *   NEW_URL=http://127.0.0.1:3100 node server/db/smoke-pigments.js
+ * בודק את דומיין גווני הפיגמנט מקצה לקצה.
+ * נוגע רק ברשומות שהוא עצמו יצר, ומאמת בסוף שהגוונים האמיתיים לא זזו.
  */
+const { login } = require('./helpers');
 const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
 const PATH = '/pigment-formulas';
 
@@ -18,6 +13,7 @@ let passed = 0;
 let failed = 0;
 const created = [];
 
+/** רושם תוצאה של בדיקה בודדת. */
 function check(name, condition, actual) {
   if (condition) {
     passed++;
@@ -28,10 +24,17 @@ function check(name, condition, actual) {
   }
 }
 
+let authCookie = null;
+
+/** שולח בקשה ל-API עם עוגיית האדמין שהתקבלה בהתחברות. */
 async function call(method, path, body) {
+  const headers = {};
+  if (body) headers['Content-Type'] = 'application/json';
+  if (authCookie) headers.Cookie = authCookie;
+
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   return { status: res.status, body: await res.json() };
@@ -47,6 +50,7 @@ const validFormula = () => ({
   sort_order: 999,
 });
 
+/** בודק את הרשימה: סדר, חיפוש, מיון ודפדוף. */
 async function testList() {
   console.log('\n── רשימה');
 
@@ -79,6 +83,7 @@ async function testList() {
   return body;
 }
 
+/** בודק שליפה בודדת, מזהים שאינם קיימים וקלט לא תקין. */
 async function testRead(existing) {
   console.log('\n── קריאה בודדת');
 
@@ -106,6 +111,7 @@ async function testRead(existing) {
   check('id לא מספרי → 400', badId.status === 400, badId.status);
 }
 
+/** בודק יצירה: ערכים שנשמרים, ברירות מחדל ושדות שהשרת קובע. */
 async function testCreate() {
   console.log('\n── יצירה');
 
@@ -127,6 +133,7 @@ async function testCreate() {
   return body.id;
 }
 
+/** בודק שכל קלט פסול נדחה בקוד 400. */
 async function testValidation() {
   console.log('\n── ולידציה (הכל אמור להיחסם ב-400)');
 
@@ -148,11 +155,12 @@ async function testValidation() {
 
   for (const [name, body] of cases) {
     const { status, body: res } = await call('POST', PATH, body);
-    if (status === 201) created.push(res.id);   // לא אמור לקרות, אבל שלא יישאר זבל
+    if (status === 201) created.push(res.id);
     check(name, status === 400, `${status} ${res.error || ''}`);
   }
 }
 
+/** בודק עדכון חלקי ואת הכללים שאסור לעקוף. */
 async function testUpdate(id) {
   console.log('\n── עדכון');
 
@@ -164,7 +172,6 @@ async function testUpdate(id) {
   const code = await call('PUT', `${PATH}/${id}`, { color_code: 'something_else' });
   check('color_code אינו ניתן לעריכה → 400', code.status === 400, `${code.status} ${code.body.error}`);
 
-  // הבדיקה החשובה: עדכון של שדה כמות אחד נשקל מול השניים שכבר ב-DB
   const breaks = await call('PUT', `${PATH}/${id}`, { ml_per_liter_dark: 30 });
   check('כהה נמוך מבינוני הקיים → 400', breaks.status === 400, `${breaks.status} ${breaks.body.error}`);
 
@@ -181,6 +188,7 @@ async function testUpdate(id) {
   check('גוון שאינו קיים → 404', missing.status === 404, missing.status);
 }
 
+/** מוחק את כל מה שהבדיקה יצרה ומאמת שלא נשארו שאריות. */
 async function cleanup(before) {
   console.log('\n── ניקוי ואימות שהנתונים האמיתיים לא נגעו');
 
@@ -200,7 +208,9 @@ async function cleanup(before) {
     { before: before.length, after: after.length });
 }
 
+/** מריץ את כל הבדיקות לפי הסדר. */
 async function main() {
+  authCookie = await login(BASE.slice(0, -4));
   const before = await testList();
   await testRead(before);
   const id = await testCreate();

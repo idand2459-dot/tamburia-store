@@ -1,3 +1,6 @@
+/**
+ * עמוד שאלות נפוצות עם תשובות מתקפלות.
+ */
 import { useState } from 'react';
 
 const FAQS = [
@@ -35,9 +38,11 @@ const FAQS = [
   },
 ];
 
+/** מציג את עמוד השאלות הנפוצות. */
 function FAQ() {
   const [openIndex, setOpenIndex] = useState(null);
 
+  /** פותח או סוגר שאלה. */
   function toggle(i) {
     setOpenIndex(openIndex === i ? null : i);
   }

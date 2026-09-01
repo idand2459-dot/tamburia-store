@@ -1,25 +1,28 @@
+/**
+ * גישה לטבלת orders: שליפה מסוננת, חיפוש לפי טלפון, יצירה,
+ * עדכון, מחיקה וסיכום לפי סטטוס.
+ */
 const { query } = require('../config/db');
 
-/** כמו במוצרים — עמודות מפורשות, לא SELECT * */
 const COLUMNS = `
   id, customer_name, customer_phone, customer_email,
   delivery_method, delivery_address, notes, items,
   subtotal, delivery_fee, total, status, created_at
 `;
 
-/** עמודות JSONB — חייבות JSON.stringify לפני שליחה ל-pg */
 const JSON_COLUMNS = new Set(['items']);
 
+/** ממיר ערך לפורמט שמתאים לעמודה, כולל JSON למקום שצריך. */
 function toDbValue(column, value) {
   return JSON_COLUMNS.has(column) ? JSON.stringify(value ?? []) : value;
 }
 
-/** משאיר ספרות בלבד — כך 050-673-5040 ו-0506735040 מזוהים כאותו מספר */
+/** משאיר ספרות בלבד, כדי שמספרי טלפון בפורמטים שונים יושוו נכון. */
 function digitsOnly(phone) {
   return String(phone ?? '').replace(/\D/g, '');
 }
 
-/** בונה WHERE משותף ל-list ול-count, כדי שהספירה תמיד תתאים לתוצאות */
+/** בונה את תנאי ה-WHERE והפרמטרים המשותפים לשליפה ולספירה. */
 function buildFilters(options = {}) {
   const { status, phone, search, from, to } = options;
   const conditions = [];
@@ -44,7 +47,6 @@ function buildFilters(options = {}) {
     conditions.push(`created_at >= $${params.length}`);
   }
   if (to) {
-    // סוף היום כולל — הוולידטור כבר הפך תאריך לגבול העליון הנכון
     params.push(to);
     conditions.push(`created_at <= $${params.length}`);
   }
@@ -53,15 +55,11 @@ function buildFilters(options = {}) {
   return { where, params };
 }
 
-/**
- * רשימת הזמנות. ברירת המחדל — החדשה ביותר ראשונה, כמו בשרת הישן.
- * id משמש כשובר-שוויון כדי שהסדר יהיה יציב בין קריאות.
- */
+/** מחזיר הזמנות לפי הסינון והמיון, מהחדשה לישנה כברירת מחדל. */
 async function list(options = {}) {
   const { sort = 'created_at', order = 'DESC', limit, offset } = options;
   const { where, params } = buildFilters(options);
 
-  // sort ו-order עברו ולידציה מול whitelist — לא ניתן להזריק דרכם
   let sql = `SELECT ${COLUMNS} FROM orders ${where} ORDER BY ${sort} ${order}, id DESC`;
 
   if (limit !== undefined) {
@@ -77,25 +75,25 @@ async function list(options = {}) {
   return rows;
 }
 
-/** ספירה לאותם תנאי סינון — בשביל pagination */
+/** סופר הזמנות לפי אותם תנאי סינון, לצורך דפדוף. */
 async function count(options = {}) {
   const { where, params } = buildFilters(options);
   const { rows } = await query(`SELECT COUNT(*)::int AS total FROM orders ${where}`, params);
   return rows[0].total;
 }
 
-/** הזמנה בודדת, או null אם אינה קיימת */
+/** מחזיר הזמנה לפי מזהה, או null אם אינה קיימת. */
 async function findById(id) {
   const { rows } = await query(`SELECT ${COLUMNS} FROM orders WHERE id = $1`, [id]);
   return rows[0] || null;
 }
 
-/** כל ההזמנות של מספר טלפון — מסך "ההזמנות שלי" של הלקוח */
+/** מחזיר את כל ההזמנות של מספר טלפון נתון. */
 async function findByPhone(phone) {
   return list({ phone });
 }
 
-/** יוצר הזמנה ומחזיר אותה כפי שנשמרה */
+/** יוצר הזמנה חדשה ומחזיר אותה כפי שנשמרה. */
 async function create(data) {
   const columns = Object.keys(data);
   const values = columns.map((col) => toDbValue(col, data[col]));
@@ -110,10 +108,7 @@ async function create(data) {
   return rows[0];
 }
 
-/**
- * מעדכן רק את השדות שנמצאים ב-data.
- * מחזיר null אם ההזמנה אינה קיימת.
- */
+/** מעדכן את השדות שנשלחו בלבד, ומחזיר null אם ההזמנה אינה קיימת. */
 async function update(id, data) {
   const columns = Object.keys(data);
   if (columns.length === 0) return findById(id);
@@ -131,16 +126,13 @@ async function update(id, data) {
   return rows[0] || null;
 }
 
-/** מוחק ומחזיר את ההזמנה שנמחקה, או null אם לא הייתה קיימת */
+/** מוחק הזמנה ומחזיר אותה, או null אם לא הייתה קיימת. */
 async function remove(id) {
   const { rows } = await query(`DELETE FROM orders WHERE id = $1 RETURNING ${COLUMNS}`, [id]);
   return rows[0] || null;
 }
 
-/**
- * סיכום לפי סטטוס — מה שמסך האדמין מחשב היום בצד הלקוח
- * על כל ההזמנות שהוא הוריד.
- */
+/** מחזיר מספר הזמנות והכנסה מצטברת לכל סטטוס. */
 async function statsByStatus() {
   const { rows } = await query(`
     SELECT status,

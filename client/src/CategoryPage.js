@@ -1,5 +1,9 @@
+/**
+ * עמוד קטגוריה: רשת המוצרים ובחירת תת-קטגוריה.
+ */
 import categories from './categories';
 
+/** מציג את מוצרי הקטגוריה ואת תתי-הקטגוריות שלה. */
 function CategoryPage({ onSelectCategory }) {
   return (
     <div className="category-page">

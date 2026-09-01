@@ -1,3 +1,6 @@
+/**
+ * מחשבון הצבע: חישוב כמות לפי שטח וסימולציית גוון הפיגמנט.
+ */
 import { useState, useEffect } from 'react';
 
 const SHADE_CONFIG = {
@@ -6,6 +9,7 @@ const SHADE_CONFIG = {
   dark:   { label: 'כהה',    emoji: '🌙',  factor: 0.65 },
 };
 
+/** מערבב צבע עם לבן לקבלת גוון בהיר יותר. */
 function blendWithWhite(hex, factor) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -13,7 +17,7 @@ function blendWithWhite(hex, factor) {
   return `rgb(${Math.round(255 * (1 - factor) + r * factor)},${Math.round(255 * (1 - factor) + g * factor)},${Math.round(255 * (1 - factor) + b * factor)})`;
 }
 
-// Perceive luminance to decide text color on the preview swatch
+/** בודק אם הצבע בהיר, כדי לבחור צבע טקסט מנוגד. */
 function isLight(rgb) {
   const match = rgb.match(/\d+/g);
   if (!match || match.length < 3) return true;
@@ -21,6 +25,7 @@ function isLight(rgb) {
   return (0.299 * r + 0.587 * g + 0.114 * b) > 160;
 }
 
+/** מציג את מחשבון הצבע ואת סימולציית הגוון. */
 function PaintCalculator({ addBundleToCart }) {
   const [walls, setWalls] = useState([{ length: '', height: '' }]);
   const [windows, setWindows] = useState(0);
@@ -44,19 +49,22 @@ function PaintCalculator({ addBundleToCart }) {
       .catch(() => {});
   }, []);
 
-  // Reset bundle-added badge when inputs change
   useEffect(() => { setBundleAdded(false); }, [walls, windows, doors, coats, selectedColor, selectedShade]);
 
+  /** מוסיף קיר לחישוב. */
   function addWall() {
     if (walls.length < 6) setWalls([...walls, { length: '', height: '' }]);
   }
+  /** מסיר קיר מהחישוב. */
   function removeWall(i) {
     if (walls.length > 1) setWalls(walls.filter((_, idx) => idx !== i));
   }
+  /** מעדכן את מידות הקיר. */
   function updateWall(i, field, value) {
     setWalls(walls.map((w, idx) => idx === i ? { ...w, [field]: value } : w));
   }
 
+  /** מחשב את שטח הצביעה ואת כמות הצבע והפיגמנט. */
   function calculate() {
     const totalWallArea = walls.reduce((sum, w) => {
       return sum + (parseFloat(w.length) || 0) * (parseFloat(w.height) || 0);
@@ -84,6 +92,7 @@ function PaintCalculator({ addBundleToCart }) {
     setBundleAdded(false);
   }
 
+  /** מוסיף לעגלה את המוצרים שהמחשבון המליץ עליהם. */
   function handleAddBundle() {
     if (!result || !addBundleToCart) return;
     const formula = formulas.find(f => f.color_code === selectedColor);

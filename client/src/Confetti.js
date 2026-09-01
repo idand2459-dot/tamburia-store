@@ -1,5 +1,9 @@
+/**
+ * אנימציית קונפטי חד-פעמית לאישור הזמנה.
+ */
 import { useEffect, useRef } from 'react';
 
+/** מפעיל אנימציית קונפטי ומודיע כשהיא נגמרת. */
 function Confetti({ onDone }) {
   const canvasRef = useRef(null);
 
@@ -26,6 +30,7 @@ function Confetti({ onDone }) {
     let frame;
     let startTime = Date.now();
 
+    /** מצייר פריים אחד של האנימציה. */
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const elapsed = Date.now() - startTime;

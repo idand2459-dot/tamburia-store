@@ -1,3 +1,4 @@
+/** מציג את עמוד יצירת הקשר. */
 function Contact() {
   return (
     <div className="page-container">

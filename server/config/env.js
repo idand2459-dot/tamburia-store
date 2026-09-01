@@ -1,21 +1,25 @@
+/**
+ * קורא את משתני הסביבה מ-.env, מאמת אותם ומרכז אותם באובייקט קונפיגורציה
+ * אחד שכל שאר השרת נשען עליו. נכשל בעלייה אם חסר משתנה חובה.
+ */
+const crypto = require('crypto');
 const path = require('path');
 
-// טוענים את .env משורש הפרויקט במפורש, כדי שזה יעבוד
-// גם אם מריצים את השרת מתוך תיקייה אחרת
 require('dotenv').config({
   path: path.join(__dirname, '..', '..', '.env'),
-  quiet: true,   // בלי באנר פרסומי בכל עלייה
+  quiet: true,
 });
 
 const missing = [];
 
+/** מחזיר משתנה חובה, ורושם אותו כחסר אם אינו מוגדר. */
 function required(key) {
   const value = process.env[key];
   if (!value) missing.push(key);
   return value;
 }
 
-/** משתנה דגל. ברירת המחדל נשמרת אלא אם הוגדר במפורש true/false. */
+/** קורא משתנה בוליאני, ומחזיר את ברירת המחדל אם לא הוגדר. */
 function flag(key, fallback) {
   const raw = process.env[key];
   if (raw === undefined || raw === '') return fallback;
@@ -25,6 +29,7 @@ function flag(key, fallback) {
   return raw === 'true';
 }
 
+/** קורא משתנה מספרי שלם, ומחזיר את ברירת המחדל אם לא הוגדר. */
 function number(key, fallback, { allowZero = false } = {}) {
   const raw = process.env[key];
   if (raw === undefined || raw === '') return fallback;
@@ -58,50 +63,55 @@ const config = {
     pass: required('MAIL_PASS'),
     to: process.env.MAIL_TO || process.env.MAIL_USER,
     from: `"טכניק טמבור 🔧" <${process.env.MAIL_USER}>`,
-    // ברירת המחדל היא "שולח" — כיבוי דורש MAIL_ENABLED=false מפורש,
-    // כדי שלא נגלה בייצור שמיילים לא נשלחו בגלל משתנה חסר
     enabled: process.env.MAIL_ENABLED !== 'false',
   },
 
-  // הכתובת שאליה מפנה הכפתור במייל ההזמנה
   adminUrl: process.env.ADMIN_URL || 'http://localhost:3001/admin',
 
   orders: {
-    // דמי המשלוח נקבעים בשרת ולא נלקחים מגוף הבקשה,
-    // אחרת אפשר לשלוח delivery_fee=0 ולקבל משלוח חינם
     deliveryFee: number('DELIVERY_FEE', 20, { allowZero: true }),
   },
 
+  auth: {
+    password: required('ADMIN_PASSWORD'),
+    sessionSecret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
+    ttlHours: number('SESSION_TTL_HOURS', 12),
+    cookieName: 'tamburia_admin',
+    loginMaxAttempts: number('LOGIN_MAX_ATTEMPTS', 10),
+    loginWindowMs: number('LOGIN_WINDOW_MS', 15 * 60 * 1000),
+  },
+
   security: {
-    // ראה את ההערה ב-middleware/securityHeaders.js
     cspEnabled: flag('CSP_ENABLED', false),
     hsts: flag('HSTS_ENABLED', true),
   },
 
   client: {
-    // הגשת אפליקציית ה-React מאותו מקור. כיבוי הופך את השרת ל-API בלבד.
     serve: flag('SERVE_CLIENT', true),
-    // תיקיית ה-build. יחסית לשורש הפרויקט.
     buildDir: process.env.CLIENT_BUILD_DIR || 'client/build',
   },
 
-  /**
-   * מקורות שמותר להם לפנות ל-API מדפדפן.
-   * בפיתוח הכל פתוח, כי שרת הפיתוח של CRA יושב על פורט אחר.
-   * בייצור הקליינט מוגש מאותו מקור, ולכן ברירת המחדל היא לא לאפשר כלום.
-   */
   corsOrigins: (process.env.CORS_ORIGINS || '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),
 };
 
-// כל המשתנים החסרים בהודעה אחת — לא אחד בכל הרצה
 if (missing.length > 0) {
   throw new Error(
     `חסרים משתני סביבה: ${missing.join(', ')}\n` +
     `העתק את .env.example ל-.env ומלא את הערכים.`
   );
+}
+
+if (!process.env.SESSION_SECRET) {
+  if (config.isProduction) {
+    throw new Error(
+      'חסר SESSION_SECRET. צור אחד עם:\n' +
+      '  node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+    );
+  }
+  console.warn('⚠ אין SESSION_SECRET — נוצר אחד זמני. התחברות לאדמין לא תשרוד הפעלה מחדש.');
 }
 
 module.exports = config;

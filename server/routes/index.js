@@ -1,12 +1,12 @@
+/**
+ * מאגד את כל ראוטרי ה-API תחת /api ומוסיף נתיב בדיקת בריאות.
+ */
 const express = require('express');
 const db = require('../config/db');
 
 const router = express.Router();
 
-/**
- * בדיקת בריאות — מאמת שהשרת חי ושהחיבור ל-DB עובד.
- * שימושי גם כשנשווה בין השרת החדש לישן.
- */
+/** GET /api/health — מאמת שהשרת חי ושהחיבור למסד עובד. */
 router.get('/health', async (req, res) => {
   const info = await db.assertConnection();
   res.json({
@@ -16,11 +16,11 @@ router.get('/health', async (req, res) => {
   });
 });
 
-// ── ראוטרים לפי דומיין ───────────────────────────────
+router.use('/auth', require('./auth.routes'));
 router.use('/products', require('./product.routes'));
 router.use('/orders', require('./order.routes'));
 router.use('/reviews', require('./review.routes'));
 router.use('/pigment-formulas', require('./pigmentFormula.routes'));
-router.use('/', require('./upload.routes'));   // /upload, /upload-multiple
+router.use('/', require('./upload.routes'));
 
 module.exports = router;

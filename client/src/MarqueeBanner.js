@@ -1,3 +1,4 @@
+/** מציג את רצועת ההודעות הנגללת. */
 function MarqueeBanner() {
   const items = [
     '🔧 טכניק טמבור',
@@ -12,7 +13,6 @@ function MarqueeBanner() {
     '🔧 עזרה טכנית מקצועית',
   ];
 
-  // כפל הפריטים כדי שהאנימציה תיראה רציפה
   const doubled = [...items, ...items];
 
   return (

@@ -1,3 +1,6 @@
+/**
+ * מחשבון הפרויקט: ממיר סוג עבודה לרשימת המוצרים הדרושה.
+ */
 import { useState, useEffect, useRef } from 'react';
 
 /* ─── Project definitions ──────────────────────────────────────────────── */
@@ -124,6 +127,7 @@ function ProjectCalculator({ addBundleToCart }) {
 
   const project = PROJECTS.find(p => p.id === selectedId) || null;
 
+  /** בוחר סוג פרויקט ומאפס את הקלט. */
   function selectProject(id) {
     if (selectedId === id) { setSelectedId(null); return; }
     setBundleAdded(false);
@@ -134,6 +138,7 @@ function ProjectCalculator({ addBundleToCart }) {
     setSelectedId(id);
   }
 
+  /** מעדכן שדה קלט של הפרויקט. */
   function setInput(id, value) {
     setInputs(prev => ({ ...prev, [id]: value }));
     setBundleAdded(false);
@@ -145,7 +150,7 @@ function ProjectCalculator({ addBundleToCart }) {
       p => p.category === category && p.subcategory === subcategory && p.in_stock !== false
     );
     if (matches.length === 0) return null;
-    return matches.reduce((a, b) => (a.price <= b.price ? a : b)); // cheapest
+    return matches.reduce((a, b) => (a.price <= b.price ? a : b));
   }
 
   const rawItems     = project ? project.getItems(inputs) : [];
@@ -154,6 +159,7 @@ function ProjectCalculator({ addBundleToCart }) {
   const totalEstimate = foundItems.reduce((s, i) => s + i.found.price, 0);
   const hasUnknown    = resolvedItems.some(i => !i.found);
 
+  /** מוסיף לעגלה את כל המוצרים שהמחשבון המליץ עליהם. */
   function handleAddAll() {
     if (!foundItems.length) return;
     addBundleToCart(foundItems.map(i => ({ ...i.found, quantity: 1 })));

@@ -1,3 +1,6 @@
+/**
+ * שורש האפליקציה: ניתוב בין העמודים, ניהול העגלה, המועדפים ותהליך ההזמנה.
+ */
 import { useState, useEffect } from 'react';
 import './App.css';
 import Admin from './Admin';
@@ -28,6 +31,7 @@ import OrderHistory from './OrderHistory';
 import Wishlist from './Wishlist';
 import CategoryAmbience from './CategoryAmbience';
 
+/** מציג את האפליקציה ומנהל את המצב המשותף לכל העמודים. */
 function App() {
   const [products, setProducts] = useState([]);
 
@@ -42,6 +46,7 @@ function App() {
 
   const [showAdmin, setShowAdmin] = useState(false);
   const [adminLoggedIn, setAdminLoggedIn] = useState(false);
+  const [adminChecked, setAdminChecked] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState('home');
@@ -63,6 +68,7 @@ function App() {
     catch { return []; }
   });
 
+  /** מוסיף או מסיר מוצר מהמועדפים. */
   function toggleCardWishlist(product) {
     try {
       const current = JSON.parse(localStorage.getItem('tamburia-wishlist')) || [];
@@ -80,8 +86,22 @@ function App() {
   const [orderNotes, setOrderNotes] = useState('');
 
   useEffect(() => {
-    if (window.location.pathname === '/admin') setShowAdmin(true);
+    if (window.location.pathname !== '/admin') return;
+    setShowAdmin(true);
+
+    fetch('/api/auth/me')
+      .then(res => setAdminLoggedIn(res.ok))
+      .catch(() => setAdminLoggedIn(false))
+      .finally(() => setAdminChecked(true));
   }, []);
+
+  /** מנתק את המנהל וחוזר לחנות. */
+  async function handleAdminLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    setShowAdmin(false);
+    setAdminLoggedIn(false);
+    window.history.pushState({}, '', '/');
+  }
 
   useEffect(() => {
     if (!selectedCategory) return;
@@ -93,6 +113,7 @@ function App() {
       .catch(() => setLoadingProducts(false));
   }, [selectedCategory]);
 
+  /** מוסיף מוצר לעגלה, או מגדיל את כמותו אם כבר קיים. */
   function addToCart(product) {
     const existing = cart.find(i => i.id === product.id && i.selectedColor === product.selectedColor && i.selectedSize === product.selectedSize);
     if (existing) {
@@ -104,8 +125,10 @@ function App() {
     setShowCart(true); setCartStep('cart');
   }
 
+  /** מסיר פריט מהעגלה. */
   function removeFromCart(index) { setCart(cart.filter((_, i) => i !== index)); }
 
+  /** משנה את כמות הפריט בעגלה. */
   function updateQuantity(index, delta) {
     setCart(cart.map((item, i) => {
       if (i !== index) return item;
@@ -119,6 +142,7 @@ function App() {
   const total = subtotal + deliveryFee;
   const cartCount = cart.reduce((sum, i) => sum + (i.quantity || 1), 0);
 
+  /** עובר לעמוד אחר ומגלל לראשו. */
   function handleNavigate(page) {
     const validPages = ['home', 'about', 'contact', 'returns'];
     setCurrentPage(validPages.includes(page) ? page : '404');
@@ -126,13 +150,17 @@ function App() {
     setSelectedProduct(null);
   }
 
+  /** פותח את עמוד המוצר שנבחר בחיפוש. */
   function handleSelectProductFromSearch(product) {
     setSelectedProduct(product); setCurrentPage('home');
   }
 
+  /** פותח את חלון העגלה. */
   function openCart() { setShowCart(true); setCartStep('cart'); }
+  /** סוגר את חלון העגלה. */
   function closeCart() { setShowCart(false); setCartStep('cart'); }
 
+  /** שולח את ההזמנה לשרת ומציג את מסך התודה. */
   async function handlePlaceOrder() {
     if (!customerName || !customerPhone) return;
     if (deliveryMethod === 'delivery' && !deliveryAddress) return;
@@ -154,6 +182,7 @@ function App() {
     setDeliveryAddress(''); setOrderNotes('');
   }
 
+  /** מסנן וממיין את המוצרים לפי הבחירה הנוכחית. */
   function getSortedProducts(list) {
     const filtered = list
       .filter(p => !selectedSubcategory || p.subcategory === selectedSubcategory)
@@ -168,8 +197,9 @@ function App() {
   }
 
   if (showAdmin) {
+    if (!adminChecked) return <div className="admin-login-page" />;
     if (!adminLoggedIn) return <AdminLogin onLogin={() => setAdminLoggedIn(true)} />;
-    return <Admin onBack={() => { setShowAdmin(false); setAdminLoggedIn(false); window.history.pushState({}, '', '/'); }} />;
+    return <Admin onBack={handleAdminLogout} onExpired={() => setAdminLoggedIn(false)} />;
   }
 
   const navbarProps = {
@@ -208,7 +238,7 @@ function App() {
   if (currentPage === 'returns') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><Returns /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /><ScrollToTop />{showOrderHistory && <OrderHistory onClose={() => setShowOrderHistory(false)} />}{showWishlist && <Wishlist onClose={() => setShowWishlist(false)} onSelectProduct={handleSelectProductFromSearch} />}</div>;
   if (currentPage === '404') return <div className="App"><Navbar {...navbarProps} /><MarqueeBanner /><NotFound onNavigate={handleNavigate} /><Footer onNavigate={handleNavigate} onSelectCategory={setSelectedCategory} />{showCart && <CartModal {...cartModalProps} />}<WhatsAppButton /><ScrollToTop />{showOrderHistory && <OrderHistory onClose={() => setShowOrderHistory(false)} />}{showWishlist && <Wishlist onClose={() => setShowWishlist(false)} onSelectProduct={handleSelectProductFromSearch} />}</div>;
 
-  if (!selectedCategory) return (
+  if (!selectedCategory && !selectedProduct) return (
     <div className="App">
       <Navbar {...navbarProps} />
       <MarqueeBanner />

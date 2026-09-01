@@ -1,3 +1,4 @@
+/** מציג את רצועת היתרונות. */
 function FeaturesBanner() {
   const features = [
     {

@@ -1,14 +1,14 @@
+/**
+ * מריץ את מיגרציות ה-SQL שטרם הורצו ומתעד אותן בטבלת
+ * schema_migrations, כך שהרצה חוזרת אינה משנה דבר.
+ */
 const fs = require('fs');
 const path = require('path');
 const { pool } = require('../config/db');
 
 const MIGRATIONS_DIR = path.join(__dirname, 'migrations');
 
-/**
- * מריץ את כל קבצי ה-.sql שטרם רצו, לפי סדר שם הקובץ.
- * כל מיגרציה רצה בטרנזקציה משלה ונרשמת בטבלת schema_migrations,
- * כך שהרצה שנייה לא עושה כלום.
- */
+/** מריץ כל קובץ .sql שטרם רץ, לפי סדר השם, כל אחד בטרנזקציה נפרדת. */
 async function runMigrations() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -41,7 +41,6 @@ async function runMigrations() {
       console.log(`  ✓ ${file}`);
     } catch (err) {
       await client.query('ROLLBACK');
-      // עוצרים כאן — לא מריצים מיגרציות שתלויות באחת שנכשלה
       throw new Error(`המיגרציה ${file} נכשלה: ${err.message}`);
     } finally {
       client.release();
@@ -53,7 +52,6 @@ async function runMigrations() {
 
 module.exports = { runMigrations };
 
-// אפשר להריץ גם ישירות:  node server/db/migrate.js
 if (require.main === module) {
   runMigrations()
     .then(() => pool.end())
