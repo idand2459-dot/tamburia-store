@@ -1,1 +1,5 @@
 node_modules
+
+# סודות — לא נכנס לגיט
+.env
+.env.local
