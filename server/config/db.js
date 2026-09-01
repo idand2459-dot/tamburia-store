@@ -1,3 +1,7 @@
+/**
+ * מנהל את החיבור היחיד ל-PostgreSQL ומספק את הממשק שדרכו כל
+ * המודלים ניגשים למסד: שאילתה, טרנזקציה, בדיקת חיבור וסגירה.
+ */
 const { Pool } = require('pg');
 const config = require('./env');
 
@@ -7,18 +11,14 @@ const pool = new Pool({
   database: config.db.name,
   user: config.db.user,
   password: config.db.password,
-  max: 10,                          // מקסימום חיבורים במקביל
+  max: 10,
   idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 5_000,   // לא תולה בקשה לנצח אם ה-DB למטה
+  connectionTimeoutMillis: 5_000,
 });
 
-// חיבור שנפל ברקע לא מפיל את התהליך
 pool.on('error', (err) => console.error('שגיאת Pool:', err.message));
 
-/**
- * כל שאילתה בפרויקט עוברת דרך כאן — נקודה אחת ללוגים ולמדידת זמנים.
- * מודלים קוראים ל-query, לא ל-pool.
- */
+/** מריץ שאילתה בודדת ומודד את זמנה. */
 async function query(text, params) {
   const start = Date.now();
   const result = await pool.query(text, params);
@@ -29,11 +29,7 @@ async function query(text, params) {
   return result;
 }
 
-/**
- * לפעולות שחייבות להצליח או להיכשל ביחד.
- * הפונקציה מקבלת client ומחויבת להשתמש בו — לא ב-query הגלובלי,
- * אחרת הפעולה תרוץ מחוץ לטרנזקציה.
- */
+/** מריץ סדרת פעולות בטרנזקציה אחת, עם ROLLBACK אוטומטי בכישלון. */
 async function withTransaction(fn) {
   const client = await pool.connect();
   try {
@@ -45,17 +41,17 @@ async function withTransaction(fn) {
     await client.query('ROLLBACK');
     throw err;
   } finally {
-    client.release();   // חובה — אחרת ה-pool נגמר
+    client.release();
   }
 }
 
-/** בדיקת חיבור בעלייה — עדיף להיכשל מיד מאשר על הבקשה הראשונה */
+/** מאמת שהחיבור למסד עובד ומחזיר את שם מסד הנתונים וגרסתו. */
 async function assertConnection() {
   const { rows } = await pool.query('SELECT current_database() AS db, version() AS version');
   return rows[0];
 }
 
-/** סגירה מסודרת ב-shutdown */
+/** סוגר את כל החיבורים. */
 async function close() {
   await pool.end();
 }

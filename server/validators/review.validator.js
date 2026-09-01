@@ -1,13 +1,17 @@
+/**
+ * מאמת ומנרמל את גוף הבקשה ואת פרמטרי החיפוש של דומיין חוות הדעת.
+ * approved נקבע בשרת ואינו נלקח מהבקשה, כדי שלא ניתן יהיה לעקוף
+ * את אישור המנהל.
+ */
 const { badRequest } = require('../utils/AppError');
 
-/** 'store' = חוות דעת על החנות, 'product' = על מוצר מסוים */
 const TYPES = ['store', 'product'];
 
-/** שדות שהאדמין רשאי לערוך. type ו-product_id אינם ביניהם — ראה parseUpdate. */
 const EDITABLE = ['reviewer_name', 'rating', 'text', 'approved'];
 
 const MAX = { reviewer_name: 200, text: 2000 };
 
+/** מוודא שהערך טקסט, מקצץ רווחים ובודק אורך מרבי. */
 function asTrimmedString(value, field, { maxLength } = {}) {
   if (typeof value !== 'string') throw badRequest(`השדה ${field} חייב להיות טקסט`);
   const trimmed = value.trim();
@@ -17,7 +21,7 @@ function asTrimmedString(value, field, { maxLength } = {}) {
   return trimmed;
 }
 
-/** דירוג 1–5. ה-CHECK ב-DB תופס את זה גם כן, אבל 400 עדיף על שגיאת DB. */
+/** מוודא שהדירוג מספר שלם בין 1 ל-5. */
 function asRating(value) {
   const rating = Number(value);
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
@@ -26,6 +30,7 @@ function asRating(value) {
   return rating;
 }
 
+/** מוודא שסוג חוות הדעת הוא על החנות או על מוצר. */
 function asType(value) {
   const type = asTrimmedString(value ?? 'store', 'type').toLowerCase();
   if (!TYPES.includes(type)) {
@@ -34,12 +39,14 @@ function asType(value) {
   return type;
 }
 
+/** מוודא שמזהה המוצר הוא מספר שלם חיובי. */
 function asProductId(value, field = 'product_id') {
   const id = Number(value);
   if (!Number.isInteger(id) || id <= 0) throw badRequest(`${field} חייב להיות מזהה מוצר תקין`);
   return id;
 }
 
+/** ממיר ערך לבוליאני, ותומך גם במחרוזות 'true' ו-'false'. */
 function asBoolean(value, field) {
   if (typeof value === 'boolean') return value;
   if (value === 'true') return true;
@@ -47,12 +54,7 @@ function asBoolean(value, field) {
   throw badRequest(`השדה ${field} חייב להיות true או false`);
 }
 
-/**
- * יצירת חוות דעת.
- *
- * approved נקבע כאן ל-false תמיד ולא נלקח מגוף הבקשה —
- * אחרת אפשר היה לפרסם חוות דעת שעוקפת את האישור של האדמין.
- */
+/** מאמת גוף בקשה ליצירת חוות דעת, ותמיד מסמן אותה כלא-מאושרת. */
 function parseCreate(body = {}) {
   const reviewer_name = asTrimmedString(body.reviewer_name ?? '', 'reviewer_name', { maxLength: MAX.reviewer_name });
   if (!reviewer_name) throw badRequest('חסר שם הכותב');
@@ -62,8 +64,6 @@ function parseCreate(body = {}) {
 
   const type = asType(body.type);
 
-  // חוות דעת על מוצר חייבת לדעת על איזה מוצר. בשרת הישן היא יכלה
-  // להישמר בלי product_id ואז פשוט לא הופיעה בשום מקום.
   let product_id = null;
   if (type === 'product') {
     if (body.product_id == null) throw badRequest('חוות דעת על מוצר חייבת לכלול product_id');
@@ -80,7 +80,7 @@ function parseCreate(body = {}) {
   };
 }
 
-/** ממיר שדה בודד לערך המוכן ל-DB */
+/** ממיר שדה בודד לערך המוכן למסד, לפי הכללים של אותו שדה. */
 function parseEditableField(field, value) {
   switch (field) {
     case 'reviewer_name': {
@@ -100,9 +100,8 @@ function parseEditableField(field, value) {
 }
 
 /**
- * עדכון חלקי, כמו במוצרים ובהזמנות.
- * type ו-product_id אינם ניתנים לשינוי: העברת חוות דעת ממוצר
- * למוצר אחר משנה את משמעותה, ולא זו מטרת מסך הניהול.
+ * מאמת גוף בקשה לעדכון חוות דעת ומחזיר רק את השדות שנשלחו.
+ * type ו-product_id אינם ניתנים לשינוי, כדי שחוות דעת לא תעבור בין מוצרים.
  */
 function parseUpdate(body = {}) {
   const data = {};
@@ -117,7 +116,7 @@ function parseUpdate(body = {}) {
   return data;
 }
 
-/** PUT /:id/approve — גוף הבקשה הוא { approved } בלבד */
+/** מאמת גוף בקשה לאישור או ביטול אישור, ומחזיר את הערך. */
 function parseApprove(body = {}) {
   if (body.approved == null) throw badRequest('חסר שדה approved');
   return asBoolean(body.approved, 'approved');
@@ -126,9 +125,8 @@ function parseApprove(body = {}) {
 const SORTABLE = ['id', 'created_at', 'rating'];
 
 /**
- * פרמטרים משותפים ל-/reviews, ל-/reviews/all ול-/reviews/stats.
- * allowApproved נדלק רק במסך האדמין — בנתיב הציבורי הסינון
- * לחוות דעת מאושרות נכפה בקונטרולר ואינו ניתן לעקיפה.
+ * מאמת את פרמטרי החיפוש והמיון. סינון לפי approved מתאפשר רק
+ * כשהקונטרולר מרשה זאת, כלומר בנתיב האדמין בלבד.
  */
 function parseListQuery(query = {}, { allowApproved = false } = {}) {
   const options = {};

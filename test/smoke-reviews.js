@@ -1,15 +1,15 @@
 /**
- * בדיקת עשן זמנית לדומיין חוות הדעת מול השרת החדש.
- * מנקה אחריה את כל מה שיצרה. למחיקה אחרי המעבר.
- *
- *   NEW_URL=http://127.0.0.1:3100 node server/db/smoke-reviews.js
+ * בודק את דומיין חוות הדעת מקצה לקצה, כולל ההפרדה בין הרשימה
+ * הציבורית לרשימת הניהול. מנקה בסוף כל רשומה שיצר.
  */
+const { login } = require('./helpers');
 const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
 
 let passed = 0;
 let failed = 0;
 const created = [];
 
+/** רושם תוצאה של בדיקה בודדת. */
 function check(name, condition, actual) {
   if (condition) {
     passed++;
@@ -20,10 +20,17 @@ function check(name, condition, actual) {
   }
 }
 
+let authCookie = null;
+
+/** שולח בקשה ל-API עם עוגיית האדמין שהתקבלה בהתחברות. */
 async function call(method, path, body) {
+  const headers = {};
+  if (body) headers['Content-Type'] = 'application/json';
+  if (authCookie) headers.Cookie = authCookie;
+
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   return { status: res.status, body: await res.json() };
@@ -37,6 +44,7 @@ async function pickProduct() {
   return product;
 }
 
+/** בודק יצירה: ערכים שנשמרים, ברירות מחדל ושדות שהשרת קובע. */
 async function testCreate(product) {
   console.log('\n── יצירה');
 
@@ -53,7 +61,6 @@ async function testCreate(product) {
   check('חוות דעת על החנות בלי product_id', store.body.product_id === null, store.body.product_id);
   check('עברית נשמרת', store.body.reviewer_name === 'רונית לוי', store.body.reviewer_name);
 
-  // approved=true בגוף הבקשה אמור להיות מתעלם ממנו
   const sneaky = await call('POST', '/reviews', {
     reviewer_name: 'תוקף',
     rating: 5,
@@ -74,7 +81,6 @@ async function testCreate(product) {
   created.push(onProduct.body.id);
   check('חוות דעת על מוצר', onProduct.body.product_id === product.id, onProduct.body.product_id);
 
-  // type ברירת מחדל כשלא נשלח בכלל
   const noType = await call('POST', '/reviews', { reviewer_name: 'אנונימי', rating: 3, text: 'בסדר' });
   created.push(noType.body.id);
   check('בלי type → store', noType.body.type === 'store', noType.body.type);
@@ -82,6 +88,7 @@ async function testCreate(product) {
   return { storeId: store.body.id, productReviewId: onProduct.body.id };
 }
 
+/** בודק שכל קלט פסול נדחה בקוד 400. */
 async function testValidation(product) {
   console.log('\n── ולידציה (הכל אמור להיחסם ב-400)');
 
@@ -101,17 +108,17 @@ async function testValidation(product) {
 
   for (const [name, body] of cases) {
     const { status, body: res } = await call('POST', '/reviews', body);
-    if (status === 201) created.push(res.id);   // לא אמור לקרות, אבל שלא יישאר זבל
+    if (status === 201) created.push(res.id);
     check(name, status === 400, `${status} ${res.error || ''}`);
   }
 
-  // מוצר שאינו קיים — נתפס ע"י ה-FK ומתורגם ל-409 במטפל השגיאות
   const ghost = await call('POST', '/reviews', { ...base, type: 'product', product_id: 999999 });
   if (ghost.status === 201) created.push(ghost.body.id);
   check('מוצר שאינו קיים → 409', ghost.status === 409, `${ghost.status} ${ghost.body.error || ''}`);
   void product;
 }
 
+/** בודק שהרשימה הציבורית מציגה מאושרות בלבד. */
 async function testPublicList(ids) {
   console.log('\n── רשימה ציבורית (מאושרות בלבד)');
 
@@ -141,6 +148,7 @@ async function testPublicList(ids) {
     paged.body);
 }
 
+/** בודק שרשימת הניהול מציגה הכל, כולל שם המוצר. */
 async function testAdminList(product, ids) {
   console.log('\n── רשימת האדמין (/all)');
 
@@ -158,6 +166,7 @@ async function testAdminList(product, ids) {
   check('סינון ללא-מאושרות', pending.body.every((r) => r.approved === false), pending.body.length);
 }
 
+/** בודק שליפה בודדת ועדכון חלקי. */
 async function testReadUpdate(ids) {
   console.log('\n── קריאה ועדכון');
 
@@ -191,12 +200,12 @@ async function testReadUpdate(ids) {
   check('אישור לחוות דעת שאינה קיימת → 404', notThere.status === 404, notThere.status);
 }
 
+/** בודק את חישוב הממוצע וההתפלגות. */
 async function testStats(ids) {
   console.log('\n── סטטיסטיקה');
 
-  // מאשרים שתיים עם דירוגים ידועים כדי שהממוצע יהיה צפוי
-  await call('PUT', `/reviews/${ids.storeId}/approve`, { approved: true });         // 5
-  await call('PUT', `/reviews/${ids.productReviewId}/approve`, { approved: true }); // 4
+  await call('PUT', `/reviews/${ids.storeId}/approve`, { approved: true });
+  await call('PUT', `/reviews/${ids.productReviewId}/approve`, { approved: true });
 
   const stats = await call('GET', '/reviews/stats');
   check('מבנה התשובה',
@@ -210,6 +219,7 @@ async function testStats(ids) {
   check('סטטיסטיקה מסוננת', scoped.status === 200, scoped.status);
 }
 
+/** מוחק את כל מה שהבדיקה יצרה ומאמת שלא נשארו שאריות. */
 async function cleanup() {
   console.log('\n── ניקוי');
   for (const id of created) {
@@ -224,7 +234,9 @@ async function cleanup() {
   check('מחיקה חוזרת → 404', twice.status === 404, twice.status);
 }
 
+/** מריץ את כל הבדיקות לפי הסדר. */
 async function main() {
+  authCookie = await login(BASE.slice(0, -4));
   const product = await pickProduct();
   const ids = await testCreate(product);
   ids.productId = product.id;

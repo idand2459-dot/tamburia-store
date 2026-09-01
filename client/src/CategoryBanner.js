@@ -1,3 +1,6 @@
+/**
+ * באנר הכותרת של עמוד הקטגוריה.
+ */
 const CATEGORY_CONFIG = {
   painting:   { name: 'מוצרי צביעה',           icon: '🎨', gradient: 'linear-gradient(135deg, #c1121f 0%, #e63946 50%, #ff6b6b 100%)', desc: 'צבעים, מברשות, רולרים וכל מה שצריך לצביעה מקצועית' },
   tools:      { name: 'כלי עבודה',              icon: '🔧', gradient: 'linear-gradient(135deg, #1a1a2e 0%, #2d3561 50%, #457b9d 100%)', desc: 'פטישים, מברגים, מסורים וכלי עבודה מקצועיים' },
@@ -13,6 +16,7 @@ const CATEGORY_CONFIG = {
   home:       { name: 'בית',                    icon: '🏠', gradient: 'linear-gradient(135deg, #8338ec 0%, #6a4c93 50%, #c77dff 100%)', desc: 'מוצרים לכל הבית במקום אחד' },
 };
 
+/** מציג את באנר הקטגוריה. */
 function CategoryBanner({ category, onBack }) {
   const cfg = CATEGORY_CONFIG[category?.id] || {
     name: category?.name || '',

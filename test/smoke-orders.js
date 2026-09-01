@@ -1,15 +1,15 @@
 /**
- * בדיקת עשן זמנית לדומיין ההזמנות מול השרת החדש.
- * מנקה אחריה את כל מה שיצרה. למחיקה אחרי המעבר.
- *
- *   NEW_URL=http://127.0.0.1:3100 node server/db/smoke-orders.js
+ * בודק את דומיין ההזמנות מקצה לקצה: יצירה, ולידציה, קריאה,
+ * עדכון ומחיקה. מנקה בסוף כל רשומה שיצר.
  */
+const { login } = require('./helpers');
 const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
 
 let passed = 0;
 let failed = 0;
 const created = [];
 
+/** רושם תוצאה של בדיקה בודדת. */
 function check(name, condition, actual) {
   if (condition) {
     passed++;
@@ -20,10 +20,17 @@ function check(name, condition, actual) {
   }
 }
 
+let authCookie = null;
+
+/** שולח בקשה ל-API עם עוגיית האדמין שהתקבלה בהתחברות. */
 async function call(method, path, body) {
+  const headers = {};
+  if (body) headers['Content-Type'] = 'application/json';
+  if (authCookie) headers.Cookie = authCookie;
+
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
   return { status: res.status, body: await res.json() };
@@ -42,10 +49,10 @@ const validOrder = () => ({
   ],
 });
 
+/** בודק יצירה: ערכים שנשמרים, ברירות מחדל ושדות שהשרת קובע. */
 async function testCreate() {
   console.log('\n── יצירה');
 
-  // הסכומים שנשלחים מהגוף אמורים להיות מוחלפים בחישוב השרת
   const tampered = { ...validOrder(), subtotal: 1, delivery_fee: 0, total: 5 };
   const { status, body } = await call('POST', '/orders', tampered);
   created.push(body.id);
@@ -72,6 +79,7 @@ async function testCreate() {
   return body.id;
 }
 
+/** בודק שכל קלט פסול נדחה בקוד 400. */
 async function testValidation() {
   console.log('\n── ולידציה (הכל אמור להיחסם ב-400)');
 
@@ -89,11 +97,12 @@ async function testValidation() {
 
   for (const [name, body] of cases) {
     const { status, body: res } = await call('POST', '/orders', body);
-    if (status === 201) created.push(res.id);   // לא אמור לקרות, אבל שלא יישאר זבל
+    if (status === 201) created.push(res.id);
     check(name, status === 400, `${status} ${res.error || ''}`);
   }
 }
 
+/** בודק שליפה בודדת, מזהים שאינם קיימים וקלט לא תקין. */
 async function testRead(id) {
   console.log('\n── קריאה');
 
@@ -135,6 +144,7 @@ async function testRead(id) {
   check('stats מחזיר סיכום', stats.status === 200 && stats.body.totals.orders >= 2, stats.body);
 }
 
+/** בודק עדכון חלקי ואת הכללים שאסור לעקוף. */
 async function testUpdate(id) {
   console.log('\n── עדכון');
 
@@ -162,6 +172,7 @@ async function testUpdate(id) {
   check('עדכון הזמנה שאינה קיימת → 404', missing.status === 404, missing.status);
 }
 
+/** מוחק את כל מה שהבדיקה יצרה ומאמת שלא נשארו שאריות. */
 async function cleanup() {
   console.log('\n── ניקוי');
   for (const id of created) {
@@ -176,7 +187,9 @@ async function cleanup() {
   check('מחיקה חוזרת → 404', twice.status === 404, twice.status);
 }
 
+/** מריץ את כל הבדיקות לפי הסדר. */
 async function main() {
+  authCookie = await login(BASE.slice(0, -4));
   const id = await testCreate();
   await testValidation();
   await testRead(id);

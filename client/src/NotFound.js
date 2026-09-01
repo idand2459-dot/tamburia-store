@@ -1,3 +1,4 @@
+/** מציג את עמוד השגיאה 404. */
 function NotFound({ onNavigate }) {
   return (
     <div className="not-found">

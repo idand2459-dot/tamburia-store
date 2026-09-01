@@ -1,9 +1,13 @@
+/**
+ * מחזיק את חיבור ה-SMTP ושולח דרכו מיילים.
+ * השליחה לעולם אינה זורקת, כדי שתקלת מייל לא תכשיל הזמנה שנשמרה.
+ */
 const nodemailer = require('nodemailer');
 const config = require('../../config/env');
 
 let cached = null;
 
-/** נוצר בפעם הראשונה שצריך אותו — לא בעליית השרת */
+/** מחזיר את ה-transporter, ויוצר אותו בפעם הראשונה שנדרש. */
 function getTransporter() {
   if (!cached) {
     cached = nodemailer.createTransport({
@@ -14,11 +18,7 @@ function getTransporter() {
   return cached;
 }
 
-/**
- * שליחה שלעולם לא זורקת.
- * הזמנה שכבר נשמרה ב-DB לא תיכשל כלפי הלקוח בגלל תקלת SMTP —
- * זו בדיוק ההתנהגות של הקוד הישן, רק במקום אחד במקום בשלושה.
- */
+/** שולח מייל ומחזיר האם הצליח, בלי לזרוק שגיאה. */
 async function send({ to, subject, html }) {
   if (!to) return { sent: false, reason: 'אין נמען' };
 

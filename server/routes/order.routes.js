@@ -1,21 +1,24 @@
+/**
+ * נתיבי ההזמנות. יצירת הזמנה וחיפוש לפי טלפון פתוחים ללקוח,
+ * כל השאר דורש התחברות כאדמין. /stats מוגדר לפני /:id.
+ */
 const express = require('express');
 const controller = require('../controllers/order.controller');
 const { idParam } = require('../middleware/validate');
+const { requireAdmin } = require('../middleware/requireAdmin');
 
 const router = express.Router();
 
-// הנתיבים הקבועים חייבים לבוא לפני /:id, אחרת "stats" ייחשב למזהה
-router.get('/stats', controller.stats);
+router.post('/', controller.create);
 router.get('/by-phone/:phone', controller.byPhone);
 
-router.get('/', controller.list);                          // List
-router.get('/:id', idParam, controller.getOne);            // Read
-router.post('/', controller.create);                       // Create
-router.put('/:id', idParam, controller.update);            // Update
-router.delete('/:id', idParam, controller.remove);         // Delete
+router.get('/stats', requireAdmin, controller.stats);
+router.get('/', requireAdmin, controller.list);
+router.get('/:id', requireAdmin, idParam, controller.getOne);
+router.put('/:id', requireAdmin, idParam, controller.update);
+router.delete('/:id', requireAdmin, idParam, controller.remove);
 
-// נתיב הסטטוס נשמר כפי שהוא — מסך האדמין קורא אליו
-router.put('/:id/status', idParam, controller.updateStatus);
-router.patch('/:id/status', idParam, controller.updateStatus);
+router.put('/:id/status', requireAdmin, idParam, controller.updateStatus);
+router.patch('/:id/status', requireAdmin, idParam, controller.updateStatus);
 
 module.exports = router;

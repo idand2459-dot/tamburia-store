@@ -1,3 +1,4 @@
+/** מציג את תחתית האתר. */
 function Footer({ onNavigate, onSelectCategory }) {
   const categories = [
     { id: 'painting', label: 'מוצרי צביעה' },

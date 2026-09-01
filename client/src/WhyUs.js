@@ -1,3 +1,4 @@
+/** מציג את המקטע. */
 function WhyUs() {
   return (
     <div className="whyus-section">

@@ -1,6 +1,9 @@
+/**
+ * מאמת ומנרמל את גוף הבקשה ואת פרמטרי החיפוש של דומיין המוצרים,
+ * כך שהמודל מקבל רק שדות מוכרים בערכים תקינים.
+ */
 const { badRequest } = require('../utils/AppError');
 
-/** השדות שמותר לשלוח מבחוץ. כל השאר בגוף הבקשה — מתעלמים ממנו. */
 const WRITABLE = [
   'name', 'price', 'image_url', 'images', 'colors', 'sizes',
   'category', 'subcategory', 'sku', 'description', 'in_stock', 'variants',
@@ -8,6 +11,7 @@ const WRITABLE = [
 
 const MAX = { name: 255, image_url: 500, category: 100, subcategory: 100, sku: 100 };
 
+/** מוודא שהערך טקסט, מקצץ רווחים ובודק אורך מרבי. */
 function asTrimmedString(value, field, { maxLength }) {
   if (typeof value !== 'string') throw badRequest(`השדה ${field} חייב להיות טקסט`);
   const trimmed = value.trim();
@@ -17,6 +21,7 @@ function asTrimmedString(value, field, { maxLength }) {
   return trimmed;
 }
 
+/** ממיר מערך לרשימת מחרוזות מקוצצות, בלי ערכים ריקים. */
 function asStringArray(value, field) {
   if (!Array.isArray(value)) throw badRequest(`השדה ${field} חייב להיות מערך`);
   return value
@@ -24,6 +29,7 @@ function asStringArray(value, field) {
     .filter(Boolean);
 }
 
+/** מוודא שהערך מספר אי-שלילי ומעגל אותו לשלם. */
 function asNonNegativeInt(value, field) {
   const num = Number(value);
   if (!Number.isFinite(num) || num < 0) {
@@ -32,6 +38,7 @@ function asNonNegativeInt(value, field) {
   return Math.round(num);
 }
 
+/** מאמת רשימת וריאנטים ומחזיר אותם עם תווית ומחיר בלבד. */
 function asVariants(value) {
   if (!Array.isArray(value)) throw badRequest('השדה variants חייב להיות מערך');
   return value.map((variant, i) => {
@@ -48,7 +55,7 @@ function asVariants(value) {
   });
 }
 
-/** ממיר שדה בודד לערך המוכן ל-DB. זורק badRequest אם הוא לא תקין. */
+/** ממיר שדה בודד לערך המוכן למסד, לפי הכללים של אותו שדה. */
 function parseField(field, value) {
   switch (field) {
     case 'name':
@@ -63,7 +70,6 @@ function parseField(field, value) {
     case 'category':
     case 'subcategory':
     case 'sku': {
-      // מחרוזת ריקה נשמרת כ-NULL, לא כ-''
       if (value == null) return null;
       const str = asTrimmedString(value, field, { maxLength: MAX[field] });
       return str || null;
@@ -83,7 +89,6 @@ function parseField(field, value) {
       return value == null ? [] : asStringArray(value, 'sizes');
 
     case 'in_stock':
-      // תואם להתנהגות הקיימת: כל דבר שאינו false נחשב "במלאי"
       return value !== false;
 
     case 'variants':
@@ -94,10 +99,7 @@ function parseField(field, value) {
   }
 }
 
-/**
- * מחיר המוצר נגזר מהוריאנטים אם יש כאלה — המחיר המוצג
- * הוא הזול מביניהם. אחרת המחיר שנשלח במפורש.
- */
+/** מחזיר את מחיר המוצר: הזול מבין הוריאנטים, או המחיר שנשלח. */
 function resolvePrice({ variants, price }) {
   if (Array.isArray(variants) && variants.length > 0) {
     return Math.min(...variants.map((v) => v.price));
@@ -105,7 +107,7 @@ function resolvePrice({ variants, price }) {
   return price;
 }
 
-/** יצירה: name חובה, כל השאר מקבל ברירת מחדל. */
+/** מאמת גוף בקשה ליצירת מוצר. name חובה, לשאר יש ברירת מחדל. */
 function parseCreate(body = {}) {
   if (body.name == null || String(body.name).trim() === '') {
     throw badRequest('חסר שם מוצר');
@@ -120,9 +122,8 @@ function parseCreate(body = {}) {
 }
 
 /**
- * עדכון חלקי: מעדכנים רק שדות שנשלחו בפועל.
- * שדה שלא נשלח נשאר כמו שהוא ב-DB — כך עדכון חלקי
- * לא מוחק subcategory או sizes בטעות.
+ * מאמת גוף בקשה לעדכון מוצר ומחזיר רק את השדות שנשלחו בפועל,
+ * כדי שעדכון חלקי לא ימחק subcategory או sizes שלא נכללו בבקשה.
  */
 function parseUpdate(body = {}) {
   const data = {};
@@ -139,7 +140,6 @@ function parseUpdate(body = {}) {
     throw badRequest('לא נשלח אף שדה לעדכון');
   }
 
-  // אם נשלחו וריאנטים, המחיר נגזר מהם ודורס מחיר מפורש
   if (Array.isArray(data.variants) && data.variants.length > 0) {
     data.price = resolvePrice({ variants: data.variants });
   }
@@ -148,7 +148,7 @@ function parseUpdate(body = {}) {
 
 const SORTABLE = ['id', 'name', 'price', 'category'];
 
-/** פרמטרים של ה-List — כולם אופציונליים. */
+/** מאמת את פרמטרי החיפוש, המיון והדפדוף של רשימת המוצרים. */
 function parseListQuery(query = {}) {
   const options = {};
 

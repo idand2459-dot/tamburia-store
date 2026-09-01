@@ -1,15 +1,14 @@
+/**
+ * הממשק היחיד שדרכו הקונטרולרים שולחים מיילים.
+ * אף פונקציה כאן אינה זורקת — כולן מחזירות { sent, reason? }.
+ */
 const config = require('../../config/env');
 const { send } = require('./transporter');
 const newOrder = require('./templates/newOrder');
 const orderConfirmation = require('./templates/orderConfirmation');
 const orderStatus = require('./templates/orderStatus');
 
-/**
- * הממשק היחיד שהקונטרולרים מכירים.
- * אף פונקציה כאן לא זורקת — כולן מחזירות { sent, reason? }.
- */
-
-/** הודעה לחנות על הזמנה חדשה */
+/** שולח לחנות הודעה על הזמנה חדשה. */
 function sendNewOrderToStore(order) {
   return send({
     to: config.mail.to,
@@ -18,7 +17,7 @@ function sendNewOrderToStore(order) {
   });
 }
 
-/** אישור ללקוח. מדלג בשקט אם הלקוח לא השאיר מייל. */
+/** שולח ללקוח אישור הזמנה, אם השאיר כתובת מייל. */
 function sendOrderConfirmationToCustomer(order) {
   return send({
     to: order.customer_email,
@@ -27,7 +26,7 @@ function sendOrderConfirmationToCustomer(order) {
   });
 }
 
-/** עדכון סטטוס ללקוח. יש סטטוסים שלא שולחים עליהם כלום. */
+/** שולח ללקוח עדכון סטטוס, אם מוגדר מייל לסטטוס הזה. */
 function sendStatusUpdateToCustomer(order, status) {
   if (!orderStatus.hasEmail(status)) {
     return { sent: false, reason: `אין מייל מוגדר לסטטוס "${status}"` };

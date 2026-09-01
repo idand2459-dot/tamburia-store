@@ -1,10 +1,9 @@
+/**
+ * בונה את מייל עדכון הסטטוס שנשלח ללקוח.
+ * הסטטוס 'new' אינו מופיע כאן, כי עליו יוצא מייל אישור נפרד.
+ */
 const { escapeHtml, header, footer, layout } = require('./shared');
 
-/**
- * מייל עדכון סטטוס.
- * 'new' מכוון לא נמצא כאן — זה הסטטוס שבו ההזמנה נוצרת,
- * ועליו כבר יצא מייל אישור נפרד.
- */
 const STATUS_LABELS = {
   processing: {
     label: 'בטיפול',
@@ -23,16 +22,17 @@ const STATUS_LABELS = {
   },
 };
 
-/** האם בכלל שולחים מייל על הסטטוס הזה */
+/** מחזיר האם מוגדר מייל לסטטוס הנתון. */
 function hasEmail(status) {
   return Object.prototype.hasOwnProperty.call(STATUS_LABELS, status);
 }
 
+/** מחזיר את שורת הנושא של המייל. */
 function subject(order, status) {
   return `${STATUS_LABELS[status].emoji} עדכון הזמנה #${order.id} — טכניק טמבור`;
 }
 
-/** שורת "תווית: ערך" בקופסת הסיכום */
+/** בונה שורת "תווית: ערך" בקופסת הסיכום. */
 function summaryLine(label, value, { last = false } = {}) {
   const margin = last ? '' : 'margin-bottom:8px';
   return `<div style="display:flex;justify-content:space-between;${margin}">
@@ -40,6 +40,7 @@ function summaryLine(label, value, { last = false } = {}) {
         </div>`;
 }
 
+/** בונה את גוף המייל המלא. */
 function html(order, status) {
   const cfg = STATUS_LABELS[status];
   return layout(`

@@ -1,3 +1,4 @@
+/** מציג את עמוד מדיניות ההחזרות. */
 function Returns() {
   return (
     <div className="page-container">

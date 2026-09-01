@@ -1,25 +1,24 @@
 /**
- * מריץ את כל חבילות הבדיקה מקצה לקצה.
+ * מריץ את כל חבילות הבדיקה מקצה לקצה עבור npm test.
+ * מרים שרת משלו על פורט 3100, כדי שאפשר יהיה להריץ גם כשהשרת
+ * האמיתי עובד על 3000. הבדיקות פונות למסד האמיתי, יוצרות רשומות
+ * זמניות ומוחקות אותן בסוף.
  *
- *   npm test
- *
- * מרים את השרת בעצמו על פורט נפרד (3100 כברירת מחדל), כדי שאפשר
- * יהיה להריץ גם כשהשרת האמיתי עובד על 3000.
- *
- * שים לב: הבדיקות פונות למסד הנתונים האמיתי. הן יוצרות רשומות
- * זמניות ומוחקות אותן בסוף, ואינן נוגעות בנתונים קיימים —
- * חבילת הגוונים אף מאמתת במפורש ש-20 הגוונים לא זזו.
+ * חלון הגבלת ההתחברות מקוצר כאן, כי כל חבילה מתחברת פעם אחת
+ * ואחרת המכסה הייתה נגמרת באמצע הריצה. smoke-auth רץ אחרון
+ * מפני שהוא ממצה את המכסה בכוונה.
  */
-process.env.MAIL_ENABLED = 'false';        // לא שולחים מיילים אמיתיים בבדיקות
-process.env.DB_LOG_QUERIES = 'false';      // בלי רעש SQL בפלט
+process.env.MAIL_ENABLED = 'false';
+process.env.DB_LOG_QUERIES = 'false';
 process.env.PORT = process.env.TEST_PORT || '3100';
+process.env.LOGIN_WINDOW_MS = '2000';
 
 const path = require('path');
 const { spawn } = require('child_process');
 
-const SUITES = ['smoke-static', 'smoke-orders', 'smoke-reviews', 'smoke-pigments'];
+const SUITES = ['smoke-static', 'smoke-orders', 'smoke-reviews', 'smoke-pigments', 'smoke-auth'];
 
-/** מריץ חבילה אחת כתהליך נפרד ומחזיר את קוד היציאה */
+/** מריץ חבילה אחת כתהליך נפרד ומחזיר את קוד היציאה. */
 function runSuite(name, baseUrl) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [path.join(__dirname, `${name}.js`)], {
@@ -30,6 +29,7 @@ function runSuite(name, baseUrl) {
   });
 }
 
+/** מעלה שרת בדיקות, מריץ את כל החבילות ומסכם את התוצאות. */
 async function main() {
   const db = require('../server/config/db');
   const { runMigrations } = require('../server/db/migrate');

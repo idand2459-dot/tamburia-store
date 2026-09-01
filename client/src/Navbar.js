@@ -1,5 +1,9 @@
+/**
+ * סרגל הניווט העליון, כולל חיפוש מוצרים.
+ */
 import { useState, useEffect, useRef } from 'react';
 
+/** מציג את סרגל הניווט והחיפוש. */
 function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, onOpenCart, menuOpen, setMenuOpen, onOpenOrderHistory, onOpenWishlist }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,11 +29,13 @@ function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, on
   }, [searchOpen]);
 
   useEffect(() => {
+    /** סוגר את החיפוש בלחיצה על Escape. */
     function handleKey(e) { if (e.key === 'Escape') closeSearch(); }
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
 
+  /** מעדכן את מונח החיפוש ואת תוצאותיו. */
   function handleSearchChange(e) {
     const q = e.target.value;
     setSearchQuery(q);
@@ -37,8 +43,11 @@ function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, on
     setSearchResults(allProducts.filter(p => p.name.toLowerCase().includes(q.toLowerCase())).slice(0, 8));
   }
 
+  /** סוגר את תיבת החיפוש ומנקה אותה. */
   function closeSearch() { setSearchOpen(false); setSearchQuery(''); setSearchResults([]); }
+  /** פותח את המוצר שנבחר מתוצאות החיפוש. */
   function handleSelectProduct(product) { closeSearch(); onSelectProduct(product); }
+  /** עובר לעמוד המבוקש וסוגר את התפריט. */
   function handleNav(key) { onNavigate(key); setMenuOpen(false); }
 
   const CATEGORY_LABELS = {

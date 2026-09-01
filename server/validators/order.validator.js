@@ -1,12 +1,15 @@
+/**
+ * מאמת ומנרמל את גוף הבקשה ואת פרמטרי החיפוש של דומיין ההזמנות.
+ * הסכומים מחושבים כאן מתוך הפריטים ולא נלקחים מגוף הבקשה, כדי
+ * שבקשה לא תוכל לקבוע לעצמה מחיר.
+ */
 const config = require('../config/env');
 const { badRequest } = require('../utils/AppError');
 
-/** הסטטוסים שהאדמין מציג. חייב להישאר מסונכרן עם STATUS_CONFIG ב-Admin.js */
 const STATUSES = ['new', 'processing', 'shipped', 'completed'];
 
 const DELIVERY_METHODS = ['pickup', 'delivery'];
 
-/** שדות שהאדמין רשאי לערוך בהזמנה קיימת. פריטים וסכומים אינם ביניהם. */
 const EDITABLE = [
   'customer_name', 'customer_phone', 'customer_email',
   'delivery_method', 'delivery_address', 'notes', 'status',
@@ -14,6 +17,7 @@ const EDITABLE = [
 
 const MAX = { customer_name: 200, customer_phone: 50, customer_email: 200 };
 
+/** מוודא שהערך טקסט, מקצץ רווחים ובודק אורך מרבי. */
 function asTrimmedString(value, field, { maxLength } = {}) {
   if (typeof value !== 'string') throw badRequest(`השדה ${field} חייב להיות טקסט`);
   const trimmed = value.trim();
@@ -23,6 +27,7 @@ function asTrimmedString(value, field, { maxLength } = {}) {
   return trimmed;
 }
 
+/** מוודא שהערך מספר אי-שלילי ומעגל אותו לשלם. */
 function asNonNegativeInt(value, field) {
   const num = Number(value);
   if (!Number.isFinite(num) || num < 0) {
@@ -31,7 +36,7 @@ function asNonNegativeInt(value, field) {
   return Math.round(num);
 }
 
-/** טלפון: 9–15 ספרות אחרי ניקוי. מכסה קווי (9) ונייד (10), גם עם קידומת בינלאומית. */
+/** מאמת מספר טלפון בן 9 עד 15 ספרות ומחזיר אותו כפי שנכתב. */
 function asPhone(value) {
   const raw = asTrimmedString(value, 'customer_phone', { maxLength: MAX.customer_phone });
   const digits = raw.replace(/\D/g, '');
@@ -41,18 +46,18 @@ function asPhone(value) {
   return raw;
 }
 
-/** מייל אופציונלי — מחרוזת ריקה נשמרת כ-NULL, לא כ-'' */
+/** מאמת כתובת מייל אופציונלית, ומחזיר null כשאין. */
 function asOptionalEmail(value) {
   if (value == null) return null;
   const email = asTrimmedString(value, 'customer_email', { maxLength: MAX.customer_email });
   if (!email) return null;
-  // בדיקה מכוונת רופפת: תופסת שגיאות הקלדה בלי לפסול כתובות חוקיות ומוזרות
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw badRequest('כתובת האימייל אינה תקינה');
   }
   return email;
 }
 
+/** מוודא שאופן הקבלה הוא איסוף עצמי או משלוח. */
 function asDeliveryMethod(value) {
   const method = asTrimmedString(value ?? '', 'delivery_method').toLowerCase();
   if (!DELIVERY_METHODS.includes(method)) {
@@ -61,6 +66,7 @@ function asDeliveryMethod(value) {
   return method;
 }
 
+/** מוודא שהסטטוס הוא אחד מהסטטוסים המוכרים. */
 function asStatus(value) {
   const status = asTrimmedString(value ?? '', 'status').toLowerCase();
   if (!STATUSES.includes(status)) {
@@ -69,11 +75,7 @@ function asStatus(value) {
   return status;
 }
 
-/**
- * פריטי ההזמנה — צילום מצב של העגלה בזמן ההזמנה.
- * המחירים נלקחים מהלקוח, בדיוק כמו קודם: וריאנטים ומידות
- * מייצרים מחיר שאינו בהכרח price של המוצר בטבלה.
- */
+/** מאמת את פריטי ההזמנה ומחזיר צילום מצב מנורמל של העגלה. */
 function asItems(value) {
   if (!Array.isArray(value) || value.length === 0) {
     throw badRequest('ההזמנה חייבת לכלול לפחות פריט אחד');
@@ -108,13 +110,7 @@ function asItems(value) {
   });
 }
 
-/**
- * יצירת הזמנה.
- *
- * subtotal, delivery_fee ו-total מחושבים כאן ולא נלקחים מגוף הבקשה.
- * הנוסחה זהה לזו שבקליינט, כך שהתוצאה אינה משתנה עבור לקוח תקין —
- * אבל בקשה ידנית כבר לא יכולה לקבוע לעצמה total=1.
- */
+/** מאמת גוף בקשה ליצירת הזמנה ומחשב את הסכומים בשרת. */
 function parseCreate(body = {}) {
   const delivery_method = asDeliveryMethod(body.delivery_method);
   const items = asItems(body.items);
@@ -146,7 +142,7 @@ function parseCreate(body = {}) {
   };
 }
 
-/** ממיר שדה בודד לערך המוכן ל-DB */
+/** ממיר שדה בודד לערך המוכן למסד, לפי הכללים של אותו שדה. */
 function parseEditableField(field, value) {
   switch (field) {
     case 'customer_name': {
@@ -168,9 +164,8 @@ function parseEditableField(field, value) {
 }
 
 /**
- * עדכון חלקי, כמו במוצרים: רק שדות שנשלחו בפועל.
- * הסכומים והפריטים אינם ניתנים לעריכה — הזמנה שנשמרה
- * היא רשומה היסטורית, ושינוי מחיר בדיעבד היה שובר את הדוחות.
+ * מאמת גוף בקשה לעדכון הזמנה ומחזיר רק את השדות שנשלחו.
+ * הפריטים והסכומים אינם ניתנים לעריכה — הזמנה שנשמרה היא רשומה היסטורית.
  */
 function parseUpdate(body = {}) {
   const data = {};
@@ -189,7 +184,7 @@ function parseUpdate(body = {}) {
   return data;
 }
 
-/** PUT /:id/status — גוף הבקשה הוא { status } בלבד */
+/** מאמת גוף בקשה לשינוי סטטוס ומחזיר את הסטטוס החדש. */
 function parseStatus(body = {}) {
   if (body.status == null) throw badRequest('חסר שדה status');
   return asStatus(body.status);
@@ -197,18 +192,17 @@ function parseStatus(body = {}) {
 
 const SORTABLE = ['id', 'created_at', 'total', 'status'];
 
-/** קצה התאריך — 'to' ניתן כיום שלם, ולכן נסגר בסופו */
+/** ממיר ערך לתאריך, ואופציונלית סוגר אותו לסוף היום. */
 function asDate(value, field, { endOfDay = false } = {}) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) throw badRequest(`${field} אינו תאריך תקין`);
-  // רק תאריך בלי שעה — סוגרים את היום, אחרת הזמנות מאותו יום נופלות מהסינון
   if (endOfDay && /^\d{4}-\d{2}-\d{2}$/.test(String(value).trim())) {
     date.setHours(23, 59, 59, 999);
   }
   return date;
 }
 
-/** פרמטרים של ה-List — כולם אופציונליים */
+/** מאמת את פרמטרי החיפוש, המיון והדפדוף של רשימת ההזמנות. */
 function parseListQuery(query = {}) {
   const options = {};
 

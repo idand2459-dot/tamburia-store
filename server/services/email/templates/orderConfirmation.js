@@ -1,29 +1,30 @@
+/**
+ * בונה את מייל אישור ההזמנה שנשלח ללקוח, אם השאיר כתובת מייל.
+ */
 const {
   escapeHtml, deliveryText, itemsRows,
   itemsTableHead, summaryRows, header, footer, layout,
 } = require('./shared');
 
-/** מייל אישור ההזמנה — נשלח ללקוח, ורק אם השאיר כתובת מייל */
-
+/** מחזיר את שורת הנושא של המייל. */
 function subject(order) {
   return `✅ ההזמנה שלך התקבלה! מספר הזמנה #${order.id} — טכניק טמבור`;
 }
 
-/** כפתור יצירת קשר בתחתית המייל */
+/** בונה כפתור יצירת קשר לתחתית המייל. */
 function contactButton(href, label, background) {
   return `<a href="${href}" style="background:${background};color:white;padding:10px 18px;border-radius:20px;text-decoration:none;font-size:0.85rem;font-weight:bold">${label}</a>`;
 }
 
+/** בונה את גוף המייל המלא. */
 function html(order) {
   return layout(`
 ${header(`אישור קבלת הזמנה — מספר #${order.id}`)}
 
-    <!-- הבהרה חשובה -->
     <div style="background:#fff8e1;border-right:4px solid #f4c430;padding:12px 20px;margin:0">
       <p style="margin:0;font-size:0.82rem;color:#666">⚠️ מסמך זה הוא <strong>אישור הזמנה בלבד</strong> ואינו חשבונית מס. חשבונית מס תוצא בנפרד.</p>
     </div>
 
-    <!-- ברכה -->
     <div style="padding:28px 32px 0">
       <p style="font-size:1.1rem;color:#1a1a2e;margin:0 0 12px">שלום ${escapeHtml(order.customer_name)},</p>
       <p style="font-size:1rem;color:#555;line-height:1.7;margin:0 0 8px">
@@ -32,7 +33,6 @@ ${header(`אישור קבלת הזמנה — מספר #${order.id}`)}
       </p>
     </div>
 
-    <!-- פרטי הזמנה -->
     <div style="padding:20px 32px">
       <div style="background:#f8f8f8;border-radius:8px;padding:16px;margin-bottom:20px">
         <div style="display:flex;justify-content:space-between;margin-bottom:8px">
@@ -43,19 +43,16 @@ ${header(`אישור קבלת הזמנה — מספר #${order.id}`)}
         </div>
       </div>
 
-      <!-- פריטים -->
       <table style="width:100%;border-collapse:collapse">
         ${itemsTableHead()}
         <tbody>${itemsRows(order.items, { alignFirst: true })}</tbody>
       </table>
 
-      <!-- סיכום -->
       <div style="background:#f8f8f8;border-radius:8px;padding:16px;margin-top:16px">
         ${summaryRows(order)}
       </div>
     </div>
 
-    <!-- פרטי קשר -->
     <div style="padding:0 32px 28px;text-align:center">
       <p style="color:#666;font-size:0.9rem;margin-bottom:12px">לכל שאלה אנחנו כאן בשבילך:</p>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">

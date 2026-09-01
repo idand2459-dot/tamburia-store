@@ -1,6 +1,10 @@
+/**
+ * חלון המועדפים ורשימת המוצרים שנשמרו.
+ */
 import { useState, useEffect } from 'react';
 import { getWishlist, toggleWishlist } from './wishlistUtils';
 
+/** מציג את חלון המועדפים. */
 function Wishlist({ onClose, onSelectProduct }) {
   const [items, setItems] = useState([]);
 
@@ -8,6 +12,7 @@ function Wishlist({ onClose, onSelectProduct }) {
     setItems(getWishlist());
   }, []);
 
+  /** מסיר מוצר מהמועדפים. */
   function handleRemove(product) {
     toggleWishlist(product);
     setItems(getWishlist());

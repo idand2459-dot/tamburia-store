@@ -1,16 +1,20 @@
+/**
+ * נתיבי המוצרים. הקריאה פתוחה לכולם, השינוי דורש התחברות כאדמין.
+ * /categories מוגדר לפני /:id כדי שלא ייחשב למזהה.
+ */
 const express = require('express');
 const controller = require('../controllers/product.controller');
 const { idParam } = require('../middleware/validate');
+const { requireAdmin } = require('../middleware/requireAdmin');
 
 const router = express.Router();
 
-// /categories חייב לבוא לפני /:id, אחרת "categories" ייחשב למזהה
 router.get('/categories', controller.categories);
+router.get('/', controller.list);
+router.get('/:id', idParam, controller.getOne);
 
-router.get('/', controller.list);                    // List
-router.get('/:id', idParam, controller.getOne);      // Read
-router.post('/', controller.create);                 // Create
-router.put('/:id', idParam, controller.update);      // Update
-router.delete('/:id', idParam, controller.remove);   // Delete
+router.post('/', requireAdmin, controller.create);
+router.put('/:id', requireAdmin, idParam, controller.update);
+router.delete('/:id', requireAdmin, idParam, controller.remove);
 
 module.exports = router;

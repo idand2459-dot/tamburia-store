@@ -1,19 +1,25 @@
+/**
+ * עמוד המוצר: גלריה, וריאנטים, חוות דעת ומוצרים דומים.
+ */
 import { useState, useEffect } from 'react';
 import { toggleWishlist, isInWishlist } from './wishlistUtils';
 
 const MAX_RECENT = 6;
 
+/** קורא את רשימת המוצרים שנצפו לאחרונה. */
 function getRecentlyViewed() {
   try { return JSON.parse(localStorage.getItem('tamburia-recent')) || []; }
   catch { return []; }
 }
 
+/** מוסיף מוצר לראש רשימת הנצפים לאחרונה. */
 function addToRecentlyViewed(product) {
   const recent = getRecentlyViewed().filter(p => p.id !== product.id);
   const updated = [{ id: product.id, name: product.name, price: product.price, image_url: product.image_url, in_stock: product.in_stock }, ...recent].slice(0, MAX_RECENT);
   localStorage.setItem('tamburia-recent', JSON.stringify(updated));
 }
 
+/** מציג את עמוד המוצר. */
 function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
   const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
   const [selectedColor, setSelectedColor] = useState(null);
@@ -43,7 +49,6 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
     setSelectedVariant(hasVariants ? product.variants[0] : null);
     setReviewSubmitted(false); setShowReviewForm(false);
 
-    // שמור בהיסטוריה וטען
     addToRecentlyViewed(product);
     setRecentlyViewed(getRecentlyViewed().filter(p => p.id !== product.id));
     setInWishlist(isInWishlist(product.id));
@@ -56,9 +61,12 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
       .then(r => r.json()).then(setReviews).catch(() => {});
   }, [product.id]);
 
+  /** עובר לתמונה הקודמת בגלריה. */
   function prevImage() { setCurrentImageIndex(i => i === 0 ? allImages.length - 1 : i - 1); }
+  /** עובר לתמונה הבאה בגלריה. */
   function nextImage() { setCurrentImageIndex(i => i === allImages.length - 1 ? 0 : i + 1); }
 
+  /** מוסיף את המוצר לעגלה לאחר בחירת הגרסה, הצבע והמידה. */
   function handleAddToCart() {
     if (hasVariants && !selectedVariant) {
       alert('אנא בחר גרסה לפני ההוספה לעגלה'); return;
@@ -76,12 +84,14 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
     setTimeout(() => setAddedToCart(false), 2000);
   }
 
+  /** משתף את המוצר בוואטסאפ. */
   function handleShare() {
     const url = window.location.href;
     const text = `היי! ראיתי את המוצר הזה בטכניק טמבור ונראה לי מעניין 🔧\n*${product.name}* — ₪${product.price}\n${url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   }
 
+  /** שולח חוות דעת חדשה על המוצר. */
   async function handleReviewSubmit(e) {
     e.preventDefault();
     if (!reviewForm.reviewer_name || !reviewForm.text) return;
@@ -94,6 +104,7 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
     setReviewForm({ reviewer_name: '', rating: 5, text: '' });
   }
 
+  /** מציג דירוג בכוכבים, ואופציונלית מאפשר לדרג. */
   function renderStars(rating, interactive = false, onRate = null) {
     return (
       <div className="stars">

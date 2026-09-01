@@ -1,25 +1,22 @@
+/**
+ * גישה לטבלת products: שליפה מסוננת, ספירה, יצירה, עדכון ומחיקה.
+ * זהו המקום היחיד בדומיין המוצרים שכותב SQL.
+ */
 const { query } = require('../config/db');
 
-/**
- * העמודות מפורטות במפורש ולא SELECT * — כך תוספת עמודה ל-DB
- * לא מדליפה אותה ל-API בטעות, והסדר קבוע.
- */
 const COLUMNS = `
   id, name, price, stock, image_url, images, colors, sizes,
   category, subcategory, sku, description, in_stock, variants
 `;
 
-/** עמודות JSONB — חייבות JSON.stringify לפני שליחה ל-pg */
 const JSON_COLUMNS = new Set(['images', 'variants']);
 
+/** ממיר ערך לפורמט שמתאים לעמודה, כולל JSON למקום שצריך. */
 function toDbValue(column, value) {
   return JSON_COLUMNS.has(column) ? JSON.stringify(value ?? []) : value;
 }
 
-/**
- * רשימת מוצרים, עם סינון אופציונלי.
- * בלי פרמטרים — מחזיר את כל המוצרים, כמו קודם.
- */
+/** מחזיר מוצרים לפי הסינון, המיון והדפדוף שהתבקשו. */
 async function list(options = {}) {
   const { category, subcategory, inStock, search, sort = 'id', order = 'ASC', limit, offset } = options;
 
@@ -40,13 +37,11 @@ async function list(options = {}) {
   }
   if (search) {
     params.push(`%${search}%`);
-    // ILIKE = חיפוש שלא תלוי אותיות גדולות/קטנות
     conditions.push(`(name ILIKE $${params.length} OR sku ILIKE $${params.length} OR description ILIKE $${params.length})`);
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-  // sort ו-order עברו ולידציה מול whitelist בוולידטור — לא ניתן להזריק דרכם
   let sql = `SELECT ${COLUMNS} FROM products ${where} ORDER BY ${sort} ${order}, id ASC`;
 
   if (limit !== undefined) {
@@ -62,7 +57,7 @@ async function list(options = {}) {
   return rows;
 }
 
-/** ספירה לאותם תנאי סינון — בשביל pagination */
+/** סופר מוצרים לפי אותם תנאי סינון, לצורך דפדוף. */
 async function count(options = {}) {
   const { category, subcategory, inStock, search } = options;
   const conditions = [];
@@ -81,19 +76,18 @@ async function count(options = {}) {
   return rows[0].total;
 }
 
-/** מוצר בודד, או null אם אינו קיים */
+/** מחזיר מוצר לפי מזהה, או null אם אינו קיים. */
 async function findById(id) {
   const { rows } = await query(`SELECT ${COLUMNS} FROM products WHERE id = $1`, [id]);
   return rows[0] || null;
 }
 
-/** יוצר מוצר ומחזיר אותו כפי שנשמר */
+/** יוצר מוצר חדש ומחזיר אותו כפי שנשמר. */
 async function create(data) {
   const columns = Object.keys(data);
   const values = columns.map((col) => toDbValue(col, data[col]));
   const placeholders = columns.map((_, i) => `$${i + 1}`);
 
-  // stock אינו בשימוש — המלאי מנוהל דרך in_stock הבוליאני
   const { rows } = await query(
     `INSERT INTO products (${columns.join(', ')}, stock)
      VALUES (${placeholders.join(', ')}, 0)
@@ -103,10 +97,7 @@ async function create(data) {
   return rows[0];
 }
 
-/**
- * מעדכן רק את השדות שנמצאים ב-data.
- * מחזיר null אם המוצר אינו קיים.
- */
+/** מעדכן את השדות שנשלחו בלבד, ומחזיר null אם המוצר אינו קיים. */
 async function update(id, data) {
   const columns = Object.keys(data);
   if (columns.length === 0) return findById(id);
@@ -124,13 +115,13 @@ async function update(id, data) {
   return rows[0] || null;
 }
 
-/** מוחק ומחזיר את המוצר שנמחק, או null אם לא היה קיים */
+/** מוחק מוצר ומחזיר אותו, או null אם לא היה קיים. */
 async function remove(id) {
   const { rows } = await query(`DELETE FROM products WHERE id = $1 RETURNING ${COLUMNS}`, [id]);
   return rows[0] || null;
 }
 
-/** רשימת הקטגוריות ותתי-הקטגוריות הקיימות בפועל */
+/** מחזיר את הקטגוריות ותתי-הקטגוריות הקיימות בפועל, עם ספירה. */
 async function listCategories() {
   const { rows } = await query(`
     SELECT category, subcategory, COUNT(*)::int AS product_count

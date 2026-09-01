@@ -1,5 +1,6 @@
+/** מציג את כפתור הוואטסאפ הצף. */
 function WhatsAppButton() {
-  const phone = '972500000099'; // 050-0000099 בפורמט בינלאומי
+  const phone = '972500000099';
   const message = encodeURIComponent('שלום, אני מעוניין במוצר מהאתר שלכם');
   const url = `https://wa.me/${phone}?text=${message}`;
 

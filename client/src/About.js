@@ -1,3 +1,4 @@
+/** מציג את עמוד האודות. */
 function About() {
   return (
     <div className="page-container">

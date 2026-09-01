@@ -1,3 +1,6 @@
+/**
+ * רקע אווירה משתנה לפי הקטגוריה הנבחרת.
+ */
 import { useMemo } from 'react';
 
 const CONFIGS = {
@@ -17,6 +20,7 @@ const CONFIGS = {
 
 const COUNT = 14;
 
+/** מציג רקע אווירה מותאם לקטגוריה. */
 function CategoryAmbience({ categoryId }) {
   const config = CONFIGS[categoryId];
 

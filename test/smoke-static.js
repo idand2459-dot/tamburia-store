@@ -1,14 +1,13 @@
 /**
- * בדיקת עשן זמנית להגשת הקליינט ולכותרות האבטחה.
- * למחיקה אחרי שה-cutover יתייצב.
- *
- *   NEW_URL=http://127.0.0.1:3100 node server/db/smoke-static.js
+ * בודק את הגשת אפליקציית React, את כותרות האבטחה,
+ * ושאף קובץ פנימי אינו נחשף דרך הדפדפן.
  */
 const BASE = process.env.NEW_URL || 'http://127.0.0.1:3100';
 
 let passed = 0;
 let failed = 0;
 
+/** רושם תוצאה של בדיקה בודדת. */
 function check(name, condition, actual) {
   if (condition) {
     passed++;
@@ -26,6 +25,7 @@ async function get(path) {
 
 const isClientHtml = (text) => text.includes('<div id="root">');
 
+/** בודק שאפליקציית React מוגשת נכון עם מדיניות המטמון הנכונה. */
 async function testClient() {
   console.log('\n── הגשת הקליינט');
 
@@ -40,7 +40,6 @@ async function testClient() {
   check('/admin מקבל את index.html (SPA fallback)',
     admin.status === 200 && isClientHtml(admin.text), admin.status);
 
-  // שם הקובץ מכיל hash, ולכן נמשך מתוך ה-HTML
   const asset = root.text.match(/\/static\/js\/main\.[a-z0-9]+\.js/)?.[0];
   check('נמצא נכס JS ב-HTML', Boolean(asset), asset);
 
@@ -56,11 +55,10 @@ async function testClient() {
   check('favicon מוגש', favicon.status === 200, favicon.status);
 }
 
+/** בודק שקבצים פנימיים אינם נחשפים דרך הדפדפן. */
 async function testNothingLeaks() {
   console.log('\n── מה שאסור להיחשף');
 
-  // ה-fallback מחזיר index.html לכל GET לא מוכר. מה שחשוב הוא
-  // שתוכן הקובץ עצמו לא יחזור — לא שהסטטוס יהיה 404.
   const secrets = [
     ['/server.js', 'require('],
     ['/package.json', '"dependencies"'],
@@ -82,6 +80,7 @@ async function testNothingLeaks() {
   }
 }
 
+/** בודק שה-API ממשיך להחזיר JSON ולא נבלע ב-fallback. */
 async function testApi() {
   console.log('\n── ה-API לא נפגע מה-fallback');
 
@@ -100,11 +99,11 @@ async function testApi() {
   const health = await get('/api/health');
   check('/api/health עובד', health.status === 200, health.status);
 
-  // POST לנתיב לא מוכר לא נתפס ע"י ה-fallback, שמוגבל ל-GET
   const post = await fetch(BASE + '/no-such-page', { method: 'POST' });
   check('POST לנתיב לא מוכר → 404 ולא index.html', post.status === 404, post.status);
 }
 
+/** בודק שכותרות האבטחה נשלחות בכל תשובה. */
 async function testHeaders() {
   console.log('\n── כותרות אבטחה');
 
@@ -122,6 +121,7 @@ async function testHeaders() {
   check('הכותרות חלות גם על ה-API', api.headers.get('x-content-type-options') === 'nosniff', null);
 }
 
+/** בודק שתמונות מוגשות ושאין דפדוף בתיקייה. */
 async function testUploads() {
   console.log('\n── תמונות');
 
@@ -141,6 +141,7 @@ async function testUploads() {
   check('אין דפדוף בתיקיית התמונות', !listing.text.includes('Index of'), listing.status);
 }
 
+/** מריץ את כל הבדיקות לפי הסדר. */
 async function main() {
   await testClient();
   await testNothingLeaks();
