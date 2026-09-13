@@ -1,0 +1,39 @@
+/* ==========================================================================
+   Technic Tambour — master stylesheet entry point
+
+   This file only orchestrates. Every rule lives in a partial below, and the
+   import order below IS the cascade order — moving a line changes which rule
+   wins. Add new rules to the partial that owns the component, not here.
+   ========================================================================== */
+
+/* 1. Base & variables */
+@import './base/_variables.css';
+@import './base/_reset.css';
+@import './base/_typography.css';
+
+/* 2. Layout */
+@import './layout/_grid.css';
+@import './layout/_header.css';
+@import './layout/_footer.css';
+
+/* 3. Reusable components */
+@import './components/_buttons.css';
+@import './components/_modals.css';
+@import './components/_notifications.css';
+@import './components/_loading.css';
+
+/* 4. Feature modules */
+@import './features/_admin.css';
+@import './features/_auth.css';
+@import './features/_calculator.css';
+@import './features/_catalog.css';
+@import './features/_cart.css';
+@import './features/_orders.css';
+@import './features/_wishlist.css';
+@import './features/_reviews.css';
+@import './features/_home.css';
+@import './features/_pages.css';
+
+/* 5. Theme overrides — must stay last: these repaint components
+      per category and rely on winning over the rules above. */
+@import './features/_category-themes.css';

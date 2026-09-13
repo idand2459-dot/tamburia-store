@@ -1,0 +1,216 @@
+/* ==========================================================================
+   Modals, dialogs and overlay backdrops
+   ========================================================================== */
+
+/* Overlay */
+.nav-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+}
+
+/* ===== CART MODAL ===== */
+.cart-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 400;
+}
+
+.cart-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 380px;
+  height: 100vh;
+  background: white;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+  overflow-y: auto;
+}
+
+.cart-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+}
+
+.cart-modal-header h3 {
+  font-size: 1.2rem;
+  color: #1a1a2e;
+  font-weight: 700;
+}
+
+.cart-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #999;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.cart-close-btn:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .cart-modal {
+      width: 100vw;
+    }
+}
+
+.search-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 600;
+}
+
+.search-popup {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 560px;
+  max-width: calc(100vw - 32px);
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+  z-index: 700;
+  overflow: hidden;
+}
+
+.search-popup-input-wrap {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  gap: 12px;
+}
+
+.search-popup-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.search-popup-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 1.1rem;
+  font-family: 'Segoe UI', sans-serif;
+  direction: rtl;
+  color: #1a1a2e;
+  background: transparent;
+}
+
+.search-popup-input::placeholder {
+  color: #aaa;
+}
+
+.search-popup-close {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.search-popup-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+@media (prefers-color-scheme: dark) {
+  /* עגלה */
+  .cart-modal {
+      background: #1a1a2e;
+      color: #e0e0e0;
+    }
+
+  .cart-modal-header {
+      border-bottom-color: #2d2d4e;
+      background: #1a1a2e;
+    }
+
+  .cart-modal-header h3 { color: #e0e0e0; }
+
+  /* חיפוש גלובלי */
+  .search-popup { background: #1a1a2e; }
+
+  .search-popup-input-wrap { border-bottom-color: #2d2d4e; background: #1a1a2e; }
+
+  .search-popup-input { color: #e0e0e0; background: transparent; }
+
+  .search-popup-input::placeholder { color: #555; }
+}
+
+/* ===== ORDER HISTORY ===== */
+.order-history-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 400;
+}
+
+.order-history-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 420px;
+  height: 100vh;
+  background: white;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+  overflow-y: auto;
+}
+
+@media (max-width: 480px) {
+  .order-history-modal { width: 100vw; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .order-history-modal { background: #1a1a2e; }
+}
+
+/* ===== WISHLIST ===== */
+.wishlist-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 400;
+}
+
+.wishlist-modal {
+  position: fixed; top: 0; left: 0;
+  width: 380px; height: 100vh;
+  background: white; z-index: 500;
+  display: flex; flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+  overflow-y: auto;
+}
+
+@media (max-width: 480px) {
+  .wishlist-modal { width: 100vw; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .wishlist-modal { background: #1a1a2e; }
+}

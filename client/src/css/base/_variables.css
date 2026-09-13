@@ -1,0 +1,73 @@
+/* ==========================================================================
+   Design tokens
+
+   NOTE: the stylesheet this was split from had no custom properties — every
+   colour was written as a literal hex. These tokens are the palette that was
+   actually in use, extracted by frequency, so new code has one place to pull
+   from. Existing declarations were deliberately left as literals: rewriting
+   ~600 colour declarations is a behaviour-changing edit, not a file split, so
+   it belongs in its own pass. Migrate a component's literals to these tokens
+   when you next touch that component.
+   ========================================================================== */
+
+:root {
+  /* Brand */
+  --color-navy: #1a1a2e;          /* primary surface: header, navbar, headings */
+  --color-navy-deep: #16213e;     /* header gradient end */
+  --color-red: #e63946;           /* primary accent: CTAs, badges, active state */
+  --color-red-dark: #c1121f;      /* accent hover / pressed */
+  --color-blue: #457b9d;          /* secondary accent */
+  --color-green: #2d6a4f;         /* success, in-stock */
+  --color-green-dark: #1b4332;
+  --color-whatsapp: #25d366;
+
+  /* Light theme surfaces */
+  --color-bg: #f8f8f6;            /* page background */
+  --color-surface: #ffffff;
+  --color-surface-alt: #f5f5f5;
+  --color-border: #e0e0e0;
+  --color-border-soft: #f0f0f0;
+
+  /* Dark theme surfaces (used inside prefers-color-scheme: dark) */
+  --color-bg-dark: #0f0f1a;
+  --color-bg-dark-deep: #0a0a1a;
+  --color-surface-dark: #2d2d4e;
+  --color-text-dark: #e0e0e0;
+
+  /* Text */
+  --color-text: #1a1a2e;
+  --color-text-muted: #555555;
+  --color-text-subtle: #888888;
+  --color-text-faint: #aaaaaa;
+
+  /* Feedback tints */
+  --color-error-bg: #fff5f5;
+  --color-error-border: #ffe0e0;
+  --color-success-bg: #d4edda;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 40px;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 20px;
+
+  /* Elevation */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+
+  /* Motion */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.25s ease;
+
+  /* Layout */
+  --content-max-width: 1200px;
+  --font-family-base: 'Heebo', 'Segoe UI', sans-serif;
+}

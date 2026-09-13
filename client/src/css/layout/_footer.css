@@ -1,0 +1,187 @@
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+/* ===== FOOTER ===== */
+.site-footer {
+  background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%);
+  color: #ccc;
+  margin-top: 60px;
+  direction: rtl;
+}
+
+.footer-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 48px 40px 32px;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1.2fr 1fr;
+  gap: 40px;
+}
+
+/* עמודות */
+.footer-col {}
+
+.footer-logo {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 12px;
+}
+
+.footer-about-text {
+  font-size: 0.88rem;
+  color: #888;
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+
+.footer-whatsapp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #25d366;
+  color: white;
+  padding: 9px 18px;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.2s;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+}
+
+.footer-whatsapp-btn:hover {
+  background: #1ebe59;
+  transform: translateY(-1px);
+}
+
+.footer-col-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e63946;
+  display: inline-block;
+}
+
+/* לינקים */
+.footer-links {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-links-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+}
+
+.footer-link {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  padding: 0;
+  text-align: right;
+  transition: color 0.15s;
+}
+
+.footer-link:hover { color: #e63946; }
+
+/* צור קשר */
+.footer-contact-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer-contact-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.footer-contact-icon { font-size: 1rem; flex-shrink: 0; }
+
+.footer-contact-link {
+  color: #aaa;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.footer-contact-link:hover { color: #e63946; }
+
+/* תחתית */
+.footer-bottom {
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 16px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 0.78rem;
+  color: #555;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-bottom-sep { color: #333; }
+
+.footer-bottom-link {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: color 0.15s;
+}
+
+.footer-bottom-link:hover { color: #e63946; }
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .site-footer {
+      background: linear-gradient(135deg, #050510 0%, #0a0a1a 100%);
+    }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .footer-main {
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      padding: 40px 24px 24px;
+    }
+}
+
+@media (max-width: 560px) {
+  .footer-main {
+      grid-template-columns: 1fr;
+      gap: 28px;
+      padding: 32px 20px 20px;
+    }
+
+  .footer-bottom {
+      flex-direction: column;
+      gap: 6px;
+      padding: 14px 20px;
+    }
+
+  .footer-bottom-sep { display: none; }
+}
+
+.site-footer         { margin-top: 60px; }
+
+@media (max-width: 768px) {
+  .site-footer      { margin-top: 40px; }
+}

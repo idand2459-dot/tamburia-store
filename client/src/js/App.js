@@ -2,7 +2,7 @@
  * שורש האפליקציה: ניתוב בין העמודים, ניהול העגלה, המועדפים ותהליך ההזמנה.
  */
 import { useState, useEffect } from 'react';
-import './App.css';
+import '../css/app.css';
 import Admin from './Admin';
 import AdminLogin from './AdminLogin';
 import CategoryPage from './CategoryPage';

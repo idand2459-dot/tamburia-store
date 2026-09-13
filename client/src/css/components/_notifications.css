@@ -1,0 +1,55 @@
+/* ==========================================================================
+   Banners, alerts and inline errors
+   ========================================================================== */
+
+/* ===== MARQUEE BANNER ===== */
+.marquee-banner {
+  background: #e63946;
+  color: white;
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 8px 0;
+  position: relative;
+}
+
+.marquee-track {
+  display: inline-flex;
+  animation: marquee-scroll 35s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee-item {
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.marquee-sep {
+  color: rgba(255,255,255,0.4);
+  font-size: 0.7rem;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .marquee-banner {
+      background: #c1121f;
+    }
+}
+
+/* ===== בדיקת אזור משלוח ===== */
+.input-error {
+  border-color: #e63946 !important;
+  background: #fff5f5 !important;
+}
