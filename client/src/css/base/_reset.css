@@ -1,0 +1,24 @@
+/* ==========================================================================
+   Reset & base element defaults
+   ========================================================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f8f8f6;
+  direction: rtl;
+  color: #1a1a2e;
+}
+
+@media (prefers-color-scheme: dark) {
+  /* רקע כללי */
+  body {
+      background-color: #0f0f1a;
+      color: #e0e0e0;
+    }
+}

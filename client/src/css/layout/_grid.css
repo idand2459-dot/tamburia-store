@@ -1,0 +1,21 @@
+/* ==========================================================================
+   Layout containers and shared page wrappers
+   ========================================================================== */
+
+/* Main content column, shared by every page */
+main {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+/* ===== PAGES SHARED ===== */
+.page-container {
+  min-height: calc(100vh - 64px);
+  background: #f8f8f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  /* דפי about/contact/returns */
+  .page-container { background: #0f0f1a; }
+}
