@@ -239,6 +239,22 @@ async function testStats(ids) {
 
   const scoped = await call('GET', `/reviews/stats?type=product&product_id=${ids.productId}`);
   check('סטטיסטיקה מסוננת', scoped.status === 200, scoped.status);
+
+  // החוזה שעליו נשען סרגל הנתונים בעמוד הבית: הוא מציג את הדירוג
+  // רק כש-total גדול מאפס, ולכן חייב לקבל מספרים ולא null/undefined
+  // גם כשאין חוות דעת בכלל — אחרת הוא לא יכול להחליט להסתיר.
+  const empty = await call('GET', '/reviews/stats?type=product&product_id=999999');
+  check('אין חוות דעת → total 0', empty.body.total === 0, empty.body.total);
+  check('אין חוות דעת → average 0 ולא null',
+    empty.body.average === 0, empty.body.average);
+  check('אין חוות דעת → התפלגות מאופסת',
+    [1, 2, 3, 4, 5].every((r) => empty.body.distribution[String(r)] === 0),
+    empty.body.distribution);
+
+  const bar = await call('GET', '/reviews/stats');
+  check('הדירוג בעמוד הבית מגיע ממספרים אמיתיים',
+    typeof bar.body.average === 'number' && bar.body.average >= 0 && bar.body.average <= 5,
+    bar.body.average);
 }
 
 /** מוחק את כל מה שהבדיקה יצרה ומאמת שלא נשארו שאריות. */
