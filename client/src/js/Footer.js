@@ -63,7 +63,10 @@ function Footer({ onNavigate, onSelectCategory }) {
           <ul className="footer-links footer-links-2col">
             {categories.map(cat => (
               <li key={cat.id}>
-                <button onClick={() => { onNavigate('home'); onSelectCategory && onSelectCategory(cat); }} className="footer-link">
+                {/* רק בחירת הקטגוריה: פעם היה צריך גם לאפס את העמוד,
+                    ועכשיו הניווט עושה את זה. קריאה כפולה הייתה מוסיפה
+                    רשומה מיותרת להיסטוריה ושוברת את כפתור "חזור". */}
+                <button onClick={() => onSelectCategory && onSelectCategory(cat)} className="footer-link">
                   {cat.label}
                 </button>
               </li>
