@@ -3,3 +3,12 @@ node_modules
 # סודות — לא נכנס לגיט
 .env
 .env.local
+
+# תמונות שהועלו דרך האדמין — תוכן של הרצה, לא של הקוד.
+# uploads/* ולא uploads/, כדי שהתיקייה עצמה לא תוחרג ו-.gitkeep
+# יוכל לחזור פנימה. בלי זה גיט לא נכנס לתיקייה בכלל.
+uploads/*
+!uploads/.gitkeep
+
+# מניפסט נתוני הדמו — מקומי, לא נכנס לגיט
+scripts/.seed-demo-manifest.json
