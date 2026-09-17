@@ -386,10 +386,6 @@ function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
       {/* ===== STATS TAB ===== */}
       {activeTab === 'stats' && (
         <div className="stats-page">
-          {/* כפתור בדיקת confetti */}
-          <div style={{textAlign:'left', marginBottom: 8}}>
-            <button onClick={() => setShowConfetti(true)} style={{background:'none', border:'none', cursor:'pointer', fontSize:'0.8rem', color:'#aaa'}}>🎉 בדוק אנימציה</button>
-          </div>
           {/* כרטיסי מכירות */}
           <div className="stats-grid">
             <div className="stats-card">
