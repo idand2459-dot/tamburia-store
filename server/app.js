@@ -70,6 +70,10 @@ function createApp() {
     maxAge: '7d',
   }));
 
+  // עוצר כאן: תמונה חסרה היא 404, ולא נפילה ל-SPA fallback שהחזירה
+  // את index.html עם 200 — תשובה שנראית תקינה ומסתירה קישור שבור.
+  app.use('/uploads', notFoundHandler);
+
   app.use('/api', require('./routes'));
   app.use('/api', notFoundHandler);
 

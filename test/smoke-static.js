@@ -121,24 +121,41 @@ async function testHeaders() {
   check('הכותרות חלות גם על ה-API', api.headers.get('x-content-type-options') === 'nosniff', null);
 }
 
-/** בודק שתמונות מוגשות ושאין דפדוף בתיקייה. */
+/**
+ * בודק שתמונות מוגשות ושאין דפדוף בתיקייה.
+ *
+ * הקובץ לבדיקה נבחר מהדיסק ולא מתוך image_url של המוצרים: חלק
+ * מהרשומות במסד מפנות לקבצים שלא הועלו בפועל, ובדיקה שנסמכת עליהן
+ * מודדת את איכות הנתונים במקום את מנגנון ההגשה.
+ */
 async function testUploads() {
   console.log('\n── תמונות');
 
-  const res = await get('/api/products');
-  const uploaded = JSON.parse(res.text)
-    .flatMap((p) => [p.image_url, ...(p.images || [])])
-    .find((url) => typeof url === 'string' && url.startsWith('/uploads/'));
+  const fs = require('fs');
+  const path = require('path');
+  const uploadsDir = path.join(__dirname, '..', 'uploads');
 
-  if (!uploaded) {
-    console.log('  — אין תמונה מועלית לבדוק, מדלג');
-    return;
+  const real = fs.existsSync(uploadsDir)
+    ? fs.readdirSync(uploadsDir).find((f) => /\.(png|jpe?g|webp|gif|avif)$/i.test(f))
+    : null;
+
+  if (real) {
+    const image = await get(`/uploads/${encodeURIComponent(real)}`);
+    check(`תמונה קיימת מוגשת (${real})`, image.status === 200, image.status);
+  } else {
+    console.log('  — אין תמונה בתיקייה לבדוק, מדלג על בדיקת ההגשה');
   }
-  const image = await get(uploaded);
-  check(`תמונה מוגשת (${uploaded})`, image.status === 200, image.status);
 
   const listing = await get('/uploads/');
   check('אין דפדוף בתיקיית התמונות', !listing.text.includes('Index of'), listing.status);
+
+  // תמונה חסרה חייבת להיות 404. אם ה-SPA fallback תופס אותה, מתקבל
+  // index.html עם 200 — קישור שבור שנראה כאילו הוא עובד.
+  const missing = await get('/uploads/does-not-exist-9f3a1c.png');
+  check('תמונה חסרה → 404', missing.status === 404, missing.status);
+  check('תמונה חסרה אינה מחזירה את index.html',
+    !isClientHtml(missing.text),
+    missing.text.slice(0, 80));
 }
 
 /** מריץ את כל הבדיקות לפי הסדר. */
