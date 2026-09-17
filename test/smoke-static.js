@@ -40,6 +40,24 @@ async function testClient() {
   check('/admin מקבל את index.html (SPA fallback)',
     admin.status === 200 && isClientHtml(admin.text), admin.status);
 
+  // נתיבי הקליינט מטופלים בדפדפן, ולכן השרת חייב להחזיר להם את
+  // index.html — אחרת קישור ישיר או רענון היו נותנים 404.
+  const clientRoutes = [
+    '/category/tools',
+    '/product/216',
+    '/cart',
+    '/checkout',
+    '/orders/lookup',
+    '/admin/orders',
+    '/route/that/does/not/exist',
+  ];
+  for (const route of clientRoutes) {
+    const res = await get(route);
+    check(`${route} מקבל את index.html`,
+      res.status === 200 && isClientHtml(res.text),
+      `${res.status} ${res.text.slice(0, 40)}`);
+  }
+
   const asset = root.text.match(/\/static\/js\/main\.[a-z0-9]+\.js/)?.[0];
   check('נמצא נכס JS ב-HTML', Boolean(asset), asset);
 

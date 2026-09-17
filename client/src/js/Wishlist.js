@@ -40,13 +40,16 @@ function Wishlist({ onClose, onSelectProduct }) {
               <div className="wishlist-list">
                 {items.map(product => (
                   <div key={product.id} className="wishlist-item">
-                    <div className="wishlist-item-img" onClick={() => { onSelectProduct(product); onClose(); }}>
+                    {/* רק onSelectProduct: הסגירה היא כבר חלק מהניווט
+                        לעמוד המוצר, וקריאה ל-onClose אחריו הייתה
+                        מחזירה אחורה ומבטלת אותו. */}
+                    <div className="wishlist-item-img" onClick={() => onSelectProduct(product)}>
                       {product.image_url
                         ? <img src={product.image_url} alt={product.name} />
                         : <span>🖼️</span>
                       }
                     </div>
-                    <div className="wishlist-item-info" onClick={() => { onSelectProduct(product); onClose(); }}>
+                    <div className="wishlist-item-info" onClick={() => onSelectProduct(product)}>
                       <span className="wishlist-item-name">{product.name}</span>
                       <span className="wishlist-item-price">₪{product.price}</span>
                       <span className={`wishlist-item-stock ${product.in_stock !== false ? 'in' : 'out'}`}>

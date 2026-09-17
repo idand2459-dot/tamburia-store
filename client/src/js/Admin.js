@@ -26,8 +26,14 @@ const STATUS_CONFIG = {
   completed:  { label: 'הושלמה', color: '#16a34a', bg: '#f0fdf4' },
 };
 
-/** מציג את מסך הניהול על כל לשוניותיו. */
-function Admin({ onBack, onExpired }) {
+/**
+ * מציג את מסך הניהול על כל לשוניותיו.
+ *
+ * הלשונית הפעילה נשלטת מבחוץ, לפי הכתובת (/admin/:tab), כדי שלכל
+ * לשונית תהיה כתובת אמיתית. setActiveTab למטה מנווט במקום לעדכן
+ * state מקומי, ולכן כל הקריאות הקיימות לו ממשיכות לעבוד.
+ */
+function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
   const expiredRef = useRef(onExpired);
   expiredRef.current = onExpired;
 
@@ -38,7 +44,8 @@ function Admin({ onBack, onExpired }) {
     return res;
   }, []);
 
-  const [activeTab, setActiveTab] = useState('stats');
+  const activeTab = tab;
+  const setActiveTab = onTabChange;
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [filterCategory, setFilterCategory] = useState('all');
