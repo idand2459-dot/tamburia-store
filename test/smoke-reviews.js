@@ -200,9 +200,20 @@ async function testReadUpdate(ids) {
   check('אישור לחוות דעת שאינה קיימת → 404', notThere.status === 404, notThere.status);
 }
 
-/** בודק את חישוב הממוצע וההתפלגות. */
+/**
+ * בודק את חישוב הממוצע וההתפלגות.
+ *
+ * הבדיקה נמדדת כהפרש לפני ואחרי, ולא מול מספרים מוחלטים: הסטטיסטיקה
+ * היא על כל חוות הדעת המאושרות במסד, ולכן כל חוות דעת אמיתית אחת
+ * הייתה שוברת בדיקה שמצפה ל-total מוחלט.
+ */
 async function testStats(ids) {
   console.log('\n── סטטיסטיקה');
+
+  const before = await call('GET', '/reviews/stats');
+  const baseTotal = before.body.total;
+  const baseFives = before.body.distribution['5'];
+  const baseFours = before.body.distribution['4'];
 
   await call('PUT', `/reviews/${ids.storeId}/approve`, { approved: true });
   await call('PUT', `/reviews/${ids.productReviewId}/approve`, { approved: true });
@@ -211,9 +222,20 @@ async function testStats(ids) {
   check('מבנה התשובה',
     typeof stats.body.total === 'number' && typeof stats.body.average === 'number' && stats.body.distribution,
     stats.body);
-  check('סופר רק מאושרות', stats.body.total === 2, stats.body.total);
-  check('ממוצע 4.5', stats.body.average === 4.5, stats.body.average);
-  check('התפלגות', stats.body.distribution['5'] === 1 && stats.body.distribution['4'] === 1, stats.body.distribution);
+  check('סופר רק מאושרות — שתיים נוספו',
+    stats.body.total === baseTotal + 2,
+    `${baseTotal} → ${stats.body.total}`);
+  check('התפלגות — דירוג 5 ודירוג 4 עלו באחד',
+    stats.body.distribution['5'] === baseFives + 1 && stats.body.distribution['4'] === baseFours + 1,
+    stats.body.distribution);
+
+  // הממוצע חייב להיות עקבי עם ההתפלגות שהוחזרה באותה תשובה.
+  const sum = Object.entries(stats.body.distribution)
+    .reduce((acc, [rating, count]) => acc + Number(rating) * count, 0);
+  const expected = Math.round((sum / stats.body.total) * 100) / 100;
+  check('הממוצע עקבי עם ההתפלגות',
+    Math.abs(stats.body.average - expected) < 0.005,
+    `${stats.body.average} מול ${expected}`);
 
   const scoped = await call('GET', `/reviews/stats?type=product&product_id=${ids.productId}`);
   check('סטטיסטיקה מסוננת', scoped.status === 200, scoped.status);
