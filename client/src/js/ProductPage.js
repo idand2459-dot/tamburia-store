@@ -35,6 +35,11 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [inWishlist, setInWishlist] = useState(false);
 
+  // תמונות שהשרת לא מצא. חלק מהרשומות מפנות לקבצים שלא הועלו, ובלי
+  // זה הדפדפן מצייר אייקון של תמונה שבורה במקום הפלייסהולדר.
+  const [brokenImages, setBrokenImages] = useState(() => new Set());
+  const markBroken = (src) => setBrokenImages((prev) => new Set(prev).add(src));
+
   const allImages = [];
   if (product.image_url) allImages.push(product.image_url);
   if (product.images && Array.isArray(product.images)) {
@@ -143,8 +148,13 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
         {/* Gallery */}
         <div className="product-page-gallery">
           <div className="product-page-image-wrap">
-            {allImages.length > 0
-              ? <img src={allImages[currentImageIndex]} alt={product.name} className="product-page-image" />
+            {allImages.length > 0 && !brokenImages.has(allImages[currentImageIndex])
+              ? <img
+                  src={allImages[currentImageIndex]}
+                  alt={product.name}
+                  className="product-page-image"
+                  onError={() => markBroken(allImages[currentImageIndex])}
+                />
               : <div className="product-page-no-image">אין תמונה</div>
             }
             {hasMultipleImages && (
@@ -163,7 +173,7 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
             <div className="gallery-thumbnails">
               {allImages.map((img, i) => (
                 <button key={i} className={`gallery-thumb ${i === currentImageIndex ? 'active' : ''}`} onClick={() => setCurrentImageIndex(i)}>
-                  <img src={img} alt={`תמונה ${i + 1}`} />
+                  <img src={img} alt={`תמונה ${i + 1}`} onError={() => markBroken(img)} />
                 </button>
               ))}
             </div>
@@ -343,7 +353,7 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
           <div className="related-grid">
             {recentlyViewed.slice(0, 3).map(p => (
               <div key={p.id} className="related-card" onClick={() => onSelectProduct(p)}>
-                {p.image_url ? <img src={p.image_url} alt={p.name} className="related-img" /> : <div className="related-no-img">🖼️</div>}
+                {p.image_url && !brokenImages.has(p.image_url) ? <img src={p.image_url} alt={p.name} className="related-img" onError={() => markBroken(p.image_url)} /> : <div className="related-no-img">🖼️</div>}
                 <div className="related-info">
                   <span className="related-name">{p.name}</span>
                   <span className="related-price">₪{p.price}</span>
@@ -362,7 +372,7 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
           <div className="related-grid">
             {relatedProducts.map(p => (
               <div key={p.id} className="related-card" onClick={() => onSelectProduct(p)}>
-                {p.image_url ? <img src={p.image_url} alt={p.name} className="related-img" /> : <div className="related-no-img">🖼️</div>}
+                {p.image_url && !brokenImages.has(p.image_url) ? <img src={p.image_url} alt={p.name} className="related-img" onError={() => markBroken(p.image_url)} /> : <div className="related-no-img">🖼️</div>}
                 <div className="related-info">
                   <span className="related-name">{p.name}</span>
                   <span className="related-price">₪{p.price}</span>
