@@ -177,7 +177,6 @@ test/            five end-to-end suites, 237 checks
 scripts/         CSV product import, demo-data seeding
 docs/images/     screenshots used by this README
 uploads/         admin image uploads — contents gitignored
-legacy/          the first static prototype, archived and not served
 ```
 
 ### Design decisions
