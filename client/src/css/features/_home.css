@@ -10,14 +10,16 @@
    theme. See the note on that rule.
    -------------------------------------------------------------------------- */
 .hero {
-  /* Three layers: a purple orb low on the left, a red one higher on the
-     right, and the dark base underneath. The orbs are what give the
-     background depth — a single linear-gradient reads as flat navy. */
+  /* Three static layers: a faint purple wash low on the left, a fainter red
+     one higher on the right, and the dark base underneath. Held deliberately
+     weak — the first attempt used double these values plus two animated,
+     blurred orbs on top, and the result read as a lava lamp. Depth only.
+     Nothing in this background moves. */
   background:
     radial-gradient(ellipse 600px 400px at 20% 60%,
-      rgba(124, 58, 237, 0.18) 0%, transparent 70%),
+      rgba(124, 58, 237, 0.09) 0%, transparent 70%),
     radial-gradient(ellipse 500px 350px at 80% 40%,
-      rgba(230, 57, 70, 0.12) 0%, transparent 70%),
+      rgba(230, 57, 70, 0.06) 0%, transparent 70%),
     linear-gradient(160deg, #050810 0%, #0f172a 40%, #1a1a2e 70%, #1e2d4d 100%);
   color: white;
   padding: 80px 24px 110px;
@@ -56,52 +58,34 @@
   pointer-events: none;
 }
 
-/* Drifting glow orbs — ambient movement, deliberately close to invisible.
-   Rendered as divs by HomePage.js because ::before and ::after on .hero are
-   already taken by the dot grid and the bottom fade. Only `transform` is
-   animated, so the drift stays on the compositor. */
-.hero-glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  pointer-events: none;
-  animation: glow-drift 8s ease-in-out infinite alternate;
-}
+/* Staggered entry.
+   `both` holds the element at opacity 0 until its delay is up, so the later
+   ones don't flash into view before animating.
 
-.hero-glow-purple {
-  width: 400px;
-  height: 400px;
-  background: rgba(124, 58, 237, 0.2);
-  top: 10%;
-  left: 10%;
-}
-
-.hero-glow-red {
-  width: 300px;
-  height: 300px;
-  background: rgba(230, 57, 70, 0.15);
-  bottom: 20%;
-  right: 15%;
-  /* offset so the two orbs never drift in lockstep */
-  animation-delay: -3s;
-}
-
-@keyframes glow-drift {
-  from { transform: translate(0, 0) scale(1); }
-  to   { transform: translate(30px, -20px) scale(1.1); }
-}
-
-/* Staggered entry — `both` holds the element at opacity 0 until its delay is
-   up, so the later ones don't flash into view before animating. */
+   The first version of this (24px over 0.5s, whole sequence done by 1.05s)
+   was invisible in practice: nothing overrode it, it simply ran out before
+   anyone could see it. The clock on a CSS animation starts when the element
+   first gets a computed style — which here is React's first commit, a frame or
+   two ahead of the first paint — so a short animation has already spent part
+   of itself by the time there is anything on screen. Hence the longer travel,
+   the longer duration, and the wider gaps between the four. */
 @keyframes hero-fade-up {
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(36px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* one shared timing for all four; only the delay differs */
+.hero-badge,
+.hero-title,
+.hero-sub,
+.hero-stats {
+  animation: hero-fade-up 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 .hero-inner {
@@ -125,7 +109,7 @@
   font-weight: 600;
   letter-spacing: 0.5px;
   margin-bottom: 24px;
-  animation: hero-fade-up 0.5s ease-out both;
+  animation-delay: 0s;
 }
 
 .hero-title {
@@ -135,7 +119,7 @@
   margin-bottom: 20px;
   letter-spacing: -0.5px;
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
-  animation: hero-fade-up 0.6s ease-out 0.1s both;
+  animation-delay: 0.18s;
 }
 
 .hero-accent {
@@ -150,7 +134,7 @@
   margin-bottom: 48px;
   letter-spacing: 0.3px;
   line-height: 1.6;
-  animation: hero-fade-up 0.6s ease-out 0.2s both;
+  animation-delay: 0.36s;
 }
 
 .hero-stats {
@@ -165,7 +149,7 @@
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  animation: hero-fade-up 0.7s ease-out 0.35s both;
+  animation-delay: 0.54s;
 }
 
 .hero-stat {
@@ -215,13 +199,6 @@
       font-size: 2.2rem;
     }
 
-  /* the orbs are wider than a phone screen; at that size they stop reading as
-     ambient glow and just tint the whole background */
-  .hero-glow-purple,
-  .hero-glow-red {
-      display: none;
-    }
-
   .hero-stats {
       flex-wrap: wrap;
       gap: 8px;
@@ -242,9 +219,8 @@
 }
 
 /* Someone who asked the OS for less motion gets the Hero without any: the
-   entry stagger lands on its final frame, and the orbs stop drifting. */
+   entry stagger lands straight on its final frame. */
 @media (prefers-reduced-motion: reduce) {
-  .hero-glow,
   .hero-badge,
   .hero-title,
   .hero-sub,

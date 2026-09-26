@@ -21,6 +21,7 @@
 @import './components/_modals.css';
 @import './components/_notifications.css';
 @import './components/_loading.css';
+@import './components/_reveal.css';
 
 /* 4. Feature modules */
 @import './features/_admin.css';
