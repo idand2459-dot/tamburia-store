@@ -11,7 +11,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { CATEGORIES, STATUS_CONFIG, formatDate } from '../pages/admin/adminConstants';
 import { useWebSocket } from './useWebSocket';
-import { errorMessageFrom } from '../utils/apiErrors';
+import { errorMessageFrom, NETWORK_ERROR } from '../utils/apiErrors';
 
 // הסקר הוא מסלול חלופי בלבד מאז שיש WebSocket: הודעה על הזמנה חדשה
 // מגיעה תוך פחות משנייה, והסקר נשאר רק למקרה שהחיבור למטה.
@@ -79,27 +79,33 @@ export function useAdminOrders(api) {
 
   /** משנה את סטטוס ההזמנה. */
   const handleStatusChange = useCallback(async (orderId, status) => {
-    const res = await api(`/api/orders/${orderId}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+    try {
+      const res = await api(`/api/orders/${orderId}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
 
-    if (!res.ok) {
-      setOrdersError(await errorMessageFrom(res, `שינוי הסטטוס של הזמנה #${orderId} נכשל.`));
-      return;
+      if (!res.ok) {
+        setOrdersError(await errorMessageFrom(res, `שינוי הסטטוס של הזמנה #${orderId} נכשל.`));
+        return;
+      }
+      setOrdersError(''); fetchOrders();
+    } catch {
+      setOrdersError(NETWORK_ERROR);
     }
-
-    setOrdersError(''); fetchOrders();
   }, [api, fetchOrders]);
 
   /** מוחק הזמנה לאחר אישור המשתמש. */
   const handleDeleteOrder = useCallback(async (id) => {
     if (!window.confirm('למחוק את ההזמנה?')) return;
 
-    const res = await api('/api/orders/' + id, { method: 'DELETE' });
-    if (!res.ok) {
-      setOrdersError(await errorMessageFrom(res, `מחיקת הזמנה #${id} נכשלה.`));
-      return;
+    try {
+      const res = await api('/api/orders/' + id, { method: 'DELETE' });
+      if (!res.ok) {
+        setOrdersError(await errorMessageFrom(res, `מחיקת הזמנה #${id} נכשלה.`));
+        return;
+      }
+      setOrdersError(''); fetchOrders();
+    } catch {
+      setOrdersError(NETWORK_ERROR);
     }
-
-    setOrdersError(''); fetchOrders();
   }, [api, fetchOrders]);
 
   /** מחשב את נתוני לשונית הסטטיסטיקות. */

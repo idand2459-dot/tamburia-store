@@ -10,7 +10,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import { CATEGORIES } from '../pages/admin/adminConstants';
-import { errorMessageFrom } from '../utils/apiErrors';
+import { errorMessageFrom, NETWORK_ERROR } from '../utils/apiErrors';
 
 const CSV_IDS = CATEGORIES.map(c => c.id);
 
@@ -100,30 +100,34 @@ export function useAdminProducts(api) {
    */
   const createProduct = useCallback(async (fields, newImages) => {
     setUploadingImages(true);
+    try {
+      let allImageUrls = [];
+      if (newImages.length > 0) {
+        const upload = await uploadImages(newImages);
+        if (!upload.ok) { setProductsError(upload.error); return false; }
+        allImageUrls = upload.imageUrls;
+      }
 
-    let allImageUrls = [];
-    if (newImages.length > 0) {
-      const upload = await uploadImages(newImages);
-      if (!upload.ok) {
-        setUploadingImages(false); setProductsError(upload.error);
+      const res = await api('/api/products', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productBody(fields, allImageUrls))
+      });
+
+      if (!res.ok) {
+        setProductsError(await errorMessageFrom(res, 'הוספת המוצר נכשלה.'));
         return false;
       }
-      allImageUrls = upload.imageUrls;
-    }
 
-    const res = await api('/api/products', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(productBody(fields, allImageUrls))
-    });
-
-    if (!res.ok) {
-      setUploadingImages(false);
-      setProductsError(await errorMessageFrom(res, 'הוספת המוצר נכשלה.'));
+      setProductsError(''); fetchProducts();
+      return true;
+    } catch {
+      setProductsError(NETWORK_ERROR);
       return false;
+    } finally {
+      // ב-finally ולא בכל מסלול בנפרד: כך הכפתור משתחרר גם כשהבקשה
+      // זרקה, ולא נשאר נעול על "מעלה..." עד רענון הדף.
+      setUploadingImages(false);
     }
-
-    setUploadingImages(false); setProductsError(''); fetchProducts();
-    return true;
   }, [api, uploadImages, fetchProducts]);
 
   /**
@@ -132,59 +136,67 @@ export function useAdminProducts(api) {
    */
   const updateProduct = useCallback(async (id, fields, existingImages, newImages) => {
     setUploadingImages(true);
+    try {
+      let newUrls = [];
+      if (newImages.length > 0) {
+        const upload = await uploadImages(newImages);
+        if (!upload.ok) { setProductsError(upload.error); return false; }
+        newUrls = upload.imageUrls;
+      }
 
-    let newUrls = [];
-    if (newImages.length > 0) {
-      const upload = await uploadImages(newImages);
-      if (!upload.ok) {
-        setUploadingImages(false); setProductsError(upload.error);
+      const allUrls = [...existingImages, ...newUrls];
+      const res = await api('/api/products/' + id, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productBody(fields, allUrls))
+      });
+
+      if (!res.ok) {
+        setProductsError(await errorMessageFrom(res, 'שמירת המוצר נכשלה.'));
         return false;
       }
-      newUrls = upload.imageUrls;
-    }
 
-    const allUrls = [...existingImages, ...newUrls];
-    const res = await api('/api/products/' + id, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(productBody(fields, allUrls))
-    });
-
-    if (!res.ok) {
-      setUploadingImages(false);
-      setProductsError(await errorMessageFrom(res, 'שמירת המוצר נכשלה.'));
+      setProductsError(''); fetchProducts();
+      return true;
+    } catch {
+      setProductsError(NETWORK_ERROR);
       return false;
+    } finally {
+      setUploadingImages(false);
     }
-
-    setUploadingImages(false); setProductsError(''); fetchProducts();
-    return true;
   }, [api, uploadImages, fetchProducts]);
 
   /** מוחק מוצר לאחר אישור המשתמש. */
   const deleteProduct = useCallback(async (id) => {
     if (!window.confirm('למחוק את המוצר?')) return;
 
-    const res = await api('/api/products/' + id, { method: 'DELETE' });
-    if (!res.ok) {
-      setProductsError(await errorMessageFrom(res, 'מחיקת המוצר נכשלה.'));
-      return;
+    try {
+      const res = await api('/api/products/' + id, { method: 'DELETE' });
+      if (!res.ok) {
+        setProductsError(await errorMessageFrom(res, 'מחיקת המוצר נכשלה.'));
+        return;
+      }
+      setProductsError(''); fetchProducts();
+    } catch {
+      setProductsError(NETWORK_ERROR);
     }
-
-    setProductsError(''); fetchProducts();
   }, [api, fetchProducts]);
 
   /** מחליף את סימון המלאי של המוצר. */
   const toggleStock = useCallback(async (product) => {
-    const res = await api('/api/products/' + product.id, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: product.name, price: product.price, in_stock: !product.in_stock, image_url: product.image_url || '', images: product.images || [], colors: product.colors || [], category: product.category, sku: product.sku || '', description: product.description || '' })
-    });
+    try {
+      const res = await api('/api/products/' + product.id, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: product.name, price: product.price, in_stock: !product.in_stock, image_url: product.image_url || '', images: product.images || [], colors: product.colors || [], category: product.category, sku: product.sku || '', description: product.description || '' })
+      });
 
-    if (!res.ok) {
-      setProductsError(await errorMessageFrom(res, 'עדכון המלאי נכשל.'));
-      return;
+      if (!res.ok) {
+        setProductsError(await errorMessageFrom(res, 'עדכון המלאי נכשל.'));
+        return;
+      }
+      setProductsError(''); fetchProducts();
+    } catch {
+      setProductsError(NETWORK_ERROR);
     }
-
-    setProductsError(''); fetchProducts();
   }, [api, fetchProducts]);
 
   /** מנקה את תצוגת ה-CSV, לפתיחה נקייה של לשונית הייבוא. */
