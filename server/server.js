@@ -6,6 +6,7 @@ const config = require('./config/env');
 const db = require('./config/db');
 const { runMigrations } = require('./db/migrate');
 const { createApp } = require('./app');
+const { attachRealtime } = require('./services/realtime');
 
 /** מעלה את השרת לפי הסדר: מסד, מיגרציות, ואז קבלת בקשות. */
 async function start() {
@@ -18,6 +19,8 @@ async function start() {
   const server = app.listen(config.port, () => {
     console.log(`השרת עובד על פורט ${config.port} (${config.nodeEnv}) ✓`);
   });
+
+  attachRealtime(server);
 
   /** מפסיק לקבל בקשות, סוגר את החיבורים ויוצא. */
   const shutdown = (signal) => {
