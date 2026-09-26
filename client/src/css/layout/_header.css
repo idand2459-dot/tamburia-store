@@ -2,71 +2,14 @@
    Header, navbar, drawer and global search
    ========================================================================== */
 
-/* Header */
-header {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  color: white;
-  padding: 16px 40px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+/* The old `header { ... }` block that used to live here is gone. <header>
+   appears exactly once in the app and it is .navbar, and nothing rendered
+   .header-logo / .header-buttons / .cart-badge / .admin-btn any more. It was
+   not harmless dead code: its mobile query set `flex-direction: column` on the
+   element, which .navbar never overrode, so the navbar stacked into a column
+   inside a 64px-tall box on phones. .navbar declares its own layout below. */
 
-.header-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-logo h1 {
-  font-size: 1.6rem;
-  font-weight: 700;
-}
-
-.header-logo p {
-  font-size: 0.85rem;
-  color: #aaa;
-  margin-top: 2px;
-}
-
-.header-buttons {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.cart-badge {
-  background-color: #e63946;
-  color: white;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-}
-
-.admin-btn {
-  padding: 6px 16px;
-  background-color: rgba(255,255,255,0.15);
-  color: white;
-  border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 20px;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.admin-btn:hover {
-  background-color: #e63946;
-  border-color: #e63946;
-}
-
-@media (max-width: 768px) {
-  header {
-      padding: 16px 20px;
-      flex-direction: column;
-      gap: 12px;
-      text-align: center;
-    }
-}
-
+/* In-page product search (CategoryView) — not the navbar's search. */
 .search-bar {
   margin-bottom: 24px;
   position: relative;
@@ -100,19 +43,42 @@ header {
   box-shadow: 0 2px 12px rgba(0,0,0,0.1);
 }
 
-/* ===== NAVBAR ===== */
+/* ===== NAVBAR =====
+   Always dark, like the Hero: the colours are fixed and there is no
+   prefers-color-scheme override for .navbar. */
 .navbar {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: rgba(7, 11, 20, 0.72);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  backdrop-filter: saturate(160%) blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   color: white;
   padding: 0 24px;
-  height: 64px;
+  height: 68px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  transition: background 0.25s, box-shadow 0.25s;
+}
+
+/* Navbar.js adds this past 8px of scroll: the glass firms up and gains a
+   shadow, so the bar separates from the content sliding under it. */
+.navbar.scrolled {
+  background: rgba(7, 11, 20, 0.92);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.navbar-link:focus-visible,
+.navbar-icon-btn:focus-visible,
+.navbar-cart-btn:focus-visible,
+.navbar-brand:focus-visible,
+.hamburger-btn:focus-visible,
+.nav-drawer-item:focus-visible,
+.nav-close-btn:focus-visible {
+  outline: 2px solid var(--color-purple-soft);
+  outline-offset: 2px;
 }
 
 .navbar-right {
@@ -126,21 +92,34 @@ header {
   transform: translateX(-50%);
 }
 
+/* One rule, no !important: the two extra .navbar-brand blocks that used to sit
+   at the bottom of this file (and needed !important to beat this one) are
+   folded in here. */
 .navbar-brand {
   background: none;
   border: none;
   color: white;
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  white-space: nowrap;
 }
 
 .navbar-brand span {
   color: white;
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+/* the wrench is the accent — the only red in the brand */
+.navbar-brand .lucide {
+  color: var(--color-red);
+  filter: drop-shadow(0 0 8px rgba(230, 57, 70, 0.45));
 }
 
 .navbar-left {
@@ -150,53 +129,95 @@ header {
 }
 
 .navbar-link {
+  position: relative;
   background: none;
   border: none;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 0.95rem;
-  padding: 6px 14px;
-  border-radius: 20px;
+  padding: 8px 6px;
   cursor: pointer;
-  font-family: 'Segoe UI', sans-serif;
-  transition: all 0.2s;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+}
+
+/* the indicator: grows from the centre outwards, so it reads as the link
+   claiming the space under itself rather than sliding in from one side */
+.navbar-link::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--color-red), var(--color-purple));
+  transform: scaleX(0);
+  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .navbar-link:hover,
+.navbar-link:focus-visible,
 .navbar-link.active {
-  background: rgba(255,255,255,0.15);
   color: white;
 }
 
-/* Hamburger button */
+.navbar-link:hover::after,
+.navbar-link:focus-visible::after,
+.navbar-link.active::after {
+  transform: scaleX(1);
+}
+
+/* Hamburger — same 40x40 box as .navbar-icon-btn so the row lines up */
 .hamburger-btn {
+  width: 40px;
+  height: 40px;
   background: none;
   border: none;
+  border-radius: 12px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 5px;
-  padding: 6px;
+  transition: background 0.2s;
+}
+
+.hamburger-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .hamburger-btn span {
   display: block;
-  width: 24px;
+  width: 20px;
   height: 2px;
-  background: white;
+  background: rgba(255, 255, 255, 0.8);
   border-radius: 2px;
-  transition: all 0.3s;
+  transition: background 0.2s;
 }
 
-/* Side Drawer */
+.hamburger-btn:hover span {
+  background: white;
+}
+
+/* Side Drawer.
+   The backdrop behind it is .nav-overlay, which already exists and is styled in
+   components/_modals.css together with the other overlay backdrops. */
 .nav-drawer {
   position: fixed;
   top: 0;
   right: -280px;
   width: 280px;
   height: 100vh;
-  background: #1a1a2e;
+  background:
+    radial-gradient(circle 320px at 100% 0%, rgba(124, 58, 237, 0.16), transparent 70%),
+    #070b14;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
   z-index: 300;
-  transition: right 0.3s ease;
+  transition: right 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
   display: flex;
   flex-direction: column;
 }
@@ -210,96 +231,195 @@ header {
   align-items: center;
   justify-content: space-between;
   padding: 20px 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .nav-drawer-logo {
   color: white;
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-drawer-logo .lucide {
+  color: var(--color-red);
 }
 
 .nav-close-btn {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
-  color: rgba(255,255,255,0.6);
-  font-size: 1.2rem;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  padding: 4px 8px;
+  transition: background 0.2s, color 0.2s;
 }
 
 .nav-close-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
   color: white;
 }
 
 .nav-drawer-links {
   display: flex;
   flex-direction: column;
-  padding: 16px 0;
+  padding: 12px 0;
+  gap: 2px;
 }
 
 .nav-drawer-item {
   background: none;
   border: none;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 1rem;
-  padding: 14px 24px;
+  padding: 8px 20px;
   text-align: right;
   cursor: pointer;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
   display: flex;
   align-items: center;
-  gap: 12px;
-  transition: background 0.2s;
+  gap: 14px;
+  transition: color 0.2s;
+}
+
+/* the icon sits in its own tile, and the tile is what reacts — a full-width
+   background sweep on hover was the loudest thing in the drawer */
+.nav-item-icon {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s;
 }
 
 .nav-drawer-item:hover,
 .nav-drawer-item.active {
-  background: rgba(255,255,255,0.1);
   color: white;
 }
 
+.nav-drawer-item:hover .nav-item-icon,
+.nav-drawer-item.active .nav-item-icon {
+  background: rgba(230, 57, 70, 0.15);
+  color: var(--color-red);
+}
+
+/* Kept for the admin entry, which no JSX renders today — see Navbar.js. */
 .nav-drawer-item.nav-admin-item {
   margin-top: 16px;
-  border-top: 1px solid rgba(255,255,255,0.1);
-  padding-top: 24px;
-}
-
-.nav-item-icon {
-  font-size: 1.2rem;
-}
-
-.navbar-spacer {
-  height: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 20px;
 }
 
 @media (max-width: 768px) {
+  .navbar {
+      height: 60px;
+      padding: 0 12px;
+      /* explicit: the deleted `header { flex-direction: column }` rule used to
+         leak into the navbar here and stack it */
+      flex-direction: row;
+      flex-wrap: nowrap;
+    }
+
   .navbar-left .navbar-link {
       display: none;
     }
 
-  .navbar-left .admin-btn {
+  .navbar-left {
+      gap: 2px;
+    }
+
+  .navbar-brand,
+  .navbar-brand span {
+      font-size: 1.15rem;
+    }
+}
+
+/* The brand is absolutely centred, so it can overlap the icon rows once the
+   viewport gets narrow enough. Absolute centring only has room while
+   (width - 24px) / 2 - half the brand >= the wider side group; with the brand
+   at 1.15rem and the left group around 160px that holds from roughly 484px up,
+   so it is dropped below 560px for margin. Static means space-between places
+   the brand instead — very slightly off centre, but it cannot collide. */
+@media (max-width: 560px) {
+  .navbar-center {
+      position: static;
+      left: auto;
+      transform: none;
+      min-width: 0;
+    }
+}
+
+/* Under ~430px even the static row runs out: both side groups plus the brand
+   exceed the width. The home button goes first — the brand already navigates
+   home — and the brand shrinks a step. At 360px that leaves the brand about
+   128px inside 136px of free space. */
+@media (max-width: 430px) {
+  .navbar-brand,
+  .navbar-brand span {
+      font-size: 1.05rem;
+    }
+
+  .navbar-home-btn {
       display: none;
     }
 }
 
-/* ===== GLOBAL SEARCH ===== */
-.navbar-search-btn {
+/* One icon button for the whole navbar. This replaces four near-identical
+   blocks (.navbar-search-btn, .navbar-home-btn, .navbar-wishlist-btn and
+   .navbar-paint-calc-btn, the last of which no JSX ever used). */
+.navbar-icon-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
-  font-size: 1.15rem;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
-  padding: 6px 10px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.navbar-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+/* wishlist count, the same idea as the cart badge but pinned to the corner of
+   the icon box since there is no pill to sit inside */
+.navbar-wishlist-count {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
   border-radius: 8px;
-  transition: background 0.2s;
+  background: var(--color-red);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: badge-pop 0.3s ease;
 }
 
-.navbar-search-btn:hover {
-  background: rgba(255,255,255,0.15);
-}
-
-/* Results */
+/* ===== GLOBAL SEARCH RESULTS ===== */
 .search-results-list {
   list-style: none;
   max-height: 400px;
@@ -402,62 +522,44 @@ header {
   font-size: 0.9rem;
 }
 
-/* שם העסק בולט יותר */
-.navbar-brand {
-  font-size: 1.45rem !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.3px;
-}
-
-.navbar-brand span {
-  font-size: 1.45rem;
-  font-weight: 800;
-}
-
-.navbar-brand span,
-.navbar-link,
-.nav-drawer-item {
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-}
-
-/* ===== כפתור עגלה בנאבאר ===== */
+/* ===== CART BUTTON =====
+   The one strong CTA up here, and the only red surface in the navbar. */
 .navbar-cart-btn {
   position: relative;
-  background: rgba(255,255,255,0.12);
-  border: 1.5px solid rgba(255,255,255,0.25);
-  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  background: var(--color-red);
+  border: none;
+  border-radius: 12px;
   color: white;
   font-size: 1rem;
-  padding: 6px 14px;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
   cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  transition: background 0.2s, box-shadow 0.2s;
 }
 
 .navbar-cart-btn:hover {
-  background: #e63946;
-  border-color: #e63946;
+  background: var(--color-red-dark);
+  box-shadow: 0 0 22px rgba(230, 57, 70, 0.45);
 }
 
+/* inverted against the pill: white circle, red number */
 .navbar-cart-badge {
-  background: #e63946;
-  color: white;
+  background: white;
+  color: var(--color-red);
   border-radius: 50%;
   width: 20px;
   height: 20px;
   font-size: 0.72rem;
   font-weight: 700;
+  line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   animation: badge-pop 0.3s ease;
-}
-
-.navbar-cart-btn:hover .navbar-cart-badge {
-  background: white;
-  color: #e63946;
 }
 
 @keyframes badge-pop {
@@ -467,13 +569,8 @@ header {
 }
 
 @media (prefers-color-scheme: dark) {
-  /* נאבאר — כבר כהה, רק מחזק */
-  .navbar {
-      background: linear-gradient(135deg, #0a0a1a 0%, #0d1020 100%);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-
-  /* חיפוש */
+  /* .navbar is not here on purpose: it is hardcoded dark either way, like the
+     Hero. What follows is the in-page product search and its results. */
   .search-bar input {
       background: #1a1a2e;
       border-color: #2d2d4e;
@@ -491,46 +588,80 @@ header {
   .search-result-no-img { background: #2d2d4e; }
 }
 
-/* ===== כפתור דף הבית בנאבאר ===== */
-.navbar-home-btn {
-  background: none;
-  border: none;
-  font-size: 1.15rem;
-  cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 8px;
-  transition: background 0.2s;
-  line-height: 1;
-  margin-right: 4px;
+/* ===== TICKER =====
+   Moved here from components/_notifications.css. It used to be a solid #e63946
+   strip, which made it the loudest thing on the page and put it in competition
+   with the Hero's red accent; red now means "action" and belongs to the cart
+   and the CTAs. It reads as one unit with the navbar, so it lives in one file
+   with it — and keeping it in a partial that loads after this one would have
+   let the old rules win over the new ones. */
+.marquee-banner {
+  background: #070b14;
+  color: rgba(255, 255, 255, 0.72);
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 9px 0;
+  position: relative;
 }
 
-.navbar-home-btn:hover {
-  background: rgba(255,255,255,0.15);
+/* the only colour in the strip */
+.marquee-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    var(--color-red),
+    var(--color-purple),
+    transparent);
+  pointer-events: none;
 }
 
-/* ===== כפתור מחשבון צבע בנאבאר ===== */
-.navbar-paint-calc-btn {
-  background: none;
-  border: none;
-  font-size: 1.15rem;
-  cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 8px;
-  transition: background 0.2s;
-  line-height: 1;
-  margin-right: 2px;
+.marquee-track {
+  display: inline-flex;
+  align-items: center;
+  animation: marquee-scroll 35s linear infinite;
 }
 
-.navbar-paint-calc-btn:hover {
-  background: rgba(255,255,255,0.15);
+.marquee-track:hover {
+  animation-play-state: paused;
 }
 
-/* כפתור ❤️ בנאבאר */
-.navbar-wishlist-btn {
-  background: none; border: none;
-  font-size: 1.15rem; cursor: pointer;
-  padding: 6px 8px; border-radius: 8px;
-  transition: background 0.2s; line-height: 1;
+/* MarqueeBanner.js renders the item list exactly twice, so -50% of the track
+   is exactly the start of the second copy and the loop has no seam. */
+@keyframes marquee-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
-.navbar-wishlist-btn:hover { background: rgba(255,255,255,0.15); }
+.marquee-item {
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.marquee-item .lucide {
+  color: var(--color-red);
+}
+
+/* a real 4px dot; it used to be a bullet character sized with font-size */
+.marquee-sep {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+      animation: none;
+    }
+}

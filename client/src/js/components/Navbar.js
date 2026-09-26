@@ -12,6 +12,7 @@ import {
   Search, X, ImageOff, Wrench, ShoppingCart,
 } from 'lucide-react';
 import { useStore } from '../context/storeContext';
+import { useScrolled } from '../hooks/useScrolled';
 
 const NAV_ITEMS = [
   { key: 'home', path: '/', label: 'ראשי', Icon: Home },
@@ -33,7 +34,8 @@ function currentPageOf(pathname) {
 function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { cartCount, menuOpen, setMenuOpen } = useStore();
+  const { cartCount, wishlistIds, menuOpen, setMenuOpen } = useStore();
+  const scrolled = useScrolled(8);
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,6 +45,7 @@ function Navbar() {
   const cancelSearchRef = useRef(null);
 
   const currentPage = currentPageOf(location.pathname);
+  const wishlistCount = wishlistIds?.length || 0;
 
   // מבטל חיפוש שממתין או שכבר יצא לדרך כשהתיבה נסגרת או שהרכיב יורד,
   // כדי שתשובה מאוחרת לא תמלא תוצאות לתיבה שכבר אינה פתוחה.
@@ -188,29 +191,36 @@ function Navbar() {
       </div>
 
       {/* Top Navbar */}
-      <header className="navbar">
+      <header className={`navbar ${scrolled ? 'scrolled' : ''}`}>
         <div className="navbar-right">
-          <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>
+          <button className="hamburger-btn" onClick={() => setMenuOpen(true)} aria-label="פתח תפריט">
             <span /><span /><span />
           </button>
-          <button className="navbar-home-btn" onClick={() => handleNav('/')} title="דף הבית" aria-label="דף הבית">
-            <Home size={18} aria-hidden="true" />
+          {/* navbar-home-btn הוא רק מודיפייר: הוא מסתיר את הכפתור מתחת
+              ל-480px, כי המיתוג עצמו כבר מוביל לדף הבית. */}
+          <button className="navbar-icon-btn navbar-home-btn" onClick={() => handleNav('/')} title="דף הבית" aria-label="דף הבית">
+            <Home size={20} aria-hidden="true" />
           </button>
         </div>
         <div className="navbar-center">
-          <button className="navbar-brand" onClick={() => handleNav('/')}><Wrench size={20} aria-hidden="true" /> <span>טכניק טמבור</span></button>
+          <button className="navbar-brand" onClick={() => handleNav('/')} aria-label="טכניק טמבור — לדף הבית"><Wrench size={20} aria-hidden="true" /> <span>טכניק טמבור</span></button>
         </div>
         <div className="navbar-left">
-          <button className="navbar-search-btn" onClick={() => setSearchOpen(true)} title="חיפוש" aria-label="חיפוש"><Search size={18} aria-hidden="true" /></button>
+          <button className="navbar-icon-btn" onClick={() => setSearchOpen(true)} title="חיפוש" aria-label="חיפוש"><Search size={20} aria-hidden="true" /></button>
           <button className="navbar-link" onClick={openOrderHistory} title="ההזמנות שלי"><ClipboardList size={18} aria-hidden="true" /> ההזמנות שלי</button>
-          <button className="navbar-wishlist-btn" onClick={openWishlist} title="רשימת משאלות" aria-label="רשימת משאלות"><Heart size={18} aria-hidden="true" /></button>
+          <button className="navbar-icon-btn" onClick={openWishlist} title="רשימת משאלות" aria-label={`רשימת משאלות${wishlistCount > 0 ? ` — ${wishlistCount} מוצרים` : ''}`}>
+            <Heart size={20} aria-hidden="true" />
+            {wishlistCount > 0 && (
+              <span className="navbar-wishlist-count">{wishlistCount}</span>
+            )}
+          </button>
           <button className={`navbar-link ${currentPage === 'about' ? 'active' : ''}`} onClick={() => handleNav('/about')}>אודות</button>
           <button className={`navbar-link ${currentPage === 'contact' ? 'active' : ''}`} onClick={() => handleNav('/contact')}>צור קשר</button>
           <button className={`navbar-link ${currentPage === 'returns' ? 'active' : ''}`} onClick={() => handleNav('/returns')}>החזרים</button>
 
           {/* כפתור עגלה — תמיד מוצג */}
           <button className="navbar-cart-btn" onClick={() => navigate('/cart')} aria-label="עגלת קניות">
-            <ShoppingCart size={18} aria-hidden="true" />
+            <ShoppingCart size={20} aria-hidden="true" />
             {cartCount > 0 && (
               <span className="navbar-cart-badge">{cartCount}</span>
             )}
