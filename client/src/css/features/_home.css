@@ -42,7 +42,7 @@
    NOTE: this one rule does need a dark-mode twin, down in the dark block of
    this file. It blends the Hero into whatever sits below it, and that is the
    page background — which *is* theme-dependent. --color-bg is a single light
-   value (#f8f8f6), so without the override the Hero would end in a pale band
+   value (#eceef5), so without the override the Hero would end in a pale band
    floating above a dark page. */
 .hero::after {
   content: '';
@@ -281,11 +281,13 @@
 }
 
 /* ===== FEATURES BANNER ===== */
+/* A full-width band, so it takes the deeper slate rather than white: as a white
+   stripe between two slate sections it read as an unfinished area. */
 .features-banner {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   border-top: 3px solid #e63946;
-  background: white;
+  background: var(--color-bg-alt);
   box-shadow: 0 4px 20px rgba(0,0,0,0.08);
 }
 

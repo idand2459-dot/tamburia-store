@@ -18,7 +18,7 @@ svg.lucide {
 
 body {
   font-family: 'Segoe UI', sans-serif;
-  background-color: #f8f8f6;
+  background-color: var(--color-bg);
   direction: rtl;
   color: #1a1a2e;
 }

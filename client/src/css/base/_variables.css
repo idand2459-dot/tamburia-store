@@ -21,8 +21,14 @@
   --color-green-dark: #1b4332;
   --color-whatsapp: #25d366;
 
-  /* Light theme surfaces */
-  --color-bg: #f8f8f6;            /* page background */
+  /* Light theme surfaces.
+     --color-bg is the backdrop *behind* content and must stay in the brand
+     family — a cool tint of the navy, never cream or white. --color-surface is
+     what sits *on* it (cards, inputs, tables, modal panels) and does stay
+     white. --color-bg-alt is one step deeper, for a full-width band that has
+     to separate from the page around it. */
+  --color-bg: #eceef5;            /* page background */
+  --color-bg-alt: #e3e6ef;        /* section band, one step deeper */
   --color-surface: #ffffff;
   --color-surface-alt: #f5f5f5;
   --color-border: #e0e0e0;
