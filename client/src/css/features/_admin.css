@@ -1293,3 +1293,17 @@
 .export-orders-btn:hover {
   background: #1b4332;
 }
+
+/* הודעת כישלון של פעולת כתיבה בניהול.
+   אותה שפה חזותית של .delivery-area-error בעגלה, אבל מחלקה משל
+   הניהול — שם שמדבר על משלוחים בתוך מסך המוצרים היה מבלבל. */
+.admin-error {
+  background: #fff5f5;
+  border: 1px solid #e63946;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: #c1121f;
+  line-height: 1.5;
+  margin: 12px 0;
+}

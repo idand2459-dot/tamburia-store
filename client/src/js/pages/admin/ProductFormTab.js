@@ -40,7 +40,7 @@ function fieldsFromProduct(product) {
 }
 
 /** מציג את טופס המוצר, להוספה או לעריכה. */
-function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, onDone }) {
+function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, onDone, productsError }) {
   const [name, setName] = useState(EMPTY.name);
   const [price, setPrice] = useState(EMPTY.price);
   const [inStock, setInStock] = useState(EMPTY.inStock);
@@ -67,12 +67,17 @@ function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, o
     return { name, price, inStock, colors, category, sku, description, variants };
   }
 
-  /** שולח את הטופס לשרת — יצירה או עדכון, לפי מצב העריכה. */
+  /**
+   * שולח את הטופס לשרת — יצירה או עדכון, לפי מצב העריכה.
+   * יציאה מהטופס רק בהצלחה: על כישלון השדות נשארים כפי שהם, כדי
+   * שאפשר יהיה לתקן ולנסות שוב בלי להקליד הכול מחדש.
+   */
   async function handleSubmit(e) {
     e.preventDefault();
-    if (editingProduct) await onUpdate(editingProduct.id, collectFields(), existingImages, images);
-    else await onCreate(collectFields(), images);
-    onDone();
+    const saved = editingProduct
+      ? await onUpdate(editingProduct.id, collectFields(), existingImages, images)
+      : await onCreate(collectFields(), images);
+    if (saved) onDone();
   }
 
   /** מסיר תמונה קיימת מהמוצר הנערך. */
@@ -159,6 +164,7 @@ function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, o
           <p className="admin-images-hint">התמונה הראשונה תוצג כתמונה הראשית</p>
         </div>
       </div>
+      {productsError && <div className="admin-error">⚠️ {productsError}</div>}
       <div className="admin-form-buttons">
         <button type="submit" className="admin-submit-btn" disabled={uploadingImages}>{uploadingImages ? '⏳ מעלה...' : editingProduct ? '💾 שמור' : '➕ הוסף'}</button>
         {editingProduct && <button type="button" className="admin-cancel-btn" onClick={onDone}>ביטול</button>}

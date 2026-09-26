@@ -3,12 +3,13 @@
  */
 
 /** מציג את לשונית חוות הדעת. */
-function ReviewsTab({ reviews, onApprove, onDelete }) {
+function ReviewsTab({ reviews, onApprove, onDelete, reviewsError }) {
   return (
     <div>
       <div className="admin-results-info" style={{marginBottom: 20}}>
         סה"כ {reviews.length} ביקורות • {reviews.filter(r => !r.approved).length} ממתינות לאישור
       </div>
+      {reviewsError && <div className="admin-error">⚠️ {reviewsError}</div>}
       {reviews.length === 0 ? <div className="admin-empty">אין ביקורות עדיין</div> : (
         <div className="reviews-admin-list">
           {reviews.map(review => (

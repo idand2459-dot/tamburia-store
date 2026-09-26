@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { STATUS_CONFIG, formatDate } from './adminConstants';
 
 /** מציג את לשונית ההזמנות. */
-function OrdersTab({ orders, onStatusChange, onDeleteOrder, onExport }) {
+function OrdersTab({ orders, onStatusChange, onDeleteOrder, onExport, ordersError }) {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [orderFilter, setOrderFilter] = useState('all');
 
@@ -37,6 +37,7 @@ function OrdersTab({ orders, onStatusChange, onDeleteOrder, onExport }) {
           </button>
         )}
       </div>
+      {ordersError && <div className="admin-error">⚠️ {ordersError}</div>}
       {filteredOrders.length === 0 ? <div className="admin-empty">אין הזמנות עדיין</div> : (
         <div className="orders-list">
           {filteredOrders.map(order => {
