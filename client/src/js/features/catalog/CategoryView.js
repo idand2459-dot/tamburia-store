@@ -46,12 +46,15 @@ function CategoryView() {
     setSearchQuery('');
     setSortBy('default');
 
-    fetch('/api/products')
+    // הסינון לפי קטגוריה נעשה בשרת ולא כאן. בלי limit במכוון — העמוד
+    // הזה מציג את כל מוצרי הקטגוריה ולא תצוגה מקוצרת שלהם.
+    // החיפוש והמיון שלמטה נשארים בצד הלקוח: הם פועלים על הקבוצה
+    // הקטנה שכבר נשלפה, וזה שימוש לגיטימי בסינון מקומי.
+    fetch(`/api/products?category=${encodeURIComponent(category.id)}`)
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
-        const list = Array.isArray(data) ? data : [];
-        setProducts(list.filter((p) => p.category === category.id));
+        setProducts(Array.isArray(data) ? data : (data.products || []));
         setLoading(false);
       })
       .catch(() => { if (!cancelled) setLoading(false); });
