@@ -13,6 +13,9 @@ import ReviewsCarousel from '../features/catalog/ReviewsCarousel';
 import FAQ from './FAQ';
 import Reveal from '../components/Reveal';
 import { useStore } from '../context/storeContext';
+import heroWide from '../../assets/images/sections/hero-tools-1916.webp';
+import heroMid from '../../assets/images/sections/hero-tools-1600.webp';
+import heroMobile from '../../assets/images/sections/hero-tools-mobile-900.webp';
 
 /** מציג את עמוד הבית. */
 function HomePage() {
@@ -54,6 +57,25 @@ function HomePage() {
   return (
     <>
       <div className="hero">
+        {/* <picture> ולא רקע ב-CSS: כך הדפדפן מוריד רק את הגרסה שהוא צריך,
+            והתמונה — שהיא ה-paint הגדול של העמוד — מקבלת עדיפות. דקורטיבית,
+            ולכן alt ריק ו-aria-hidden.
+            שים לב: ה-1916w הוא הרוחב המקורי של הקובץ ולא 2400 — המקור צר
+            מזה, ו-upscale היה עולה בבתים בלי להוסיף פרט.
+            בלי aria-hidden על ה-picture: הוא אינו אלמנט מרונדר ואינו תומך
+            ב-ARIA (eslint מתלונן בצדק). alt="" על ה-img הוא מה שמוציא תמונה
+            דקורטיבית מעץ הנגישות. */}
+        <picture className="hero-media">
+          <source media="(max-width: 767px)" srcSet={heroMobile} />
+          <img
+            src={heroMid}
+            srcSet={`${heroMid} 1600w, ${heroWide} 1916w`}
+            sizes="100vw"
+            alt=""
+            fetchPriority="high"
+            decoding="async"
+          />
+        </picture>
         <div className="hero-inner">
           <div className="hero-badge"><Crown size={14} aria-hidden="true" /> מאז 1991 · פתח תקווה</div>
           <h1 className="hero-title">כל מה שצריך לבית<br/><span className="hero-accent">במקום אחד</span></h1>
