@@ -11,6 +11,7 @@ import ProjectCalculator from '../features/calculator/ProjectCalculator';
 import FeaturesBanner from '../components/FeaturesBanner';
 import ReviewsCarousel from '../features/catalog/ReviewsCarousel';
 import FAQ from './FAQ';
+import Reveal from '../components/Reveal';
 import { useStore } from '../context/storeContext';
 
 /** מציג את עמוד הבית. */
@@ -53,10 +54,6 @@ function HomePage() {
   return (
     <>
       <div className="hero">
-        {/* נקודות הזוהר הן divs ולא ::before/::after, כי שני אלה על .hero
-            כבר תפוסים — רשת הנקודות והדהייה התחתונה. */}
-        <div className="hero-glow hero-glow-purple" aria-hidden="true" />
-        <div className="hero-glow hero-glow-red" aria-hidden="true" />
         <div className="hero-inner">
           <div className="hero-badge"><Crown size={14} aria-hidden="true" /> מאז 1991 · פתח תקווה</div>
           <h1 className="hero-title">כל מה שצריך לבית<br/><span className="hero-accent">במקום אחד</span></h1>
@@ -76,11 +73,13 @@ function HomePage() {
 
       <CategoryPage onSelectCategory={(category) => navigate(`/category/${category.id}`)} />
       <WhyUs />
-      <PaintCalculator addBundleToCart={addBundleToCart} />
+      <Reveal variant="up"><PaintCalculator addBundleToCart={addBundleToCart} /></Reveal>
+      {/* ProjectCalculator מחשיף את עצמו ב-IntersectionObserver משלו — עטיפה
+          שנייה כאן הייתה מריצה שתי אנימציות על אותו תוכן. */}
       <ProjectCalculator addBundleToCart={addBundleToCart} />
-      <FeaturesBanner />
-      <ReviewsCarousel />
-      <FAQ />
+      <Reveal variant="up"><FeaturesBanner /></Reveal>
+      <Reveal variant="up"><ReviewsCarousel /></Reveal>
+      <Reveal variant="up"><FAQ /></Reveal>
     </>
   );
 }

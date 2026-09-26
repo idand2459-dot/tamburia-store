@@ -1,4 +1,5 @@
 import { Trophy, Handshake, HelpCircle, Banknote } from 'lucide-react';
+import Reveal, { stagger } from './Reveal';
 
 /** מציג את המקטע. */
 function WhyUs() {
@@ -7,7 +8,7 @@ function WhyUs() {
       <div className="whyus-content">
 
         {/* טקסט ראשי */}
-        <div className="whyus-text">
+        <Reveal as="div" variant="up" className="whyus-text">
           <span className="whyus-tag">למה טכניק טמבור?</span>
           <h2 className="whyus-title">
             לא סתם חנות —<br />
@@ -23,7 +24,7 @@ function WhyUs() {
             זו הסיבה שאנשים חוזרים אלינו שוב ושוב — לא כי אין להם ברירה,
             אלא כי הם יודעים שאצלנו הם בידיים טובות.
           </p>
-        </div>
+        </Reveal>
 
         {/* יתרונות */}
         <div className="whyus-points">
@@ -49,13 +50,13 @@ function WhyUs() {
               text: 'מחיר הוגן, שקוף וללא הפתעות — כי אמון הוא הבסיס של כל עסק טוב'
             },
           ].map(({ Icon, title, text }, i) => (
-            <div key={i} className="whyus-point">
+            <Reveal as="div" variant="up" delay={stagger(i, 100)} key={i} className="whyus-point">
               <span className="whyus-point-icon"><Icon size={28} aria-hidden="true" /></span>
               <div>
                 <h3>{title}</h3>
                 <p>{text}</p>
               </div>
-            </div>
+            </Reveal>
           ))}
         </div>
 
