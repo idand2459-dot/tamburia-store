@@ -10,8 +10,11 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { CATEGORIES, STATUS_CONFIG, formatDate } from '../pages/admin/adminConstants';
+import { useWebSocket } from './useWebSocket';
 
-const POLL_MS = 30000;
+// הסקר הוא מסלול חלופי בלבד מאז שיש WebSocket: הודעה על הזמנה חדשה
+// מגיעה תוך פחות משנייה, והסקר נשאר רק למקרה שהחיבור למטה.
+const POLL_MS = 120000;
 
 /** מנהל את ההזמנות, את זיהוי החדשות ואת חישובי הסטטיסטיקות. */
 export function useAdminOrders(api) {
@@ -19,32 +22,55 @@ export function useAdminOrders(api) {
   const [showConfetti, setShowConfetti] = useState(false);
   const prevOrdersCount = useRef(null);
 
-  /** טוען את ההזמנות ומזהה הזמנות חדשות מאז הטעינה הקודמת. */
-  const fetchOrders = useCallback(() => {
-    api('/api/orders').then(r => r.json()).then(data => {
-      const arr = Array.isArray(data) ? data : [];
-      if (prevOrdersCount.current === null) prevOrdersCount.current = arr.length;
-      setOrders(arr);
-    }).catch(() => {});
+  /**
+   * שולף את ההזמנות. שלושת הקוראים צריכים אותו שליפה אבל התייחסות
+   * שונה לספירה שנראתה לאחרונה, ולכן הם נבדלים בדגלים ולא בעותק
+   * נוסף של אותו fetch:
+   * - detectNew — הסקר: גידול במספר ההזמנות מפעיל קונפטי.
+   * - markSeen — אחרי הודעת WebSocket: הספירה מסומנת כמעודכנת, כדי
+   *   שהסקר לא יפעיל קונפטי שוב על אותה הזמנה.
+   * בלי שניהם (עדכון סטטוס, מחיקה) הספירה לא נוגעת, כמו קודם.
+   */
+  const loadOrders = useCallback(async ({ detectNew = false, markSeen = false } = {}) => {
+    let arr;
+    try {
+      const res = await api('/api/orders');
+      const data = await res.json();
+      arr = Array.isArray(data) ? data : [];
+    } catch {
+      // תקלה ברשת אינה מפילה את הסקר — הוא ינסה שוב בפעימה הבאה.
+      return;
+    }
+
+    if (detectNew && prevOrdersCount.current !== null && arr.length > prevOrdersCount.current) {
+      setShowConfetti(true);
+    }
+    if (prevOrdersCount.current === null || detectNew || markSeen) {
+      prevOrdersCount.current = arr.length;
+    }
+    setOrders(arr);
   }, [api]);
+
+  /** טוען את ההזמנות מחדש, בלי לגעת בספירה שנראתה לאחרונה. */
+  const fetchOrders = useCallback(() => loadOrders(), [loadOrders]);
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
-  // סקר תקופתי: הזמנה שנכנסה מאז הבדיקה הקודמת מפעילה קונפטי.
-  // הספירה מתעדכנת רק כאן, ולא בטעינות שאחרי עדכון סטטוס או מחיקה,
-  // כדי שפעולות של המנהל עצמו לא ייחשבו כהזמנה חדשה.
+  // הזמנה חדשה מגיעה מהשרת בזמן אמת. ההוק שמביא אותה הוא תעבורה
+  // גנרית; המשמעות — קונפטי ורענון — נמצאת כאן, בשכבה שיודעת מה
+  // order:created אומר.
+  useWebSocket({
+    'order:created': () => {
+      setShowConfetti(true);
+      loadOrders({ markSeen: true });
+    },
+  });
+
+  // סקר תקופתי כמסלול חלופי, למקרה שה-WebSocket אינו מחובר.
   useEffect(() => {
-    const interval = setInterval(async () => {
-      const res = await api('/api/orders');
-      const fresh = await res.json();
-      if (prevOrdersCount.current !== null && fresh.length > prevOrdersCount.current) {
-        setShowConfetti(true);
-      }
-      prevOrdersCount.current = fresh.length;
-      setOrders(fresh);
-    }, POLL_MS);
+    const interval = setInterval(() => loadOrders({ detectNew: true }), POLL_MS);
     return () => clearInterval(interval);
-  }, [api]);
+  }, [loadOrders]);
 
   /** מכבה את הקונפטי בסיום האנימציה. */
   const dismissConfetti = useCallback(() => setShowConfetti(false), []);
