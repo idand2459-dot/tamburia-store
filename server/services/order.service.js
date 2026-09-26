@@ -7,7 +7,9 @@
  */
 const Order = require('../models/order.model');
 const mailer = require('./email');
-const { assertDeliveryCityAllowed } = require('../validators/order.validator');
+const {
+  assertDeliveryCityAllowed, assertDeliveryAddressPresent,
+} = require('../validators/order.validator');
 const { badRequest, notFound } = require('../utils/AppError');
 
 /** שולף הזמנה או זורק 404. משמש כל פעולה שדורשת הזמנה קיימת. */
@@ -64,11 +66,13 @@ async function createOrder(data) {
 async function updateOrder(id, data) {
   const existing = await requireOrder(id);
 
-  // בדיקת אזור החלוקה על המצב שאחרי המיזוג, ולא על גוף הבקשה בלבד.
+  // בדיקות המשלוח על המצב שאחרי המיזוג, ולא על גוף הבקשה בלבד.
   // עדכון יכול לשנות רק את הכתובת, או רק את אופן הקבלה, ואז הוולידטור
   // לבדו אינו יודע מה הערך השני — רק כאן יש גם את ההזמנה הקיימת.
+  // קודם האם יש כתובת בכלל, ורק אחר כך אם היא באזור החלוקה.
   const method = data.delivery_method ?? existing.delivery_method;
   const address = 'delivery_address' in data ? data.delivery_address : existing.delivery_address;
+  assertDeliveryAddressPresent(method, address);
   assertDeliveryCityAllowed(method, address);
 
   const order = await Order.update(id, data);
