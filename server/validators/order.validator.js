@@ -65,7 +65,7 @@ const EDITABLE = [
   'delivery_method', 'delivery_address', 'notes', 'status',
 ];
 
-const MAX = { customer_name: 200, customer_phone: 50, customer_email: 200 };
+const MAX = { customer_name: 30, customer_phone: 50, customer_email: 200 };
 
 /** מוודא שהערך טקסט, מקצץ רווחים ובודק אורך מרבי. */
 function asTrimmedString(value, field, { maxLength } = {}) {
