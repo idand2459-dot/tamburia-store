@@ -1,10 +1,28 @@
 /**
- * עמוד המוצר: גלריה, וריאנטים, חוות דעת ומוצרים דומים.
+ * עמוד המוצר: מרכיב את הגלריה, הבוררים, חוות הדעת והמוצרים הדומים.
+ *
+ * כאן נשאר רק מה שיותר מחלק אחד צריך: הגרסה, הצבע והמידה שנבחרו
+ * (כי מהם מורכב הפריט שנכנס לעגלה), מצב ההוספה והמועדפים, השליפות,
+ * והאיפוס במעבר בין מוצרים. כל חלק שמחזיק state שרק הוא צריך —
+ * התמונה המוצגת בגלריה, מצב טופס הביקורת — מחזיק אותו בעצמו.
  */
 import { useState, useEffect } from 'react';
 import { toggleWishlist, isInWishlist } from '../utils/wishlistUtils';
+import ProductGallery from '../features/catalog/product-page/ProductGallery';
+import ProductVariantSelector from '../features/catalog/product-page/ProductVariantSelector';
+import ProductReviewsSection from '../features/catalog/product-page/ProductReviewsSection';
+import RelatedProducts from '../features/catalog/product-page/RelatedProducts';
+import Stars from '../features/catalog/product-page/Stars';
 
 const MAX_RECENT = 6;
+const MAX_RELATED = 3;
+
+const CATEGORY_LABELS = {
+  painting: 'מוצרי צביעה', kitchen: 'מוצרי מטבח', bathroom: 'מוצרי אמבטיה',
+  tools: 'כלי עבודה', cleaning: 'ניקיון', garden: 'גינה',
+  plumbing: 'אינסטלציה', adhesives: 'דבקים', locks: 'צילינדרים ומנעולים',
+  faucets: 'ברזים', electrical: 'מוצרי חשמל', home: 'בית'
+};
 
 /** קורא את רשימת המוצרים שנצפו לאחרונה. */
 function getRecentlyViewed() {
@@ -25,51 +43,37 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(hasVariants ? product.variants[0] : null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [addedToCart, setAddedToCart] = useState(false);
   const [reviews, setReviews] = useState([]);
-  const [showReviewForm, setShowReviewForm] = useState(false);
-  const [reviewForm, setReviewForm] = useState({ reviewer_name: '', rating: 5, text: '' });
-  const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [inWishlist, setInWishlist] = useState(false);
 
-  // תמונות שהשרת לא מצא. חלק מהרשומות מפנות לקבצים שלא הועלו, ובלי
-  // זה הדפדפן מצייר אייקון של תמונה שבורה במקום הפלייסהולדר.
-  const [brokenImages, setBrokenImages] = useState(() => new Set());
-  const markBroken = (src) => setBrokenImages((prev) => new Set(prev).add(src));
-
-  const allImages = [];
-  if (product.image_url) allImages.push(product.image_url);
-  if (product.images && Array.isArray(product.images)) {
-    product.images.forEach(img => { if (img && !allImages.includes(img)) allImages.push(img); });
-  }
-
   const inStock = product.in_stock !== false;
-  const hasMultipleImages = allImages.length > 1;
 
   useEffect(() => {
-    setSelectedColor(null); setSelectedSize(null); setCurrentImageIndex(0); setAddedToCart(false);
+    setSelectedColor(null); setSelectedSize(null); setAddedToCart(false);
     setSelectedVariant(hasVariants ? product.variants[0] : null);
-    setReviewSubmitted(false); setShowReviewForm(false);
 
     addToRecentlyViewed(product);
     setRecentlyViewed(getRecentlyViewed().filter(p => p.id !== product.id));
     setInWishlist(isInWishlist(product.id));
 
-    fetch('/api/products').then(r => r.json()).then(data => {
-      setRelatedProducts((Array.isArray(data) ? data : []).filter(p => p.category === product.category && p.id !== product.id).slice(0, 3));
-    }).catch(() => {});
+    // הסינון לפי קטגוריה נעשה בשרת ולא כאן. קודם נשלף כל הקטלוג רק
+    // כדי למצוא שלושה מוצרים — 4 מבוקשים כדי שאפשר יהיה להוציא את
+    // המוצר הנוכחי ועדיין להישאר עם שלושה. limit גורם לשרת להחזיר
+    // { products, pagination } במקום מערך, ולכן שתי הצורות נתמכות.
+    fetch(`/api/products?category=${encodeURIComponent(product.category)}&limit=${MAX_RELATED + 1}`)
+      .then(r => r.json())
+      .then(data => {
+        const list = Array.isArray(data) ? data : (data.products || []);
+        setRelatedProducts(list.filter(p => p.id !== product.id).slice(0, MAX_RELATED));
+      })
+      .catch(() => {});
 
     fetch(`/api/reviews?type=product&product_id=${product.id}`)
       .then(r => r.json()).then(setReviews).catch(() => {});
   }, [product.id]);
-
-  /** עובר לתמונה הקודמת בגלריה. */
-  function prevImage() { setCurrentImageIndex(i => i === 0 ? allImages.length - 1 : i - 1); }
-  /** עובר לתמונה הבאה בגלריה. */
-  function nextImage() { setCurrentImageIndex(i => i === allImages.length - 1 ? 0 : i + 1); }
 
   /** מוסיף את המוצר לעגלה לאחר בחירת הגרסה, הצבע והמידה. */
   function handleAddToCart() {
@@ -96,89 +100,16 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   }
 
-  /** שולח חוות דעת חדשה על המוצר. */
-  async function handleReviewSubmit(e) {
-    e.preventDefault();
-    if (!reviewForm.reviewer_name || !reviewForm.text) return;
-    await fetch('/api/reviews', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...reviewForm, type: 'product', product_id: product.id })
-    });
-    setReviewSubmitted(true);
-    setShowReviewForm(false);
-    setReviewForm({ reviewer_name: '', rating: 5, text: '' });
-  }
-
-  /** מציג דירוג בכוכבים, ואופציונלית מאפשר לדרג. */
-  function renderStars(rating, interactive = false, onRate = null) {
-    return (
-      <div className="stars">
-        {[1,2,3,4,5].map(s => (
-          <span key={s} className={`star ${s <= rating ? 'filled' : ''} ${interactive ? 'interactive' : ''}`}
-            onClick={() => interactive && onRate && onRate(s)}>★</span>
-        ))}
-      </div>
-    );
-  }
-
   const avgRating = reviews.length > 0
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : null;
-
-  const colorMap = {
-    'לבן': '#ffffff', 'שחור': '#1a1a1a', 'אפור': '#888888',
-    'כחול': '#2563eb', 'אדום': '#dc2626', 'ירוק': '#16a34a',
-    'צהוב': '#eab308', 'כתום': '#ea580c', 'חום': '#92400e',
-    'בז': '#d4b896', 'כסף': '#c0c0c0', 'זהב': '#d4af37',
-    'ורוד': '#ec4899', 'סגול': '#9333ea', 'תכלת': '#38bdf8',
-  };
-
-  const CATEGORY_LABELS = {
-    painting: 'מוצרי צביעה', kitchen: 'מוצרי מטבח', bathroom: 'מוצרי אמבטיה',
-    tools: 'כלי עבודה', cleaning: 'ניקיון', garden: 'גינה',
-    plumbing: 'אינסטלציה', adhesives: 'דבקים', locks: 'צילינדרים ומנעולים',
-    faucets: 'ברזים', electrical: 'מוצרי חשמל', home: 'בית'
-  };
 
   return (
     <div className="product-page">
       <button className="back-btn product-page-back" onClick={onBack}>← חזרה למוצרים</button>
 
       <div className="product-page-content">
-        {/* Gallery */}
-        <div className="product-page-gallery">
-          <div className="product-page-image-wrap">
-            {allImages.length > 0 && !brokenImages.has(allImages[currentImageIndex])
-              ? <img
-                  src={allImages[currentImageIndex]}
-                  alt={product.name}
-                  className="product-page-image"
-                  onError={() => markBroken(allImages[currentImageIndex])}
-                />
-              : <div className="product-page-no-image">אין תמונה</div>
-            }
-            {hasMultipleImages && (
-              <>
-                <button className="gallery-arrow gallery-arrow-right" onClick={prevImage}>‹</button>
-                <button className="gallery-arrow gallery-arrow-left" onClick={nextImage}>›</button>
-                <div className="gallery-dots">
-                  {allImages.map((_, i) => (
-                    <button key={i} className={`gallery-dot ${i === currentImageIndex ? 'active' : ''}`} onClick={() => setCurrentImageIndex(i)} />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-          {hasMultipleImages && (
-            <div className="gallery-thumbnails">
-              {allImages.map((img, i) => (
-                <button key={i} className={`gallery-thumb ${i === currentImageIndex ? 'active' : ''}`} onClick={() => setCurrentImageIndex(i)}>
-                  <img src={img} alt={`תמונה ${i + 1}`} onError={() => markBroken(img)} />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <ProductGallery product={product} />
 
         {/* Details */}
         <div className="product-page-details">
@@ -195,7 +126,7 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
 
           {avgRating && (
             <div className="product-rating-summary">
-              {renderStars(Math.round(avgRating))}
+              <Stars rating={Math.round(avgRating)} />
               <span className="product-rating-avg">{avgRating}</span>
               <span className="product-rating-count">({reviews.length} ביקורות)</span>
             </div>
@@ -211,58 +142,22 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
             {inStock ? 'יש במלאי' : 'אזל מהמלאי'}
           </div>
 
-          {hasVariants && (
-            <div className="product-page-variants">
-              <h3>בחר גרסה / גודל</h3>
-              <div className="variant-chips">
-                {product.variants.map((v, i) => (
-                  <button
-                    key={i}
-                    className={`variant-chip ${selectedVariant === v ? 'selected' : ''}`}
-                    onClick={() => setSelectedVariant(v)}>
-                    <span className="variant-chip-label">{v.label}</span>
-                    <span className="variant-chip-price">₪{v.price}</span>
-                  </button>
-                ))}
+          <ProductVariantSelector
+            product={product}
+            hasVariants={hasVariants}
+            selectedVariant={selectedVariant}
+            onSelectVariant={setSelectedVariant}
+            selectedColor={selectedColor}
+            onSelectColor={setSelectedColor}
+            selectedSize={selectedSize}
+            onSelectSize={setSelectedSize}>
+            {product.description && (
+              <div className="product-page-description">
+                <h3>תיאור המוצר</h3>
+                <p>{product.description}</p>
               </div>
-            </div>
-          )}
-
-          {product.description && (
-            <div className="product-page-description">
-              <h3>תיאור המוצר</h3>
-              <p>{product.description}</p>
-            </div>
-          )}
-
-          {product.colors && product.colors.length > 0 && (
-            <div className="product-page-colors">
-              <h3>בחר צבע {selectedColor && <span className="selected-color-name">— {selectedColor}</span>}</h3>
-              <div className="color-circles">
-                {product.colors.map(color => (
-                  <button key={color}
-                    className={`color-circle ${selectedColor === color ? 'selected' : ''}`}
-                    style={{ backgroundColor: colorMap[color] || '#ccc', border: color === 'לבן' ? '2px solid #ddd' : '2px solid transparent' }}
-                    onClick={() => setSelectedColor(color)} title={color} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {product.sizes && product.sizes.length > 0 && (
-            <div className="product-page-sizes">
-              <h3>בחר מידה {selectedSize && <span className="selected-color-name">— {selectedSize}</span>}</h3>
-              <select
-                className="size-select"
-                value={selectedSize || ''}
-                onChange={e => setSelectedSize(e.target.value || null)}>
-                <option value="">-- בחר מידה --</option>
-                {product.sizes.map(size => (
-                  <option key={size} value={size}>{size}</option>
-                ))}
-              </select>
-            </div>
-          )}
+            )}
+          </ProductVariantSelector>
 
           <div className="product-page-actions">
             <button
@@ -288,101 +183,13 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
         </div>
       </div>
 
-      {/* ביקורות */}
-      <div className="product-reviews">
-        <div className="product-reviews-header">
-          <h2>ביקורות על המוצר</h2>
-          <button className="add-review-btn" onClick={() => setShowReviewForm(!showReviewForm)}>
-            {showReviewForm ? '✕ סגור' : '✍️ כתוב ביקורת'}
-          </button>
-        </div>
+      <ProductReviewsSection productId={product.id} reviews={reviews} />
 
-        {showReviewForm && (
-          <div className="review-form-wrap">
-            {reviewSubmitted ? (
-              <div className="review-submitted"><span>🎉</span><p>תודה! הביקורת תפורסם לאחר אישור.</p></div>
-            ) : (
-              <form className="review-form" onSubmit={handleReviewSubmit}>
-                <div className="review-form-fields">
-                  <div className="review-field">
-                    <label>שמך *</label>
-                    <input placeholder="ישראל ישראלי" value={reviewForm.reviewer_name}
-                      onChange={e => setReviewForm({...reviewForm, reviewer_name: e.target.value})} required />
-                  </div>
-                  <div className="review-field">
-                    <label>דירוג *</label>
-                    {renderStars(reviewForm.rating, true, r => setReviewForm({...reviewForm, rating: r}))}
-                  </div>
-                  <div className="review-field full">
-                    <label>הביקורת שלך *</label>
-                    <textarea placeholder="מה דעתך על המוצר?" rows={3} value={reviewForm.text}
-                      onChange={e => setReviewForm({...reviewForm, text: e.target.value})} required />
-                  </div>
-                </div>
-                <button type="submit" className="review-submit-btn">✅ שלח ביקורת</button>
-              </form>
-            )}
-          </div>
-        )}
-
-        {reviews.length === 0 ? (
-          <p className="no-product-reviews">אין ביקורות עדיין — היה הראשון!</p>
-        ) : (
-          <div className="product-reviews-list">
-            {reviews.map(r => (
-              <div key={r.id} className="product-review-item">
-                <div className="product-review-top">
-                  <div className="reviewer-avatar">{r.reviewer_name.charAt(0).toUpperCase()}</div>
-                  <div>
-                    <div className="reviewer-name">{r.reviewer_name}</div>
-                    <div className="review-date">{new Date(r.created_at).toLocaleDateString('he-IL')}</div>
-                  </div>
-                  {renderStars(r.rating)}
-                </div>
-                <p className="product-review-text">{r.text}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* צפית לאחרונה */}
-      {recentlyViewed.length > 0 && (
-        <div className="recently-viewed">
-          <h2 className="related-title">צפית לאחרונה 👁️</h2>
-          <div className="related-grid">
-            {recentlyViewed.slice(0, 3).map(p => (
-              <div key={p.id} className="related-card" onClick={() => onSelectProduct(p)}>
-                {p.image_url && !brokenImages.has(p.image_url) ? <img src={p.image_url} alt={p.name} className="related-img" onError={() => markBroken(p.image_url)} /> : <div className="related-no-img">🖼️</div>}
-                <div className="related-info">
-                  <span className="related-name">{p.name}</span>
-                  <span className="related-price">₪{p.price}</span>
-                  <span className={`related-stock ${p.in_stock !== false ? 'in' : 'out'}`}>{p.in_stock !== false ? 'יש במלאי' : 'אזל'}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* מוצרים קשורים */}
-      {relatedProducts.length > 0 && (
-        <div className="related-products">
-          <h2 className="related-title">מוצרים נוספים מאותה קטגוריה</h2>
-          <div className="related-grid">
-            {relatedProducts.map(p => (
-              <div key={p.id} className="related-card" onClick={() => onSelectProduct(p)}>
-                {p.image_url && !brokenImages.has(p.image_url) ? <img src={p.image_url} alt={p.name} className="related-img" onError={() => markBroken(p.image_url)} /> : <div className="related-no-img">🖼️</div>}
-                <div className="related-info">
-                  <span className="related-name">{p.name}</span>
-                  <span className="related-price">₪{p.price}</span>
-                  <span className={`related-stock ${p.in_stock !== false ? 'in' : 'out'}`}>{p.in_stock !== false ? 'יש במלאי' : 'אזל'}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <RelatedProducts
+        recentlyViewed={recentlyViewed}
+        relatedProducts={relatedProducts}
+        onSelectProduct={onSelectProduct}
+      />
     </div>
   );
 }
