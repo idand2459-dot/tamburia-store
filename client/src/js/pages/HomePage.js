@@ -53,6 +53,10 @@ function HomePage() {
   return (
     <>
       <div className="hero">
+        {/* נקודות הזוהר הן divs ולא ::before/::after, כי שני אלה על .hero
+            כבר תפוסים — רשת הנקודות והדהייה התחתונה. */}
+        <div className="hero-glow hero-glow-purple" aria-hidden="true" />
+        <div className="hero-glow hero-glow-red" aria-hidden="true" />
         <div className="hero-inner">
           <div className="hero-badge"><Crown size={14} aria-hidden="true" /> מאז 1991 · פתח תקווה</div>
           <h1 className="hero-title">כל מה שצריך לבית<br/><span className="hero-accent">במקום אחד</span></h1>
