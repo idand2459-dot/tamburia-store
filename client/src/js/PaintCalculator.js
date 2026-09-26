@@ -9,6 +9,23 @@ const SHADE_CONFIG = {
   dark:   { label: 'כהה',    emoji: '🌙',  factor: 0.65 },
 };
 
+/** נפח הדלי הגדול בליטרים, כפי שהחנות מוכרת אותו. */
+const LARGE_BUCKET_LITERS = 18;
+
+/**
+ * המוצרים שהחבילה מוסיפה לעגלה, לפי מזהה במסד.
+ *
+ * ההתאמה היא לפי id ולא לפי category+subcategory כמו ב-ProjectCalculator.
+ * שם זה עובד כי לכל פריט יש תת-קטגוריה מזהה; כאן לשני המוצרים
+ * subcategory ריק, ועוד 42 מוצרי צביעה חולקים איתם את אותו צירוף.
+ * findProduct בוחר את הזול ביותר, כך שהעתקה ישירה של הדפוס הייתה
+ * מחזירה "ספריי מסיר צבע" ב-0 ₪ — כלומר משחזרת בדיוק את הבאג שנסגר כאן.
+ */
+const BUNDLE_PRODUCT_IDS = {
+  paint5: 627,
+  colorMix: 416,
+};
+
 /** מערבב צבע עם לבן לקבלת גוון בהיר יותר. */
 function blendWithWhite(hex, factor) {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -37,6 +54,7 @@ function PaintCalculator({ addBundleToCart }) {
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedShade, setSelectedShade] = useState('medium');
   const [bundleAdded, setBundleAdded] = useState(false);
+  const [bundleProducts, setBundleProducts] = useState({});
 
   useEffect(() => {
     fetch('/api/pigment-formulas')
@@ -47,6 +65,20 @@ function PaintCalculator({ addBundleToCart }) {
         if (arr.length > 0) setSelectedColor(arr[0].color_code);
       })
       .catch(() => {});
+  }, []);
+
+  // מושכים את מוצרי החבילה עצמם, כדי שהמחיר והמזהה שייכנסו לעגלה
+  // יהיו של המוצר האמיתי. מוצר שלא נמצא פשוט לא נכנס לחבילה.
+  useEffect(() => {
+    const keys = Object.keys(BUNDLE_PRODUCT_IDS);
+    Promise.all(keys.map(key => fetch(`/api/products/${BUNDLE_PRODUCT_IDS[key]}`)
+      .then(r => (r.ok ? r.json() : null))
+      .catch(() => null)))
+      .then(list => {
+        const found = {};
+        keys.forEach((key, i) => { if (list[i]) found[key] = list[i]; });
+        setBundleProducts(found);
+      });
   }, []);
 
   useEffect(() => { setBundleAdded(false); }, [walls, windows, doors, coats, selectedColor, selectedShade]);
@@ -86,23 +118,23 @@ function PaintCalculator({ addBundleToCart }) {
       netArea: netArea.toFixed(1),
       paintLiters: Math.ceil(paintLiters * 10) / 10,
       paintCans5: Math.ceil(paintLiters / 5),
-      paintCans15: Math.ceil(paintLiters / 15),
+      paintCans18: Math.ceil(paintLiters / LARGE_BUCKET_LITERS),
       colorMixBottles,
     });
     setBundleAdded(false);
   }
 
+  /** מחזיר את מוצר החבילה אם נמצא והוא במלאי, אחרת null. */
+  function findBundleProduct(key) {
+    const product = bundleProducts[key];
+    if (!product || product.in_stock === false) return null;
+    return product;
+  }
+
   /** מוסיף לעגלה את המוצרים שהמחשבון המליץ עליהם. */
   function handleAddBundle() {
-    if (!result || !addBundleToCart) return;
-    const formula = formulas.find(f => f.color_code === selectedColor);
-    const colorLabel = formula ? `${formula.color_name_he} — ${SHADE_CONFIG[selectedShade].label}` : '';
-    const items = [];
-    if (result.paintCans5 > 0)
-      items.push({ id: 'paint-bundle-white-5L', name: 'דלי צבע לבן 5 ליטר', price: 0, quantity: result.paintCans5, image_url: '', in_stock: true });
-    if (result.colorMixBottles > 0)
-      items.push({ id: 'paint-bundle-kolor-mix', name: `קולור MIX יעקבי 250מ"ל — ${colorLabel}`, price: 0, quantity: result.colorMixBottles, image_url: '', in_stock: true });
-    addBundleToCart(items);
+    if (!addBundleToCart || bundleItems.length === 0) return;
+    addBundleToCart(bundleItems.map(i => ({ ...i.found, quantity: i.quantity })));
     setBundleAdded(true);
   }
 
@@ -111,6 +143,19 @@ function PaintCalculator({ addBundleToCart }) {
     ? blendWithWhite(currentFormula.hex, SHADE_CONFIG[selectedShade].factor)
     : '#FFFFFF';
   const previewTextDark = isLight(previewBg);
+
+  // מה שהמחשבון ממליץ עליו, מול מה שבאמת קיים בקטלוג. פריט שאין לו
+  // מוצר אמיתי נשאר בהמלצה על המסך אבל לא נכנס לעגלה.
+  const recommended = result
+    ? [
+      { key: 'paint5', quantity: result.paintCans5 },
+      { key: 'colorMix', quantity: result.colorMixBottles },
+    ].filter(line => line.quantity > 0)
+    : [];
+  const resolvedBundle = recommended.map(line => ({ ...line, found: findBundleProduct(line.key) }));
+  const bundleItems = resolvedBundle.filter(line => line.found);
+  const bundleHasUnknown = resolvedBundle.some(line => !line.found);
+  const bundleTotal = bundleItems.reduce((sum, line) => sum + line.found.price * line.quantity, 0);
   const isValid = walls.some(w => parseFloat(w.length) > 0 && parseFloat(w.height) > 0);
 
   return (
@@ -288,8 +333,8 @@ function PaintCalculator({ addBundleToCart }) {
                     <div className="paint-result-label">צבע לבן</div>
                     <div className="paint-result-sub">
                       {result.paintCans5 > 0 && `דלי 5 ל' × ${result.paintCans5}`}
-                      {result.paintCans5 > 0 && result.paintCans15 > 0 && ' | '}
-                      {result.paintCans15 > 0 && `דלי 15 ל' × ${result.paintCans15}`}
+                      {result.paintCans5 > 0 && result.paintCans18 > 0 && ' | '}
+                      {result.paintCans18 > 0 && `דלי 18 ל' × ${result.paintCans18}`}
                     </div>
                   </div>
                 </div>
@@ -317,15 +362,22 @@ function PaintCalculator({ addBundleToCart }) {
               )}
 
               {/* Bundle CTA */}
-              {addBundleToCart && (
+              {addBundleToCart && bundleItems.length > 0 && (
                 <button
                   className={`paint-bundle-btn ${bundleAdded ? 'added' : ''}`}
                   onClick={handleAddBundle}
                   disabled={bundleAdded}>
                   {bundleAdded
                     ? '✅ נוסף לעגלה!'
-                    : `🛒 הוסף חבילה לעגלה — ${result.paintCans5} דלי + ${result.colorMixBottles} בקבוק קולור MIX`}
+                    : `🛒 הוסף חבילה לעגלה — ${result.paintCans5} דלי + ${result.colorMixBottles} בקבוק קולור MIX · ₪${bundleTotal}`}
                 </button>
+              )}
+
+              {addBundleToCart && bundleHasUnknown && (
+                <div className="paint-results-tip">
+                  <span>🏪</span>
+                  <p>חלק מהפריטים אינם זמינים להזמנה כרגע — שווה לשאול עליהם בחנות.</p>
+                </div>
               )}
 
               <div className="paint-results-tip">
