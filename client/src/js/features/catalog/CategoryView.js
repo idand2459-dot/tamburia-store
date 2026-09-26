@@ -11,9 +11,9 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import categories from './categories';
 import CategoryBanner from './CategoryBanner';
 import CategoryAmbience from './CategoryAmbience';
-import NotFoundPage from './NotFoundPage';
-import { ProductCardSkeleton } from './LoadingStates';
-import { useStore } from './storeContext';
+import NotFoundPage from '../../pages/NotFoundPage';
+import { ProductCardSkeleton } from '../../components/LoadingStates';
+import { useStore } from '../../context/storeContext';
 
 const SORT_OPTIONS = [
   { value: 'default', label: 'ברירת מחדל' },

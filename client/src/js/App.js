@@ -9,19 +9,19 @@
 import { useState, useMemo } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import '../css/app.css';
-import { StoreContext } from './storeContext';
+import { StoreContext } from './context/storeContext';
 import { useCart } from './hooks/useCart';
 import { useWishlist } from './hooks/useWishlist';
 import { useCheckoutForm } from './hooks/useCheckoutForm';
 import StoreLayout from './StoreLayout';
-import HomePage from './HomePage';
-import CategoryView from './CategoryView';
-import ProductView from './ProductView';
-import AdminRoute from './AdminRoute';
-import NotFoundPage from './NotFoundPage';
-import About from './About';
-import Contact from './Contact';
-import Returns from './Returns';
+import HomePage from './pages/HomePage';
+import CategoryView from './features/catalog/CategoryView';
+import ProductView from './features/catalog/ProductView';
+import AdminRoute from './routes/AdminRoute';
+import NotFoundPage from './pages/NotFoundPage';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import Returns from './pages/Returns';
 
 /** מציג את האפליקציה ומנהל את המצב המשותף לכל המסכים. */
 function App() {

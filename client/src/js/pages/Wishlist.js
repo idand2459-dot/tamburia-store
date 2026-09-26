@@ -2,7 +2,7 @@
  * חלון המועדפים ורשימת המוצרים שנשמרו.
  */
 import { useState, useEffect } from 'react';
-import { getWishlist, toggleWishlist } from './wishlistUtils';
+import { getWishlist, toggleWishlist } from '../utils/wishlistUtils';
 
 /** מציג את חלון המועדפים. */
 function Wishlist({ onClose, onSelectProduct }) {

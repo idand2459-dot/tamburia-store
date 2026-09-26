@@ -8,10 +8,10 @@
  */
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import ProductPage from './ProductPage';
-import NotFoundPage from './NotFoundPage';
-import { ProductCardSkeleton } from './LoadingStates';
-import { useStore } from './storeContext';
+import ProductPage from '../../pages/ProductPage';
+import NotFoundPage from '../../pages/NotFoundPage';
+import { ProductCardSkeleton } from '../../components/LoadingStates';
+import { useStore } from '../../context/storeContext';
 
 /** טוען את המוצר לפי המזהה שבכתובת ומציג אותו. */
 function ProductView() {
