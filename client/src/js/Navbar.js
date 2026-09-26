@@ -34,14 +34,18 @@ function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [allProducts, setAllProducts] = useState([]);
   const searchInputRef = useRef(null);
+  const searchTimerRef = useRef(null);
+  const cancelSearchRef = useRef(null);
 
   const currentPage = currentPageOf(location.pathname);
 
-  useEffect(() => {
-    fetch('/api/products').then(r => r.json()).then(data => setAllProducts(Array.isArray(data) ? data : [])).catch(() => {});
-  }, []);
+  // מבטל חיפוש שממתין או שכבר יצא לדרך כשהתיבה נסגרת או שהרכיב יורד,
+  // כדי שתשובה מאוחרת לא תמלא תוצאות לתיבה שכבר אינה פתוחה.
+  useEffect(() => () => {
+    clearTimeout(searchTimerRef.current);
+    cancelSearchRef.current?.();
+  }, [searchOpen]);
 
   useEffect(() => {
     if (searchOpen && searchInputRef.current) {
@@ -56,12 +60,43 @@ function Navbar() {
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
 
-  /** מעדכן את מונח החיפוש ואת תוצאותיו. */
+  /**
+   * מריץ חיפוש בשרת ומעדכן את התוצאות.
+   *
+   * דגל cancelled לכל בקשה, באותו דפוס של ה-useEffect-ים בפרויקט:
+   * הקלדה מהירה מייצרת כמה בקשות, והן לא בהכרח חוזרות לפי הסדר.
+   * בלי הדגל תשובה איטית של מילה קודמת הייתה דורסת תוצאה עדכנית
+   * שכבר הוצגה.
+   *
+   * עם limit התשובה היא { products, pagination } ולא מערך שטוח.
+   */
+  function runSearch(q) {
+    cancelSearchRef.current?.();
+
+    let cancelled = false;
+    cancelSearchRef.current = () => { cancelled = true; };
+
+    fetch(`/api/products?search=${encodeURIComponent(q)}&limit=8`)
+      .then(r => r.json())
+      .then(data => {
+        if (cancelled) return;
+        setSearchResults(Array.isArray(data) ? data : (data.products || []));
+      })
+      .catch(() => {});
+  }
+
+  /** מעדכן את מונח החיפוש ומתזמן חיפוש בשרת. */
   function handleSearchChange(e) {
     const q = e.target.value;
     setSearchQuery(q);
-    if (!q.trim()) { setSearchResults([]); return; }
-    setSearchResults(allProducts.filter(p => p.name.toLowerCase().includes(q.toLowerCase())).slice(0, 8));
+
+    clearTimeout(searchTimerRef.current);
+    if (!q.trim()) {
+      cancelSearchRef.current?.();
+      setSearchResults([]);
+      return;
+    }
+    searchTimerRef.current = setTimeout(() => runSearch(q), 300);
   }
 
   /** סוגר את תיבת החיפוש ומנקה אותה. */
