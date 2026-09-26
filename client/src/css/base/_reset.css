@@ -8,6 +8,14 @@
   box-sizing: border-box;
 }
 
+/* אייקוני Lucide הם <svg> inline, ולכן הם יושבים על קו הבסיס ונראים
+   נמוכים מדי ליד טקסט. היישור והיציבות כאן הם ברירת המחדל לכולם —
+   רכיב שצריך אחרת דוחה אותה בקובץ שלו, שנטען אחרי הקובץ הזה. */
+svg.lucide {
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
 body {
   font-family: 'Segoe UI', sans-serif;
   background-color: #f8f8f6;

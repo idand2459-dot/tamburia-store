@@ -4,6 +4,7 @@
  * מושך את שדות הטופס מ-StoreContext ומקבל בפרופס רק את מעבר השלבים,
  * שהוא עניין של הניתוב ולא של המצב המשותף.
  */
+import { Ban, Check, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Spinner } from '../LoadingStates';
 import { useStore } from '../../context/storeContext';
 
@@ -72,12 +73,12 @@ function CheckoutFormView({ setCartStep }) {
             />
             {deliveryInvalid && (
               <div className="delivery-area-error">
-                🚫 מצטערים, אנחנו משלחים לפתח תקווה, גני תקווה וקריית אונו בלבד.
+                <Ban size={18} aria-hidden="true" /> מצטערים, אנחנו משלחים לפתח תקווה, גני תקווה וקריית אונו בלבד.
                 <br />לאיסוף עצמי — חזור ובחר "איסוף עצמי".
               </div>
             )}
             {!deliveryInvalid && deliveryAddress && (
-              <div className="delivery-area-ok">✓ אזור המשלוח תקין</div>
+              <div className="delivery-area-ok"><Check size={16} aria-hidden="true" /> אזור המשלוח תקין</div>
             )}
           </div>
         )}
@@ -87,12 +88,12 @@ function CheckoutFormView({ setCartStep }) {
         </div>
       </div>
       {/* דחייה מהשרת — העגלה נשארת מלאה כדי שאפשר יהיה לנסות שוב */}
-      {orderError && <div className="delivery-area-error">⚠️ {orderError}</div>}
+      {orderError && <div className="delivery-area-error"><AlertTriangle size={18} aria-hidden="true" /> {orderError}</div>}
       <button
         className={`checkout-btn ${(!customerName || !customerPhone || (deliveryMethod === 'delivery' && (!deliveryAddress || deliveryInvalid)) || submittingOrder) ? 'disabled' : ''}`}
         disabled={!customerName || !customerPhone || (deliveryMethod === 'delivery' && (!deliveryAddress || deliveryInvalid)) || submittingOrder}
         onClick={handleSubmit}>
-        {submittingOrder ? <span className="checkout-btn-loading"><Spinner size="small" color="white" /> שולח הזמנה...</span> : '✅ שלח הזמנה'}
+        {submittingOrder ? <span className="checkout-btn-loading"><Spinner size="small" color="white" /> שולח הזמנה...</span> : <><CheckCircle size={18} aria-hidden="true" /> שלח הזמנה</>}
       </button>
     </div>
   );

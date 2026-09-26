@@ -7,19 +7,21 @@
  * ייצוא האקסל שב-useAdminOrders מציגים תאריכים באותה צורה.
  */
 
+/* אין כאן שדה icon: אייקון הקטגוריה נשלף מ-CATEGORY_ICONS לפי ה-id
+   (רכיב Lucide, לא מחרוזת), כדי שהאדמין והחנות יציגו את אותו אייקון. */
 export const CATEGORIES = [
-  { id: 'painting', label: 'מוצרי צביעה', icon: '🎨' },
-  { id: 'kitchen', label: 'מוצרי מטבח', icon: '🍳' },
-  { id: 'bathroom', label: 'מוצרי אמבטיה', icon: '🚿' },
-  { id: 'tools', label: 'כלי עבודה', icon: '🔧' },
-  { id: 'cleaning', label: 'ניקיון', icon: '🧹' },
-  { id: 'garden', label: 'גינה', icon: '🌿' },
-  { id: 'plumbing', label: 'אינסטלציה', icon: '🔩' },
-  { id: 'adhesives', label: 'דבקים', icon: '🗜️' },
-  { id: 'locks', label: 'צילינדרים ומנעולים', icon: '🔐' },
-  { id: 'faucets', label: 'ברזים', icon: '🚰' },
-  { id: 'electrical', label: 'מוצרי חשמל', icon: '⚡' },
-  { id: 'home', label: 'בית', icon: '🏠' },
+  { id: 'painting', label: 'מוצרי צביעה' },
+  { id: 'kitchen', label: 'מוצרי מטבח' },
+  { id: 'bathroom', label: 'מוצרי אמבטיה' },
+  { id: 'tools', label: 'כלי עבודה' },
+  { id: 'cleaning', label: 'ניקיון' },
+  { id: 'garden', label: 'גינה' },
+  { id: 'plumbing', label: 'אינסטלציה' },
+  { id: 'adhesives', label: 'דבקים' },
+  { id: 'locks', label: 'צילינדרים ומנעולים' },
+  { id: 'faucets', label: 'ברזים' },
+  { id: 'electrical', label: 'מוצרי חשמל' },
+  { id: 'home', label: 'בית' },
 ];
 
 export const STATUS_CONFIG = {

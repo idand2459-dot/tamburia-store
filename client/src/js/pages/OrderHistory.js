@@ -2,12 +2,16 @@
  * חלון ההזמנות שלי — חיפוש הזמנות לפי מספר טלפון.
  */
 import { useState } from 'react';
+import {
+  X, ClipboardList, Search, Inbox, Settings, Truck, CheckCircle,
+  Store, ChevronUp, ChevronDown, Phone, MessageCircle, Loader,
+} from 'lucide-react';
 
 const STATUS_CONFIG = {
-  new:        { label: 'התקבלה',  emoji: '📥', color: '#2563eb', bg: '#eff6ff' },
-  processing: { label: 'בטיפול',  emoji: '⚙️', color: '#d97706', bg: '#fffbeb' },
-  shipped:    { label: 'נשלחה',   emoji: '🚚', color: '#7c3aed', bg: '#f5f3ff' },
-  completed:  { label: 'הושלמה', emoji: '✅', color: '#16a34a', bg: '#f0fdf4' },
+  new:        { label: 'התקבלה',  Icon: Inbox,       color: '#2563eb', bg: '#eff6ff' },
+  processing: { label: 'בטיפול',  Icon: Settings,    color: '#d97706', bg: '#fffbeb' },
+  shipped:    { label: 'נשלחה',   Icon: Truck,       color: '#7c3aed', bg: '#f5f3ff' },
+  completed:  { label: 'הושלמה', Icon: CheckCircle, color: '#16a34a', bg: '#f0fdf4' },
 };
 
 /** מציג את חלון חיפוש ההזמנות של הלקוח. */
@@ -45,8 +49,8 @@ function OrderHistory({ onClose }) {
       <div className="order-history-overlay" onClick={onClose} />
       <div className="order-history-modal">
         <div className="order-history-header">
-          <button className="cart-close-btn" onClick={onClose}>✕</button>
-          <h3>📋 היסטוריית הזמנות</h3>
+          <button className="cart-close-btn" onClick={onClose} aria-label="סגור"><X size={20} aria-hidden="true" /></button>
+          <h3><ClipboardList size={20} aria-hidden="true" /> היסטוריית הזמנות</h3>
         </div>
 
         <div className="order-history-body">
@@ -63,7 +67,7 @@ function OrderHistory({ onClose }) {
                 dir="ltr"
               />
               <button type="submit" className="order-history-search-btn" disabled={loading}>
-                {loading ? '⏳' : '🔍 חפש'}
+                {loading ? <Loader size={18} aria-hidden="true" /> : <><Search size={18} aria-hidden="true" /> חפש</>}
               </button>
             </div>
           </form>
@@ -72,7 +76,7 @@ function OrderHistory({ onClose }) {
             <>
               {orders.length === 0 ? (
                 <div className="order-history-empty">
-                  <span>🔍</span>
+                  <span><Search size={40} aria-hidden="true" /></span>
                   <p>לא נמצאו הזמנות למספר זה</p>
                   <small>נסה מספר אחר או פנה אלינו בטלפון</small>
                 </div>
@@ -95,16 +99,18 @@ function OrderHistory({ onClose }) {
                           <div className="order-history-card-left">
                             <span className="order-history-total">₪{order.total}</span>
                             <span className="order-history-status" style={{ color: cfg.color, background: cfg.bg }}>
-                              {cfg.emoji} {cfg.label}
+                              <cfg.Icon size={16} aria-hidden="true" /> {cfg.label}
                             </span>
-                            <span className="order-expand-btn">{isExpanded ? '▲' : '▼'}</span>
+                            <span className="order-expand-btn">{isExpanded ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />}</span>
                           </div>
                         </div>
 
                         {isExpanded && (
                           <div className="order-history-card-body">
                             <div className="order-history-delivery">
-                              {order.delivery_method === 'pickup' ? '🏪 איסוף עצמי' : `🚚 משלוח — ${order.delivery_address || ''}`}
+                              {order.delivery_method === 'pickup'
+                                ? <><Store size={16} aria-hidden="true" /> איסוף עצמי</>
+                                : <><Truck size={16} aria-hidden="true" /> משלוח — {order.delivery_address || ''}</>}
                             </div>
                             <table className="order-history-table">
                               <thead>
@@ -138,8 +144,8 @@ function OrderHistory({ onClose }) {
           <div className="order-history-contact">
             <p>שאלה על הזמנה? דברו איתנו:</p>
             <div className="order-history-contact-btns">
-              <a href="tel:039315750" className="order-history-btn">📞 03-9315750</a>
-              <a href={`https://wa.me/972506735040`} target="_blank" rel="noopener noreferrer" className="order-history-btn whatsapp">💬 וואטסאפ</a>
+              <a href="tel:039315750" className="order-history-btn"><Phone size={18} aria-hidden="true" /> 03-9315750</a>
+              <a href={`https://wa.me/972506735040`} target="_blank" rel="noopener noreferrer" className="order-history-btn whatsapp"><MessageCircle size={18} aria-hidden="true" /> וואטסאפ</a>
             </div>
           </div>
         </div>

@@ -1,3 +1,5 @@
+import { Trophy, Handshake, HelpCircle, Banknote } from 'lucide-react';
+
 /** מציג את המקטע. */
 function WhyUs() {
   return (
@@ -27,31 +29,31 @@ function WhyUs() {
         <div className="whyus-points">
           {[
             {
-              icon: '🏆',
+              Icon: Trophy,
               title: 'ניסיון של 30+ שנה',
               text: 'אנרי דביר פתח את החנות ב-1991 ומאז צבר ידע מעמיק שקשה למצוא במקום אחר'
             },
             {
-              icon: '🤝',
+              Icon: Handshake,
               title: 'יחס אישי אמיתי',
               text: 'כל לקוח מקבל תשומת לב מלאה — לא מספר בתור, אלא שם ופנים'
             },
             {
-              icon: '🔧',
+              Icon: HelpCircle,
               title: 'עזרה טכנית במקום',
               text: 'לא יודע מה לקנות? אנחנו נעזור לך לבחור בדיוק את מה שמתאים לפרויקט שלך'
             },
             {
-              icon: '💰',
+              Icon: Banknote,
               title: 'מחירים שלא מפתיעים',
               text: 'מחיר הוגן, שקוף וללא הפתעות — כי אמון הוא הבסיס של כל עסק טוב'
             },
-          ].map((point, i) => (
+          ].map(({ Icon, title, text }, i) => (
             <div key={i} className="whyus-point">
-              <span className="whyus-point-icon">{point.icon}</span>
+              <span className="whyus-point-icon"><Icon size={28} aria-hidden="true" /></span>
               <div>
-                <h3>{point.title}</h3>
-                <p>{point.text}</p>
+                <h3>{title}</h3>
+                <p>{text}</p>
               </div>
             </div>
           ))}

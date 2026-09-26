@@ -2,6 +2,7 @@
  * עמוד שאלות נפוצות עם תשובות מתקפלות.
  */
 import { useState } from 'react';
+import { MessageCircle, Phone } from 'lucide-react';
 
 const FAQS = [
   {
@@ -52,7 +53,7 @@ function FAQ() {
       <div className="faq-content">
         <div className="faq-header">
           <span className="faq-tag">שאלות נפוצות</span>
-          <h2 className="faq-title">יש לכם שאלות? יש לנו תשובות 💬</h2>
+          <h2 className="faq-title">יש לכם שאלות? יש לנו תשובות <MessageCircle size={24} aria-hidden="true" /></h2>
           <p className="faq-subtitle">כל מה שרציתם לדעת על טכניק טמבור</p>
         </div>
 
@@ -75,8 +76,8 @@ function FAQ() {
         <div className="faq-contact">
           <p>לא מצאתם תשובה? אנחנו כאן בשבילכם</p>
           <div className="faq-contact-btns">
-            <a href="tel:039315750" className="faq-btn">📞 03-9315750</a>
-            <a href="https://wa.me/972506735040" target="_blank" rel="noopener noreferrer" className="faq-btn whatsapp">💬 וואטסאפ</a>
+            <a href="tel:039315750" className="faq-btn"><Phone size={18} aria-hidden="true" /> 03-9315750</a>
+            <a href="https://wa.me/972506735040" target="_blank" rel="noopener noreferrer" className="faq-btn whatsapp"><MessageCircle size={18} aria-hidden="true" /> וואטסאפ</a>
           </div>
         </div>
       </div>

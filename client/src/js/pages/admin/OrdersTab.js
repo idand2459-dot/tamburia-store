@@ -5,6 +5,7 @@
  * אף לשונית אחרת.
  */
 import { useState } from 'react';
+import { BarChart3, AlertTriangle, Store, Truck, ChevronUp, ChevronDown } from 'lucide-react';
 import { STATUS_CONFIG, formatDate } from './adminConstants';
 
 /** מציג את לשונית ההזמנות. */
@@ -33,11 +34,11 @@ function OrdersTab({ orders, onStatusChange, onDeleteOrder, onExport, ordersErro
         ))}
         {orders.length > 0 && (
           <button className="export-orders-btn" onClick={onExport} title="ייצא לאקסל">
-            📊 ייצא לאקסל
+            <BarChart3 size={18} aria-hidden="true" /> ייצא לאקסל
           </button>
         )}
       </div>
-      {ordersError && <div className="admin-error">⚠️ {ordersError}</div>}
+      {ordersError && <div className="admin-error"><AlertTriangle size={18} aria-hidden="true" /> {ordersError}</div>}
       {filteredOrders.length === 0 ? <div className="admin-empty">אין הזמנות עדיין</div> : (
         <div className="orders-list">
           {filteredOrders.map(order => {
@@ -52,9 +53,9 @@ function OrdersTab({ orders, onStatusChange, onDeleteOrder, onExport, ordersErro
                   </div>
                   <div className="order-card-left">
                     <span className="order-total-badge">₪{order.total}</span>
-                    <span className="order-delivery-badge">{order.delivery_method === 'pickup' ? '🏪 איסוף' : '🚚 משלוח'}</span>
+                    <span className="order-delivery-badge">{order.delivery_method === 'pickup' ? <><Store size={16} aria-hidden="true" /> איסוף</> : <><Truck size={16} aria-hidden="true" /> משלוח</>}</span>
                     <span className="order-status-badge" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
-                    <span className="order-expand-btn">{isExpanded ? '▲' : '▼'}</span>
+                    <span className="order-expand-btn">{isExpanded ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />}</span>
                   </div>
                 </div>
                 {isExpanded && (

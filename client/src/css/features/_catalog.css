@@ -167,15 +167,15 @@
   background-size: 18px 18px;
 }
 
-/* category icon hint — small, top-right */
-.product-img-placeholder::after {
-  content: attr(data-icon);
+/* רמז אייקון הקטגוריה — קטן, בפינה. היה ::after עם content: attr(data-icon)
+   כשהאייקון היה אימוג'י; רכיב Lucide אינו יכול לשבת ב-generated content,
+   ולכן CategoryView מרנדר עכשיו אלמנט אמיתי עם ה-class הזה. */
+.product-img-icon {
   position: absolute;
   top: 10px;
   left: 10px;
-  font-size: 1.4rem;
   opacity: 0.22;
-  line-height: 1;
+  color: #fff;
 }
 
 .product-img-initial {

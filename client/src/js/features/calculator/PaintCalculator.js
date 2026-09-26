@@ -2,11 +2,15 @@
  * מחשבון הצבע: חישוב כמות לפי שטח וסימולציית גוון הפיגמנט.
  */
 import { useState, useEffect } from 'react';
+import {
+  Paintbrush, Brush, Ruler, AppWindow, DoorOpen, PaintBucket, X,
+  CheckCircle, Lightbulb, Store, Phone, ShoppingCart, Sun, CloudSun, Moon,
+} from 'lucide-react';
 
 const SHADE_CONFIG = {
-  light:  { label: 'בהיר',   emoji: '☀️',  factor: 0.15 },
-  medium: { label: 'בינוני', emoji: '🌤️', factor: 0.35 },
-  dark:   { label: 'כהה',    emoji: '🌙',  factor: 0.65 },
+  light:  { label: 'בהיר',   Icon: Sun,      factor: 0.15 },
+  medium: { label: 'בינוני', Icon: CloudSun, factor: 0.35 },
+  dark:   { label: 'כהה',    Icon: Moon,     factor: 0.65 },
 };
 
 /** נפח הדלי הגדול בליטרים, כפי שהחנות מוכרת אותו. */
@@ -202,7 +206,7 @@ function PaintCalculator({ addBundleToCart }) {
       <div className="paint-calc-content">
         <div className="paint-calc-header">
           <span className="faq-tag">כלי עזר</span>
-          <h2 className="paint-calc-title">🎨 מחשבון צבע</h2>
+          <h2 className="paint-calc-title"><Paintbrush size={28} aria-hidden="true" /> מחשבון צבע</h2>
           <p className="paint-calc-subtitle">חשבו כמה צבע תצטרכו לפני שאתם מגיעים לחנות</p>
         </div>
 
@@ -211,7 +215,7 @@ function PaintCalculator({ addBundleToCart }) {
           {/* ── Color & Shade Selector ── */}
           {formulas.length > 0 && (
             <div className="paint-calc-card paint-pigment-card">
-              <h3 className="paint-calc-card-title">🎨 קולור MIX יעקבי — בחרו גוון</h3>
+              <h3 className="paint-calc-card-title"><Paintbrush size={20} aria-hidden="true" /> קולור MIX יעקבי — בחרו גוון</h3>
 
               <div className="paint-pigment-row">
                 {/* Color swatches */}
@@ -245,7 +249,7 @@ function PaintCalculator({ addBundleToCart }) {
                       key={key}
                       className={`paint-shade-btn ${selectedShade === key ? 'active' : ''}`}
                       onClick={() => setSelectedShade(key)}>
-                      {cfg.emoji} {cfg.label}
+                      <cfg.Icon size={18} aria-hidden="true" /> {cfg.label}
                     </button>
                   ))}
                 </div>
@@ -271,7 +275,7 @@ function PaintCalculator({ addBundleToCart }) {
 
           {/* ── Walls ── */}
           <div className="paint-calc-card">
-            <h3 className="paint-calc-card-title">📐 מידות הקירות</h3>
+            <h3 className="paint-calc-card-title"><Ruler size={20} aria-hidden="true" /> מידות הקירות</h3>
             <div className="paint-walls-list">
               {walls.map((wall, i) => (
                 <div key={i} className="paint-wall-row">
@@ -289,7 +293,7 @@ function PaintCalculator({ addBundleToCart }) {
                       <span className="paint-unit">מ'</span>
                     </div>
                     {walls.length > 1 && (
-                      <button className="paint-remove-btn" onClick={() => removeWall(i)}>✕</button>
+                      <button className="paint-remove-btn" onClick={() => removeWall(i)} aria-label="הסר קיר"><X size={16} aria-hidden="true" /></button>
                     )}
                   </div>
                 </div>
@@ -302,10 +306,10 @@ function PaintCalculator({ addBundleToCart }) {
 
           {/* ── Windows & Doors ── */}
           <div className="paint-calc-card">
-            <h3 className="paint-calc-card-title">🪟 חלונות ודלתות</h3>
+            <h3 className="paint-calc-card-title"><AppWindow size={20} aria-hidden="true" /> חלונות ודלתות</h3>
             <div className="paint-openings">
               <div className="paint-opening-row">
-                <span>🪟 מספר חלונות</span>
+                <span><AppWindow size={18} aria-hidden="true" /> מספר חלונות</span>
                 <div className="paint-counter">
                   <button onClick={() => setWindows(Math.max(0, windows - 1))}>−</button>
                   <span>{windows}</span>
@@ -314,7 +318,7 @@ function PaintCalculator({ addBundleToCart }) {
                 <span className="paint-opening-note">~1.5 מ"ר כל אחד</span>
               </div>
               <div className="paint-opening-row">
-                <span>🚪 מספר דלתות</span>
+                <span><DoorOpen size={18} aria-hidden="true" /> מספר דלתות</span>
                 <div className="paint-counter">
                   <button onClick={() => setDoors(Math.max(0, doors - 1))}>−</button>
                   <span>{doors}</span>
@@ -327,7 +331,7 @@ function PaintCalculator({ addBundleToCart }) {
 
           {/* ── Coats ── */}
           <div className="paint-calc-card">
-            <h3 className="paint-calc-card-title">🖌️ מספר ציפויים</h3>
+            <h3 className="paint-calc-card-title"><Brush size={20} aria-hidden="true" /> מספר ציפויים</h3>
             <div className="paint-coats">
               {[1, 2, 3].map(c => (
                 <button key={c} className={`paint-coat-btn ${coats === c ? 'active' : ''}`}
@@ -351,13 +355,13 @@ function PaintCalculator({ addBundleToCart }) {
           {result && (
             <div className="paint-results">
               <div className="paint-results-header">
-                <span>✅</span>
+                <span><CheckCircle size={24} aria-hidden="true" /></span>
                 <h3>התוצאות שלך</h3>
               </div>
 
               <div className="paint-results-grid">
                 <div className="paint-result-item">
-                  <span className="paint-result-icon">📐</span>
+                  <span className="paint-result-icon"><Ruler size={24} aria-hidden="true" /></span>
                   <div>
                     <div className="paint-result-value">{result.netArea} מ"ר</div>
                     <div className="paint-result-label">שטח נטו לצביעה</div>
@@ -366,7 +370,7 @@ function PaintCalculator({ addBundleToCart }) {
                 </div>
 
                 <div className="paint-result-item accent">
-                  <span className="paint-result-icon">🪣</span>
+                  <span className="paint-result-icon"><PaintBucket size={24} aria-hidden="true" /></span>
                   <div>
                     <div className="paint-result-value">{result.paintLiters} ליטר</div>
                     <div className="paint-result-label">צבע לבן</div>
@@ -380,7 +384,7 @@ function PaintCalculator({ addBundleToCart }) {
                 </div>
 
                 <div className="paint-result-item" style={{ borderRight: `4px solid ${currentFormula?.hex || '#e63946'}` }}>
-                  <span className="paint-result-icon">🎨</span>
+                  <span className="paint-result-icon"><Paintbrush size={24} aria-hidden="true" /></span>
                   <div>
                     <div className="paint-result-value">{result.colorMixBottles} בקבוק</div>
                     <div className="paint-result-label">קולור MIX יעקבי 250מ"ל</div>
@@ -396,7 +400,7 @@ function PaintCalculator({ addBundleToCart }) {
                 <div className="paint-result-preview-bar"
                   style={{ background: `linear-gradient(135deg, ${previewBg} 0%, ${blendWithWhite(currentFormula.hex, SHADE_CONFIG[selectedShade].factor * 0.7)} 100%)` }}>
                   <span style={{ color: previewTextDark ? '#333' : '#fff', fontWeight: 600 }}>
-                    🎨 הצבע המשוחזר שלך: {currentFormula.color_name_he} {SHADE_CONFIG[selectedShade].label}
+                    <Paintbrush size={18} aria-hidden="true" /> הצבע המשוחזר שלך: {currentFormula.color_name_he} {SHADE_CONFIG[selectedShade].label}
                   </span>
                 </div>
               )}
@@ -408,20 +412,20 @@ function PaintCalculator({ addBundleToCart }) {
                   onClick={handleAddBundle}
                   disabled={bundleAdded}>
                   {bundleAdded
-                    ? '✅ נוסף לעגלה!'
-                    : `🛒 הוסף חבילה לעגלה — ${chosenBucket ? `${chosenBucket.quantity} דלי ${BUCKET_LABELS[chosenBucket.key]}` : ''} + ${result.colorMixBottles} בקבוק קולור MIX · ₪${bundleTotal}`}
+                    ? <><CheckCircle size={18} aria-hidden="true" /> נוסף לעגלה!</>
+                    : <><ShoppingCart size={18} aria-hidden="true" /> {`הוסף חבילה לעגלה — ${chosenBucket ? `${chosenBucket.quantity} דלי ${BUCKET_LABELS[chosenBucket.key]}` : ''} + ${result.colorMixBottles} בקבוק קולור MIX · ₪${bundleTotal}`}</>}
                 </button>
               )}
 
               {addBundleToCart && bundleHasUnknown && (
                 <div className="paint-results-tip">
-                  <span>🏪</span>
+                  <span><Store size={20} aria-hidden="true" /></span>
                   <p>חלק מהפריטים אינם זמינים להזמנה כרגע — שווה לשאול עליהם בחנות.</p>
                 </div>
               )}
 
               <div className="paint-results-tip">
-                <span>💡</span>
+                <span><Lightbulb size={20} aria-hidden="true" /></span>
                 <p>
                   אנחנו ממליצים לקנות <strong>10% יותר</strong> מהכמות המחושבת למקרה של תיקונים.
                   הביאו את שם הגוון לחנות — ואנרי ישמח לעזור!
@@ -429,7 +433,7 @@ function PaintCalculator({ addBundleToCart }) {
               </div>
 
               <a href="tel:039315750" className="paint-results-cta">
-                📞 התקשרו להזמין — 03-9315750
+                <Phone size={18} aria-hidden="true" /> התקשרו להזמין — 03-9315750
               </a>
             </div>
           )}

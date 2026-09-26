@@ -11,6 +11,7 @@
  * הנערך הגיע לפני העלייה. ב-useEffect שני הסדרים עובדים.
  */
 import { useState, useEffect } from 'react';
+import { Check, X, AlertTriangle, Loader, Save, Plus } from 'lucide-react';
 import { CATEGORIES } from './adminConstants';
 
 const EMPTY = {
@@ -97,14 +98,15 @@ function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, o
             <button type="button" className={`instock-toggle ${inStock ? 'in' : 'out'}`} onClick={() => setInStock(!inStock)}>
               <span className="instock-toggle-knob" />
             </button>
-            <span className={`instock-toggle-label ${inStock ? 'in' : 'out'}`}>{inStock ? '✓ יש במלאי' : '✗ אזל מהמלאי'}</span>
+            <span className={`instock-toggle-label ${inStock ? 'in' : 'out'}`}>{inStock ? <><Check size={16} aria-hidden="true" /> יש במלאי</> : <><X size={16} aria-hidden="true" /> אזל מהמלאי</>}</span>
           </div>
         </div>
         <div className="admin-form-group"><label>מק"ט</label><input placeholder="TT-1042" value={sku} onChange={e => setSku(e.target.value)} /></div>
         <div className="admin-form-group"><label>קטגוריה *</label>
           <select value={category} onChange={e => setCategory(e.target.value)} required>
             <option value="">בחר קטגוריה</option>
-            {CATEGORIES.map(cat => <option key={cat.id} value={cat.id}>{cat.icon} {cat.label}</option>)}
+            {/* בלי אייקון: <option> יכול להכיל טקסט בלבד, ו-svg בתוכו לא מרונדר. */}
+            {CATEGORIES.map(cat => <option key={cat.id} value={cat.id}>{cat.label}</option>)}
           </select>
         </div>
         <div className="admin-form-group full"><label>צבעים</label><input placeholder="לבן, שחור, אפור" value={colors} onChange={e => setColors(e.target.value)} /></div>
@@ -131,7 +133,7 @@ function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, o
                     value={v.price}
                     onChange={e => setVariants(variants.map((x, j) => j === i ? { ...x, price: e.target.value } : x))}
                   />
-                  <button type="button" className="variant-remove-btn" onClick={() => setVariants(variants.filter((_, j) => j !== i))}>✕</button>
+                  <button type="button" className="variant-remove-btn" onClick={() => setVariants(variants.filter((_, j) => j !== i))} aria-label="הסר גרסה"><X size={16} aria-hidden="true" /></button>
                 </div>
               ))}
             </div>
@@ -143,7 +145,7 @@ function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, o
             + הוסף גרסה
           </button>
           {variants.length > 0 && (
-            <p className="variant-hint">המחיר הנמוך ביותר יוצג בכרטיס המוצר. לחץ ✕ להסרת גרסה.</p>
+            <p className="variant-hint">המחיר הנמוך ביותר יוצג בכרטיס המוצר. לחץ על ה-X להסרת גרסה.</p>
           )}
         </div>
 
@@ -155,7 +157,7 @@ function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, o
                 <div key={i} className="existing-image-item">
                   <img src={url} alt={`תמונה ${i+1}`} />
                   {i === 0 && <span className="main-image-badge">ראשית</span>}
-                  <button type="button" className="remove-image-btn" onClick={() => removeExistingImage(i)}>✕</button>
+                  <button type="button" className="remove-image-btn" onClick={() => removeExistingImage(i)} aria-label="הסר תמונה"><X size={16} aria-hidden="true" /></button>
                 </div>
               ))}
             </div>
@@ -164,9 +166,9 @@ function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, o
           <p className="admin-images-hint">התמונה הראשונה תוצג כתמונה הראשית</p>
         </div>
       </div>
-      {productsError && <div className="admin-error">⚠️ {productsError}</div>}
+      {productsError && <div className="admin-error"><AlertTriangle size={18} aria-hidden="true" /> {productsError}</div>}
       <div className="admin-form-buttons">
-        <button type="submit" className="admin-submit-btn" disabled={uploadingImages}>{uploadingImages ? '⏳ מעלה...' : editingProduct ? '💾 שמור' : '➕ הוסף'}</button>
+        <button type="submit" className="admin-submit-btn" disabled={uploadingImages}>{uploadingImages ? <><Loader size={18} aria-hidden="true" /> מעלה...</> : editingProduct ? <><Save size={18} aria-hidden="true" /> שמור</> : <><Plus size={18} aria-hidden="true" /> הוסף</>}</button>
         {editingProduct && <button type="button" className="admin-cancel-btn" onClick={onDone}>ביטול</button>}
       </div>
     </form>

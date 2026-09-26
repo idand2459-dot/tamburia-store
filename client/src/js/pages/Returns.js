@@ -1,3 +1,9 @@
+import {
+  AlertTriangle, CalendarDays, CheckCircle, XCircle, Hammer, Paintbrush, Wrench,
+  Scissors, FlaskConical, Receipt, Package, Store, Shield, Coins, CreditCard,
+  Gift, ScrollText, Phone, Truck, ClipboardList,
+} from 'lucide-react';
+
 /** מציג את עמוד מדיניות ההחזרות. */
 function Returns() {
   return (
@@ -11,7 +17,7 @@ function Returns() {
 
         {/* הבהרה חשובה */}
         <section className="returns-card returns-disclaimer">
-          <div className="returns-card-icon">⚠️</div>
+          <div className="returns-card-icon"><AlertTriangle size={32} aria-hidden="true" /></div>
           <h2>הבהרה חשובה</h2>
           <p>
             מדיניות זו מתייחסת לרכישות המבוצעות דרך האתר ובחנות הפיזית.
@@ -22,7 +28,7 @@ function Returns() {
 
         {/* חלון זמן */}
         <section className="returns-card highlight">
-          <div className="returns-card-icon">📅</div>
+          <div className="returns-card-icon"><CalendarDays size={32} aria-hidden="true" /></div>
           <h2>חלון זמן להחזרה</h2>
           <p>
             ניתן להחזיר מוצרים תוך <strong>14 יום</strong> מיום קבלת ההזמנה או מיום הרכישה בחנות,
@@ -33,25 +39,25 @@ function Returns() {
 
         {/* מתי מקבלים החזר */}
         <section className="returns-card">
-          <div className="returns-card-icon">✅</div>
+          <div className="returns-card-icon"><CheckCircle size={32} aria-hidden="true" /></div>
           <h2>מתי מקבלים החזר?</h2>
           <div className="returns-list">
             <div className="returns-list-item green">
-              <span className="returns-item-icon">🔧</span>
+              <span className="returns-item-icon"><Wrench size={24} aria-hidden="true" /></span>
               <div>
                 <strong>מוצר פגום או תקול</strong>
                 <p>קיבלת מוצר שאינו תקין? נחליף אותו או נחזיר את הכסף במלואו — ללא עלות נוספת.</p>
               </div>
             </div>
             <div className="returns-list-item green">
-              <span className="returns-item-icon">📦</span>
+              <span className="returns-item-icon"><Package size={24} aria-hidden="true" /></span>
               <div>
                 <strong>מוצר שלא נפתח ולא נעשה בו שימוש</strong>
                 <p>מוצר באריזתו המקורית, ללא סימני שימוש — ניתן להחזרה תוך 14 יום.</p>
               </div>
             </div>
             <div className="returns-list-item green">
-              <span className="returns-item-icon">🚚</span>
+              <span className="returns-item-icon"><Truck size={24} aria-hidden="true" /></span>
               <div>
                 <strong>טעות בשליחה</strong>
                 <p>קיבלת מוצר שגוי? נשלח את המוצר הנכון ונאסוף את השגוי על חשבוננו.</p>
@@ -62,39 +68,39 @@ function Returns() {
 
         {/* מה לא ניתן להחזיר */}
         <section className="returns-card">
-          <div className="returns-card-icon">❌</div>
+          <div className="returns-card-icon"><XCircle size={32} aria-hidden="true" /></div>
           <h2>מה לא ניתן להחזיר?</h2>
           <div className="returns-list">
             <div className="returns-list-item red">
-              <span className="returns-item-icon">🔨</span>
+              <span className="returns-item-icon"><Hammer size={24} aria-hidden="true" /></span>
               <div>
                 <strong>כלי עבודה ידניים לאחר פתיחה</strong>
                 <p>מסורים, פטישים, מפתחות ברגים וכלי עבודה ידניים — לא ניתן להחזיר לאחר פתיחת האריזה.</p>
               </div>
             </div>
             <div className="returns-list-item red">
-              <span className="returns-item-icon">🎨</span>
+              <span className="returns-item-icon"><Paintbrush size={24} aria-hidden="true" /></span>
               <div>
                 <strong>צבעים ותמהילים שנפתחו</strong>
                 <p>צבע שנפתח, הורכב או נעשה בו שימוש — לא ניתן להחזרה.</p>
               </div>
             </div>
             <div className="returns-list-item red">
-              <span className="returns-item-icon">🔩</span>
+              <span className="returns-item-icon"><Wrench size={24} aria-hidden="true" /></span>
               <div>
                 <strong>מוצרי אינסטלציה שהותקנו</strong>
                 <p>ברזים, צינורות ואביזרי אינסטלציה שכבר הותקנו — לא ניתן להחזרה.</p>
               </div>
             </div>
             <div className="returns-list-item red">
-              <span className="returns-item-icon">✂️</span>
+              <span className="returns-item-icon"><Scissors size={24} aria-hidden="true" /></span>
               <div>
                 <strong>מוצרים שנחתכו או עוצבו לפי הזמנה</strong>
                 <p>כל מוצר שיוצר או נחתך בהתאמה אישית — לא ניתן להחזרה.</p>
               </div>
             </div>
             <div className="returns-list-item red">
-              <span className="returns-item-icon">🧴</span>
+              <span className="returns-item-icon"><FlaskConical size={24} aria-hidden="true" /></span>
               <div>
                 <strong>חומרי הדבקה ואיטום שנפתחו</strong>
                 <p>דבקים, סיליקון וחומרי איטום לאחר פתיחה — לא ניתן להחזרה מטעמי בריאות ובטיחות.</p>
@@ -105,25 +111,25 @@ function Returns() {
 
         {/* תנאי ההחזרה */}
         <section className="returns-card">
-          <div className="returns-card-icon">📋</div>
+          <div className="returns-card-icon"><ClipboardList size={32} aria-hidden="true" /></div>
           <h2>תנאי ההחזרה</h2>
           <div className="returns-list">
             <div className="returns-list-item green">
-              <span className="returns-item-icon">🧾</span>
+              <span className="returns-item-icon"><Receipt size={24} aria-hidden="true" /></span>
               <div>
                 <strong>חובה להציג חשבונית או אישור הזמנה</strong>
                 <p>ללא הוכחת רכישה לא ניתן לבצע החזרה.</p>
               </div>
             </div>
             <div className="returns-list-item green">
-              <span className="returns-item-icon">📦</span>
+              <span className="returns-item-icon"><Package size={24} aria-hidden="true" /></span>
               <div>
                 <strong>אריזה מקורית</strong>
                 <p>יש להחזיר את המוצר עם כל האביזרים, הוראות ההפעלה והאריזה המקורית.</p>
               </div>
             </div>
             <div className="returns-list-item green">
-              <span className="returns-item-icon">🏪</span>
+              <span className="returns-item-icon"><Store size={24} aria-hidden="true" /></span>
               <div>
                 <strong>החזרה לחנות בלבד</strong>
                 <p>החזרת מוצרים מתבצעת פיזית בחנות בבר כוכבא 52, פתח תקווה בלבד.</p>
@@ -134,7 +140,7 @@ function Returns() {
 
         {/* אחריות על מוצרים */}
         <section className="returns-card">
-          <div className="returns-card-icon">🛡️</div>
+          <div className="returns-card-icon"><Shield size={32} aria-hidden="true" /></div>
           <h2>אחריות על מוצרים</h2>
           <p>
             המוצרים נמכרים עם אחריות היצרן בלבד. טכניק טמבור אינה אחראית לנזקים שנגרמו
@@ -145,18 +151,18 @@ function Returns() {
 
         {/* איך מבצעים החזרה */}
         <section className="returns-card">
-          <div className="returns-card-icon">💰</div>
+          <div className="returns-card-icon"><Coins size={32} aria-hidden="true" /></div>
           <h2>איך מקבלים את הכסף בחזרה?</h2>
           <div className="refund-options">
             <div className="refund-option">
-              <span className="refund-icon">💳</span>
+              <span className="refund-icon"><CreditCard size={24} aria-hidden="true" /></span>
               <div>
                 <strong>החזר לאמצעי התשלום המקורי</strong>
                 <p>ההחזר יבוצע לכרטיס האשראי או לאמצעי שבו שילמת — בדרך כלל תוך 3-5 ימי עסקים.</p>
               </div>
             </div>
             <div className="refund-option">
-              <span className="refund-icon">🎁</span>
+              <span className="refund-icon"><Gift size={24} aria-hidden="true" /></span>
               <div>
                 <strong>זיכוי לקנייה הבאה</strong>
                 <p>מעדיף זיכוי? נשמח להעניק שובר זיכוי בשווי המוצר לשימוש בקנייה הבאה בחנות.</p>
@@ -168,7 +174,7 @@ function Returns() {
 
         {/* שלבי ההחזרה */}
         <section className="returns-card">
-          <div className="returns-card-icon">📦</div>
+          <div className="returns-card-icon"><Package size={32} aria-hidden="true" /></div>
           <h2>איך מבצעים החזרה?</h2>
           <div className="returns-steps">
             <div className="returns-step">
@@ -192,7 +198,7 @@ function Returns() {
 
         {/* הגבלת אחריות */}
         <section className="returns-card returns-disclaimer">
-          <div className="returns-card-icon">📜</div>
+          <div className="returns-card-icon"><ScrollText size={32} aria-hidden="true" /></div>
           <h2>הגבלת אחריות</h2>
           <p>
             טכניק טמבור לא תישא באחריות לכל נזק ישיר, עקיף, מקרי או תוצאתי שייגרם
@@ -203,7 +209,7 @@ function Returns() {
 
         {/* יצירת קשר */}
         <section className="returns-card returns-contact">
-          <div className="returns-card-icon">📞</div>
+          <div className="returns-card-icon"><Phone size={32} aria-hidden="true" /></div>
           <h2>יש שאלה?</h2>
           <p>אנחנו כאן לעזור — אל תהסס לפנות אלינו</p>
           <div className="returns-contact-btns">

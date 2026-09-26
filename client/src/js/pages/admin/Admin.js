@@ -11,6 +11,7 @@
  * המוצר הנערך, שלשונית המוצרים מסמנת ולשונית הטופס קוראת.
  */
 import { useState, useRef, useCallback } from 'react';
+import { BarChart3, ClipboardList, Package, Pencil, Plus, Download, Star } from 'lucide-react';
 import Confetti from '../../components/Confetti';
 import { useAdminProducts } from '../../hooks/useAdminProducts';
 import { useAdminOrders } from '../../hooks/useAdminOrders';
@@ -77,17 +78,17 @@ function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
       </div>
 
       <div className="admin-tabs">
-        <button className={`admin-tab ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>📊 סטטיסטיקות</button>
+        <button className={`admin-tab ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}><BarChart3 size={18} aria-hidden="true" /> סטטיסטיקות</button>
         <button className={`admin-tab ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')}>
-          📋 הזמנות {newOrdersCount > 0 && <span className="orders-new-badge">{newOrdersCount}</span>}
+          <ClipboardList size={18} aria-hidden="true" /> הזמנות {newOrdersCount > 0 && <span className="orders-new-badge">{newOrdersCount}</span>}
         </button>
-        <button className={`admin-tab ${activeTab === 'products' ? 'active' : ''}`} onClick={() => { setActiveTab('products'); setEditingProduct(null); }}>📦 מוצרים</button>
+        <button className={`admin-tab ${activeTab === 'products' ? 'active' : ''}`} onClick={() => { setActiveTab('products'); setEditingProduct(null); }}><Package size={18} aria-hidden="true" /> מוצרים</button>
         <button className={`admin-tab ${activeTab === 'add' ? 'active' : ''}`} onClick={() => setActiveTab('add')}>
-          {editingProduct ? '✏️ עריכה' : '➕ הוסף מוצר'}
+          {editingProduct ? <><Pencil size={18} aria-hidden="true" /> עריכה</> : <><Plus size={18} aria-hidden="true" /> הוסף מוצר</>}
         </button>
-        <button className={`admin-tab ${activeTab === 'import' ? 'active' : ''}`} onClick={() => { setActiveTab('import'); resetCsv(); }}>📥 ייבוא CSV</button>
+        <button className={`admin-tab ${activeTab === 'import' ? 'active' : ''}`} onClick={() => { setActiveTab('import'); resetCsv(); }}><Download size={18} aria-hidden="true" /> ייבוא CSV</button>
         <button className={`admin-tab ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
-          ⭐ ביקורות {pendingReviewsCount > 0 && <span className="orders-new-badge">{pendingReviewsCount}</span>}
+          <Star size={18} aria-hidden="true" /> ביקורות {pendingReviewsCount > 0 && <span className="orders-new-badge">{pendingReviewsCount}</span>}
         </button>
       </div>
 

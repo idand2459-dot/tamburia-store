@@ -5,6 +5,7 @@
  * חנות, רק קישורים — ולכן useNavigate מספיק.
  */
 import { useNavigate } from 'react-router-dom';
+import { Wrench, MessageCircle, MapPin, Phone, Smartphone, Clock } from 'lucide-react';
 
 /** מציג את תחתית האתר. */
 function Footer() {
@@ -38,7 +39,7 @@ function Footer() {
 
         {/* עמוד 1 — אודות */}
         <div className="footer-col">
-          <h3 className="footer-logo">🔧 טכניק טמבור</h3>
+          <h3 className="footer-logo"><Wrench size={22} aria-hidden="true" /> טכניק טמבור</h3>
           <p className="footer-about-text">
             חנות מקצועית לכלי עבודה, חומרי בניין וצבעים בפתח תקווה.<br />
             מאז 1991 — יחס אישי, עזרה טכנית ומחירים טובים.
@@ -49,7 +50,7 @@ function Footer() {
             rel="noopener noreferrer"
             className="footer-whatsapp-btn"
           >
-            <span>💬</span> שלח הודעה בוואטסאפ
+            <MessageCircle size={18} aria-hidden="true" /> שלח הודעה בוואטסאפ
           </a>
         </div>
 
@@ -89,23 +90,23 @@ function Footer() {
           <h4 className="footer-col-title">צור קשר</h4>
           <ul className="footer-contact-list">
             <li>
-              <span className="footer-contact-icon">📍</span>
+              <span className="footer-contact-icon"><MapPin size={16} aria-hidden="true" /></span>
               <span>בר כוכבא 52, פתח תקווה</span>
             </li>
             <li>
-              <span className="footer-contact-icon">📞</span>
+              <span className="footer-contact-icon"><Phone size={16} aria-hidden="true" /></span>
               <a href="tel:039315750" className="footer-contact-link">03-9315750</a>
             </li>
             <li>
-              <span className="footer-contact-icon">📱</span>
+              <span className="footer-contact-icon"><Smartphone size={16} aria-hidden="true" /></span>
               <a href="tel:0506735040" className="footer-contact-link">050-6735040</a>
             </li>
             <li>
-              <span className="footer-contact-icon">🕐</span>
+              <span className="footer-contact-icon"><Clock size={16} aria-hidden="true" /></span>
               <span>א׳-ה׳: 7:00–20:00</span>
             </li>
             <li>
-              <span className="footer-contact-icon">🕐</span>
+              <span className="footer-contact-icon"><Clock size={16} aria-hidden="true" /></span>
               <span>ו׳: 7:00–15:00</span>
             </li>
           </ul>
