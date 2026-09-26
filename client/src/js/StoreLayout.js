@@ -14,7 +14,7 @@ import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
 import ScrollToTop from './components/ScrollToTop';
 import PaintCalcBtn from './features/calculator/PaintCalcBtn';
-import CartModal from './components/CartModal';
+import CartModal from './components/cart/CartModal';
 import OrderHistory from './pages/OrderHistory';
 import Wishlist from './pages/Wishlist';
 import { useStore } from './context/storeContext';
@@ -86,33 +86,9 @@ function StoreLayout() {
 
       {(onCart || onCheckout) && (
         <CartModal
-          cart={store.cart}
-          setCart={store.setCart}
           cartStep={cartStep}
           setCartStep={goToCartStep}
           closeCart={() => { store.clearOrderSuccess(); closeOverlay(); }}
-          deliveryMethod={store.deliveryMethod}
-          setDeliveryMethod={store.setDeliveryMethod}
-          subtotal={store.subtotal}
-          deliveryFee={store.deliveryFee}
-          total={store.total}
-          cartCount={store.cartCount}
-          updateQuantity={store.updateQuantity}
-          removeFromCart={store.removeFromCart}
-          customerName={store.customerName}
-          setCustomerName={store.setCustomerName}
-          customerPhone={store.customerPhone}
-          setCustomerPhone={store.setCustomerPhone}
-          customerEmail={store.customerEmail}
-          setCustomerEmail={store.setCustomerEmail}
-          deliveryAddress={store.deliveryAddress}
-          setDeliveryAddress={store.setDeliveryAddress}
-          orderNotes={store.orderNotes}
-          setOrderNotes={store.setOrderNotes}
-          submittingOrder={store.submittingOrder}
-          handlePlaceOrder={store.handlePlaceOrder}
-          orderSuccess={store.orderSuccess}
-          orderError={store.orderError}
         />
       )}
 
