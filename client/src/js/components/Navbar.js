@@ -7,13 +7,17 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  Home, Store, Phone, Undo2, ClipboardList, Heart,
+  Search, X, ImageOff, Wrench, ShoppingCart,
+} from 'lucide-react';
 import { useStore } from '../context/storeContext';
 
 const NAV_ITEMS = [
-  { key: 'home', path: '/', label: 'ראשי', icon: '🏠' },
-  { key: 'about', path: '/about', label: 'אודות', icon: '🏪' },
-  { key: 'contact', path: '/contact', label: 'צור קשר', icon: '📞' },
-  { key: 'returns', path: '/returns', label: 'מדיניות החזרים', icon: '↩️' },
+  { key: 'home', path: '/', label: 'ראשי', Icon: Home },
+  { key: 'about', path: '/about', label: 'אודות', Icon: Store },
+  { key: 'contact', path: '/contact', label: 'צור קשר', Icon: Phone },
+  { key: 'returns', path: '/returns', label: 'מדיניות החזרים', Icon: Undo2 },
 ];
 
 /** מחזיר את המפתח שיש לסמן כפעיל, לפי הכתובת הנוכחית. */
@@ -127,10 +131,10 @@ function Navbar() {
           <div className="search-overlay" onClick={closeSearch} />
           <div className="search-popup">
             <div className="search-popup-input-wrap">
-              <span className="search-popup-icon">🔍</span>
+              <span className="search-popup-icon"><Search size={18} aria-hidden="true" /></span>
               <input ref={searchInputRef} className="search-popup-input" placeholder="חפש מוצר..."
                 value={searchQuery} onChange={handleSearchChange} />
-              <button className="search-popup-close" onClick={closeSearch}>✕</button>
+              <button className="search-popup-close" onClick={closeSearch} aria-label="סגור חיפוש"><X size={18} aria-hidden="true" /></button>
             </div>
             {searchQuery && searchResults.length === 0 && (
               <div className="search-no-results">לא נמצאו מוצרים עבור "{searchQuery}"</div>
@@ -141,7 +145,7 @@ function Navbar() {
                   <li key={product.id} className="search-result-item" onClick={() => handleSelectProduct(product)}>
                     {product.image_url
                       ? <img src={product.image_url} alt={product.name} className="search-result-img" />
-                      : <div className="search-result-no-img">🖼️</div>
+                      : <div className="search-result-no-img"><ImageOff size={24} aria-hidden="true" /></div>
                     }
                     <div className="search-result-info">
                       <span className="search-result-name">{product.name}</span>
@@ -165,20 +169,20 @@ function Navbar() {
       {/* Side Drawer */}
       <div className={`nav-drawer ${menuOpen ? 'open' : ''}`}>
         <div className="nav-drawer-header">
-          <span className="nav-drawer-logo">🔧 טכניק טמבור</span>
-          <button className="nav-close-btn" onClick={() => setMenuOpen(false)}>✕</button>
+          <span className="nav-drawer-logo"><Wrench size={20} aria-hidden="true" /> טכניק טמבור</span>
+          <button className="nav-close-btn" onClick={() => setMenuOpen(false)} aria-label="סגור תפריט"><X size={20} aria-hidden="true" /></button>
         </div>
         <nav className="nav-drawer-links">
-          {NAV_ITEMS.map(item => (
-            <button key={item.key} className={`nav-drawer-item ${currentPage === item.key ? 'active' : ''}`} onClick={() => handleNav(item.path)}>
-              <span className="nav-item-icon">{item.icon}</span>{item.label}
+          {NAV_ITEMS.map(({ key, path, label, Icon }) => (
+            <button key={key} className={`nav-drawer-item ${currentPage === key ? 'active' : ''}`} onClick={() => handleNav(path)}>
+              <span className="nav-item-icon"><Icon size={18} aria-hidden="true" /></span>{label}
             </button>
           ))}
           <button className="nav-drawer-item" onClick={openOrderHistory}>
-            <span className="nav-item-icon">📋</span>ההזמנות שלי
+            <span className="nav-item-icon"><ClipboardList size={18} aria-hidden="true" /></span>ההזמנות שלי
           </button>
           <button className="nav-drawer-item" onClick={openWishlist}>
-            <span className="nav-item-icon">❤️</span>רשימת המשאלות שלי
+            <span className="nav-item-icon"><Heart size={18} fill="currentColor" aria-hidden="true" /></span>רשימת המשאלות שלי
           </button>
         </nav>
       </div>
@@ -189,24 +193,24 @@ function Navbar() {
           <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>
             <span /><span /><span />
           </button>
-          <button className="navbar-home-btn" onClick={() => handleNav('/')} title="דף הבית">
-            🏠
+          <button className="navbar-home-btn" onClick={() => handleNav('/')} title="דף הבית" aria-label="דף הבית">
+            <Home size={18} aria-hidden="true" />
           </button>
         </div>
         <div className="navbar-center">
-          <button className="navbar-brand" onClick={() => handleNav('/')}>🔧 <span>טכניק טמבור</span></button>
+          <button className="navbar-brand" onClick={() => handleNav('/')}><Wrench size={20} aria-hidden="true" /> <span>טכניק טמבור</span></button>
         </div>
         <div className="navbar-left">
-          <button className="navbar-search-btn" onClick={() => setSearchOpen(true)} title="חיפוש">🔍</button>
-          <button className="navbar-link" onClick={openOrderHistory} title="ההזמנות שלי">📋 ההזמנות שלי</button>
-          <button className="navbar-wishlist-btn" onClick={openWishlist} title="רשימת משאלות">🤍</button>
+          <button className="navbar-search-btn" onClick={() => setSearchOpen(true)} title="חיפוש" aria-label="חיפוש"><Search size={18} aria-hidden="true" /></button>
+          <button className="navbar-link" onClick={openOrderHistory} title="ההזמנות שלי"><ClipboardList size={18} aria-hidden="true" /> ההזמנות שלי</button>
+          <button className="navbar-wishlist-btn" onClick={openWishlist} title="רשימת משאלות" aria-label="רשימת משאלות"><Heart size={18} aria-hidden="true" /></button>
           <button className={`navbar-link ${currentPage === 'about' ? 'active' : ''}`} onClick={() => handleNav('/about')}>אודות</button>
           <button className={`navbar-link ${currentPage === 'contact' ? 'active' : ''}`} onClick={() => handleNav('/contact')}>צור קשר</button>
           <button className={`navbar-link ${currentPage === 'returns' ? 'active' : ''}`} onClick={() => handleNav('/returns')}>החזרים</button>
 
           {/* כפתור עגלה — תמיד מוצג */}
-          <button className="navbar-cart-btn" onClick={() => navigate('/cart')}>
-            🛒
+          <button className="navbar-cart-btn" onClick={() => navigate('/cart')} aria-label="עגלת קניות">
+            <ShoppingCart size={18} aria-hidden="true" />
             {cartCount > 0 && (
               <span className="navbar-cart-badge">{cartCount}</span>
             )}

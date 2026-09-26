@@ -431,7 +431,8 @@
 
 .admin-search-bar input {
   width: 100%;
-  padding: 12px 20px;
+  /* padding-right מפנה מקום לאייקון החיפוש שיושב בתוך השדה */
+  padding: 12px 44px 12px 20px;
   border: 1.5px solid #e0e0e0;
   border-radius: 30px;
   font-size: 1rem;
@@ -443,6 +444,17 @@
 
 .admin-search-bar input:focus {
   border-color: #1a1a2e;
+}
+
+/* אייקון החיפוש: היה חלק מה-placeholder, ועכשיו הוא רכיב Lucide בתוך
+   ה-.admin-search-bar שהוא position: relative. */
+.admin-search-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+  pointer-events: none;
 }
 
 .admin-search-clear {

@@ -7,6 +7,7 @@
  * התמונה המוצגת בגלריה, מצב טופס הביקורת — מחזיק אותו בעצמו.
  */
 import { useState, useEffect } from 'react';
+import { Check, ShoppingCart, Heart } from 'lucide-react';
 import { toggleWishlist, isInWishlist } from '../utils/wishlistUtils';
 import ProductGallery from '../features/catalog/product-page/ProductGallery';
 import ProductVariantSelector from '../features/catalog/product-page/ProductVariantSelector';
@@ -163,13 +164,15 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
             <button
               className={`product-page-add-btn ${!inStock ? 'disabled' : ''} ${addedToCart ? 'added' : ''}`}
               onClick={handleAddToCart} disabled={!inStock}>
-              {!inStock ? 'אזל מהמלאי' : addedToCart ? '✓ נוסף לעגלה!' : '🛒 הוסף לעגלה'}
+              {!inStock ? 'אזל מהמלאי'
+                : addedToCart ? <><Check size={18} aria-hidden="true" /> נוסף לעגלה!</>
+                : <><ShoppingCart size={18} aria-hidden="true" /> הוסף לעגלה</>}
             </button>
             <button
               className={`product-wishlist-btn ${inWishlist ? 'active' : ''}`}
               onClick={() => { const added = toggleWishlist(product); setInWishlist(added); }}
               title={inWishlist ? 'הסר מרשימת המשאלות' : 'הוסף לרשימת המשאלות'}>
-              {inWishlist ? '❤️' : '🤍'}
+              <Heart size={20} fill={inWishlist ? 'currentColor' : 'none'} aria-hidden="true" />
             </button>
           </div>
 

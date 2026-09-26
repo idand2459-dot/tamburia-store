@@ -1,3 +1,5 @@
+import { MapPin, Phone, Clock } from 'lucide-react';
+
 /** מציג את עמוד יצירת הקשר. */
 function Contact() {
   return (
@@ -10,7 +12,7 @@ function Contact() {
       <div className="contact-cards">
  
         <div className="contact-card">
-          <div className="contact-icon">📍</div>
+          <div className="contact-icon"><MapPin size={32} aria-hidden="true" /></div>
           <h2>כתובת</h2>
           <p>בר כוכבא 52</p>
           <p>פתח תקווה</p>
@@ -25,7 +27,7 @@ function Contact() {
         </div>
  
         <div className="contact-card">
-          <div className="contact-icon">📞</div>
+          <div className="contact-icon"><Phone size={32} aria-hidden="true" /></div>
           <h2>טלפונים</h2>
           <div className="phone-list">
             <div className="phone-item">
@@ -41,7 +43,7 @@ function Contact() {
         </div>
  
         <div className="contact-card">
-          <div className="contact-icon">🕐</div>
+          <div className="contact-icon"><Clock size={32} aria-hidden="true" /></div>
           <h2>שעות פעילות</h2>
           <div className="contact-hours">
             <div className="contact-hours-row">

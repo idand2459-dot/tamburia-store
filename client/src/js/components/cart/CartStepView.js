@@ -4,6 +4,7 @@
  * מושך את מצב העגלה מ-StoreContext ומקבל בפרופס רק את מעבר השלבים,
  * שהוא עניין של הניתוב ולא של המצב המשותף.
  */
+import { ShoppingCart, X, Store, Truck } from 'lucide-react';
 import { useStore } from '../../context/storeContext';
 
 /** מציג את תוכן העגלה ואת בחירת אופן הקבלה. */
@@ -15,7 +16,7 @@ function CartStepView({ setCartStep }) {
   } = useStore();
 
   if (cart.length === 0) {
-    return <div className="cart-empty"><span>🛒</span><p>העגלה ריקה</p></div>;
+    return <div className="cart-empty"><span><ShoppingCart size={48} aria-hidden="true" /></span><p>העגלה ריקה</p></div>;
   }
 
   return (
@@ -32,7 +33,7 @@ function CartStepView({ setCartStep }) {
               <span>{item.quantity || 1}</span>
               <button onClick={() => updateQuantity(index, 1)}>+</button>
             </div>
-            <button className="cart-item-remove" onClick={() => removeFromCart(index)}>✕</button>
+            <button className="cart-item-remove" onClick={() => removeFromCart(index)} aria-label="הסר מהעגלה"><X size={18} aria-hidden="true" /></button>
           </li>
         ))}
       </ul>
@@ -40,12 +41,12 @@ function CartStepView({ setCartStep }) {
         <h4>אופן קבלת ההזמנה</h4>
         <div className="delivery-options">
           <div className={`delivery-option ${deliveryMethod === 'pickup' ? 'selected' : ''}`} onClick={() => setDeliveryMethod('pickup')}>
-            <div className="delivery-option-top"><span className="delivery-icon">🏪</span><div><strong>איסוף עצמי</strong><span className="delivery-free">חינם</span></div></div>
+            <div className="delivery-option-top"><span className="delivery-icon"><Store size={24} aria-hidden="true" /></span><div><strong>איסוף עצמי</strong><span className="delivery-free">חינם</span></div></div>
             <p className="delivery-desc">בר כוכבא 52, פתח תקווה</p>
             <p className="delivery-desc">באותו יום בשעות הפעילות</p>
           </div>
           <div className={`delivery-option ${deliveryMethod === 'delivery' ? 'selected' : ''}`} onClick={() => setDeliveryMethod('delivery')}>
-            <div className="delivery-option-top"><span className="delivery-icon">🚚</span><div><strong>שליח עד הבית</strong><span className="delivery-price">₪20</span></div></div>
+            <div className="delivery-option-top"><span className="delivery-icon"><Truck size={24} aria-hidden="true" /></span><div><strong>שליח עד הבית</strong><span className="delivery-price">₪20</span></div></div>
             <p className="delivery-desc">פתח תקווה • גני תקווה • קריית אונו</p>
           </div>
         </div>

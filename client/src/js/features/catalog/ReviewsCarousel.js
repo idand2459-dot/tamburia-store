@@ -2,6 +2,7 @@
  * קרוסלת חוות דעת על החנות, עם טופס הוספה.
  */
 import { useState, useEffect, useRef } from 'react';
+import { Star, X, PenLine, CheckCircle, Loader } from 'lucide-react';
 
 /** מציג את קרוסלת חוות הדעת ואת טופס ההוספה. */
 function ReviewsCarousel() {
@@ -65,7 +66,9 @@ function ReviewsCarousel() {
             key={s}
             className={`star ${s <= rating ? 'filled' : ''} ${interactive ? 'interactive' : ''}`}
             onClick={() => interactive && onRate && onRate(s)}
-          >★</span>
+          >
+            <Star size={18} fill={s <= rating ? 'currentColor' : 'none'} aria-hidden="true" />
+          </span>
         ))}
       </div>
     );
@@ -94,7 +97,7 @@ function ReviewsCarousel() {
           )}
         </div>
         <button className="add-review-btn" onClick={() => setShowForm(!showForm)}>
-          {showForm ? '✕ סגור' : '✍️ כתוב ביקורת'}
+          {showForm ? <><X size={18} aria-hidden="true" /> סגור</> : <><PenLine size={18} aria-hidden="true" /> כתוב ביקורת</>}
         </button>
       </div>
 
@@ -103,7 +106,7 @@ function ReviewsCarousel() {
         <div className="review-form-wrap">
           {submitted ? (
             <div className="review-submitted">
-              <span>🎉</span>
+              <span><CheckCircle size={40} aria-hidden="true" /></span>
               <p>תודה! הביקורת שלך התקבלה ותפורסם לאחר אישור.</p>
             </div>
           ) : (
@@ -127,7 +130,7 @@ function ReviewsCarousel() {
                 </div>
               </div>
               <button type="submit" className="review-submit-btn" disabled={submitting}>
-                {submitting ? '⏳ שולח...' : '✅ שלח ביקורת'}
+                {submitting ? <><Loader size={18} aria-hidden="true" /> שולח...</> : <><CheckCircle size={18} aria-hidden="true" /> שלח ביקורת</>}
               </button>
             </form>
           )}

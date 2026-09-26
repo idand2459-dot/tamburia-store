@@ -69,11 +69,23 @@ header {
 
 .search-bar {
   margin-bottom: 24px;
+  position: relative;
+}
+
+/* אייקון החיפוש: היה חלק מה-placeholder ועכשיו הוא רכיב Lucide,
+   ולכן הוא ממוקם בתוך השדה וה-padding-right מפנה לו מקום. */
+.search-bar-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+  pointer-events: none;
 }
 
 .search-bar input {
   width: 100%;
-  padding: 12px 20px;
+  padding: 12px 44px 12px 20px;
   border: 1px solid #ddd;
   border-radius: 30px;
   font-size: 1rem;

@@ -8,7 +8,9 @@
  */
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { Search, Check, X, Heart } from 'lucide-react';
 import categories from './categories';
+import CATEGORY_ICONS from '../../utils/categoryIcons';
 import CategoryBanner from './CategoryBanner';
 import CategoryAmbience from './CategoryAmbience';
 import NotFoundPage from '../../pages/NotFoundPage';
@@ -64,6 +66,8 @@ function CategoryView() {
 
   if (!category) return <NotFoundPage />;
 
+  const CategoryIcon = CATEGORY_ICONS[category.id];
+
   /** מחליף תת-קטגוריה, ומחליף את רשומת ההיסטוריה כדי לא להציף אותה. */
   function selectSubcategory(id) {
     const next = new URLSearchParams(searchParams);
@@ -112,8 +116,9 @@ function CategoryView() {
       <main style={{ '--cat-color': category.color }}>
         <div className="products-toolbar">
           <div className="search-bar">
+            <Search className="search-bar-icon" size={18} aria-hidden="true" />
             <input
-              placeholder="🔍 חפש מוצר..."
+              placeholder="חפש מוצר..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -142,7 +147,8 @@ function CategoryView() {
                 onClick={() => navigate(`/product/${product.id}`)}
                 style={{ cursor: 'pointer' }}>
                 <div className="product-img-wrap">
-                  <div className="product-img-placeholder" data-icon={category.icon}>
+                  <div className="product-img-placeholder">
+                    {CategoryIcon && <CategoryIcon className="product-img-icon" size={22} aria-hidden="true" />}
                     <span className="product-img-initial">{product.name.charAt(0)}</span>
                   </div>
                   {product.image_url && (
@@ -161,7 +167,7 @@ function CategoryView() {
                     : <>₪{product.price}</>}
                 </p>
                 <p className={`stock ${product.in_stock !== false ? '' : 'out-of-stock-label'}`}>
-                  {product.in_stock !== false ? '✓ יש במלאי' : '✗ אזל מהמלאי'}
+                  {product.in_stock !== false ? <><Check size={14} aria-hidden="true" /> יש במלאי</> : <><X size={14} aria-hidden="true" /> אזל מהמלאי</>}
                 </p>
                 <div className="card-bottom-actions">
                   <button
@@ -174,7 +180,7 @@ function CategoryView() {
                     className={`card-wishlist-btn ${wishlistIds.includes(product.id) ? 'active' : ''}`}
                     onClick={(e) => { e.stopPropagation(); toggleCardWishlist(product); }}
                     title={wishlistIds.includes(product.id) ? 'הסר' : 'הוסף למשאלות'}>
-                    {wishlistIds.includes(product.id) ? '❤️' : '🤍'}
+                    <Heart size={18} fill={wishlistIds.includes(product.id) ? 'currentColor' : 'none'} aria-hidden="true" />
                   </button>
                 </div>
               </div>

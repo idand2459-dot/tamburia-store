@@ -2,12 +2,15 @@
  * מחשבון הפרויקט: ממיר סוג עבודה לרשימת המוצרים הדרושה.
  */
 import { useState, useEffect, useRef } from 'react';
+import {
+  ShowerHead, DoorOpen, Flower2, Wrench, Crown, Check, Circle, ShoppingCart,
+} from 'lucide-react';
 
 /* ─── Project definitions ──────────────────────────────────────────────── */
 const PROJECTS = [
   {
     id: 'bathroom',
-    icon: '🚿',
+    Icon: ShowerHead,
     name: 'שיפוץ שירותים',
     color: '#457b9d',
     inputs: [],
@@ -22,7 +25,7 @@ const PROJECTS = [
   },
   {
     id: 'cylinder',
-    icon: '🚪',
+    Icon: DoorOpen,
     name: 'החלפת צילינדר',
     color: '#6c757d',
     inputs: [
@@ -50,7 +53,7 @@ const PROJECTS = [
   },
   {
     id: 'garden',
-    icon: '🌿',
+    Icon: Flower2,
     name: 'סידור גינה',
     color: '#52b788',
     inputs: [
@@ -82,7 +85,7 @@ const PROJECTS = [
   },
   {
     id: 'plumbing',
-    icon: '🔧',
+    Icon: Wrench,
     name: 'תיקון אינסטלציה',
     color: '#0077b6',
     inputs: [],
@@ -173,8 +176,8 @@ function ProjectCalculator({ addBundleToCart }) {
 
         {/* ── Header ── */}
         <div className="proj-header">
-          <span className="proj-tag">✦ כלי תכנון</span>
-          <h2 className="proj-title">לא יודעים מה לקנות? 🛠️</h2>
+          <span className="proj-tag"><Crown size={14} aria-hidden="true" /> כלי תכנון</span>
+          <h2 className="proj-title">לא יודעים מה לקנות? <Wrench size={24} aria-hidden="true" /></h2>
           <p className="proj-subtitle">בחרו פרויקט — נכין לכם רשימת קניות מלאה</p>
         </div>
 
@@ -187,9 +190,9 @@ function ProjectCalculator({ addBundleToCart }) {
               style={{ '--proj-color': proj.color, animationDelay: `${i * 0.09}s` }}
               onClick={() => selectProject(proj.id)}
             >
-              <span className="proj-card-icon">{proj.icon}</span>
+              <span className="proj-card-icon"><proj.Icon size={32} aria-hidden="true" /></span>
               <span className="proj-card-name">{proj.name}</span>
-              {selectedId === proj.id && <span className="proj-card-check">✓</span>}
+              {selectedId === proj.id && <span className="proj-card-check"><Check size={16} aria-hidden="true" /></span>}
             </button>
           ))}
         </div>
@@ -253,7 +256,7 @@ function ProjectCalculator({ addBundleToCart }) {
                   className={`proj-item ${item.found ? 'found' : 'missing'}`}
                   style={{ animationDelay: `${i * 0.06}s` }}
                 >
-                  <span className="proj-item-dot">{item.found ? '✓' : '○'}</span>
+                  <span className="proj-item-dot">{item.found ? <Check size={14} aria-hidden="true" /> : <Circle size={14} aria-hidden="true" />}</span>
                   <div className="proj-item-body">
                     <span className="proj-item-name">
                       {item.found ? item.found.name : item.name}
@@ -287,8 +290,8 @@ function ProjectCalculator({ addBundleToCart }) {
                 onClick={handleAddAll}
               >
                 {bundleAdded
-                  ? '✓ נוסף לעגלה!'
-                  : `🛒 הוסף הכל לעגלה (${foundItems.length} פריטים)`}
+                  ? <><Check size={18} aria-hidden="true" /> נוסף לעגלה!</>
+                  : <><ShoppingCart size={18} aria-hidden="true" /> הוסף הכל לעגלה ({foundItems.length} פריטים)</>}
               </button>
             </div>
           </div>

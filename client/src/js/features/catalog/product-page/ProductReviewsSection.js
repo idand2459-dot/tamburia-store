@@ -9,6 +9,7 @@
  * לאחר אישור בניהול, ולכן שליפה מחדש לא הייתה מציגה אותה בכל מקרה.
  */
 import { useState, useEffect } from 'react';
+import { X, PenLine, CheckCircle } from 'lucide-react';
 import Stars from './Stars';
 
 const EMPTY_FORM = { reviewer_name: '', rating: 5, text: '' };
@@ -42,14 +43,14 @@ function ProductReviewsSection({ productId, reviews }) {
       <div className="product-reviews-header">
         <h2>ביקורות על המוצר</h2>
         <button className="add-review-btn" onClick={() => setShowReviewForm(!showReviewForm)}>
-          {showReviewForm ? '✕ סגור' : '✍️ כתוב ביקורת'}
+          {showReviewForm ? <><X size={18} aria-hidden="true" /> סגור</> : <><PenLine size={18} aria-hidden="true" /> כתוב ביקורת</>}
         </button>
       </div>
 
       {showReviewForm && (
         <div className="review-form-wrap">
           {reviewSubmitted ? (
-            <div className="review-submitted"><span>🎉</span><p>תודה! הביקורת תפורסם לאחר אישור.</p></div>
+            <div className="review-submitted"><span><CheckCircle size={40} aria-hidden="true" /></span><p>תודה! הביקורת תפורסם לאחר אישור.</p></div>
           ) : (
             <form className="review-form" onSubmit={handleReviewSubmit}>
               <div className="review-form-fields">
@@ -68,7 +69,7 @@ function ProductReviewsSection({ productId, reviews }) {
                     onChange={e => setReviewForm({...reviewForm, text: e.target.value})} required />
                 </div>
               </div>
-              <button type="submit" className="review-submit-btn">✅ שלח ביקורת</button>
+              <button type="submit" className="review-submit-btn"><CheckCircle size={18} aria-hidden="true" /> שלח ביקורת</button>
             </form>
           )}
         </div>

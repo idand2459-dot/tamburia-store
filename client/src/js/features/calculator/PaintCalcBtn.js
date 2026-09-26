@@ -2,6 +2,7 @@
  * כפתור צף שגולל אל מחשבון הצבע.
  */
 import { useState, useEffect } from 'react';
+import { Paintbrush } from 'lucide-react';
 
 /** מציג את הכפתור הצף של מחשבון הצבע. */
 function PaintCalcBtn({ menuOpen }) {
@@ -31,7 +32,7 @@ function PaintCalcBtn({ menuOpen }) {
       onClick={scrollToCalc}
       title="מחשבון צבע"
     >
-      🎨
+      <Paintbrush size={22} aria-hidden="true" />
       <span className="paint-calc-float-label">מחשבון צבע</span>
     </button>
   );

@@ -11,6 +11,7 @@
  * ולכן אין חפיפה בין קבוצות התמונות והתוצאה על המסך זהה.
  */
 import { useState } from 'react';
+import { ImageOff, Eye } from 'lucide-react';
 
 /** מציג רשת כרטיסי מוצר עם כותרת. */
 function RelatedGrid({ title, wrapClass, items, onSelectProduct, brokenImages, markBroken }) {
@@ -20,7 +21,7 @@ function RelatedGrid({ title, wrapClass, items, onSelectProduct, brokenImages, m
       <div className="related-grid">
         {items.map(p => (
           <div key={p.id} className="related-card" onClick={() => onSelectProduct(p)}>
-            {p.image_url && !brokenImages.has(p.image_url) ? <img src={p.image_url} alt={p.name} className="related-img" onError={() => markBroken(p.image_url)} /> : <div className="related-no-img">🖼️</div>}
+            {p.image_url && !brokenImages.has(p.image_url) ? <img src={p.image_url} alt={p.name} className="related-img" onError={() => markBroken(p.image_url)} /> : <div className="related-no-img"><ImageOff size={28} aria-hidden="true" /></div>}
             <div className="related-info">
               <span className="related-name">{p.name}</span>
               <span className="related-price">₪{p.price}</span>
@@ -42,7 +43,7 @@ function RelatedProducts({ recentlyViewed, relatedProducts, onSelectProduct }) {
     <>
       {recentlyViewed.length > 0 && (
         <RelatedGrid
-          title="צפית לאחרונה 👁️"
+          title={<><Eye size={20} aria-hidden="true" /> צפית לאחרונה</>}
           wrapClass="recently-viewed"
           items={recentlyViewed.slice(0, 3)}
           onSelectProduct={onSelectProduct}

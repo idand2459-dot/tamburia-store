@@ -3,6 +3,7 @@
  */
 import { useState, useEffect, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Crown, Star } from 'lucide-react';
 import CategoryPage from './CategoryPage';
 import WhyUs from '../components/WhyUs';
 import PaintCalculator from '../features/calculator/PaintCalculator';
@@ -44,7 +45,7 @@ function HomePage() {
 
   if (rating) {
     stats.push({
-      value: `★ ${rating.average}`,
+      value: <><Star size={16} fill="currentColor" aria-hidden="true" /> {rating.average}</>,
       label: rating.total === 1 ? 'ביקורת אחת' : `${rating.total} ביקורות`,
     });
   }
@@ -53,7 +54,7 @@ function HomePage() {
     <>
       <div className="hero">
         <div className="hero-inner">
-          <div className="hero-badge">✦ מאז 1991 · פתח תקווה</div>
+          <div className="hero-badge"><Crown size={14} aria-hidden="true" /> מאז 1991 · פתח תקווה</div>
           <h1 className="hero-title">כל מה שצריך לבית<br/><span className="hero-accent">במקום אחד</span></h1>
           <p className="hero-sub">מוצרי צביעה · אינסטלציה · כלי עבודה · ממנעולים ועד גינה</p>
           {/* המפרידים נבנים מתוך המערך, כדי שלא יישאר קו תלוי
