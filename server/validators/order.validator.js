@@ -10,6 +10,41 @@ const STATUSES = ['new', 'processing', 'shipped', 'completed'];
 
 const DELIVERY_METHODS = ['pickup', 'delivery'];
 
+/**
+ * הערים שאליהן מבצעים משלוח.
+ *
+ * הרשימה מועתקת כלשונה מ-CartModal: כל עיר מופיעה גם עם מקף וגם עם
+ * רווח, ו"קריית/קרית" בשני האיותים. הכפילות מכוונת — היא מה שמאפשר
+ * להתאים כתובת שהלקוח הקליד בעצמו, ואין לאחד אותה.
+ */
+const ALLOWED_CITIES = ['פתח תקווה', 'פתח-תקווה', 'גני תקווה', 'גני-תקווה', 'קריית אונו', 'קרית אונו', 'קריית-אונו', 'קרית-אונו'];
+
+const DELIVERY_AREA_ERROR = 'מצטערים, אנחנו מבצעים משלוחים לפתח תקווה, גני תקווה וקריית אונו בלבד';
+
+/** בודק אם הכתובת נמצאת באזור החלוקה. כתובת ריקה נבדקת במקום אחר. */
+function checkAllowedCity(address) {
+  if (!address) return true;
+  const lower = address.toLowerCase();
+  return ALLOWED_CITIES.some(city => lower.includes(city.toLowerCase()));
+}
+
+/**
+ * זורק 400 כשמבקשים משלוח לכתובת מחוץ לאזור החלוקה.
+ *
+ * עד כה הכלל התקיים רק בקליינט, שמשבית את כפתור השליחה. בקשה ישירה
+ * ל-API עקפה אותו לגמרי והזמנה לתל אביב נשמרה כרגיל.
+ *
+ * כתובת ריקה אינה נדחית כאן — החוסר נתפס בבדיקות שכבר קיימות
+ * ("חסרה כתובת למשלוח" ביצירה, "משלוח דורש כתובת" בעדכון) — וכך
+ * חלוקת האחריות נשארת זהה לזו שבקליינט.
+ */
+function assertDeliveryCityAllowed(delivery_method, delivery_address) {
+  if (delivery_method !== 'delivery') return;
+  if (!delivery_address) return;
+  if (checkAllowedCity(delivery_address)) return;
+  throw badRequest(DELIVERY_AREA_ERROR);
+}
+
 const EDITABLE = [
   'customer_name', 'customer_phone', 'customer_email',
   'delivery_method', 'delivery_address', 'notes', 'status',
@@ -119,6 +154,7 @@ function parseCreate(body = {}) {
   if (delivery_method === 'delivery') {
     delivery_address = asTrimmedString(body.delivery_address ?? '', 'delivery_address');
     if (!delivery_address) throw badRequest('חסרה כתובת למשלוח');
+    assertDeliveryCityAllowed(delivery_method, delivery_address);
   }
 
   const customer_name = asTrimmedString(body.customer_name ?? '', 'customer_name', { maxLength: MAX.customer_name });
@@ -246,5 +282,6 @@ function parseListQuery(query = {}) {
 
 module.exports = {
   parseCreate, parseUpdate, parseStatus, parseListQuery,
-  STATUSES, DELIVERY_METHODS, EDITABLE, SORTABLE,
+  assertDeliveryCityAllowed,
+  STATUSES, DELIVERY_METHODS, EDITABLE, SORTABLE, ALLOWED_CITIES,
 };
