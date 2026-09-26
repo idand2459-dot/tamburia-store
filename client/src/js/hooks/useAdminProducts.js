@@ -10,6 +10,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import { CATEGORIES } from '../pages/admin/adminConstants';
+import { errorMessageFrom } from '../utils/apiErrors';
 
 const CSV_IDS = CATEGORIES.map(c => c.id);
 
@@ -60,6 +61,7 @@ export function downloadTemplate() {
 export function useAdminProducts(api) {
   const [products, setProducts] = useState([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [productsError, setProductsError] = useState('');
 
   const [csvPreview, setCsvPreview] = useState(null);
   const [csvErrors, setCsvErrors] = useState([]);
@@ -73,51 +75,116 @@ export function useAdminProducts(api) {
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
-  /** מעלה קבצי תמונה ומחזיר את כתובותיהם. */
+  /**
+   * מעלה קבצי תמונה ומחזיר את כתובותיהם.
+   *
+   * מחזיר { ok } ולא רק מערך, כי העלאה שנכשלה הייתה מחזירה [] —
+   * ואז המוצר היה נשמר בלי התמונות, בשקט. השומר למעלה עוצר במקום.
+   */
   const uploadImages = useCallback(async (files) => {
     const formData = new FormData();
     files.forEach(f => formData.append('images', f));
     const res = await api('/api/upload-multiple', { method: 'POST', body: formData });
-    return (await res.json()).imageUrls || [];
+
+    if (!res.ok) {
+      return { ok: false, error: await errorMessageFrom(res, 'העלאת התמונות נכשלה. המוצר לא נשמר.') };
+    }
+
+    const body = await res.json().catch(() => ({}));
+    return { ok: true, imageUrls: body.imageUrls || [] };
   }, [api]);
 
-  /** יוצר מוצר חדש מתוך שדות הטופס והתמונות שנבחרו. */
+  /**
+   * יוצר מוצר חדש מתוך שדות הטופס והתמונות שנבחרו.
+   * מחזיר true בהצלחה בלבד, כדי שהטופס לא יתאפס על כישלון.
+   */
   const createProduct = useCallback(async (fields, newImages) => {
     setUploadingImages(true);
-    let allImageUrls = newImages.length > 0 ? await uploadImages(newImages) : [];
-    await api('/api/products', {
+
+    let allImageUrls = [];
+    if (newImages.length > 0) {
+      const upload = await uploadImages(newImages);
+      if (!upload.ok) {
+        setUploadingImages(false); setProductsError(upload.error);
+        return false;
+      }
+      allImageUrls = upload.imageUrls;
+    }
+
+    const res = await api('/api/products', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(productBody(fields, allImageUrls))
     });
-    setUploadingImages(false); fetchProducts();
+
+    if (!res.ok) {
+      setUploadingImages(false);
+      setProductsError(await errorMessageFrom(res, 'הוספת המוצר נכשלה.'));
+      return false;
+    }
+
+    setUploadingImages(false); setProductsError(''); fetchProducts();
+    return true;
   }, [api, uploadImages, fetchProducts]);
 
-  /** שומר את השינויים במוצר קיים. */
+  /**
+   * שומר את השינויים במוצר קיים.
+   * מחזיר true בהצלחה בלבד, כדי שהעריכה לא תיזרק על כישלון.
+   */
   const updateProduct = useCallback(async (id, fields, existingImages, newImages) => {
     setUploadingImages(true);
-    let newUrls = newImages.length > 0 ? await uploadImages(newImages) : [];
+
+    let newUrls = [];
+    if (newImages.length > 0) {
+      const upload = await uploadImages(newImages);
+      if (!upload.ok) {
+        setUploadingImages(false); setProductsError(upload.error);
+        return false;
+      }
+      newUrls = upload.imageUrls;
+    }
+
     const allUrls = [...existingImages, ...newUrls];
-    await api('/api/products/' + id, {
+    const res = await api('/api/products/' + id, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(productBody(fields, allUrls))
     });
-    setUploadingImages(false); fetchProducts();
+
+    if (!res.ok) {
+      setUploadingImages(false);
+      setProductsError(await errorMessageFrom(res, 'שמירת המוצר נכשלה.'));
+      return false;
+    }
+
+    setUploadingImages(false); setProductsError(''); fetchProducts();
+    return true;
   }, [api, uploadImages, fetchProducts]);
 
   /** מוחק מוצר לאחר אישור המשתמש. */
   const deleteProduct = useCallback(async (id) => {
     if (!window.confirm('למחוק את המוצר?')) return;
-    await api('/api/products/' + id, { method: 'DELETE' });
-    fetchProducts();
+
+    const res = await api('/api/products/' + id, { method: 'DELETE' });
+    if (!res.ok) {
+      setProductsError(await errorMessageFrom(res, 'מחיקת המוצר נכשלה.'));
+      return;
+    }
+
+    setProductsError(''); fetchProducts();
   }, [api, fetchProducts]);
 
   /** מחליף את סימון המלאי של המוצר. */
   const toggleStock = useCallback(async (product) => {
-    await api('/api/products/' + product.id, {
+    const res = await api('/api/products/' + product.id, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: product.name, price: product.price, in_stock: !product.in_stock, image_url: product.image_url || '', images: product.images || [], colors: product.colors || [], category: product.category, sku: product.sku || '', description: product.description || '' })
     });
-    fetchProducts();
+
+    if (!res.ok) {
+      setProductsError(await errorMessageFrom(res, 'עדכון המלאי נכשל.'));
+      return;
+    }
+
+    setProductsError(''); fetchProducts();
   }, [api, fetchProducts]);
 
   /** מנקה את תצוגת ה-CSV, לפתיחה נקייה של לשונית הייבוא. */
@@ -151,7 +218,7 @@ export function useAdminProducts(api) {
   const clearImportResult = useCallback(() => setImportResult(null), []);
 
   return {
-    products, fetchProducts,
+    products, fetchProducts, productsError,
     createProduct, updateProduct, deleteProduct, toggleStock, uploadingImages,
     csvPreview, csvErrors, importing, importResult,
     downloadTemplate, handleCsvFile, handleImport, resetCsv, clearImportResult,

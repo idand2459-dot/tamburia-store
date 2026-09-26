@@ -38,17 +38,17 @@ function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
   const setActiveTab = onTabChange;
 
   const {
-    products, createProduct, updateProduct, deleteProduct, toggleStock, uploadingImages,
+    products, createProduct, updateProduct, deleteProduct, toggleStock, uploadingImages, productsError,
     csvPreview, csvErrors, importing, importResult,
     downloadTemplate, handleCsvFile, handleImport, resetCsv, clearImportResult,
   } = useAdminProducts(api);
 
   const {
-    orders, handleStatusChange, handleDeleteOrder, exportOrdersToExcel, getStats,
+    orders, handleStatusChange, handleDeleteOrder, exportOrdersToExcel, getStats, ordersError,
     showConfetti, dismissConfetti,
   } = useAdminOrders(api);
 
-  const { reviews, approveReview, deleteReview } = useAdminReviews(api);
+  const { reviews, approveReview, deleteReview, reviewsError } = useAdminReviews(api);
 
   const [editingProduct, setEditingProduct] = useState(null);
 
@@ -97,6 +97,7 @@ function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
           products={products}
           getStats={getStats}
           onToggleStock={toggleStock}
+          productsError={productsError}
         />
       )}
 
@@ -106,6 +107,7 @@ function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
           onStatusChange={handleStatusChange}
           onDeleteOrder={handleDeleteOrder}
           onExport={exportOrdersToExcel}
+          ordersError={ordersError}
         />
       )}
 
@@ -115,6 +117,7 @@ function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
           onEdit={startEdit}
           onDelete={deleteProduct}
           onToggleStock={toggleStock}
+          productsError={productsError}
         />
       )}
 
@@ -125,6 +128,7 @@ function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
           onUpdate={updateProduct}
           uploadingImages={uploadingImages}
           onDone={finishForm}
+          productsError={productsError}
         />
       )}
 
@@ -146,6 +150,7 @@ function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
           reviews={reviews}
           onApprove={approveReview}
           onDelete={deleteReview}
+          reviewsError={reviewsError}
         />
       )}
     </div>

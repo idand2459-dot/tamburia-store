@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { CATEGORIES } from './adminConstants';
 
 /** מציג את לשונית המוצרים. */
-function ProductsTab({ products, onEdit, onDelete, onToggleStock }) {
+function ProductsTab({ products, onEdit, onDelete, onToggleStock, productsError }) {
   const [filterCategory, setFilterCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -34,6 +34,7 @@ function ProductsTab({ products, onEdit, onDelete, onToggleStock }) {
         ))}
       </div>
       <div className="admin-results-info">{(searchQuery || filterCategory !== 'all') ? `מציג ${filteredProducts.length} מוצרים` : ''}</div>
+      {productsError && <div className="admin-error">⚠️ {productsError}</div>}
       {filteredProducts.length === 0 ? <div className="admin-empty">אין מוצרים</div> : (
         <div className="admin-products-grid">
           {filteredProducts.map(product => (

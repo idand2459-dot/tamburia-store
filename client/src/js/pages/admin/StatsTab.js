@@ -5,7 +5,7 @@
  * כדי שהחישוב יקרה רק כשהלשונית באמת מוצגת.
  */
 /** מציג את לשונית הסטטיסטיקות. */
-function StatsTab({ orders, products, getStats, onToggleStock }) {
+function StatsTab({ orders, products, getStats, onToggleStock, productsError }) {
   const stats = getStats(products);
   const maxDailyCount = Math.max(...stats.dailyOrders.map(d => d.count), 1);
 
@@ -85,6 +85,7 @@ function StatsTab({ orders, products, getStats, onToggleStock }) {
                 <span className="out-of-stock-count">{stats.outOfStock.length}</span>
               )}
             </h3>
+            {productsError && <div className="admin-error">⚠️ {productsError}</div>}
             {stats.outOfStock.length === 0 ? (
               <p className="stats-empty">✅ כל המוצרים במלאי</p>
             ) : (

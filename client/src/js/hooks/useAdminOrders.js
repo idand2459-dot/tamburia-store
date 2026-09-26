@@ -11,6 +11,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { CATEGORIES, STATUS_CONFIG, formatDate } from '../pages/admin/adminConstants';
 import { useWebSocket } from './useWebSocket';
+import { errorMessageFrom } from '../utils/apiErrors';
 
 // הסקר הוא מסלול חלופי בלבד מאז שיש WebSocket: הודעה על הזמנה חדשה
 // מגיעה תוך פחות משנייה, והסקר נשאר רק למקרה שהחיבור למטה.
@@ -20,6 +21,7 @@ const POLL_MS = 120000;
 export function useAdminOrders(api) {
   const [orders, setOrders] = useState([]);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [ordersError, setOrdersError] = useState('');
   const prevOrdersCount = useRef(null);
 
   /**
@@ -77,15 +79,27 @@ export function useAdminOrders(api) {
 
   /** משנה את סטטוס ההזמנה. */
   const handleStatusChange = useCallback(async (orderId, status) => {
-    await api(`/api/orders/${orderId}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
-    fetchOrders();
+    const res = await api(`/api/orders/${orderId}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+
+    if (!res.ok) {
+      setOrdersError(await errorMessageFrom(res, `שינוי הסטטוס של הזמנה #${orderId} נכשל.`));
+      return;
+    }
+
+    setOrdersError(''); fetchOrders();
   }, [api, fetchOrders]);
 
   /** מוחק הזמנה לאחר אישור המשתמש. */
   const handleDeleteOrder = useCallback(async (id) => {
     if (!window.confirm('למחוק את ההזמנה?')) return;
-    await api('/api/orders/' + id, { method: 'DELETE' });
-    fetchOrders();
+
+    const res = await api('/api/orders/' + id, { method: 'DELETE' });
+    if (!res.ok) {
+      setOrdersError(await errorMessageFrom(res, `מחיקת הזמנה #${id} נכשלה.`));
+      return;
+    }
+
+    setOrdersError(''); fetchOrders();
   }, [api, fetchOrders]);
 
   /** מחשב את נתוני לשונית הסטטיסטיקות. */
@@ -169,7 +183,7 @@ export function useAdminOrders(api) {
   }, [orders]);
 
   return {
-    orders, fetchOrders,
+    orders, fetchOrders, ordersError,
     handleStatusChange, handleDeleteOrder, exportOrdersToExcel, getStats,
     showConfetti, dismissConfetti,
   };
