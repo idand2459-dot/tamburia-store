@@ -6,7 +6,7 @@
  * גם את אלה שטרם אושרו.
  */
 import { useState, useEffect, useCallback } from 'react';
-import { errorMessageFrom } from '../utils/apiErrors';
+import { errorMessageFrom, NETWORK_ERROR } from '../utils/apiErrors';
 
 /** מנהל את חוות הדעת ואת אישורן. */
 export function useAdminReviews(api) {
@@ -22,27 +22,33 @@ export function useAdminReviews(api) {
 
   /** מאשר פרסום של חוות דעת. */
   const approveReview = useCallback(async (id) => {
-    const res = await api(`/api/reviews/${id}/approve`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({approved: true}) });
+    try {
+      const res = await api(`/api/reviews/${id}/approve`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({approved: true}) });
 
-    if (!res.ok) {
-      setReviewsError(await errorMessageFrom(res, 'אישור הביקורת נכשל.'));
-      return;
+      if (!res.ok) {
+        setReviewsError(await errorMessageFrom(res, 'אישור הביקורת נכשל.'));
+        return;
+      }
+      setReviewsError(''); fetchReviews();
+    } catch {
+      setReviewsError(NETWORK_ERROR);
     }
-
-    setReviewsError(''); fetchReviews();
   }, [api, fetchReviews]);
 
   /** מוחק חוות דעת לאחר אישור המשתמש. */
   const deleteReview = useCallback(async (id) => {
     if (!window.confirm('למחוק ביקורת?')) return;
 
-    const res = await api(`/api/reviews/${id}`, { method: 'DELETE' });
-    if (!res.ok) {
-      setReviewsError(await errorMessageFrom(res, 'מחיקת הביקורת נכשלה.'));
-      return;
+    try {
+      const res = await api(`/api/reviews/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        setReviewsError(await errorMessageFrom(res, 'מחיקת הביקורת נכשלה.'));
+        return;
+      }
+      setReviewsError(''); fetchReviews();
+    } catch {
+      setReviewsError(NETWORK_ERROR);
     }
-
-    setReviewsError(''); fetchReviews();
   }, [api, fetchReviews]);
 
   return { reviews, fetchReviews, approveReview, deleteReview, reviewsError };
