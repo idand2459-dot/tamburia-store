@@ -1,7 +1,6 @@
 /**
  * חלון העגלה: הפריטים, פרטי הלקוח ואופן הקבלה עד לשליחת ההזמנה.
  */
-import { useState } from 'react';
 import { Spinner } from './LoadingStates';
 
 const ALLOWED_CITIES = ['פתח תקווה', 'פתח-תקווה', 'גני תקווה', 'גני-תקווה', 'קריית אונו', 'קרית אונו', 'קריית-אונו', 'קרית-אונו'];
@@ -27,22 +26,17 @@ function CartModal({
   submittingOrder, handlePlaceOrder,
   orderSuccess, orderError
 }) {
-  const [addressError, setAddressError] = useState('');
-
-  /** מעדכן את הכתובת ובודק אם היא באזור החלוקה. */
+  /** מעדכן את הכתובת למשלוח. */
   function handleAddressChange(e) {
     setDeliveryAddress(e.target.value);
-    setAddressError('');
   }
 
   /** שולח את הטופס לשרת. */
   function handleSubmit() {
-    if (deliveryMethod === 'delivery') {
-      if (!checkAllowedCity(deliveryAddress)) {
-        setAddressError('מצטערים, אנחנו משלחים לפתח תקווה, גני תקווה וקריית אונו בלבד 🚚');
-        return;
-      }
-    }
+    // קו הגנה אחרון: הכפתור כבר חסום כש-deliveryInvalid דולק, וההודעה
+    // ללקוח מוצגת ליד שדה הכתובת. הבדיקה נשארת למקרה שתנאי ה-disabled
+    // ישתנה בעתיד, אבל בלי הודעה משלה — היא לא יכולה להגיע למסך.
+    if (deliveryMethod === 'delivery' && !checkAllowedCity(deliveryAddress)) return;
     handlePlaceOrder();
   }
 
