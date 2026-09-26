@@ -112,6 +112,7 @@ function StoreLayout() {
           submittingOrder={store.submittingOrder}
           handlePlaceOrder={store.handlePlaceOrder}
           orderSuccess={store.orderSuccess}
+          orderError={store.orderError}
         />
       )}
 

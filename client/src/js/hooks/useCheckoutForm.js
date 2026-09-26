@@ -25,9 +25,13 @@ export function useCheckoutForm(cartState) {
 
   const [submittingOrder, setSubmittingOrder] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(null);
+  const [orderError, setOrderError] = useState('');
 
-  /** מנקה את מסך התודה, כדי שפתיחה הבאה של העגלה תתחיל מחדש. */
-  const clearOrderSuccess = useCallback(() => setOrderSuccess(null), []);
+  /** מנקה את תוצאת השליחה, כדי שפתיחה הבאה של העגלה תתחיל מחדש. */
+  const clearOrderSuccess = useCallback(() => {
+    setOrderSuccess(null);
+    setOrderError('');
+  }, []);
 
   /** שולח את ההזמנה לשרת. הסכומים מחושבים מחדש בשרת. */
   const handlePlaceOrder = useCallback(async () => {
@@ -35,6 +39,7 @@ export function useCheckoutForm(cartState) {
     if (deliveryMethod === 'delivery' && !deliveryAddress) return;
 
     setSubmittingOrder(true);
+    setOrderError('');
     const order = {
       customer_name: customerName,
       customer_phone: customerPhone,
@@ -49,12 +54,30 @@ export function useCheckoutForm(cartState) {
       subtotal, delivery_fee: deliveryFee, total,
     };
 
-    const res = await fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order),
-    });
-    const saved = await res.json();
+    // הזמנה שנדחתה אינה מרוקנת את העגלה ואינה מציגה מסך תודה. קודם
+    // הכול קרה ללא תנאי, כך שדחייה בשרת נראתה ללקוח כהצלחה והעגלה
+    // שלו נמחקה — אובדן נתונים שנראה כמו הזמנה שהתקבלה.
+    let res;
+    let saved;
+    try {
+      res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order),
+      });
+      saved = await res.json();
+    } catch {
+      // תקלת רשת, או תשובה שאינה JSON. בלי זה הספינר היה נתקע לנצח.
+      setSubmittingOrder(false);
+      setOrderError('לא הצלחנו לשלוח את ההזמנה. בדקו את החיבור ונסו שוב.');
+      return;
+    }
+
+    if (!res.ok) {
+      setSubmittingOrder(false);
+      setOrderError(saved?.error || 'שליחת ההזמנה נכשלה. אפשר לנסות שוב.');
+      return;
+    }
 
     setSubmittingOrder(false);
     setOrderSuccess(saved);
@@ -75,9 +98,9 @@ export function useCheckoutForm(cartState) {
     deliveryAddress, setDeliveryAddress,
     orderNotes, setOrderNotes,
     submittingOrder, handlePlaceOrder,
-    orderSuccess, clearOrderSuccess,
+    orderSuccess, clearOrderSuccess, orderError,
   }), [
     customerName, customerPhone, customerEmail, deliveryAddress, orderNotes,
-    submittingOrder, handlePlaceOrder, orderSuccess, clearOrderSuccess,
+    submittingOrder, handlePlaceOrder, orderSuccess, clearOrderSuccess, orderError,
   ]);
 }
