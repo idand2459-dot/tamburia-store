@@ -27,7 +27,8 @@ function MarqueeBanner() {
           <span key={i} className="marquee-item">
             <Icon size={14} aria-hidden="true" />
             {text}
-            <span className="marquee-sep">•</span>
+            {/* המפריד הוא עיגול שה-CSS מצייר, לא תו bullet */}
+            <span className="marquee-sep" aria-hidden="true" />
           </span>
         ))}
       </div>
