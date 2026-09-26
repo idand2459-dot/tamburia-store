@@ -32,5 +32,8 @@
     "nodemailer": "^8.0.3",
     "pg": "^8.20.0",
     "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.4"
   }
 }
