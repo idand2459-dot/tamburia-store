@@ -1,22 +1,43 @@
 /**
  * סרגל הניווט העליון, כולל חיפוש מוצרים.
+ *
+ * מושך את מצב העגלה והתפריט מ-StoreContext ואת הניווט מהראוטר, ולא
+ * מקבל אותם בפרופס: הערכים האלה זמינים בכל מקום ממילא, והעברתם דרך
+ * StoreLayout רק החזירה את אותו prop-drilling שההקשר בא לבטל.
  */
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useStore } from './storeContext';
+
+const NAV_ITEMS = [
+  { key: 'home', path: '/', label: 'ראשי', icon: '🏠' },
+  { key: 'about', path: '/about', label: 'אודות', icon: '🏪' },
+  { key: 'contact', path: '/contact', label: 'צור קשר', icon: '📞' },
+  { key: 'returns', path: '/returns', label: 'מדיניות החזרים', icon: '↩️' },
+];
+
+/** מחזיר את המפתח שיש לסמן כפעיל, לפי הכתובת הנוכחית. */
+function currentPageOf(pathname) {
+  if (pathname === '/') return 'home';
+  if (pathname.startsWith('/about')) return 'about';
+  if (pathname.startsWith('/contact')) return 'contact';
+  if (pathname.startsWith('/returns')) return 'returns';
+  return '';
+}
 
 /** מציג את סרגל הניווט והחיפוש. */
-function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, onOpenCart, menuOpen, setMenuOpen, onOpenOrderHistory, onOpenWishlist }) {
+function Navbar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { cartCount, menuOpen, setMenuOpen } = useStore();
+
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const searchInputRef = useRef(null);
 
-  const navItems = [
-    { key: 'home', label: 'ראשי', icon: '🏠' },
-    { key: 'about', label: 'אודות', icon: '🏪' },
-    { key: 'contact', label: 'צור קשר', icon: '📞' },
-    { key: 'returns', label: 'מדיניות החזרים', icon: '↩️' },
-  ];
+  const currentPage = currentPageOf(location.pathname);
 
   useEffect(() => {
     fetch('/api/products').then(r => r.json()).then(data => setAllProducts(Array.isArray(data) ? data : [])).catch(() => {});
@@ -46,9 +67,13 @@ function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, on
   /** סוגר את תיבת החיפוש ומנקה אותה. */
   function closeSearch() { setSearchOpen(false); setSearchQuery(''); setSearchResults([]); }
   /** פותח את המוצר שנבחר מתוצאות החיפוש. */
-  function handleSelectProduct(product) { closeSearch(); onSelectProduct(product); }
+  function handleSelectProduct(product) { closeSearch(); navigate(`/product/${product.id}`); }
   /** עובר לעמוד המבוקש וסוגר את התפריט. */
-  function handleNav(key) { onNavigate(key); setMenuOpen(false); }
+  function handleNav(path) { navigate(path); setMenuOpen(false); }
+  /** פותח את איתור ההזמנות וסוגר את התפריט. */
+  function openOrderHistory() { navigate('/orders/lookup'); setMenuOpen(false); }
+  /** פותח את רשימת המשאלות וסוגר את התפריט. */
+  function openWishlist() { navigate('/wishlist'); setMenuOpen(false); }
 
   const CATEGORY_LABELS = {
     painting: 'מוצרי צביעה', kitchen: 'מוצרי מטבח', bathroom: 'מוצרי אמבטיה',
@@ -109,15 +134,15 @@ function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, on
           <button className="nav-close-btn" onClick={() => setMenuOpen(false)}>✕</button>
         </div>
         <nav className="nav-drawer-links">
-          {navItems.map(item => (
-            <button key={item.key} className={`nav-drawer-item ${currentPage === item.key ? 'active' : ''}`} onClick={() => handleNav(item.key)}>
+          {NAV_ITEMS.map(item => (
+            <button key={item.key} className={`nav-drawer-item ${currentPage === item.key ? 'active' : ''}`} onClick={() => handleNav(item.path)}>
               <span className="nav-item-icon">{item.icon}</span>{item.label}
             </button>
           ))}
-          <button className="nav-drawer-item" onClick={() => { onOpenOrderHistory(); setMenuOpen(false); }}>
+          <button className="nav-drawer-item" onClick={openOrderHistory}>
             <span className="nav-item-icon">📋</span>ההזמנות שלי
           </button>
-          <button className="nav-drawer-item" onClick={() => { onOpenWishlist(); setMenuOpen(false); }}>
+          <button className="nav-drawer-item" onClick={openWishlist}>
             <span className="nav-item-icon">❤️</span>רשימת המשאלות שלי
           </button>
         </nav>
@@ -129,23 +154,23 @@ function Navbar({ currentPage, onNavigate, onSelectProduct, cartCount, total, on
           <button className="hamburger-btn" onClick={() => setMenuOpen(true)}>
             <span /><span /><span />
           </button>
-          <button className="navbar-home-btn" onClick={() => handleNav('home')} title="דף הבית">
+          <button className="navbar-home-btn" onClick={() => handleNav('/')} title="דף הבית">
             🏠
           </button>
         </div>
         <div className="navbar-center">
-          <button className="navbar-brand" onClick={() => handleNav('home')}>🔧 <span>טכניק טמבור</span></button>
+          <button className="navbar-brand" onClick={() => handleNav('/')}>🔧 <span>טכניק טמבור</span></button>
         </div>
         <div className="navbar-left">
           <button className="navbar-search-btn" onClick={() => setSearchOpen(true)} title="חיפוש">🔍</button>
-          <button className="navbar-link" onClick={onOpenOrderHistory} title="ההזמנות שלי">📋 ההזמנות שלי</button>
-          <button className="navbar-wishlist-btn" onClick={onOpenWishlist} title="רשימת משאלות">🤍</button>
-          <button className={`navbar-link ${currentPage === 'about' ? 'active' : ''}`} onClick={() => handleNav('about')}>אודות</button>
-          <button className={`navbar-link ${currentPage === 'contact' ? 'active' : ''}`} onClick={() => handleNav('contact')}>צור קשר</button>
-          <button className={`navbar-link ${currentPage === 'returns' ? 'active' : ''}`} onClick={() => handleNav('returns')}>החזרים</button>
+          <button className="navbar-link" onClick={openOrderHistory} title="ההזמנות שלי">📋 ההזמנות שלי</button>
+          <button className="navbar-wishlist-btn" onClick={openWishlist} title="רשימת משאלות">🤍</button>
+          <button className={`navbar-link ${currentPage === 'about' ? 'active' : ''}`} onClick={() => handleNav('/about')}>אודות</button>
+          <button className={`navbar-link ${currentPage === 'contact' ? 'active' : ''}`} onClick={() => handleNav('/contact')}>צור קשר</button>
+          <button className={`navbar-link ${currentPage === 'returns' ? 'active' : ''}`} onClick={() => handleNav('/returns')}>החזרים</button>
 
           {/* כפתור עגלה — תמיד מוצג */}
-          <button className="navbar-cart-btn" onClick={onOpenCart}>
+          <button className="navbar-cart-btn" onClick={() => navigate('/cart')}>
             🛒
             {cartCount > 0 && (
               <span className="navbar-cart-badge">{cartCount}</span>
