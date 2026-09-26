@@ -495,7 +495,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8f8f6;
+  background: var(--color-bg);
   padding: 40px 20px;
 }
 
@@ -655,7 +655,7 @@
 
 /* ===== FAQ ===== */
 .faq-section {
-  background: #f8f8f6;
+  background: var(--color-bg);
   padding: 70px 40px;
 }
 
