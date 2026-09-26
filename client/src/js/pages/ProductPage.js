@@ -2,7 +2,7 @@
  * עמוד המוצר: גלריה, וריאנטים, חוות דעת ומוצרים דומים.
  */
 import { useState, useEffect } from 'react';
-import { toggleWishlist, isInWishlist } from './wishlistUtils';
+import { toggleWishlist, isInWishlist } from '../utils/wishlistUtils';
 
 const MAX_RECENT = 6;
 

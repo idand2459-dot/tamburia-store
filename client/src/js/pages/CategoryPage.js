@@ -1,7 +1,7 @@
 /**
  * עמוד קטגוריה: רשת המוצרים ובחירת תת-קטגוריה.
  */
-import categories from './categories';
+import categories from '../features/catalog/categories';
 
 /** מציג את מוצרי הקטגוריה ואת תתי-הקטגוריות שלה. */
 function CategoryPage({ onSelectCategory }) {

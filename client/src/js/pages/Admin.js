@@ -2,7 +2,7 @@
  * מסך הניהול: מוצרים, הזמנות, חוות דעת, ייבוא CSV וסטטיסטיקות.
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
-import Confetti from './Confetti';
+import Confetti from '../components/Confetti';
 
 const CATEGORIES = [
   { id: 'painting', label: 'מוצרי צביעה', icon: '🎨' },

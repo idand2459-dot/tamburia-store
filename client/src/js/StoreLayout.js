@@ -8,16 +8,16 @@
  */
 import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, useMatch } from 'react-router-dom';
-import Navbar from './Navbar';
-import MarqueeBanner from './MarqueeBanner';
-import Footer from './Footer';
-import WhatsAppButton from './WhatsAppButton';
-import ScrollToTop from './ScrollToTop';
-import PaintCalcBtn from './PaintCalcBtn';
-import CartModal from './CartModal';
-import OrderHistory from './OrderHistory';
-import Wishlist from './Wishlist';
-import { useStore } from './storeContext';
+import Navbar from './components/Navbar';
+import MarqueeBanner from './components/MarqueeBanner';
+import Footer from './components/Footer';
+import WhatsAppButton from './components/WhatsAppButton';
+import ScrollToTop from './components/ScrollToTop';
+import PaintCalcBtn from './features/calculator/PaintCalcBtn';
+import CartModal from './components/CartModal';
+import OrderHistory from './pages/OrderHistory';
+import Wishlist from './pages/Wishlist';
+import { useStore } from './context/storeContext';
 
 /** מגלל לראש העמוד בכל מעבר כתובת, למעט פתיחת מודאל. */
 function useScrollToTopOnNavigate(pathname) {

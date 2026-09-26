@@ -13,8 +13,8 @@
  */
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
-import Admin from './Admin';
-import AdminLogin from './AdminLogin';
+import Admin from '../pages/Admin';
+import AdminLogin from '../pages/AdminLogin';
 
 const TABS = ['stats', 'orders', 'products', 'add', 'import', 'reviews'];
 

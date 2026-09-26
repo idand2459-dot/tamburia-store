@@ -4,13 +4,13 @@
 import { useState, useEffect, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CategoryPage from './CategoryPage';
-import WhyUs from './WhyUs';
-import PaintCalculator from './PaintCalculator';
-import ProjectCalculator from './ProjectCalculator';
-import FeaturesBanner from './FeaturesBanner';
-import ReviewsCarousel from './ReviewsCarousel';
+import WhyUs from '../components/WhyUs';
+import PaintCalculator from '../features/calculator/PaintCalculator';
+import ProjectCalculator from '../features/calculator/ProjectCalculator';
+import FeaturesBanner from '../components/FeaturesBanner';
+import ReviewsCarousel from '../features/catalog/ReviewsCarousel';
 import FAQ from './FAQ';
-import { useStore } from './storeContext';
+import { useStore } from '../context/storeContext';
 
 /** מציג את עמוד הבית. */
 function HomePage() {

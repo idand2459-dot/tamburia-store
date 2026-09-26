@@ -7,7 +7,7 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useStore } from './storeContext';
+import { useStore } from '../context/storeContext';
 
 const NAV_ITEMS = [
   { key: 'home', path: '/', label: 'ראשי', icon: '🏠' },
