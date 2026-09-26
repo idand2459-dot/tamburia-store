@@ -21,6 +21,21 @@ const ALLOWED_CITIES = ['פתח תקווה', 'פתח-תקווה', 'גני תקו
 
 const DELIVERY_AREA_ERROR = 'מצטערים, אנחנו מבצעים משלוחים לפתח תקווה, גני תקווה וקריית אונו בלבד';
 
+const DELIVERY_ADDRESS_REQUIRED = 'משלוח דורש כתובת';
+
+/**
+ * זורק 400 כשמבקשים משלוח בלי כתובת.
+ *
+ * parseUpdate בודק את אותו כלל על גוף הבקשה בלבד, ולכן מפספס עדכון
+ * שמשנה רק את אופן הקבלה ומשאיר הזמנה מסומנת כמשלוח בלי כתובת כלל.
+ * השירות קורא לכאן עם המצב הממוזג, ששם יש גם את ההזמנה הקיימת.
+ */
+function assertDeliveryAddressPresent(delivery_method, delivery_address) {
+  if (delivery_method !== 'delivery') return;
+  if (delivery_address) return;
+  throw badRequest(DELIVERY_ADDRESS_REQUIRED);
+}
+
 /** בודק אם הכתובת נמצאת באזור החלוקה. כתובת ריקה נבדקת במקום אחר. */
 function checkAllowedCity(address) {
   if (!address) return true;
@@ -215,7 +230,7 @@ function parseUpdate(body = {}) {
     throw badRequest('לא נשלח אף שדה לעדכון');
   }
   if (data.delivery_method === 'delivery' && data.delivery_address === null) {
-    throw badRequest('משלוח דורש כתובת');
+    throw badRequest(DELIVERY_ADDRESS_REQUIRED);
   }
   return data;
 }
@@ -282,6 +297,6 @@ function parseListQuery(query = {}) {
 
 module.exports = {
   parseCreate, parseUpdate, parseStatus, parseListQuery,
-  assertDeliveryCityAllowed,
+  assertDeliveryCityAllowed, assertDeliveryAddressPresent,
   STATUSES, DELIVERY_METHODS, EDITABLE, SORTABLE, ALLOWED_CITIES,
 };
