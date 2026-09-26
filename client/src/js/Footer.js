@@ -1,5 +1,15 @@
+/**
+ * תחתית האתר.
+ *
+ * מנווט בעצמו דרך הראוטר. אינו צורך את StoreContext — אין בו מצב
+ * חנות, רק קישורים — ולכן useNavigate מספיק.
+ */
+import { useNavigate } from 'react-router-dom';
+
 /** מציג את תחתית האתר. */
-function Footer({ onNavigate, onSelectCategory }) {
+function Footer() {
+  const navigate = useNavigate();
+
   const categories = [
     { id: 'painting', label: 'מוצרי צביעה' },
     { id: 'tools', label: 'כלי עבודה' },
@@ -16,10 +26,10 @@ function Footer({ onNavigate, onSelectCategory }) {
   ];
 
   const pages = [
-    { key: 'home', label: 'דף הבית' },
-    { key: 'about', label: 'אודות' },
-    { key: 'contact', label: 'צור קשר' },
-    { key: 'returns', label: 'מדיניות החזרים' },
+    { key: 'home', path: '/', label: 'דף הבית' },
+    { key: 'about', path: '/about', label: 'אודות' },
+    { key: 'contact', path: '/contact', label: 'צור קשר' },
+    { key: 'returns', path: '/returns', label: 'מדיניות החזרים' },
   ];
 
   return (
@@ -49,7 +59,7 @@ function Footer({ onNavigate, onSelectCategory }) {
           <ul className="footer-links">
             {pages.map(p => (
               <li key={p.key}>
-                <button onClick={() => onNavigate(p.key)} className="footer-link">
+                <button onClick={() => navigate(p.path)} className="footer-link">
                   {p.label}
                 </button>
               </li>
@@ -66,7 +76,7 @@ function Footer({ onNavigate, onSelectCategory }) {
                 {/* רק בחירת הקטגוריה: פעם היה צריך גם לאפס את העמוד,
                     ועכשיו הניווט עושה את זה. קריאה כפולה הייתה מוסיפה
                     רשומה מיותרת להיסטוריה ושוברת את כפתור "חזור". */}
-                <button onClick={() => onSelectCategory && onSelectCategory(cat)} className="footer-link">
+                <button onClick={() => navigate(`/category/${cat.id}`)} className="footer-link">
                   {cat.label}
                 </button>
               </li>
@@ -107,7 +117,7 @@ function Footer({ onNavigate, onSelectCategory }) {
       <div className="footer-bottom">
         <span>© {new Date().getFullYear()} טכניק טמבור — כל הזכויות שמורות</span>
         <span className="footer-bottom-sep">|</span>
-        <button onClick={() => onNavigate('returns')} className="footer-bottom-link">מדיניות החזרים</button>
+        <button onClick={() => navigate('/returns')} className="footer-bottom-link">מדיניות החזרים</button>
       </div>
     </footer>
   );

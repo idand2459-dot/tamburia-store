@@ -19,18 +19,6 @@ import OrderHistory from './OrderHistory';
 import Wishlist from './Wishlist';
 import { useStore } from './storeContext';
 
-/** ממפה נתיב לכתובת, עבור ה-API הקיים של הנאבאר והפוטר. */
-const PATHS = { home: '/', about: '/about', contact: '/contact', returns: '/returns' };
-
-/** מחזיר את המפתח שהנאבאר מסמן כפעיל, לפי הכתובת. */
-function currentPageOf(pathname) {
-  if (pathname === '/') return 'home';
-  if (pathname.startsWith('/about')) return 'about';
-  if (pathname.startsWith('/contact')) return 'contact';
-  if (pathname.startsWith('/returns')) return 'returns';
-  return '';
-}
-
 /** מגלל לראש העמוד בכל מעבר כתובת, למעט פתיחת מודאל. */
 function useScrollToTopOnNavigate(pathname) {
   useEffect(() => {
@@ -89,26 +77,12 @@ function StoreLayout() {
 
   return (
     <div className={rootClass}>
-      <Navbar
-        currentPage={currentPageOf(location.pathname)}
-        onNavigate={(page) => navigate(PATHS[page] || '/')}
-        onSelectProduct={(product) => navigate(`/product/${product.id}`)}
-        cartCount={store.cartCount}
-        total={store.total}
-        onOpenCart={() => navigate('/cart')}
-        menuOpen={store.menuOpen}
-        setMenuOpen={store.setMenuOpen}
-        onOpenOrderHistory={() => navigate('/orders/lookup')}
-        onOpenWishlist={() => navigate('/wishlist')}
-      />
+      <Navbar />
       <MarqueeBanner />
 
       <Outlet />
 
-      <Footer
-        onNavigate={(page) => navigate(PATHS[page] || '/')}
-        onSelectCategory={(category) => navigate(`/category/${category.id}`)}
-      />
+      <Footer />
 
       {(onCart || onCheckout) && (
         <CartModal
