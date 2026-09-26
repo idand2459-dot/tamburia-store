@@ -23,7 +23,14 @@ const LARGE_BUCKET_LITERS = 18;
  */
 const BUNDLE_PRODUCT_IDS = {
   paint5: 627,
+  paint18: 628,
   colorMix: 416,
+};
+
+/** התוויות של שני גדלי הדלי, לשימוש בתוצאות ובכפתור. */
+const BUCKET_LABELS = {
+  paint5: "5 ל'",
+  paint18: `${LARGE_BUCKET_LITERS} ל'`,
 };
 
 /** מערבב צבע עם לבן לקבלת גוון בהיר יותר. */
@@ -144,11 +151,43 @@ function PaintCalculator({ addBundleToCart }) {
     : '#FFFFFF';
   const previewTextDark = isLight(previewBg);
 
+  /**
+   * בוחר את גודל הדלי שיוצא זול יותר לכמות הנדרשת.
+   *
+   * אותו נפח אפשר לכסות בדליים קטנים או גדולים, והזול מביניהם משתנה
+   * לפי הכמות: 6 דליים של 5 ל' יקרים מ-2 דליים של 18 ל'. משווים את
+   * העלות בפועל לפי המחירים מהקטלוג, ולא לפי מחיר קבוע בקוד.
+   *
+   * בתיקו נשאר 5 ל' — הוא הראשון ברשימה ו-reduce מחליף רק על "קטן ממש".
+   * אין ערבוב בין הגדלים: נבחר גודל אחד לכל הכמות.
+   */
+  function cheaperBucket() {
+    if (!result) return null;
+
+    const options = [
+      { key: 'paint5', quantity: result.paintCans5 },
+      { key: 'paint18', quantity: result.paintCans18 },
+    ]
+      .filter(option => option.quantity > 0)
+      .map(option => ({ ...option, product: findBundleProduct(option.key) }))
+      .filter(option => option.product);
+
+    if (options.length === 0) return null;
+
+    return options.reduce((best, option) => (
+      option.product.price * option.quantity < best.product.price * best.quantity ? option : best
+    ));
+  }
+
+  const chosenBucket = cheaperBucket();
+
   // מה שהמחשבון ממליץ עליו, מול מה שבאמת קיים בקטלוג. פריט שאין לו
   // מוצר אמיתי נשאר בהמלצה על המסך אבל לא נכנס לעגלה.
   const recommended = result
     ? [
-      { key: 'paint5', quantity: result.paintCans5 },
+      // כששני הגדלים חסרים מהקטלוג עדיין מציגים את ההמלצה, כדי
+      // ש-bundleHasUnknown ידליק את ההודעה במקום להשמיט אותה בשקט.
+      { key: chosenBucket?.key ?? 'paint5', quantity: chosenBucket?.quantity ?? result.paintCans5 },
       { key: 'colorMix', quantity: result.colorMixBottles },
     ].filter(line => line.quantity > 0)
     : [];
@@ -332,9 +371,10 @@ function PaintCalculator({ addBundleToCart }) {
                     <div className="paint-result-value">{result.paintLiters} ליטר</div>
                     <div className="paint-result-label">צבע לבן</div>
                     <div className="paint-result-sub">
-                      {result.paintCans5 > 0 && `דלי 5 ל' × ${result.paintCans5}`}
-                      {result.paintCans5 > 0 && result.paintCans18 > 0 && ' | '}
-                      {result.paintCans18 > 0 && `דלי 18 ל' × ${result.paintCans18}`}
+                      {/* הגודל שנבחר בפועל — אותו אחד שייכנס לעגלה */}
+                      {chosenBucket
+                        ? `דלי ${BUCKET_LABELS[chosenBucket.key]} × ${chosenBucket.quantity}`
+                        : result.paintCans5 > 0 && `דלי ${BUCKET_LABELS.paint5} × ${result.paintCans5}`}
                     </div>
                   </div>
                 </div>
@@ -369,7 +409,7 @@ function PaintCalculator({ addBundleToCart }) {
                   disabled={bundleAdded}>
                   {bundleAdded
                     ? '✅ נוסף לעגלה!'
-                    : `🛒 הוסף חבילה לעגלה — ${result.paintCans5} דלי + ${result.colorMixBottles} בקבוק קולור MIX · ₪${bundleTotal}`}
+                    : `🛒 הוסף חבילה לעגלה — ${chosenBucket ? `${chosenBucket.quantity} דלי ${BUCKET_LABELS[chosenBucket.key]}` : ''} + ${result.colorMixBottles} בקבוק קולור MIX · ₪${bundleTotal}`}
                 </button>
               )}
 

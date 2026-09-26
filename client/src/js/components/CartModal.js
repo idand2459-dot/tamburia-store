@@ -25,7 +25,7 @@ function CartModal({
   deliveryAddress, setDeliveryAddress,
   orderNotes, setOrderNotes,
   submittingOrder, handlePlaceOrder,
-  orderSuccess
+  orderSuccess, orderError
 }) {
   const [addressError, setAddressError] = useState('');
 
@@ -153,6 +153,8 @@ function CartModal({
                 <textarea placeholder="הערות מיוחדות..." value={orderNotes} onChange={e => setOrderNotes(e.target.value)} rows={2} />
               </div>
             </div>
+            {/* דחייה מהשרת — העגלה נשארת מלאה כדי שאפשר יהיה לנסות שוב */}
+            {orderError && <div className="delivery-area-error">⚠️ {orderError}</div>}
             <button
               className={`checkout-btn ${(!customerName || !customerPhone || (deliveryMethod === 'delivery' && (!deliveryAddress || deliveryInvalid)) || submittingOrder) ? 'disabled' : ''}`}
               disabled={!customerName || !customerPhone || (deliveryMethod === 'delivery' && (!deliveryAddress || deliveryInvalid)) || submittingOrder}
