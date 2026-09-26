@@ -7,6 +7,7 @@
  */
 const Order = require('../models/order.model');
 const mailer = require('./email');
+const { broadcast } = require('./realtime');
 const {
   assertDeliveryCityAllowed, assertDeliveryAddressPresent,
 } = require('../validators/order.validator');
@@ -45,11 +46,17 @@ async function findOrdersByPhone(rawPhone) {
 }
 
 /**
- * יוצר הזמנה ומודיע לחנות וללקוח במקביל.
+ * יוצר הזמנה, משדר אותה למסכי הניהול הפתוחים ומודיע לחנות וללקוח.
  * מחזיר את ההזמנה יחד עם מה שעלה בגורל שני המיילים.
+ *
+ * השידור הוא החלטה עסקית ולכן הוא כאן ולא בקונטרולר: רק השכבה הזו
+ * יודעת שהזמנה *נוצרה בהצלחה*. הוא סינכרוני, לא מחכה לאיש ואינו
+ * חלק מ-Promise.all של המיילים — שידור אינו אמור לעכב תשובה ללקוח.
  */
 async function createOrder(data) {
   const order = await Order.create(data);
+
+  broadcast('order:created', { id: order.id, total: order.total });
 
   const [store, customer] = await Promise.all([
     mailer.sendNewOrderToStore(order),
