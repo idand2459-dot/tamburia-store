@@ -2,9 +2,23 @@
    Home page sections
    ========================================================================== */
 
-/* Hero */
+/* Hero
+   ---------------------------------------------------------------------------
+   The Hero is always dark, whatever the system theme: every colour below is
+   hardcoded and there is no dark-mode override for it — except .hero::after,
+   which fades into the *page* background and therefore has to follow the
+   theme. See the note on that rule.
+   -------------------------------------------------------------------------- */
 .hero {
-  background: linear-gradient(150deg, #0a0e1a 0%, #1a1a2e 45%, #1e2d4d 100%);
+  /* Three layers: a purple orb low on the left, a red one higher on the
+     right, and the dark base underneath. The orbs are what give the
+     background depth — a single linear-gradient reads as flat navy. */
+  background:
+    radial-gradient(ellipse 600px 400px at 20% 60%,
+      rgba(124, 58, 237, 0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 350px at 80% 40%,
+      rgba(230, 57, 70, 0.12) 0%, transparent 70%),
+    linear-gradient(160deg, #050810 0%, #0f172a 40%, #1a1a2e 70%, #1e2d4d 100%);
   color: white;
   padding: 80px 24px 110px;
   text-align: center;
@@ -17,21 +31,77 @@
   content: '';
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(255,255,255,0.065) 1.5px, transparent 1.5px);
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1.5px, transparent 1.5px);
   background-size: 28px 28px;
   pointer-events: none;
 }
 
-/* Bottom fade */
+/* Bottom fade
+   NOTE: this one rule does need a dark-mode twin, down in the dark block of
+   this file. It blends the Hero into whatever sits below it, and that is the
+   page background — which *is* theme-dependent. --color-bg is a single light
+   value (#f8f8f6), so without the override the Hero would end in a pale band
+   floating above a dark page. */
 .hero::after {
   content: '';
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 80px;
-  background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.25));
+  height: 120px;
+  background: linear-gradient(to bottom,
+    transparent,
+    rgba(248, 248, 246, 0.02) 40%,
+    var(--color-bg));
   pointer-events: none;
+}
+
+/* Drifting glow orbs — ambient movement, deliberately close to invisible.
+   Rendered as divs by HomePage.js because ::before and ::after on .hero are
+   already taken by the dot grid and the bottom fade. Only `transform` is
+   animated, so the drift stays on the compositor. */
+.hero-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  animation: glow-drift 8s ease-in-out infinite alternate;
+}
+
+.hero-glow-purple {
+  width: 400px;
+  height: 400px;
+  background: rgba(124, 58, 237, 0.2);
+  top: 10%;
+  left: 10%;
+}
+
+.hero-glow-red {
+  width: 300px;
+  height: 300px;
+  background: rgba(230, 57, 70, 0.15);
+  bottom: 20%;
+  right: 15%;
+  /* offset so the two orbs never drift in lockstep */
+  animation-delay: -3s;
+}
+
+@keyframes glow-drift {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(30px, -20px) scale(1.1); }
+}
+
+/* Staggered entry — `both` holds the element at opacity 0 until its delay is
+   up, so the later ones don't flash into view before animating. */
+@keyframes hero-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero-inner {
@@ -43,46 +113,59 @@
 
 .hero-badge {
   display: inline-block;
-  background: rgba(230, 57, 70, 0.18);
-  border: 1px solid rgba(230, 57, 70, 0.45);
-  color: #ff9a9a;
-  padding: 6px 20px;
+  /* purple, not red: red is reserved for the title accent and the CTAs, so
+     secondary chrome uses purple and the hierarchy stays readable */
+  background: rgba(124, 58, 237, 0.12);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  color: var(--color-purple-soft);
+  backdrop-filter: blur(12px);
+  padding: 8px 22px;
   border-radius: 30px;
   font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.5px;
-  margin-bottom: 22px;
+  margin-bottom: 24px;
+  animation: hero-fade-up 0.5s ease-out both;
 }
 
 .hero-title {
-  font-size: 3.2rem;
-  font-weight: 800;
-  line-height: 1.15;
-  margin-bottom: 18px;
+  font-size: var(--font-size-hero);
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.12;
+  margin-bottom: 20px;
   letter-spacing: -0.5px;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+  animation: hero-fade-up 0.6s ease-out 0.1s both;
 }
 
 .hero-accent {
-  color: #e63946;
+  color: var(--color-red);
   display: block;
+  text-shadow: 0 0 40px rgba(230, 57, 70, 0.35);
 }
 
 .hero-sub {
-  font-size: 1.05rem;
-  color: rgba(255,255,255,0.55);
-  margin-bottom: 44px;
+  font-size: 1.08rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 48px;
   letter-spacing: 0.3px;
+  line-height: 1.6;
+  animation: hero-fade-up 0.6s ease-out 0.2s both;
 }
 
 .hero-stats {
   display: inline-flex;
   align-items: center;
-  gap: 0;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 18px;
-  padding: 18px 28px;
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 20px 32px;
+  backdrop-filter: blur(16px);
+  /* the inset highlight along the top edge is what sells the glass */
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  animation: hero-fade-up 0.7s ease-out 0.35s both;
 }
 
 .hero-stat {
@@ -97,31 +180,52 @@
   font-weight: 800;
   color: white;
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+/* The rating stat is the only one whose value carries an icon (a Lucide star),
+   which makes it the hook for the accent colour — no marker class needed. */
+.hero-stat b .lucide {
+  color: var(--color-red);
 }
 
 .hero-stat span {
   font-size: 0.75rem;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255, 255, 255, 0.45);
   font-weight: 400;
 }
 
+/* gradient rather than a solid hairline — it fades out at both ends */
 .hero-stat-div {
   width: 1px;
-  height: 38px;
-  background: rgba(255,255,255,0.15);
+  height: 40px;
+  background: linear-gradient(to bottom,
+    transparent,
+    rgba(255, 255, 255, 0.15),
+    transparent);
   flex-shrink: 0;
 }
 
 @media (max-width: 768px) {
+  .hero {
+      padding: 60px 20px 80px;
+    }
+
   .hero-title {
-      font-size: 2.1rem;
+      font-size: 2.2rem;
+    }
+
+  /* the orbs are wider than a phone screen; at that size they stop reading as
+     ambient glow and just tint the whole background */
+  .hero-glow-purple,
+  .hero-glow-red {
+      display: none;
     }
 
   .hero-stats {
       flex-wrap: wrap;
       gap: 8px;
-      padding: 16px 18px;
+      padding: 16px 20px;
     }
 
   .hero-stat {
@@ -134,6 +238,18 @@
 
   .hero-stat-div {
       display: none;
+    }
+}
+
+/* Someone who asked the OS for less motion gets the Hero without any: the
+   entry stagger lands on its final frame, and the orbs stop drifting. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-glow,
+  .hero-badge,
+  .hero-title,
+  .hero-sub,
+  .hero-stats {
+      animation: none;
     }
 }
 
@@ -172,9 +288,13 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  /* Hero */
-  .hero {
-      background: linear-gradient(135deg, #0a0a1a 0%, #0d1020 60%, #0a1f3d 100%);
+  /* The Hero itself is hardcoded dark and needs no override. Its bottom fade
+     does: it blends into the page background, and --color-bg is light-only. */
+  .hero::after {
+      background: linear-gradient(to bottom,
+        transparent,
+        rgba(15, 15, 26, 0.02) 40%,
+        var(--color-bg-dark));
     }
 
   .why-us-item { background: #0f0f1a; }
