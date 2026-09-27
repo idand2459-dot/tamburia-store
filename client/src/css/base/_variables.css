@@ -43,6 +43,7 @@
      Plain white and black are exempt: they are not brand colours, they never
      change, and rgba(255, 255, 255, 0.1) reads better than the token form. */
   --color-navy-rgb: 26, 26, 46;           /* --color-navy      #1a1a2e */
+  --color-navy-900-rgb: 15, 23, 42;       /* --color-navy-900  #0f172a */
   --color-navy-950-rgb: 7, 11, 20;        /* --color-navy-950  #070b14 */
   --color-red-rgb: 230, 57, 70;           /* --color-red       #e63946 */
   --color-purple-rgb: 124, 58, 237;       /* --color-purple    #7c3aed */
@@ -113,6 +114,9 @@
   --color-navy-950: #070b14;
   --color-purple: #7c3aed;
   --color-purple-soft: #a78bfa;
+  /* red lightened for icons and small marks on a dark surface:
+     --color-red itself goes muddy below ~20px of stroke */
+  --color-red-soft: #ff6b75;
   --color-glow-red: rgba(230, 57, 70, 0.15);
   --color-glow-purple: rgba(124, 58, 237, 0.12);
 
