@@ -76,7 +76,8 @@
 @import './features/_review-form.css';
 @import './features/_admin-reviews.css';
 @import './features/_hero.css';
-@import './features/_home.css';
+@import './features/_features-banner.css';
+@import './features/_whyus.css';
 /* One partial per static page, in the order their rules had inside the old
    _pages.css. The three heroes' shared h1 rule is split per page. */
 @import './features/_about.css';

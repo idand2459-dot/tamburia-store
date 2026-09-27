@@ -98,6 +98,36 @@
   font-weight: 600;
 }
 
+/* ── The three-up points grid ──────────────────────────────────────────────
+   Moved in from _home.css, where it sat under a "Why us" heading next to the
+   home page's own .whyus-* section. About.js is the only thing that renders
+   it, and the two share no selectors. */
+
+/* Why us grid */
+.why-us-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-top: 8px;
+}
+.why-us-item {
+  background: #f8f8f6;
+  border-radius: 14px;
+  padding: 20px;
+}
+.why-us-item h3 {
+  font-size: 1rem;
+  color: var(--color-text);
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.why-us-item p {
+  font-size: 0.88rem;
+  color: #777;
+  line-height: 1.6;
+  margin: 0;
+}
+
 /* ---- States ---------------------------------------------------------------- */
 
 .hours-row:last-child {
@@ -115,6 +145,10 @@
 @media (max-width: 768px) {
   .about-hero h1 {
       font-size: 2rem;
+    }
+
+  .why-us-grid {
+      grid-template-columns: 1fr;
     }
 }
 
@@ -135,4 +169,10 @@
   .hours-day { color: var(--color-text-faint); }
 
   .hours-time { color: var(--color-text-dark); }
+
+  .why-us-item { background: var(--color-bg-dark); }
+
+  .why-us-item h3 { color: var(--color-text-dark); }
+
+  .why-us-item p { color: #777; }
 }

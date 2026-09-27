@@ -76,6 +76,19 @@
   font-weight: 600;
 }
 
+/* ── Recently viewed ───────────────────────────────────────────────────────
+   Moved in from _home.css. RelatedProducts.js renders this divider above the
+   strip, so it belongs with it rather than with the home page. */
+
+/* ===== צפית לאחרונה ===== */
+.recently-viewed {
+  max-width: 1000px;
+  margin: 40px auto 0;
+  padding: 0 20px 0;
+  border-top: 2px solid var(--color-border-soft);
+  padding-top: 40px;
+}
+
 /* ---- States ------------------------------------------------------------- */
 
 .related-card:hover {
@@ -127,5 +140,9 @@
 
   .related-name {
       color: var(--color-text-dark);
+    }
+
+  .recently-viewed {
+      border-top-color: var(--color-surface-dark);
     }
 }
