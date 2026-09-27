@@ -113,6 +113,57 @@
   white-space: nowrap;
 }
 
+
+/* ── The expandable order card ─────────────────────────────────────────────
+   Moved in from _orders.css. OrdersTab renders these alongside the stat row and
+   the status buttons above, so the tab's styles were split across two partials.
+   Nothing else in the stylesheet uses a .order-card* or .order-detail*
+   selector. */
+
+.order-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  overflow: hidden;
+}
+.order-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.order-card-right { display: flex; align-items: center; gap: 14px; }
+.order-card-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.order-status-badge {
+  font-size: 0.78rem; font-weight: 600;
+  padding: 3px 10px; border-radius: 20px;
+}
+/* Order body */
+.order-card-body {
+  border-top: 1px solid var(--color-border-soft);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.order-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.order-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.9rem;
+  color: #333;
+}
+.order-detail-label { font-size: 0.78rem; color: var(--color-text-faint); font-weight: 600; }
+.order-detail-item a { color: var(--color-text); text-decoration: none; font-weight: 600; }
+.order-status-select { display: flex; align-items: center; gap: 12px; }
+.order-status-select label { font-size: 0.88rem; font-weight: 600; color: var(--color-text-muted); }
 /* ---- States -------------------------------------------------------------------- */
 
 .status-btn:hover { border-color: var(--color-navy); color: var(--color-navy); }
@@ -123,10 +174,20 @@
   background: var(--color-green-dark);
 }
 
+.order-card-header:hover { background: #fafafa; }
+.order-detail-item a:hover { color: var(--color-red); }
+/* ---- Variants -------------------------------------------------------------- */
+
+.order-detail-item.full { grid-column: 1 / -1; }
+
 /* ---- Responsive ---------------------------------------------------------------- */
 
 @media (max-width: 768px) {
   .orders-stats { grid-template-columns: repeat(2, 1fr); }
+
+  .order-details-grid { grid-template-columns: 1fr; }
+
+  .order-card-header { flex-wrap: wrap; gap: 10px; }
 }
 
 /* ---- Dark mode ----------------------------------------------------------------- */
@@ -145,4 +206,10 @@
   .status-btn { background: var(--color-bg-dark); border-color: var(--color-surface-dark); color: var(--color-text-faint); }
 
   .status-btn:hover { border-color: var(--color-blue); color: var(--color-text-dark); }
+
+  .order-card { background: var(--color-navy); }
+
+  .order-card-header:hover { background: #1f1f35; }
+
+  .order-card-body { border-top-color: var(--color-surface-dark); }
 }
