@@ -1,0 +1,318 @@
+/* ==========================================================
+   Paint calculator — the input side: wall dimensions, openings
+   and the number of coats
+
+   The rest of the section is beside it: _paint-pigment.css is
+   the colour and shade picker, _paint-calc-results.css is the
+   output panel, and _paint-calc-btn.css is the floating button
+   that opens the whole thing.
+   ========================================================== */
+
+.paint-calc-section {
+  background: linear-gradient(150deg, #0d1117 0%, var(--color-navy) 45%, #1e2d4d 100%);
+  padding: 70px 40px;
+  position: relative;
+  overflow: hidden;
+  margin-top: 60px;
+}
+
+.paint-calc-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.055) 1.5px, transparent 1.5px);
+  background-size: 30px 30px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ---- Elements -------------------------------------------------------------- */
+
+.paint-calc-content {
+  max-width: 700px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.paint-calc-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.paint-calc-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.paint-calc-subtitle {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.6);
+}
+
+/* Cards */
+.paint-calc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.paint-calc-card {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 22px 24px;
+}
+
+.paint-calc-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 16px;
+}
+
+/* קירות */
+.paint-walls-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.paint-wall-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.paint-wall-label {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.6);
+  min-width: 42px;
+}
+
+.paint-wall-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.paint-input-group {
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  flex: 1;
+}
+
+.paint-input-group input {
+  background: none;
+  border: none;
+  outline: none;
+  padding: 10px 12px;
+  font-size: 1rem;
+  color: white;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  width: 100%;
+  direction: ltr;
+  text-align: center;
+}
+
+.paint-input-group input::placeholder { color: rgba(255,255,255,0.3); }
+
+.paint-unit {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  padding: 0 10px 0 4px;
+  white-space: nowrap;
+}
+
+.paint-wall-x {
+  color: rgba(255,255,255,0.4);
+  font-size: 1rem;
+}
+
+.paint-remove-btn {
+  background: rgba(var(--color-red-rgb), 0.2);
+  border: none;
+  color: var(--color-red);
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.paint-add-wall-btn {
+  background: none;
+  border: 1px dashed rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.6);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+/* חלונות ודלתות */
+.paint-openings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.paint-opening-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.8);
+  flex-wrap: wrap;
+}
+
+.paint-opening-row > span:first-child { flex: 1; min-width: 120px; }
+
+.paint-counter {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.paint-counter button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: monospace;
+}
+
+.paint-counter span {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  min-width: 32px;
+  text-align: center;
+}
+
+.paint-opening-note {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+}
+
+/* ציפויים */
+.paint-coats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.paint-coat-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 12px 8px;
+  background: rgba(255,255,255,0.07);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.paint-coat-btn span {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.4);
+}
+
+/* כפתור חישוב */
+.paint-calc-btn {
+  padding: 16px;
+  background: var(--color-red);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: background 0.2s, transform 0.15s;
+}
+
+/* ---- States ---------------------------------------------------------------- */
+
+.paint-remove-btn:hover { background: rgba(var(--color-red-rgb), 0.4); }
+
+.paint-add-wall-btn:hover { border-color: white; color: white; }
+
+.paint-counter button:hover { background: rgba(255,255,255,0.15); }
+
+.paint-coat-btn:hover { border-color: rgba(255,255,255,0.4); color: white; }
+
+.paint-calc-btn:hover:not(.disabled) {
+  background: var(--color-red-dark);
+  transform: translateY(-2px);
+}
+
+/* ---- Variants -------------------------------------------------------------- */
+
+.paint-coat-btn.active {
+  background: var(--color-red);
+  border-color: var(--color-red);
+  color: white;
+}
+
+.paint-coat-btn.active span { color: rgba(255,255,255,0.7); }
+
+.paint-calc-btn.disabled {
+  background: rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.4);
+  cursor: not-allowed;
+}
+
+/* ---- Responsive ------------------------------------------------------------ */
+
+/* Kept at 600px rather than moved to 560. The block is not cosmetic: the
+   results grid drops to one column here and .paint-coats turns into a column,
+   and the font-size and padding changes are paired with those — the title
+   shrinks because the section just got narrower. Splitting the cosmetic half
+   off to 560 would desynchronise the two, which is the visual change
+   CONVENTIONS.md rule 4 says to avoid. */
+@media (max-width: 600px) {
+  .paint-calc-section { padding: 50px 20px; }
+
+  .paint-calc-title { font-size: 1.5rem; }
+
+  .paint-coats { flex-direction: column; }
+}
+
+@media (max-width: 768px) {
+  .paint-calc-section { margin-top: 40px; }
+}
