@@ -65,8 +65,6 @@
 @import './features/_project-calculator.css';
 @import './features/_project-calc-inputs.css';
 @import './features/_project-calc-items.css';
-/* the in-page search field sits above a category's product grid */
-@import './features/_product-search.css';
 /* What used to be features/_catalog.css, in the order its rules had inside it,
    because that order is the cascade. _product-gallery.css after
    _product-page.css is the one place it matters: the gallery owns the two
@@ -77,7 +75,6 @@
 @import './features/_product-gallery.css';
 @import './features/_breadcrumb.css';
 @import './features/_related-products.css';
-@import './features/_products-toolbar.css';
 @import './features/_product-reviews.css';
 /* The three steps of the cart flow, in order. */
 @import './features/_cart.css';
@@ -97,6 +94,13 @@
    used to be: that file painted every category page in one saturated colour and
    is gone — a category's atmosphere is now this banner alone. */
 @import './features/_category-banner.css';
+/* The shopping area below that banner, outermost first. Together they replace
+   features/_products-toolbar.css (a row of sort buttons and a count) and
+   features/_product-search.css (the full-width pill input), both deleted.
+   No selector appears in more than one of the three. */
+@import './features/_category-layout.css';
+@import './features/_category-filters.css';
+@import './features/_category-toolbar.css';
 @import './features/_features-banner.css';
 @import './features/_whyus.css';
 /* One partial per static page, in the order their rules had inside the old

@@ -1,0 +1,198 @@
+/* ==========================================================
+   Category filters — the subcategory filter on a category page
+
+   One control with two shapes, and one piece of markup for both:
+   a sticky white sidebar card on a desk, a horizontally
+   scrollable row of chips on a phone. Rendering it twice and
+   hiding one copy would have put every subcategory in the
+   accessibility tree twice, so the switch is entirely here — the
+   list is a <ul> of buttons either way, and the lg block at the
+   bottom is what turns the column into a row.
+
+   The active item is a link to a URL (?sub=…), not local state:
+   CategoryView keeps it in the query so a filtered view can be
+   shared. aria-current on the active button is what says so.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+/* top: the navbar's 68px plus 16px of air. The navbar is sticky, so the card
+   has to clear it rather than the top of the viewport. */
+.category-filters {
+  position: sticky;
+  top: 84px;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+  padding: 16px 12px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.category-filters-title {
+  font-size: 0.8rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.3px;
+  color: rgba(var(--color-navy-rgb), 0.5);
+  padding: 0 10px;
+  margin-bottom: 10px;
+}
+
+.category-filters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  list-style: none;
+}
+
+/* position: relative for the active bar below, which is positioned against
+   this box rather than added to its flow — a border on the start edge would
+   move every label 3px whenever the selection changed. */
+.category-filter {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(var(--color-navy-rgb), 0.85);
+  font-family: var(--font-family-base);
+  font-size: 0.88rem;
+  text-align: start;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.category-filter::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--color-red);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.category-filter-count {
+  flex-shrink: 0;
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  color: rgba(var(--color-navy-rgb), 0.45);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.category-filter:hover {
+  background: rgba(var(--color-navy-rgb), 0.05);
+}
+
+.category-filter:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: -2px;
+}
+
+.category-filter.is-active {
+  background: rgba(var(--color-red-rgb), 0.08);
+  color: var(--color-red);
+  font-weight: 600;
+}
+
+.category-filter.is-active::before {
+  opacity: 1;
+}
+
+.category-filter.is-active .category-filter-count {
+  color: rgba(var(--color-red-rgb), 0.75);
+}
+
+/* A subcategory the fetch returned nothing for. It stays in the list — the
+   list is the category's shape, not a report on today's stock — but it says
+   so, rather than looking like a count that failed to load. */
+.category-filter--empty,
+.category-filter--empty .category-filter-count {
+  color: rgba(var(--color-navy-rgb), 0.4);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* Below the sidebar's breakpoint the card dissolves and the list becomes one
+   scrollable row of chips. scroll-snap so a flick lands on a chip rather than
+   between two, and the scrollbar is hidden because the chips themselves are
+   the affordance — the row always starts mid-way through its content on the
+   end side, which is what says it scrolls. */
+@media (max-width: 900px) {
+  .category-filters {
+      position: static;
+      background: none;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+      /* the row bleeds into the page gutter so the first chip lines up with
+         the content above it and the last one can still scroll fully into view */
+      margin-inline: -16px;
+    }
+
+  .category-filters-title {
+      /* the chips read as a filter row on their own; a heading above them was
+         a line of chrome on the screen with the least room for it */
+      display: none;
+    }
+
+  .category-filters-list {
+      flex-direction: row;
+      gap: 8px;
+      overflow-x: auto;
+      scroll-snap-type: x proximity;
+      scrollbar-width: none;
+      padding: 2px 16px;
+    }
+
+  .category-filters-list::-webkit-scrollbar {
+      display: none;
+    }
+
+  .category-filter {
+      width: auto;
+      flex-shrink: 0;
+      scroll-snap-align: start;
+      padding: 7px 15px;
+      border: 1px solid rgba(var(--color-navy-rgb), 0.1);
+      border-radius: var(--radius-pill);
+      background: var(--color-surface);
+      color: var(--color-navy);
+      white-space: nowrap;
+    }
+
+  .category-filter::before {
+      display: none;
+    }
+
+  /* the count is what the toolbar under the row already reports for the
+     selected filter, and on a chip it doubled the width of every label */
+  .category-filter-count {
+      display: none;
+    }
+
+  .category-filter:hover {
+      background: var(--color-surface);
+      border-color: rgba(var(--color-navy-rgb), 0.25);
+    }
+
+  .category-filter.is-active {
+      background: var(--color-red);
+      border-color: var(--color-red);
+      color: white;
+    }
+
+  .category-filter--empty {
+      color: rgba(var(--color-navy-rgb), 0.4);
+    }
+}

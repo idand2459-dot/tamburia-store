@@ -5,13 +5,18 @@
  * כ-404 ולא כעמוד ריק. תת-הקטגוריה נשמרת ב-query (?sub=), כך שגם
  * סינון אפשר לשתף בקישור; החיפוש והמיון נשארו מצב מקומי, כי הם
  * משתנים בכל הקלדה והיו מציפים את היסטוריית הדפדפן.
+ *
+ * מבנה העמוד: באנר תצלום למעלה, ומתחתיו אזור קנייה בהיר — סרגל סינון
+ * בצד ההתחלה (צ'יפים בטלפון), שורת כלים ורשת המוצרים.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { Search, Check, X, Heart } from 'lucide-react';
+import { Check, X, Heart } from 'lucide-react';
 import categories from './categories';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
 import CategoryBanner from './CategoryBanner';
+import CategoryFilters from './CategoryFilters';
+import CategoryToolbar from './CategoryToolbar';
 import NotFoundPage from '../../pages/NotFoundPage';
 import { ProductCardSkeleton } from '../../components/LoadingStates';
 import { useStore } from '../../context/storeContext';
@@ -63,6 +68,16 @@ function CategoryView() {
     return () => { cancelled = true; };
   }, [category]);
 
+  // מספר המוצרים בכל תת-קטגוריה, מתוך מה שנשלף. מחושב פעם אחת לכל
+  // שליפה ולא בכל הקלדה בחיפוש.
+  const subcategoryCounts = useMemo(() => {
+    const counts = {};
+    products.forEach((p) => {
+      if (p.subcategory) counts[p.subcategory] = (counts[p.subcategory] || 0) + 1;
+    });
+    return counts;
+  }, [products]);
+
   if (!category) return <NotFoundPage />;
 
   const CategoryIcon = CATEGORY_ICONS[category.id];
@@ -93,96 +108,79 @@ function CategoryView() {
     <>
       <CategoryBanner category={category} productCount={loading ? null : products.length} />
 
-      {category.subcategories?.length > 0 && (
-        <div className="subcategory-chips">
-          <button
-            className={`subcategory-chip ${!selectedSubcategory ? 'active' : ''}`}
-            onClick={() => selectSubcategory(null)}>
-            הכל
-          </button>
-          {category.subcategories.map((sub) => (
-            <button
-              key={sub.id}
-              className={`subcategory-chip ${selectedSubcategory === sub.id ? 'active' : ''}`}
-              onClick={() => selectSubcategory(selectedSubcategory === sub.id ? null : sub.id)}>
-              {sub.name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <main>
-        <div className="products-toolbar">
-          <div className="search-bar">
-            <Search className="search-bar-icon" size={18} aria-hidden="true" />
-            <input
-              placeholder="חפש מוצר..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+      <main className="category-page">
+        <div className="category-layout">
+          {category.subcategories?.length > 0 && (
+            <CategoryFilters
+              subcategories={category.subcategories}
+              counts={subcategoryCounts}
+              total={products.length}
+              selected={selectedSubcategory}
+              onSelect={selectSubcategory}
             />
-          </div>
-          <div className="sort-bar">
-            {SORT_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                className={`sort-btn ${sortBy === opt.value ? 'active' : ''}`}
-                onClick={() => setSortBy(opt.value)}>
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
+          )}
 
-        <div className="products-count">{!loading && `${sorted.length} מוצרים`}</div>
+          <div className="category-main">
+            <CategoryToolbar
+              count={sorted.length}
+              loading={loading}
+              searchQuery={searchQuery}
+              onSearch={setSearchQuery}
+              sortBy={sortBy}
+              onSort={setSortBy}
+              sortOptions={SORT_OPTIONS}
+            />
 
-        <div className="products-grid">
-          {loading
-            ? Array(6).fill(0).map((_, i) => <ProductCardSkeleton key={i} />)
-            : sorted.map((product) => (
-              <div
-                key={product.id}
-                className="product-card"
-                onClick={() => navigate(`/product/${product.id}`)}
-                style={{ cursor: 'pointer' }}>
-                <div className="product-img-wrap">
-                  <div className="product-img-placeholder">
-                    {CategoryIcon && <CategoryIcon className="product-img-icon" size={22} aria-hidden="true" />}
-                    <span className="product-img-initial">{product.name.charAt(0)}</span>
+            <div className="products-grid">
+              {loading
+                ? Array(6).fill(0).map((_, i) => <ProductCardSkeleton key={i} />)
+                : sorted.map((product) => (
+                  <div
+                    key={product.id}
+                    className="product-card"
+                    onClick={() => navigate(`/product/${product.id}`)}
+                    style={{ cursor: 'pointer' }}>
+                    <div className="product-img-wrap">
+                      <div className="product-img-placeholder">
+                        {CategoryIcon && <CategoryIcon className="product-img-icon" size={22} aria-hidden="true" />}
+                        <span className="product-img-initial">{product.name.charAt(0)}</span>
+                      </div>
+                      {product.image_url && (
+                        <img
+                          src={product.image_url}
+                          alt={product.name}
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      )}
+                    </div>
+                    <h3>{product.name}</h3>
+                    {product.sku && <p className="product-sku">מק"ט: {product.sku}</p>}
+                    <p className="price">
+                      {Array.isArray(product.variants) && product.variants.length > 0
+                        ? <>מ-₪{Math.min(...product.variants.map((v) => v.price))} <span className="price-variants-hint">· {product.variants.length} גרסאות</span></>
+                        : <>₪{product.price}</>}
+                    </p>
+                    <p className={`stock ${product.in_stock !== false ? '' : 'out-of-stock-label'}`}>
+                      {product.in_stock !== false ? <><Check size={14} aria-hidden="true" /> יש במלאי</> : <><X size={14} aria-hidden="true" /> אזל מהמלאי</>}
+                    </p>
+                    <div className="card-bottom-actions">
+                      <button
+                        className={`card-add-btn ${product.in_stock === false ? 'btn-disabled' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); if (product.in_stock !== false) addToCart(product); }}
+                        disabled={product.in_stock === false}>
+                        {product.in_stock !== false ? 'הוסף לעגלה' : 'אזל מהמלאי'}
+                      </button>
+                      <button
+                        className={`card-wishlist-btn ${wishlistIds.includes(product.id) ? 'active' : ''}`}
+                        onClick={(e) => { e.stopPropagation(); toggleCardWishlist(product); }}
+                        title={wishlistIds.includes(product.id) ? 'הסר' : 'הוסף למשאלות'}>
+                        <Heart size={18} fill={wishlistIds.includes(product.id) ? 'currentColor' : 'none'} aria-hidden="true" />
+                      </button>
+                    </div>
                   </div>
-                  {product.image_url && (
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                    />
-                  )}
-                </div>
-                <h3>{product.name}</h3>
-                {product.sku && <p className="product-sku">מק"ט: {product.sku}</p>}
-                <p className="price">
-                  {Array.isArray(product.variants) && product.variants.length > 0
-                    ? <>מ-₪{Math.min(...product.variants.map((v) => v.price))} <span className="price-variants-hint">· {product.variants.length} גרסאות</span></>
-                    : <>₪{product.price}</>}
-                </p>
-                <p className={`stock ${product.in_stock !== false ? '' : 'out-of-stock-label'}`}>
-                  {product.in_stock !== false ? <><Check size={14} aria-hidden="true" /> יש במלאי</> : <><X size={14} aria-hidden="true" /> אזל מהמלאי</>}
-                </p>
-                <div className="card-bottom-actions">
-                  <button
-                    className={`card-add-btn ${product.in_stock === false ? 'btn-disabled' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); if (product.in_stock !== false) addToCart(product); }}
-                    disabled={product.in_stock === false}>
-                    {product.in_stock !== false ? 'הוסף לעגלה' : 'אזל מהמלאי'}
-                  </button>
-                  <button
-                    className={`card-wishlist-btn ${wishlistIds.includes(product.id) ? 'active' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); toggleCardWishlist(product); }}
-                    title={wishlistIds.includes(product.id) ? 'הסר' : 'הוסף למשאלות'}>
-                    <Heart size={18} fill={wishlistIds.includes(product.id) ? 'currentColor' : 'none'} aria-hidden="true" />
-                  </button>
-                </div>
-              </div>
-            ))}
+                ))}
+            </div>
+          </div>
         </div>
       </main>
     </>

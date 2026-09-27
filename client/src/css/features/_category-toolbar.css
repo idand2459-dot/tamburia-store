@@ -1,0 +1,132 @@
+/* ==========================================================
+   Category toolbar — the row above a category's product grid
+
+   The result count on the start side, the search field and the
+   sort <select> on the end side. It replaces what used to be
+   three files' worth of chrome: features/_products-toolbar.css's
+   row of sort buttons and its count, and
+   features/_product-search.css's full-width pill input. Five
+   sort options as five buttons took a whole line of the page to
+   say what a 150px select says.
+
+   Both controls are white on the blush page background, like
+   every other surface here, and both take the purple focus ring
+   the rest of the redesign uses.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.category-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* min-height so the row does not resettle when the count appears after the
+   fetch: while loading this element is empty. */
+.category-toolbar-count {
+  font-size: var(--font-size-small);
+  color: rgba(var(--color-navy-rgb), 0.6);
+  min-height: 20px;
+}
+
+.category-toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.category-search,
+.category-sort {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Both icons sit inside their field on the start edge, and the field's
+   padding-inline-start is what makes room for them. inset-inline-start rather
+   than right: the page is RTL, but this file should not be the one place that
+   stops working if that ever changes. */
+.category-search-icon,
+.category-sort-icon {
+  position: absolute;
+  inset-inline-start: 12px;
+  color: rgba(var(--color-navy-rgb), 0.4);
+  pointer-events: none;
+}
+
+.category-search input {
+  width: 260px;
+  padding: 9px 14px;
+  padding-inline: 36px 14px;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.1);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-family: var(--font-family-base);
+  font-size: 0.88rem;
+  outline: none;
+}
+
+.category-search input::placeholder {
+  color: rgba(var(--color-navy-rgb), 0.4);
+}
+
+/* appearance: none removes the platform arrow, which on Windows sits on the
+   left in an RTL document and collided with the icon. The field is wide enough
+   for the longest option ("ברירת מחדל") without one. */
+.category-sort select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 9px 14px;
+  padding-inline: 36px 14px;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.1);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-family: var(--font-family-base);
+  font-size: 0.88rem;
+  cursor: pointer;
+  outline: none;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.category-search input:hover,
+.category-sort select:hover {
+  border-color: rgba(var(--color-navy-rgb), 0.25);
+}
+
+.category-search input:focus-visible,
+.category-sort select:focus-visible {
+  border-color: var(--color-purple);
+  outline: 2px solid var(--color-purple);
+  outline-offset: -1px;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* One row will not hold a 260px field, a select and the count, so the three
+   stack: the count, then the search at full width, then the sort under it. */
+@media (max-width: 560px) {
+  .category-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
+
+  .category-toolbar-controls {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+
+  .category-search input,
+  .category-sort select {
+      width: 100%;
+    }
+}
