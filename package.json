@@ -10,7 +10,8 @@
     "dev:client": "npm start --prefix client",
     "test": "node test/run-all.js",
     "seed:demo": "node scripts/seed-demo.js",
-    "seed:demo:clear": "node scripts/seed-demo.js --clear"
+    "seed:demo:clear": "node scripts/seed-demo.js --clear",
+    "images:categories": "node scripts/images-categories.js"
   },
   "repository": {
     "type": "git",

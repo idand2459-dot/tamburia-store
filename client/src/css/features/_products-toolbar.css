@@ -1,9 +1,9 @@
 /* ==========================================================
    Products toolbar — sort buttons, result count, subcategory chips
 
-   features/_category-themes.css recolours .products-count and
-   .subcategory-chips per category and is imported after this
-   file, so it still wins there.
+   The per-category recolouring of .products-count and
+   .subcategory-chips that used to override this file is gone
+   with features/_category-themes.css.
    ========================================================== */
 
 .products-toolbar {
@@ -52,9 +52,7 @@
 }
 
 /* ── Subcategory filter chips ──────────────────────────────────────────────
-   Moved across verbatim, colours and 600px breakpoint included: the category
-   backgrounds these sit on are being reworked in a later step, so there is no
-   point normalising them twice. */
+   Moved across verbatim, colours and 600px breakpoint included. */
 .subcategory-chips {
   display: flex;
   flex-wrap: wrap;

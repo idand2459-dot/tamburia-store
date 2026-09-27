@@ -34,18 +34,12 @@ function StoreLayout() {
   const location = useLocation();
   const store = useStore();
 
-  const categoryMatch = useMatch('/category/:slug');
   const onCart = Boolean(useMatch('/cart'));
   const onCheckout = Boolean(useMatch('/checkout'));
   const onOrderLookup = Boolean(useMatch('/orders/lookup'));
   const onWishlist = Boolean(useMatch('/wishlist'));
 
   useScrollToTopOnNavigate(location.pathname);
-
-  const categorySlug = categoryMatch?.params.slug;
-  const rootClass = categorySlug
-    ? `App cat-bg cat-bg-${categorySlug}`
-    : 'App';
 
   /**
    * סוגר מודאל. חוזר אחורה כשיש לאן, ואחרת עולה לעמוד הבית — כך
@@ -76,7 +70,7 @@ function StoreLayout() {
   }
 
   return (
-    <div className={rootClass}>
+    <div className="App">
       <Navbar />
       <MarqueeBanner />
 
