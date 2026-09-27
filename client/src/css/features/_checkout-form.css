@@ -1,0 +1,122 @@
+/* ==========================================================
+   Checkout form — the name, phone and address step
+
+   .input-error came from components/_notifications.css, which
+   held nothing else and is gone. Its two !important declarations
+   are what let it beat the field styling above it, so they stay.
+   ========================================================== */
+
+/* ===== ORDER FORM IN CART ===== */
+.order-form {
+  padding: 16px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---- Elements -------------------------------------------------------------- */
+
+.order-back-btn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  text-align: right;
+}
+
+.order-summary-mini {
+  display: flex;
+  justify-content: space-between;
+  background: #f8f8f6;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.order-total-mini { font-weight: 700; color: var(--color-text); }
+
+.order-fields { display: flex; flex-direction: column; gap: 12px; }
+
+.order-field { display: flex; flex-direction: column; gap: 5px; }
+
+.order-field label { font-size: 0.85rem; font-weight: 600; color: #444; }
+
+.order-field input, .order-field textarea {
+  padding: 10px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: 'Segoe UI', sans-serif;
+  direction: rtl;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.order-field textarea { resize: none; }
+
+/* כפתור עם spinner */
+.checkout-btn-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.delivery-area-error {
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-red);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: var(--color-red-dark);
+  line-height: 1.5;
+  margin-top: 6px;
+}
+
+.delivery-area-ok {
+  font-size: 0.82rem;
+  color: var(--color-green);
+  font-weight: 600;
+  margin-top: 4px;
+  padding-right: 4px;
+}
+
+/* ---- States ---------------------------------------------------------------- */
+
+.order-back-btn:hover { color: var(--color-text); }
+
+.order-field input:focus, .order-field textarea:focus { border-color: var(--color-navy); }
+
+
+/* ===== בדיקת אזור משלוח ===== */
+.input-error {
+  border-color: var(--color-red) !important;
+  background: var(--color-error-bg) !important;
+}
+
+/* ---- Dark mode ------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .order-field label { color: var(--color-text-faint); }
+
+  .order-field input,
+    .order-field textarea {
+      background: var(--color-bg-dark);
+      border-color: var(--color-surface-dark);
+      color: var(--color-text-dark);
+    }
+
+  .order-field input:focus,
+    .order-field textarea:focus { border-color: var(--color-blue); }
+
+  .order-summary-mini {
+      background: var(--color-bg-dark);
+      color: var(--color-text-faint);
+    }
+
+  .order-total-mini { color: var(--color-text-dark); }
+}

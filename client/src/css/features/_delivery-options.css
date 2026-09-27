@@ -1,0 +1,111 @@
+/* ==========================================================
+   Delivery options — the shipping method picker in the cart step
+
+   Whether the chosen area is actually served is checked in the
+   details form, so .delivery-area-ok and .delivery-area-error
+   live in _checkout-form.css with the rest of that step.
+   ========================================================== */
+
+/* Delivery section */
+.delivery-section {
+  padding: 0 24px 16px;
+}
+
+/* ---- Elements -------------------------------------------------------------- */
+
+.delivery-section h4 {
+  font-size: 1rem;
+  color: var(--color-text);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.delivery-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.delivery-option {
+  border: 2px solid #eee;
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delivery-option-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.delivery-option-top div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.delivery-option-top strong {
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.delivery-icon {
+  font-size: 1.4rem;
+}
+
+.delivery-free {
+  font-size: 0.82rem;
+  background: var(--color-success-bg);
+  color: var(--color-green);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.delivery-price {
+  font-size: 0.82rem;
+  background: #fff3cd;
+  color: #856404;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.delivery-desc {
+  font-size: 0.82rem;
+  color: var(--color-text-subtle);
+  margin: 0;
+  padding-right: 36px;
+  line-height: 1.5;
+}
+
+/* ---- States ---------------------------------------------------------------- */
+
+.delivery-option:hover {
+  border-color: var(--color-navy);
+}
+
+/* ---- Variants -------------------------------------------------------------- */
+
+.delivery-option.selected {
+  border-color: var(--color-navy);
+  background: #f0f4ff;
+}
+
+/* ---- Dark mode ------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .delivery-option {
+      border-color: var(--color-surface-dark);
+      color: var(--color-text-dark);
+    }
+
+  .delivery-option:hover { border-color: var(--color-blue); }
+
+  .delivery-option.selected { background: #0d1a2e; border-color: var(--color-blue); }
+
+  .delivery-option strong { color: var(--color-text-dark); }
+}
