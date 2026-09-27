@@ -1,0 +1,138 @@
+/* ==========================================================
+   About page — the intro hero, the three cards and the opening
+   hours table
+
+   The hero h1's font-family used to sit in one rule shared with
+   the contact and returns heroes; each page now declares its
+   own, so no partial reaches into another.
+   ========================================================== */
+
+/* ===== ABOUT PAGE ===== */
+.about-hero {
+  background: linear-gradient(135deg, var(--color-navy) 0%, #16213e 60%, #0f3460 100%);
+  color: white;
+  padding: 60px 40px;
+  text-align: center;
+}
+
+/* ---- Elements -------------------------------------------------------------- */
+
+.about-hero h1 {
+  font-size: 2.8rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+}
+
+.about-hero p {
+  font-size: 1.1rem;
+  color: var(--color-text-faint);
+}
+
+.about-sections {
+  max-width: 860px;
+  margin: 40px auto;
+  padding: 0 20px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.about-card {
+  background: white;
+  border-radius: 20px;
+  padding: 36px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+
+.about-card-icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.about-card h2 {
+  font-size: 1.5rem;
+  color: var(--color-text);
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+.about-card p {
+  color: var(--color-text-muted);
+  line-height: 1.8;
+  margin-bottom: 12px;
+}
+
+.why-icon {
+  font-size: 1.6rem;
+  display: block;
+  margin-bottom: 10px;
+}
+
+/* Hours table */
+.hours-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #eee;
+}
+
+.hours-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-border-soft);
+  font-size: 1rem;
+}
+
+.hours-day {
+  color: #333;
+  font-weight: 500;
+}
+
+.hours-time {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+/* ---- States ---------------------------------------------------------------- */
+
+.hours-row:last-child {
+  border-bottom: none;
+}
+
+/* ---- Variants -------------------------------------------------------------- */
+
+.hours-row.closed .hours-time {
+  color: var(--color-red);
+}
+
+/* ---- Responsive ------------------------------------------------------------ */
+
+@media (max-width: 768px) {
+  .about-hero h1 {
+      font-size: 2rem;
+    }
+}
+
+/* ---- Dark mode ------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .about-card {
+      background: var(--color-navy);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+
+  .about-card h2 { color: var(--color-text-dark); }
+
+  .about-card p { color: var(--color-text-faint); }
+
+  .hours-row { border-bottom-color: var(--color-surface-dark); }
+
+  .hours-day { color: var(--color-text-faint); }
+
+  .hours-time { color: var(--color-text-dark); }
+}

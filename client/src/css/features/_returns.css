@@ -1,0 +1,272 @@
+/* ==========================================================
+   Returns page — the policy cards, the refund options and the
+   numbered steps
+   ========================================================== */
+
+/* ===== RETURNS PAGE ===== */
+.returns-hero {
+  background: linear-gradient(135deg, var(--color-navy) 0%, #16213e 60%, #0f3460 100%);
+  color: white;
+  padding: 60px 40px;
+  text-align: center;
+}
+
+/* ---- Elements -------------------------------------------------------------- */
+
+.returns-hero h1 {
+  font-size: 2.8rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+}
+
+.returns-hero p {
+  font-size: 1.1rem;
+  color: var(--color-text-faint);
+}
+
+.returns-sections {
+  max-width: 760px;
+  margin: 40px auto;
+  padding: 0 20px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.returns-card {
+  background: white;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+
+.returns-card-icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.returns-card h2 {
+  font-size: 1.3rem;
+  color: var(--color-text);
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.returns-card > p {
+  color: var(--color-text-muted);
+  line-height: 1.8;
+  font-size: 1rem;
+}
+
+/* Lists */
+.returns-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.returns-list-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+.returns-item-icon {
+  font-size: 1.5rem;
+  margin-top: 2px;
+}
+
+.returns-list-item strong {
+  font-size: 1rem;
+  color: var(--color-text);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.returns-list-item p {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Refund options */
+.refund-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.refund-option {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px;
+  background: #f8f8f6;
+  border-radius: 12px;
+}
+
+.refund-icon {
+  font-size: 1.5rem;
+  margin-top: 2px;
+}
+
+.refund-option strong {
+  font-size: 1rem;
+  color: var(--color-text);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.refund-option p {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.refund-note {
+  font-size: 0.82rem;
+  color: #999;
+  margin: 0 !important;
+}
+
+/* Steps */
+.returns-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.returns-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.step-number {
+  background: var(--color-navy);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.returns-step p {
+  color: #444;
+  line-height: 1.7;
+  margin: 4px 0 0;
+  font-size: 0.95rem;
+}
+
+.returns-step a {
+  color: var(--color-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Contact */
+.returns-contact {
+  text-align: center;
+}
+
+.returns-contact p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.returns-contact-btns {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.returns-phone-btn {
+  padding: 12px 28px;
+  background: var(--color-navy);
+  color: white;
+  border-radius: 24px;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+/* ---- States ---------------------------------------------------------------- */
+
+.returns-step a:hover {
+  color: var(--color-red);
+}
+
+.returns-phone-btn:hover {
+  background: var(--color-red);
+}
+
+.returns-phone-btn.secondary:hover {
+  background: var(--color-navy);
+  color: white;
+}
+
+/* ---- Variants -------------------------------------------------------------- */
+
+.returns-card.highlight {
+  border-right: 5px solid var(--color-navy);
+}
+
+.returns-list-item.green {
+  background: #f0fff4;
+  border: 1px solid #b7e4c7;
+}
+
+.returns-list-item.red {
+  background: #fff5f5;
+  border: 1px solid #ffc0c0;
+}
+
+.returns-phone-btn.secondary {
+  background: white;
+  color: var(--color-text);
+  border: 2px solid var(--color-navy);
+}
+
+/* ---- Responsive ------------------------------------------------------------ */
+
+@media (max-width: 768px) {
+  .returns-hero h1 { font-size: 2rem; }
+}
+
+/* ---- Dark mode ------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .returns-card {
+      background: var(--color-navy);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+
+  .returns-card h2 { color: var(--color-text-dark); }
+
+  .refund-option { background: var(--color-bg-dark); }
+
+  .refund-option strong { color: var(--color-text-dark); }
+
+  .refund-option p { color: var(--color-text-faint); }
+
+  .returns-list-item.green { background: #0d1f15; border-color: #1a3d28; }
+
+  .returns-list-item.red { background: #1f0d0d; border-color: #3d1a1a; }
+
+  .returns-step p { color: var(--color-text-faint); }
+
+  .returns-step a { color: var(--color-text-faint); }
+}

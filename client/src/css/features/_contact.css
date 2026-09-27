@@ -1,0 +1,178 @@
+/* ==========================================================
+   Contact page — the hero, the contact cards, the phone list and
+   the opening hours
+   ========================================================== */
+
+/* ===== CONTACT PAGE ===== */
+.contact-hero {
+  background: linear-gradient(135deg, var(--color-navy) 0%, #16213e 60%, #0f3460 100%);
+  color: white;
+  padding: 60px 40px;
+  text-align: center;
+}
+
+/* ---- Elements -------------------------------------------------------------- */
+
+.contact-hero h1 {
+  font-size: 2.8rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+}
+
+.contact-hero p {
+  font-size: 1.1rem;
+  color: var(--color-text-faint);
+}
+
+.contact-cards {
+  max-width: 860px;
+  margin: 40px auto;
+  padding: 0 20px 60px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.contact-card {
+  background: white;
+  border-radius: 20px;
+  padding: 32px 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.contact-icon {
+  font-size: 2.4rem;
+  margin-bottom: 4px;
+}
+
+.contact-card h2 {
+  font-size: 1.2rem;
+  color: var(--color-text);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.contact-card p {
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.contact-link-btn {
+  margin-top: 12px;
+  display: inline-block;
+  padding: 10px 22px;
+  background: var(--color-navy);
+  color: white;
+  border-radius: 20px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+
+/* Phone list */
+.phone-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.phone-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.phone-label {
+  font-size: 0.82rem;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.phone-number {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+}
+
+.phone-divider {
+  height: 1px;
+  background: var(--color-border-soft);
+  width: 100%;
+  margin: 6px 0;
+}
+
+/* Contact hours */
+.contact-hours {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contact-hours-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* ---- States ---------------------------------------------------------------- */
+
+.contact-link-btn:hover {
+  background: var(--color-red);
+}
+
+.phone-number:hover {
+  color: var(--color-red);
+}
+
+.contact-hours-row:nth-child(odd) {
+  background: #f8f8f6;
+}
+
+/* ---- Variants -------------------------------------------------------------- */
+
+.contact-hours-row.closed {
+  color: var(--color-red);
+}
+
+/* ---- Responsive ------------------------------------------------------------ */
+
+@media (max-width: 768px) {
+  .contact-cards {
+      grid-template-columns: 1fr;
+    }
+
+  .contact-hero h1 {
+      font-size: 2rem;
+    }
+}
+
+/* ---- Dark mode ------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .contact-card {
+      background: var(--color-navy);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+
+  .contact-card h2 { color: var(--color-text-dark); }
+
+  .contact-card p { color: var(--color-text-faint); }
+
+  .contact-hours-row:nth-child(odd) { background: var(--color-bg-dark); }
+}

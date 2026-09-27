@@ -1,0 +1,140 @@
+/* ==========================================================
+   404 page — the wiggling icon, the code and the two ways out
+   ========================================================== */
+
+/* ===== דף 404 ===== */
+.not-found {
+  min-height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  padding: 40px 20px;
+}
+
+/* ---- Elements -------------------------------------------------------------- */
+
+.not-found-content {
+  text-align: center;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.not-found-icon {
+  font-size: 4rem;
+  animation: wiggle 2s ease-in-out infinite;
+}
+
+.not-found-code {
+  font-size: 7rem;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+  margin: 0;
+  background: linear-gradient(135deg, var(--color-navy), var(--color-red));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.not-found-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.not-found-desc {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.not-found-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.not-found-btn {
+  padding: 12px 28px;
+  border-radius: 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: all 0.2s;
+}
+
+.not-found-info {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+  width: 100%;
+}
+
+.not-found-info span {
+  font-size: 0.88rem;
+  color: #999;
+}
+
+/* ---- States ---------------------------------------------------------------- */
+
+.not-found-btn.primary:hover {
+  background: var(--color-red);
+  transform: translateY(-2px);
+}
+
+.not-found-btn.secondary:hover {
+  background: var(--color-navy);
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* ---- Variants -------------------------------------------------------------- */
+
+.not-found-btn.primary {
+  background: var(--color-navy);
+  color: white;
+}
+
+.not-found-btn.secondary {
+  background: white;
+  color: var(--color-text);
+  border: 2px solid var(--color-navy);
+}
+
+/* ---- Animations ------------------------------------------------------------ */
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  75% { transform: rotate(10deg); }
+}
+
+/* ---- Dark mode ------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .not-found { background: var(--color-bg-dark); }
+
+  .not-found-title { color: var(--color-text-dark); }
+
+  .not-found-desc { color: #777; }
+
+  .not-found-btn.secondary {
+      background: var(--color-navy);
+      color: var(--color-text-dark);
+      border-color: var(--color-surface-dark);
+    }
+}

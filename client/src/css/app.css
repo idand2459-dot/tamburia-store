@@ -71,7 +71,13 @@
 @import './features/_reviews.css';
 @import './features/_hero.css';
 @import './features/_home.css';
-@import './features/_pages.css';
+/* One partial per static page, in the order their rules had inside the old
+   _pages.css. The three heroes' shared h1 rule is split per page. */
+@import './features/_about.css';
+@import './features/_contact.css';
+@import './features/_returns.css';
+@import './features/_not-found.css';
+@import './features/_faq.css';
 
 /* 5. Theme overrides — must stay last: these repaint components
       per category and rely on winning over the rules above. */

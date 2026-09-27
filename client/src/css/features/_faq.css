@@ -1,0 +1,210 @@
+/* ==========================================================
+   FAQ page — the accordion and the contact strip under it
+
+   .faq-tag is also rendered by PaintCalculator.js, which borrows
+   this page's pill for its own section heading. Nothing there
+   competes with it, so it is styled here once.
+   ========================================================== */
+
+.faq-section {
+  background: var(--color-bg);
+  padding: 70px 40px;
+  margin-top: 60px;
+}
+
+/* ---- Elements -------------------------------------------------------------- */
+
+.faq-content {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.faq-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.faq-tag {
+  display: inline-block;
+  background: rgba(var(--color-red-rgb),  0.1);
+  color: var(--color-red);
+  border: 1px solid rgba(var(--color-red-rgb),  0.3);
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.faq-title {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--color-text);
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+
+.faq-subtitle {
+  font-size: 1rem;
+  color: var(--color-text-subtle);
+}
+
+/* רשימת שאלות */
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 40px;
+}
+
+.faq-item {
+  background: white;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s;
+  border: 1.5px solid transparent;
+}
+
+.faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  text-align: right;
+  gap: 12px;
+  transition: background 0.15s;
+}
+
+.faq-arrow {
+  font-size: 1.4rem;
+  font-weight: 300;
+  color: var(--color-red);
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+  line-height: 1;
+}
+
+.faq-answer {
+  padding: 0 22px 18px;
+  animation: faq-open 0.2s ease;
+}
+
+.faq-answer p {
+  font-size: 0.93rem;
+  color: var(--color-text-muted);
+  line-height: 1.8;
+  margin: 0;
+}
+
+/* כפתורי קשר */
+.faq-contact {
+  text-align: center;
+  background: white;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.faq-contact p {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  margin-bottom: 16px;
+}
+
+.faq-contact-btns {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.faq-btn {
+  padding: 10px 22px;
+  background: var(--color-navy);
+  color: white;
+  border-radius: 20px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: background 0.2s;
+}
+
+/* ---- States ---------------------------------------------------------------- */
+
+.faq-question:hover {
+  background: #fafafa;
+}
+
+.faq-item.open .faq-question {
+  background: #f8f8f6;
+}
+
+.faq-btn:hover { background: var(--color-red); }
+
+.faq-btn.whatsapp:hover { background: #1ebe59; }
+
+/* ---- Variants -------------------------------------------------------------- */
+
+.faq-item.open {
+  border-color: var(--color-navy);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.faq-btn.whatsapp { background: var(--color-whatsapp); }
+
+/* ---- Animations ------------------------------------------------------------ */
+
+@keyframes faq-open {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Responsive ------------------------------------------------------------ */
+
+/* Was 600px. Only the padding and the title's font-size change here, so moving
+   it to the nearest allowed breakpoint shifts nothing structural — the heading
+   simply stays one step larger between 561px and 600px. */
+@media (max-width: 560px) {
+  .faq-section { padding: 50px 20px; }
+
+  .faq-title { font-size: 1.5rem; }
+}
+
+@media (max-width: 768px) {
+  .faq-section { margin-top: 40px; }
+}
+
+/* ---- Dark mode ------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .faq-section { background: var(--color-bg-dark); }
+
+  .faq-title { color: var(--color-text-dark); }
+
+  .faq-item { background: var(--color-navy); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
+  .faq-item.open { border-color: var(--color-blue); }
+
+  .faq-question { color: var(--color-text-dark); }
+
+  .faq-question:hover { background: var(--color-bg-dark); }
+
+  .faq-item.open .faq-question { background: var(--color-bg-dark); }
+
+  .faq-answer p { color: var(--color-text-faint); }
+
+  .faq-contact { background: var(--color-navy); }
+
+  .faq-contact p { color: var(--color-text-faint); }
+}
