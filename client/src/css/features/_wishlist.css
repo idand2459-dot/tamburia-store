@@ -4,20 +4,11 @@
    .product-wishlist-btn used to sit at the bottom of this file: the heart
    beside "add to cart" on the product page, parked here because it writes to
    the same list. That button is now features/_product-buy.css's
-   .product-buy-wish, so the four rules are gone and this file is the modal
-   alone.
+   .product-buy-wish, so the four rules are gone.
+
+   The panel itself is the shared components/_drawer.css, so .wishlist-header
+   is gone as well and this file is the list inside it.
    ========================================================================== */
-
-.wishlist-header {
-  display: flex; align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--color-border-soft);
-  position: sticky; top: 0;
-  background: white; z-index: 1;
-}
-
-.wishlist-header h3 { font-size: 1.2rem; color: var(--color-text); font-weight: 700; }
 
 .wishlist-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
 
@@ -83,10 +74,6 @@
 .wishlist-remove-btn:hover { background: var(--color-error-border); color: var(--color-red); }
 
 @media (prefers-color-scheme: dark) {
-  .wishlist-header { background: var(--color-navy); border-bottom-color: var(--color-surface-dark); }
-
-  .wishlist-header h3 { color: var(--color-text-dark); }
-
   .wishlist-item { background: var(--color-bg-dark); }
 
   .wishlist-item-name { color: var(--color-text-dark); }

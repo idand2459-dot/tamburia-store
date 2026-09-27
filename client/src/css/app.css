@@ -25,6 +25,10 @@
 /* 3. Reusable components */
 @import './components/_buttons.css';
 @import './components/_modals.css';
+/* the side panel the cart, the order lookup and the wishlist open in. After
+   _modals.css because that file still owns the nav backdrop and the search
+   popup, and the three panels this replaces used to live in it. */
+@import './components/_drawer.css';
 @import './components/_loading.css';
 @import './components/_reveal.css';
 @import './components/_product-card.css';

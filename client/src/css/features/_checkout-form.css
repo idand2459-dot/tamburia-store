@@ -59,7 +59,7 @@
 .order-field textarea { resize: none; }
 
 /* כפתור עם spinner */
-.checkout-btn-loading {
+.cart-cta-loading {
   display: flex;
   align-items: center;
   justify-content: center;
