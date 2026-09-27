@@ -1,13 +1,19 @@
-/* ==========================================================================
-   Reviews and ratings
-   ========================================================================== */
+/* ==========================================================
+   Reviews carousel — the site-wide testimonials section
 
-/* ===== REVIEWS SECTION ===== */
+   The form that writes one is features/_review-form.css, the
+   moderation list is features/_admin-reviews.css, the star row
+   is components/_stars.css, and the per-product block is
+   features/_product-reviews.css.
+   ========================================================== */
+
 .reviews-section {
   max-width: 900px;
-  margin: 60px auto;
+  margin: 60px auto 0;
   padding: 0 20px;
 }
+
+/* ---- Elements -------------------------------------------------------------- */
 
 .reviews-header {
   display: flex;
@@ -21,7 +27,7 @@
 .reviews-header-text h2 {
   font-size: 1.6rem;
   font-weight: 800;
-  color: #1a1a2e;
+  color: var(--color-text);
   margin-bottom: 8px;
 }
 
@@ -34,128 +40,13 @@
 .reviews-avg-num {
   font-size: 1.4rem;
   font-weight: 800;
-  color: #1a1a2e;
+  color: var(--color-text);
 }
 
 .reviews-avg-count {
   font-size: 0.85rem;
   color: #999;
 }
-
-.add-review-btn {
-  padding: 10px 20px;
-  background: #1a1a2e;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  font-weight: 600;
-  transition: background 0.2s;
-  white-space: nowrap;
-}
-
-.add-review-btn:hover { background: #e63946; }
-
-/* ===== STARS ===== */
-.stars { display: flex; gap: 2px; }
-
-.star {
-  font-size: 1.2rem;
-  color: #ddd;
-  transition: color 0.1s, transform 0.1s;
-  line-height: 1;
-}
-
-.star.filled { color: #f4c430; }
-
-.star.interactive { cursor: pointer; }
-
-.star.interactive:hover { transform: scale(1.2); color: #f4c430; }
-
-/* ===== REVIEW FORM ===== */
-.review-form-wrap {
-  background: white;
-  border-radius: 20px;
-  padding: 28px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
-  margin-bottom: 32px;
-}
-
-.review-form h3 {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1a1a2e;
-  margin-bottom: 20px;
-}
-
-.review-form-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.review-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.review-field.full { grid-column: 1 / -1; }
-
-.review-field label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #555;
-}
-
-.review-field input,
-.review-field textarea {
-  padding: 10px 14px;
-  border: 1.5px solid #e0e0e0;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  direction: rtl;
-  outline: none;
-  transition: border-color 0.2s;
-  resize: none;
-}
-
-.review-field input:focus,
-.review-field textarea:focus { border-color: #1a1a2e; }
-
-.review-submit-btn {
-  padding: 12px 28px;
-  background: #1a1a2e;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  transition: background 0.2s;
-}
-
-.review-submit-btn:hover:not(:disabled) { background: #e63946; }
-
-.review-submit-btn:disabled { background: #aaa; cursor: not-allowed; }
-
-.review-submitted {
-  text-align: center;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  font-size: 1rem;
-  color: #2d6a4f;
-}
-
-.review-submitted span { font-size: 2rem; }
 
 /* ===== CAROUSEL ===== */
 .reviews-carousel {
@@ -185,22 +76,6 @@
   pointer-events: none;
 }
 
-.review-card.active {
-  opacity: 1;
-  transform: translateX(0);
-  pointer-events: all;
-}
-
-.review-card.prev {
-  opacity: 0;
-  transform: translateX(-60px);
-}
-
-.review-card.hidden {
-  opacity: 0;
-  transform: translateX(100px);
-}
-
 .review-card-top {
   display: flex;
   align-items: center;
@@ -211,7 +86,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1a1a2e, #e63946);
+  background: linear-gradient(135deg, var(--color-navy), var(--color-red));
   color: white;
   font-size: 1.1rem;
   font-weight: 700;
@@ -224,12 +99,12 @@
 .reviewer-name {
   font-size: 1rem;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--color-text);
 }
 
 .review-date {
   font-size: 0.78rem;
-  color: #aaa;
+  color: var(--color-text-faint);
   margin-top: 2px;
 }
 
@@ -237,7 +112,7 @@
 
 .review-text {
   font-size: 0.95rem;
-  color: #555;
+  color: var(--color-text-muted);
   line-height: 1.6;
   font-style: italic;
   margin: 0;
@@ -261,14 +136,8 @@
   justify-content: center;
   transition: background 0.2s;
   z-index: 2;
-  color: #1a1a2e;
+  color: var(--color-text);
 }
-
-.carousel-arrow:hover { background: #1a1a2e; color: white; }
-
-.carousel-arrow-right { right: 4px; }
-
-.carousel-arrow-left { left: 4px; }
 
 /* Dots */
 .carousel-dots {
@@ -288,162 +157,73 @@
   padding: 0;
 }
 
-.carousel-dot.active { background: #1a1a2e; transform: scale(1.2); }
-
 .reviews-empty {
   text-align: center;
   padding: 40px;
-  color: #aaa;
+  color: var(--color-text-faint);
   background: white;
   border-radius: 20px;
 }
 
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  .reviews-header-text h2 { color: #e0e0e0; }
+/* ---- States ---------------------------------------------------------------- */
 
-  .reviews-avg-num { color: #e0e0e0; }
+.carousel-arrow:hover { background: var(--color-navy); color: white; }
 
-  .review-form-wrap { background: #1a1a2e; }
+/* ---- Variants -------------------------------------------------------------- */
 
-  .review-form h3 { color: #e0e0e0; }
-
-  .review-field label { color: #aaa; }
-
-  .review-field input, .review-field textarea {
-      background: #0f0f1a; border-color: #2d2d4e; color: #e0e0e0;
-    }
-
-  .review-card { background: #1a1a2e; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-
-  .reviewer-name { color: #e0e0e0; }
-
-  .review-text { color: #aaa; }
-
-  .carousel-arrow { background: #1a1a2e; color: #e0e0e0; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
-
-  .carousel-arrow:hover { background: #e63946; }
-
-  .reviews-empty { background: #1a1a2e; }
+.review-card.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: all;
 }
 
+.review-card.prev {
+  opacity: 0;
+  transform: translateX(-60px);
+}
+
+.review-card.hidden {
+  opacity: 0;
+  transform: translateX(100px);
+}
+
+.carousel-arrow-right { right: 4px; }
+
+.carousel-arrow-left { left: 4px; }
+
+.carousel-dot.active { background: var(--color-navy); transform: scale(1.2); }
+
+/* ---- Responsive ------------------------------------------------------------ */
+
+/* Kept at 600px: the block it comes from also drops the review form's field
+   grid to one column, and the carousel's height and padding are tuned together
+   with that. Split across two partials, one 600px block each. */
 @media (max-width: 600px) {
   .reviews-carousel { padding: 0 36px; }
 
   .reviews-track { height: 220px; }
-
-  .review-form-fields { grid-template-columns: 1fr; }
-
-  .review-field.full { grid-column: 1; }
 }
-
-.product-review-top .stars { margin-right: auto; }
-
-.no-product-reviews {
-  color: #aaa;
-  font-size: 0.9rem;
-  padding: 20px 0;
-}
-
-/* ===== ביקורות באדמין ===== */
-.reviews-admin-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.review-admin-card {
-  background: white;
-  border-radius: 14px;
-  padding: 18px 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border-right: 4px solid #2d6a4f;
-}
-
-.review-admin-card.pending {
-  border-right-color: #e63946;
-  background: #fffbfb;
-}
-
-.review-admin-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.review-admin-top strong {
-  font-size: 0.95rem;
-  color: #1a1a2e;
-}
-
-.review-admin-type {
-  font-size: 0.78rem;
-  background: #f0f0f0;
-  color: #666;
-  padding: 2px 8px;
-  border-radius: 10px;
-  margin-right: 8px;
-}
-
-.review-admin-date {
-  font-size: 0.78rem;
-  color: #aaa;
-  margin-right: 8px;
-}
-
-.review-admin-text {
-  font-size: 0.9rem;
-  color: #555;
-  line-height: 1.6;
-  margin: 0;
-}
-
-.review-admin-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.review-approve-btn {
-  padding: 6px 16px;
-  background: #d4edda;
-  color: #2d6a4f;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  transition: background 0.2s;
-}
-
-.review-approve-btn:hover { background: #2d6a4f; color: white; }
-
-.review-approved-badge {
-  font-size: 0.82rem;
-  color: #2d6a4f;
-  font-weight: 600;
-}
-
-@media (prefers-color-scheme: dark) {
-  .review-admin-card { background: #1a1a2e; border-right-color: #2d6a4f; }
-
-  .review-admin-card.pending { background: #1f0d0d; border-right-color: #e63946; }
-
-  .review-admin-top strong { color: #e0e0e0; }
-
-  .review-admin-text { color: #aaa; }
-
-  .review-admin-type { background: #2d2d4e; color: #aaa; }
-}
-
-.reviews-section     { margin-top: 60px; margin-bottom: 0; }
 
 @media (max-width: 768px) {
   .reviews-section { margin-top: 40px; }
+}
+
+/* ---- Dark mode ------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .reviews-header-text h2 { color: var(--color-text-dark); }
+
+  .reviews-avg-num { color: var(--color-text-dark); }
+
+  .review-card { background: var(--color-navy); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+
+  .reviewer-name { color: var(--color-text-dark); }
+
+  .review-text { color: var(--color-text-faint); }
+
+  .carousel-arrow { background: var(--color-navy); color: var(--color-text-dark); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
+  .carousel-arrow:hover { background: var(--color-red); }
+
+  .reviews-empty { background: var(--color-navy); }
 }
