@@ -2,8 +2,8 @@
    Delivery options — the shipping method picker in the cart step
 
    Whether the chosen area is actually served is checked in the
-   details form, so .delivery-area-ok and .delivery-area-error
-   live in _checkout-form.css with the rest of that step.
+   details form, so .checkout-ok and .checkout-error live in
+   _checkout-form.css with the rest of that step.
 
    Two selectable cards over a real radio group. The inputs are
    hidden from sight but not from the keyboard, so arrow keys,

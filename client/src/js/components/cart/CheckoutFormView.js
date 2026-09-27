@@ -3,6 +3,11 @@
  *
  * מושך את שדות הטופס מ-StoreContext ומקבל בפרופס רק את מעבר השלבים,
  * שהוא עניין של הניתוב ולא של המצב המשותף.
+ *
+ * הכפתור אינו כאן אלא ב-CheckoutFormFooter שלמטה, כי הוא יושב בשורה
+ * התחתונה הדביקה של המגירה. שני הרכיבים מחשבים את deliveryInvalid מאותה
+ * פונקציה טהורה ומאותו קונטקסט, ולכן אין מצב שהכפתור יהיה פתוח בזמן
+ * שהשדה מציג שגיאה.
  */
 import { Ban, Check, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Spinner } from '../LoadingStates';
@@ -17,8 +22,22 @@ function checkAllowedCity(address) {
   return ALLOWED_CITIES.some(city => lower.includes(city.toLowerCase()));
 }
 
-/** מציג את טופס ההזמנה ושולח אותה. */
+/** האם הכתובת שהוזנה מחוץ לאזור החלוקה. */
+function isDeliveryInvalid({ deliveryMethod, deliveryAddress }) {
+  return Boolean(deliveryMethod === 'delivery' && deliveryAddress && !checkAllowedCity(deliveryAddress));
+}
+
+/** האם אפשר לשלוח את הטופס במצבו הנוכחי. */
+function canSubmit(store) {
+  const { customerName, customerPhone, deliveryMethod, deliveryAddress, submittingOrder } = store;
+  if (!customerName || !customerPhone || submittingOrder) return false;
+  if (deliveryMethod === 'delivery' && (!deliveryAddress || isDeliveryInvalid(store))) return false;
+  return true;
+}
+
+/** מציג את טופס ההזמנה. */
 function CheckoutFormView({ setCartStep }) {
+  const store = useStore();
   const {
     cartCount, total, deliveryMethod,
     customerName, setCustomerName,
@@ -26,13 +45,111 @@ function CheckoutFormView({ setCartStep }) {
     customerEmail, setCustomerEmail,
     deliveryAddress, setDeliveryAddress,
     orderNotes, setOrderNotes,
-    submittingOrder, handlePlaceOrder, orderError,
-  } = useStore();
+  } = store;
 
   /** מעדכן את הכתובת למשלוח. */
   function handleAddressChange(e) {
     setDeliveryAddress(e.target.value);
   }
+
+  const deliveryInvalid = isDeliveryInvalid(store);
+
+  return (
+    <div className="checkout-form">
+      <button type="button" className="checkout-back" onClick={() => setCartStep('cart')}>
+        ← חזרה לעגלה
+      </button>
+
+      <div className="checkout-recap">
+        <span>{cartCount} פריטים</span>
+        <span className="checkout-recap-total">סה"כ ₪{total}</span>
+      </div>
+
+      <div className="checkout-fields">
+        <div className="checkout-field">
+          <label htmlFor="checkout-name">שם מלא <span className="checkout-req" aria-hidden="true">*</span></label>
+          <input
+            id="checkout-name"
+            placeholder="ישראל ישראלי"
+            maxLength={30}
+            autoComplete="name"
+            value={customerName}
+            onChange={e => setCustomerName(e.target.value)}
+          />
+        </div>
+
+        <div className="checkout-field">
+          <label htmlFor="checkout-phone">טלפון <span className="checkout-req" aria-hidden="true">*</span></label>
+          <input
+            id="checkout-phone"
+            placeholder="050-0000000"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            value={customerPhone}
+            onChange={e => setCustomerPhone(e.target.value)}
+          />
+        </div>
+
+        <div className="checkout-field">
+          <label htmlFor="checkout-email">אימייל</label>
+          <input
+            id="checkout-email"
+            placeholder="example@email.com"
+            type="email"
+            autoComplete="email"
+            value={customerEmail}
+            onChange={e => setCustomerEmail(e.target.value)}
+          />
+        </div>
+
+        {deliveryMethod === 'delivery' && (
+          <div className="checkout-field">
+            <label htmlFor="checkout-address">כתובת למשלוח <span className="checkout-req" aria-hidden="true">*</span></label>
+            <input
+              id="checkout-address"
+              placeholder="רחוב, מספר, עיר"
+              autoComplete="street-address"
+              value={deliveryAddress}
+              onChange={handleAddressChange}
+              className={deliveryInvalid ? 'is-invalid' : ''}
+            />
+            {deliveryInvalid && (
+              <p className="checkout-error">
+                <Ban size={16} aria-hidden="true" />
+                <span>
+                  מצטערים, אנחנו משלחים לפתח תקווה, גני תקווה וקריית אונו בלבד.
+                  <br />לאיסוף עצמי — חזרו לעגלה ובחרו "איסוף עצמי".
+                </span>
+              </p>
+            )}
+            {!deliveryInvalid && deliveryAddress && (
+              <p className="checkout-ok"><Check size={15} aria-hidden="true" /> אזור המשלוח תקין</p>
+            )}
+          </div>
+        )}
+
+        <div className="checkout-field">
+          <label htmlFor="checkout-notes">הערות להזמנה</label>
+          <textarea
+            id="checkout-notes"
+            placeholder="הערות מיוחדות..."
+            value={orderNotes}
+            onChange={e => setOrderNotes(e.target.value)}
+            rows={2}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * הכפתור שיושב בשורה התחתונה של המגירה, והתראת השרת שמעליו.
+ */
+function CheckoutFormFooter() {
+  const store = useStore();
+  const { deliveryMethod, deliveryAddress, submittingOrder, handlePlaceOrder, orderError } = store;
 
   /** שולח את הטופס לשרת. */
   function handleSubmit() {
@@ -43,60 +160,28 @@ function CheckoutFormView({ setCartStep }) {
     handlePlaceOrder();
   }
 
-  const deliveryInvalid = deliveryMethod === 'delivery' && deliveryAddress && !checkAllowedCity(deliveryAddress);
-
   return (
-    <div className="order-form">
-      <button className="order-back-btn" onClick={() => setCartStep('cart')}>← חזור לעגלה</button>
-      <div className="order-summary-mini"><span>{cartCount} פריטים</span><span className="order-total-mini">סה"כ: ₪{total}</span></div>
-      <div className="order-fields">
-        <div className="order-field">
-          <label>שם מלא *</label>
-          <input placeholder="ישראל ישראלי" maxLength={30} value={customerName} onChange={e => setCustomerName(e.target.value)} />
-        </div>
-        <div className="order-field">
-          <label>טלפון *</label>
-          <input placeholder="050-0000000" type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
-        </div>
-        <div className="order-field">
-          <label>אימייל</label>
-          <input placeholder="example@email.com" type="email" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} />
-        </div>
-        {deliveryMethod === 'delivery' && (
-          <div className="order-field">
-            <label>כתובת למשלוח *</label>
-            <input
-              placeholder="רחוב, מספר, עיר"
-              value={deliveryAddress}
-              onChange={handleAddressChange}
-              className={deliveryInvalid ? 'input-error' : ''}
-            />
-            {deliveryInvalid && (
-              <div className="delivery-area-error">
-                <Ban size={18} aria-hidden="true" /> מצטערים, אנחנו משלחים לפתח תקווה, גני תקווה וקריית אונו בלבד.
-                <br />לאיסוף עצמי — חזור ובחר "איסוף עצמי".
-              </div>
-            )}
-            {!deliveryInvalid && deliveryAddress && (
-              <div className="delivery-area-ok"><Check size={16} aria-hidden="true" /> אזור המשלוח תקין</div>
-            )}
-          </div>
-        )}
-        <div className="order-field">
-          <label>הערות להזמנה</label>
-          <textarea placeholder="הערות מיוחדות..." value={orderNotes} onChange={e => setOrderNotes(e.target.value)} rows={2} />
-        </div>
-      </div>
+    <div className="checkout-submit">
       {/* דחייה מהשרת — העגלה נשארת מלאה כדי שאפשר יהיה לנסות שוב */}
-      {orderError && <div className="delivery-area-error"><AlertTriangle size={18} aria-hidden="true" /> {orderError}</div>}
+      {orderError && (
+        <p className="checkout-alert" role="alert">
+          <AlertTriangle size={17} aria-hidden="true" />
+          <span>{orderError}</span>
+        </p>
+      )}
+
       <button
-        className={`cart-cta ${(!customerName || !customerPhone || (deliveryMethod === 'delivery' && (!deliveryAddress || deliveryInvalid)) || submittingOrder) ? 'disabled' : ''}`}
-        disabled={!customerName || !customerPhone || (deliveryMethod === 'delivery' && (!deliveryAddress || deliveryInvalid)) || submittingOrder}
+        type="button"
+        className="cart-cta"
+        disabled={!canSubmit(store)}
         onClick={handleSubmit}>
-        {submittingOrder ? <span className="cart-cta-loading"><Spinner size="small" color="white" /> שולח הזמנה...</span> : <><CheckCircle size={18} aria-hidden="true" /> שלח הזמנה</>}
+        {submittingOrder
+          ? <><Spinner size="small" color="white" /> שולח הזמנה…</>
+          : <><CheckCircle size={18} aria-hidden="true" /> שלח הזמנה</>}
       </button>
     </div>
   );
 }
 
+export { CheckoutFormFooter };
 export default CheckoutFormView;
