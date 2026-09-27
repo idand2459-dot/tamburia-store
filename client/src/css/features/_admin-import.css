@@ -147,6 +147,9 @@
   margin: 0;
 }
 
+/* !important on all three: `.import-upload-area p` above carries an element
+   selector and so outranks this class, and this is the second paragraph in that
+   same area with its own smaller, dimmer treatment. */
 .import-upload-sub {
   color: var(--color-text-faint) !important;
   font-size: 0.85rem !important;

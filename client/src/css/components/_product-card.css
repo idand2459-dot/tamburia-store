@@ -53,7 +53,7 @@
   align-items: center;
   justify-content: center;
   /* base = category color via CSS var; fallback = brand navy */
-  background-color: var(--cat-color, #1a1a2e);
+  background-color: var(--cat-color, var(--color-navy));
   background-image:
     radial-gradient(ellipse at 28% 28%, rgba(255, 255, 255, 0.28) 0%, transparent 55%),
     linear-gradient(145deg, transparent 30%, rgba(0, 0, 0, 0.32) 100%);
@@ -169,7 +169,7 @@
    they have to beat, and in the old single file they came *earlier*, so order
    alone would have lost. */
 .out-of-stock-label {
-  color: #c1121f !important;
+  color: var(--color-red-dark) !important;
 }
 
 .btn-disabled {

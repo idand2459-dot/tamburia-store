@@ -4,7 +4,7 @@
 
 /* ===== SKELETON BASE ===== */
 .skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--color-border-soft) 25%, var(--color-border) 50%, var(--color-border-soft) 75%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.4s infinite;
   border-radius: 8px;
@@ -91,17 +91,17 @@
 }
 
 .spinner-dark {
-  border-top-color: #1a1a2e;
-  border-right-color: rgba(26,26,46,0.2);
-  border-bottom-color: rgba(26,26,46,0.2);
-  border-left-color: rgba(26,26,46,0.2);
+  border-top-color: var(--color-navy);
+  border-right-color: rgba(var(--color-navy-rgb), 0.2);
+  border-bottom-color: rgba(var(--color-navy-rgb), 0.2);
+  border-left-color: rgba(var(--color-navy-rgb), 0.2);
 }
 
 .spinner-green {
-  border-top-color: #2d6a4f;
-  border-right-color: rgba(45,106,79,0.2);
-  border-bottom-color: rgba(45,106,79,0.2);
-  border-left-color: rgba(45,106,79,0.2);
+  border-top-color: var(--color-green);
+  border-right-color: rgba(var(--color-green-rgb), 0.2);
+  border-bottom-color: rgba(var(--color-green-rgb), 0.2);
+  border-left-color: rgba(var(--color-green-rgb), 0.2);
 }
 
 /* Loading overlay לדף שלם */
@@ -112,7 +112,7 @@
   justify-content: center;
   padding: 80px 20px;
   gap: 16px;
-  color: #aaa;
+  color: var(--color-text-faint);
   font-size: 0.95rem;
   font-family: 'Segoe UI', sans-serif;
 }
@@ -120,7 +120,7 @@
 @media (prefers-color-scheme: dark) {
   /* skeleton */
   .skeleton {
-      background: linear-gradient(90deg, #1a1a2e 25%, #2d2d4e 50%, #1a1a2e 75%);
+      background: linear-gradient(90deg, var(--color-navy) 25%, var(--color-surface-dark) 50%, var(--color-navy) 75%);
       background-size: 200% 100%;
     }
 }

@@ -20,13 +20,13 @@ body {
   font-family: 'Segoe UI', sans-serif;
   background-color: var(--color-bg);
   direction: rtl;
-  color: #1a1a2e;
+  color: var(--color-text);
 }
 
 @media (prefers-color-scheme: dark) {
   /* רקע כללי */
   body {
-      background-color: #0f0f1a;
-      color: #e0e0e0;
+      background-color: var(--color-bg-dark);
+      color: var(--color-text-dark);
     }
 }

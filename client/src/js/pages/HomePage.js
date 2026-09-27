@@ -77,7 +77,7 @@ function HomePage() {
             ב-ARIA (eslint מתלונן בצדק). alt="" על ה-img הוא מה שמוציא תמונה
             דקורטיבית מעץ הנגישות. */}
         <picture className={`hero-media ${heroLoaded ? 'is-loaded' : ''}`}>
-          <source media="(max-width: 767px)" srcSet={heroMobile} />
+          <source media="(max-width: 768px)" srcSet={heroMobile} />
           <img
             ref={heroImgRef}
             onLoad={() => setHeroLoaded(true)}
