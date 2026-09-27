@@ -28,6 +28,7 @@
 @import './components/_loading.css';
 @import './components/_reveal.css';
 @import './components/_product-card.css';
+@import './components/_stars.css';
 
 /* 4. Feature modules */
 /* The admin dashboard, one partial per tab. No two of these carry the same
@@ -71,6 +72,8 @@
 @import './features/_orders.css';
 @import './features/_wishlist.css';
 @import './features/_reviews.css';
+@import './features/_review-form.css';
+@import './features/_admin-reviews.css';
 @import './features/_hero.css';
 @import './features/_home.css';
 /* One partial per static page, in the order their rules had inside the old

@@ -1,0 +1,111 @@
+/* ==========================================================
+   Admin reviews — the moderation list in ReviewsTab
+
+   Named to sit with the other _admin-* partials, but imported
+   with the reviews group, which is where its rules were.
+   ========================================================== */
+
+/* ===== ביקורות באדמין ===== */
+.reviews-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---- Elements -------------------------------------------------------------- */
+
+.review-admin-card {
+  background: white;
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-right: 4px solid var(--color-green);
+}
+
+.review-admin-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.review-admin-top strong {
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.review-admin-type {
+  font-size: 0.78rem;
+  background: var(--color-border-soft);
+  color: #666;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-right: 8px;
+}
+
+.review-admin-date {
+  font-size: 0.78rem;
+  color: var(--color-text-faint);
+  margin-right: 8px;
+}
+
+.review-admin-text {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.review-admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.review-approve-btn {
+  padding: 6px 16px;
+  background: var(--color-success-bg);
+  color: var(--color-green);
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: background 0.2s;
+}
+
+.review-approved-badge {
+  font-size: 0.82rem;
+  color: var(--color-green);
+  font-weight: 600;
+}
+
+/* ---- States ---------------------------------------------------------------- */
+
+.review-approve-btn:hover { background: var(--color-green); color: white; }
+
+/* ---- Variants -------------------------------------------------------------- */
+
+.review-admin-card.pending {
+  border-right-color: var(--color-red);
+  background: #fffbfb;
+}
+
+/* ---- Dark mode ------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .review-admin-card { background: var(--color-navy); border-right-color: var(--color-green); }
+
+  .review-admin-card.pending { background: #1f0d0d; border-right-color: var(--color-red); }
+
+  .review-admin-top strong { color: var(--color-text-dark); }
+
+  .review-admin-text { color: var(--color-text-faint); }
+
+  .review-admin-type { background: var(--color-surface-dark); color: var(--color-text-faint); }
+}

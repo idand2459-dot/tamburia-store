@@ -77,6 +77,19 @@
   margin: 0;
 }
 
+/* Moved in from _reviews.css: how this block spaces its star row, and what it
+   says when a product has no reviews yet. The star row itself is
+   components/_stars.css. */
+.product-review-top .stars {
+  margin-right: auto;
+}
+
+.no-product-reviews {
+  color: var(--color-text-faint);
+  font-size: 0.9rem;
+  padding: 20px 0;
+}
+
 /* ---- Dark mode ---------------------------------------------------------- */
 
 @media (prefers-color-scheme: dark) {
