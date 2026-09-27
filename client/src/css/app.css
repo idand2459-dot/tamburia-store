@@ -45,11 +45,17 @@
 @import './features/_auth.css';
 /* Two unrelated calculators that shared one file. In the order their rules had
    inside it; no selector appears in more than one of the six. */
+/* The dark band, its background photograph and the section header, split out
+   of _paint-calculator.css when that file passed the 300-line ceiling. It owns
+   nothing the form partials below it also declare, so it leads simply because
+   it is the outermost of the four. */
+@import './features/_paint-calc-section.css';
 @import './features/_paint-calculator.css';
 @import './features/_paint-pigment.css';
 @import './features/_paint-calc-results.css';
 @import './features/_paint-calc-btn.css';
 @import './features/_project-calculator.css';
+@import './features/_project-calc-inputs.css';
 @import './features/_project-calc-items.css';
 /* the in-page search field sits above a category's product grid */
 @import './features/_product-search.css';

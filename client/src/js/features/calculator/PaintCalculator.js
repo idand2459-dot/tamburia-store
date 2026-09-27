@@ -6,6 +6,7 @@ import {
   Paintbrush, Brush, Ruler, AppWindow, DoorOpen, PaintBucket, X,
   CheckCircle, Lightbulb, Store, Phone, ShoppingCart, Sun, CloudSun, Moon,
 } from 'lucide-react';
+import paintCalcBg from '../../../assets/images/sections/paint-calc-bg-1672.webp';
 
 const SHADE_CONFIG = {
   light:  { label: 'בהיר',   Icon: Sun,      factor: 0.15 },
@@ -203,9 +204,14 @@ function PaintCalculator({ addBundleToCart }) {
 
   return (
     <section className="paint-calc-section">
+      {/* רקע דקורטיבי. <img> ולא background ב-CSS, כדי שיוכל להיטען בעצלות —
+          המקטע נמצא הרבה מתחת לקיפול. ב-CSS הוא מוסתר מתחת ל-768px, ותמונה
+          עם display: none לא נטענת כלל. */}
+      <img className="paint-calc-bg" src={paintCalcBg} alt=""
+        loading="lazy" decoding="async" />
       <div className="paint-calc-content">
         <div className="paint-calc-header">
-          <span className="faq-tag">כלי עזר</span>
+          <span className="calc-tag">כלי עזר</span>
           <h2 className="paint-calc-title"><Paintbrush size={28} aria-hidden="true" /> מחשבון צבע</h2>
           <p className="paint-calc-subtitle">חשבו כמה צבע תצטרכו לפני שאתם מגיעים לחנות</p>
         </div>
@@ -214,7 +220,7 @@ function PaintCalculator({ addBundleToCart }) {
 
           {/* ── Color & Shade Selector ── */}
           {formulas.length > 0 && (
-            <div className="paint-calc-card paint-pigment-card">
+            <div className="paint-calc-card">
               <h3 className="paint-calc-card-title"><Paintbrush size={20} aria-hidden="true" /> קולור MIX יעקבי — בחרו גוון</h3>
 
               <div className="paint-pigment-row">

@@ -2,73 +2,44 @@
    Paint calculator — the input side: wall dimensions, openings
    and the number of coats
 
-   The rest of the section is beside it: _paint-pigment.css is
-   the colour and shade picker, _paint-calc-results.css is the
-   output panel, and _paint-calc-btn.css is the floating button
-   that opens the whole thing.
+   Beside it: _paint-calc-section.css is the dark band, its
+   background photograph and the header, _paint-pigment.css the
+   colour picker, _paint-calc-results.css the output panel, and
+   _paint-calc-btn.css the floating button that opens it all.
+
+   Every surface here is dark glass over a photograph, so the
+   fills are darker than the section, not lighter: the 0.07
+   white film these cards had went a translucent grey over the
+   paint items and stopped separating from them.
    ========================================================== */
 
-.paint-calc-section {
-  background: linear-gradient(150deg, #0d1117 0%, var(--color-navy) 45%, #1e2d4d 100%);
-  padding: 70px 40px;
-  position: relative;
-  overflow: hidden;
-  margin-top: 60px;
-}
+/* ---- Block --------------------------------------------------------------- */
 
-.paint-calc-section::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, rgba(255,255,255,0.055) 1.5px, transparent 1.5px);
-  background-size: 30px 30px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ---- Elements -------------------------------------------------------------- */
-
-.paint-calc-content {
-  max-width: 700px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-}
-
-.paint-calc-header {
-  text-align: center;
-  margin-bottom: 36px;
-}
-
-.paint-calc-title {
-  font-size: 2rem;
-  font-weight: 800;
-  color: white;
-  margin-bottom: 10px;
-}
-
-.paint-calc-subtitle {
-  font-size: 1rem;
-  color: rgba(255,255,255,0.6);
-}
-
-/* Cards */
 .paint-calc-body {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
+/* ---- Elements ------------------------------------------------------------ */
+
+/* the WhyUs point cards glass, one step more opaque: a form has to stay
+   legible over whatever the photograph is doing behind it */
 .paint-calc-card {
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 16px;
+  background: rgba(var(--color-navy-900-rgb), 0.7);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
   padding: 22px 24px;
 }
 
 .paint-calc-card-title {
-  font-size: 1rem;
-  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
   color: white;
   margin-bottom: 16px;
 }
@@ -90,7 +61,7 @@
 
 .paint-wall-label {
   font-size: 0.85rem;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.72);
   min-width: 42px;
 }
 
@@ -101,14 +72,18 @@
   flex: 1;
 }
 
+/* The group carries the border and the focus ring, not the input inside it:
+   the input is borderless and outline: none so the unit label can sit flush
+   against it inside one rounded box. */
 .paint-input-group {
   display: flex;
   align-items: center;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   overflow: hidden;
   flex: 1;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
 .paint-input-group input {
@@ -116,54 +91,50 @@
   border: none;
   outline: none;
   padding: 10px 12px;
-  font-size: 1rem;
+  font-size: var(--font-size-body);
   color: white;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  font-family: var(--font-family-base);
   width: 100%;
   direction: ltr;
   text-align: center;
 }
 
-.paint-input-group input::placeholder { color: rgba(255,255,255,0.3); }
+.paint-input-group input::placeholder { color: rgba(255, 255, 255, 0.35); }
 
 .paint-unit {
   font-size: 0.8rem;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255, 255, 255, 0.62);
   padding: 0 10px 0 4px;
   white-space: nowrap;
 }
 
-.paint-wall-x {
-  color: rgba(255,255,255,0.4);
-  font-size: 1rem;
-}
+.paint-wall-x { color: rgba(255, 255, 255, 0.4); font-size: var(--font-size-body); }
 
 .paint-remove-btn {
-  background: rgba(var(--color-red-rgb), 0.2);
-  border: none;
-  color: var(--color-red);
+  background: rgba(var(--color-red-rgb), 0.16);
+  border: 1px solid rgba(var(--color-red-rgb), 0.3);
+  color: var(--color-red-soft);
   border-radius: 8px;
   width: 30px;
   height: 30px;
   cursor: pointer;
-  font-size: 0.8rem;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 0.2s;
+  transition: background var(--transition-base), border-color var(--transition-base);
 }
 
 .paint-add-wall-btn {
   background: none;
-  border: 1px dashed rgba(255,255,255,0.3);
-  color: rgba(255,255,255,0.6);
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.72);
   border-radius: 10px;
   padding: 8px 16px;
   font-size: 0.88rem;
   cursor: pointer;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  transition: all 0.2s;
+  font-family: var(--font-family-base);
+  transition: border-color var(--transition-base), color var(--transition-base);
   width: 100%;
 }
 
@@ -179,7 +150,7 @@
   align-items: center;
   gap: 12px;
   font-size: 0.9rem;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255, 255, 255, 0.82);
   flex-wrap: wrap;
 }
 
@@ -188,11 +159,10 @@
 .paint-counter {
   display: flex;
   align-items: center;
-  gap: 0;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.04);
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .paint-counter button {
@@ -203,22 +173,19 @@
   width: 36px;
   height: 36px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--transition-fast);
   font-family: monospace;
 }
 
 .paint-counter span {
-  font-size: 1rem;
-  font-weight: 700;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
   color: white;
   min-width: 32px;
   text-align: center;
 }
 
-.paint-opening-note {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.4);
-}
+.paint-opening-note { font-size: 0.8rem; color: rgba(255, 255, 255, 0.62); }
 
 /* ציפויים */
 .paint-coats {
@@ -231,25 +198,26 @@
   flex: 1;
   min-width: 100px;
   padding: 12px 8px;
-  background: rgba(255,255,255,0.07);
-  border: 1.5px solid rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  color: rgba(255,255,255,0.7);
+  color: rgba(255, 255, 255, 0.82);
   cursor: pointer;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  font-family: var(--font-family-base);
   font-size: 0.95rem;
   font-weight: 600;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  transition: all 0.2s;
+  transition: background var(--transition-base), border-color var(--transition-base),
+    color var(--transition-base), box-shadow var(--transition-base);
 }
 
 .paint-coat-btn span {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 400;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.62);
 }
 
 /* כפתור חישוב */
@@ -260,59 +228,69 @@
   border: none;
   border-radius: 14px;
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  transition: background 0.2s, transform 0.15s;
+  font-family: var(--font-family-base);
+  transition: background var(--transition-base), transform var(--transition-base),
+    box-shadow var(--transition-base);
 }
 
-/* ---- States ---------------------------------------------------------------- */
+/* ---- States -------------------------------------------------------------- */
 
-.paint-remove-btn:hover { background: rgba(var(--color-red-rgb), 0.4); }
+/* purple, the ring the navbar focuses with, so a keyboard user meets one focus
+   colour across the site */
+.paint-input-group:focus-within {
+  border-color: rgba(var(--color-purple-rgb), 0.5);
+  box-shadow: 0 0 0 3px rgba(var(--color-purple-rgb), 0.18);
+}
+
+.paint-remove-btn:hover {
+  background: rgba(var(--color-red-rgb), 0.3);
+  border-color: rgba(var(--color-red-rgb), 0.55);
+}
 
 .paint-add-wall-btn:hover { border-color: white; color: white; }
 
-.paint-counter button:hover { background: rgba(255,255,255,0.15); }
+.paint-counter button:hover { background: rgba(255, 255, 255, 0.1); }
 
-.paint-coat-btn:hover { border-color: rgba(255,255,255,0.4); color: white; }
-
-.paint-calc-btn:hover:not(.disabled) {
-  background: var(--color-red-dark);
-  transform: translateY(-2px);
-}
-
-/* ---- Variants -------------------------------------------------------------- */
-
-.paint-coat-btn.active {
-  background: var(--color-red);
-  border-color: var(--color-red);
+.paint-coat-btn:hover:not(.active) {
+  border-color: rgba(255, 255, 255, 0.3);
   color: white;
 }
 
-.paint-coat-btn.active span { color: rgba(255,255,255,0.7); }
+/* the navbar cart glow, on every red call to action in this section */
+.paint-calc-btn:hover:not(.disabled) {
+  background: var(--color-red-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 0 22px rgba(var(--color-red-rgb), 0.45);
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+/* Selected, not filled: a solid red block competed with the red CTA below it.
+   A red border plus a tint plus a small glow says the same thing quietly, and
+   reads the same way a selected swatch and a selected shade chip do. */
+.paint-coat-btn.active {
+  background: rgba(var(--color-red-rgb), 0.14);
+  border-color: var(--color-red);
+  color: white;
+  box-shadow: 0 0 18px rgba(var(--color-red-rgb), 0.25);
+}
+
+.paint-coat-btn.active span { color: rgba(255, 255, 255, 0.72); }
 
 .paint-calc-btn.disabled {
-  background: rgba(255,255,255,0.15);
-  color: rgba(255,255,255,0.4);
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.4);
   cursor: not-allowed;
 }
 
-/* ---- Responsive ------------------------------------------------------------ */
+/* ---- Responsive ---------------------------------------------------------- */
 
-/* Kept at 600px rather than moved to 560. The block is not cosmetic: the
-   results grid drops to one column here and .paint-coats turns into a column,
-   and the font-size and padding changes are paired with those — the title
-   shrinks because the section just got narrower. Splitting the cosmetic half
-   off to 560 would desynchronise the two, which is the visual change
-   CONVENTIONS.md rule 4 says to avoid. */
+/* 600px, matching the rest of the section — see the note in
+   _paint-calc-section.css. */
 @media (max-width: 600px) {
-  .paint-calc-section { padding: 50px 20px; }
-
-  .paint-calc-title { font-size: 1.5rem; }
-
-  .paint-coats { flex-direction: column; }
-}
-
-@media (max-width: 768px) {
-  .paint-calc-section { margin-top: 40px; }
+  .paint-coats {
+      flex-direction: column;
+    }
 }

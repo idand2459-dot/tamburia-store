@@ -1,9 +1,10 @@
 /* ==========================================================
    FAQ page — the accordion and the contact strip under it
 
-   .faq-tag is also rendered by PaintCalculator.js, which borrows
-   this page's pill for its own section heading. Nothing there
-   competes with it, so it is styled here once.
+   .faq-tag belongs to this page alone. PaintCalculator.js used to
+   borrow it for its own section heading and has its own .calc-tag
+   now — this page is light, that section is dark, and one pill
+   could not be both.
    ========================================================== */
 
 .faq-section {

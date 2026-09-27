@@ -12,7 +12,6 @@ const PROJECTS = [
     id: 'bathroom',
     Icon: ShowerHead,
     name: 'שיפוץ שירותים',
-    color: '#457b9d',
     inputs: [],
     getItems: () => [
       { name: 'סיליקון ואיטום',          category: 'adhesives', subcategory: 'sealants'         },
@@ -27,7 +26,6 @@ const PROJECTS = [
     id: 'cylinder',
     Icon: DoorOpen,
     name: 'החלפת צילינדר',
-    color: '#6c757d',
     inputs: [
       {
         id: 'lockType', label: 'סוג מנעול', type: 'select', default: 'standard',
@@ -55,7 +53,6 @@ const PROJECTS = [
     id: 'garden',
     Icon: Flower2,
     name: 'סידור גינה',
-    color: '#52b788',
     inputs: [
       {
         id: 'size', label: 'גודל גינה', type: 'select', default: 'small',
@@ -87,7 +84,6 @@ const PROJECTS = [
     id: 'plumbing',
     Icon: Wrench,
     name: 'תיקון אינסטלציה',
-    color: '#0077b6',
     inputs: [],
     getItems: () => [
       { name: 'ברזי הזנה',         category: 'plumbing',  subcategory: 'feed_valves'         },
@@ -187,10 +183,10 @@ function ProjectCalculator({ addBundleToCart }) {
             <button
               key={proj.id}
               className={`proj-card ${selectedId === proj.id ? 'selected' : ''}`}
-              style={{ '--proj-color': proj.color, animationDelay: `${i * 0.09}s` }}
+              style={{ animationDelay: `${i * 0.09}s` }}
               onClick={() => selectProject(proj.id)}
             >
-              <span className="proj-card-icon"><proj.Icon size={32} aria-hidden="true" /></span>
+              <span className="proj-card-icon"><proj.Icon size={26} strokeWidth={1.75} aria-hidden="true" /></span>
               <span className="proj-card-name">{proj.name}</span>
               {selectedId === proj.id && <span className="proj-card-check"><Check size={16} aria-hidden="true" /></span>}
             </button>

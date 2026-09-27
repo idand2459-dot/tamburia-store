@@ -1,30 +1,60 @@
 /* ==========================================================
    Project calculator — pick a project, then its measurements
 
-   The parts list and the estimate footer are
-   _project-calc-items.css. Nothing here is shared with the paint
-   calculator; they only used to live in one file.
+   The section, its header, the four project cards and the panel
+   that opens under them. The controls inside that panel are
+   _project-calc-inputs.css, the parts list and estimate footer
+   are _project-calc-items.css. Nothing here is shared with the
+   paint calculator; they only used to live in one file.
+
+   Fifth stop in the home page dark rhythm: --color-navy-900,
+   the same surface as the WhyUs section, after the paint
+   calculator photograph. One red glow in the top-right corner
+   is the only light. Always dark, so no
+   prefers-color-scheme block at the bottom of this file.
    ========================================================== */
 
-/* ── Section wrapper ────────────────────────────────────────────── */
+/* ---- Block --------------------------------------------------------------- */
+
+/* No margin-top: this section butts straight onto the paint calculator above
+   it. The hairline on ::after is the whole boundary. */
 .proj-section {
-  background: linear-gradient(150deg, #0d1117 0%, var(--color-navy) 45%, #1e2d4d 100%);
-  padding: 72px 40px 80px;
+  background-color: var(--color-navy-900);
+  padding: 100px 40px 110px;
   position: relative;
   overflow: hidden;
 }
 
-/* subtle dot-grid texture (matches hero) */
+/* The backdrop layer, where a background image could later go — add it as the
+   bottom-most layer of this background and the glow keeps sitting over it.
+   The dot grid that used to be on this pseudo-element is gone. */
 .proj-section::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(255,255,255,0.055) 1.5px, transparent 1.5px);
-  background-size: 30px 30px;
+  z-index: 0;
+  background: radial-gradient(ellipse 45% 55% at 90% 0%,
+    rgba(var(--color-red-rgb), 0.14), transparent 70%);
   pointer-events: none;
 }
 
-/* ---- Elements -------------------------------------------------------------- */
+.proj-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  z-index: 1;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(var(--color-red-rgb), 0.6),
+    rgba(var(--color-purple-rgb), 0.6),
+    transparent);
+  pointer-events: none;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
 
 .proj-content {
   max-width: 860px;
@@ -34,79 +64,115 @@
 }
 
 /* ── Header ─────────────────────────────────────────────────────── */
+
 .proj-header {
   text-align: center;
   margin-bottom: 42px;
 }
 
+/* purple, matching the pills on the categories, WhyUs and paint calculator
+   sections. It was a red pill, which put red on the tag, the title and the
+   button all at once. */
 .proj-tag {
-  display: inline-block;
-  background: rgba(var(--color-red-rgb), 0.18);
-  border: 1px solid rgba(var(--color-red-rgb), 0.4);
-  color: #ff9a9a;
-  padding: 5px 18px;
-  border-radius: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(var(--color-purple-rgb), 0.18);
+  border: 1px solid rgba(var(--color-purple-rgb), 0.35);
+  color: var(--color-purple-soft);
+  padding: 6px 18px;
+  border-radius: var(--radius-pill);
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.5px;
   margin-bottom: 18px;
 }
 
+/* flex, because the title carries a Lucide wrench after the words */
 .proj-title {
-  font-size: 2rem;
-  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 2.2rem;
+  font-weight: var(--font-weight-extrabold);
   color: white;
   margin-bottom: 10px;
   line-height: 1.25;
 }
 
 .proj-subtitle {
-  font-size: 1rem;
-  color: rgba(255,255,255,0.55);
+  font-size: var(--font-size-body);
+  color: rgba(255, 255, 255, 0.72);
 }
 
 /* ── Project cards ──────────────────────────────────────────────── */
+
 .proj-cards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
   margin-bottom: 32px;
 }
 
-/* entry animation: the card starts invisible and .proj-visible on the section
-   hands it over to the keyframes below. The old file split these two rules
-   apart; nothing they declare overlaps. */
+/* Dark glass cards, not the pills these used to be: they are the same kind of
+   control as a category card — a clickable tile with an icon above a name —
+   and they now look like one.
+
+   opacity: 0 is the entry animation start; .proj-visible on the section (set
+   by the IntersectionObserver in ProjectCalculator.js) hands over to the
+   keyframes. */
 .proj-card {
   opacity: 0;
-  transform: translateY(18px) scale(0.95);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 13px 22px;
-  border-radius: 50px;
-  border: 1.5px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.85);
+  gap: 12px;
+  padding: 22px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(var(--color-navy-950-rgb), 0.55);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 0.95rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: transform 0.22s cubic-bezier(0.34,1.4,0.64,1),
-              border-color 0.2s, background 0.2s, color 0.2s;
   position: relative;
+  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-.proj-card-icon { font-size: 1.3rem; line-height: 1; }
+/* the category card icon tile */
+.proj-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(var(--color-red-rgb), 0.14);
+  border: 1px solid rgba(var(--color-red-rgb), 0.25);
+  color: var(--color-red-soft);
+  transition: background 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    color 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
 
-.proj-card-name { white-space: nowrap; }
+.proj-card-name { line-height: 1.3; }
 
+/* top-left corner: in RTL that is the corner away from the reading edge */
 .proj-card-check {
-  font-size: 0.78rem;
-  background: rgba(255,255,255,0.25);
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: var(--color-red);
+  color: white;
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,143 +180,62 @@
 }
 
 /* ── Panel ──────────────────────────────────────────────────────── */
+
 .proj-panel {
-  animation: proj-fade-up 0.38s cubic-bezier(0.22,1,0.36,1) both;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.11);
-  border-radius: 20px;
+  animation: proj-fade-up 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  background: rgba(var(--color-navy-950-rgb), 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
   padding: 28px 32px;
-  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
-/* ── Inputs row ─────────────────────────────────────────────────── */
-.proj-inputs-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin-bottom: 24px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-}
+/* ---- States -------------------------------------------------------------- */
 
-.proj-input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 180px;
-}
-
-.proj-input-label {
-  font-size: 0.82rem;
-  color: rgba(255,255,255,0.55);
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
-
-.proj-select {
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1.5px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.1);
-  color: white;
-  font-size: 0.92rem;
-  font-family: inherit;
-  cursor: pointer;
-  direction: rtl;
-}
-
-.proj-select option { background: var(--color-navy); color: white; }
-
-.proj-number-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  border: 1.5px solid rgba(255,255,255,0.2);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.proj-number-input {
-  width: 90px;
-  padding: 10px 12px;
-  border: none;
-  background: rgba(255,255,255,0.1);
-  color: white;
-  font-size: 1rem;
-  font-family: inherit;
-  text-align: center;
-}
-
-.proj-number-input::-webkit-inner-spin-button,
-.proj-number-input::-webkit-outer-spin-button { opacity: 0; }
-
-.proj-unit {
-  padding: 10px 12px;
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.5);
-  font-size: 0.82rem;
-  border-right: 1px solid rgba(255,255,255,0.15);
-  white-space: nowrap;
-}
-
-.proj-stepper {
-  display: flex;
-  align-items: center;
-  border: 1.5px solid rgba(255,255,255,0.2);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.proj-stepper button {
-  width: 38px;
-  height: 40px;
-  border: none;
-  background: rgba(255,255,255,0.1);
-  color: white;
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.proj-stepper-val {
-  min-width: 48px;
-  text-align: center;
-  color: white;
-  font-weight: 700;
-  font-size: 1rem;
-  padding: 0 8px;
-}
-
-/* ---- States ---------------------------------------------------------------- */
-
+/* `backwards`, not `forwards`. A forwards fill pins the keyframe transform on
+   the element for good, which silently killed the hover lift below — the same
+   trap components/_reveal.css documents. Backwards holds the first frame
+   through the delay and then lets the element fall back to its own styles;
+   the opacity: 1 here is what keeps it visible afterwards. */
 .proj-visible .proj-card {
-  animation: proj-card-in 0.45s cubic-bezier(0.34,1.4,0.64,1) forwards;
+  opacity: 1;
+  animation: proj-card-in 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
 }
 
-.proj-card:hover:not(.selected) {
-  border-color: rgba(255,255,255,0.4);
-  background: rgba(255,255,255,0.13);
-  transform: translateY(-3px);
-}
-
+/* Hover and selected are one rule: both mean "this is the project", and it is
+   the category card treatment — lift, red border, red glow. */
+.proj-card:hover,
+.proj-card:focus-visible,
 .proj-card.selected {
-  background: var(--proj-color);
-  border-color: var(--proj-color);
-  color: white;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-  transform: translateY(-4px) scale(1.04);
+  transform: translateY(-4px);
+  border-color: rgba(var(--color-red-rgb), 0.6);
+  box-shadow: 0 0 26px rgba(var(--color-red-rgb), 0.28);
 }
 
-.proj-select:focus  { border-color: rgba(255,255,255,0.5); outline: none; }
+.proj-card:focus-visible {
+  outline: 2px solid var(--color-purple-soft);
+  outline-offset: 2px;
+}
 
-.proj-number-input:focus { outline: none; background: rgba(255,255,255,0.15); }
+.proj-card:hover .proj-card-icon,
+.proj-card:focus-visible .proj-card-icon,
+.proj-card.selected .proj-card-icon {
+  background: var(--color-red);
+  border-color: var(--color-red);
+  color: white;
+}
 
-.proj-stepper button:hover { background: rgba(255,255,255,0.2); }
+.proj-card.selected { color: white; }
 
-/* ---- Animations ------------------------------------------------------------ */
+/* ---- Animations ---------------------------------------------------------- */
 
+/* The from-frame carries what .proj-card used to declare on itself; with a
+   backwards fill it has to live in the keyframes or the card would sit at its
+   final position until the animation starts. */
 @keyframes proj-card-in {
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(18px) scale(0.95); }
+  to   { opacity: 1; transform: none; }
 }
 
 @keyframes proj-fade-up {
@@ -258,7 +243,21 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ---- Responsive ------------------------------------------------------------ */
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .proj-section {
+      padding: 64px 24px 72px;
+    }
+
+  .proj-cards {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+  .proj-title {
+      font-size: 1.8rem;
+    }
+}
 
 /* Kept at 640px. .proj-footer turns into a column here and the padding and
    font-size changes are paired with it, so remapping to 560 or 768 would move
@@ -269,9 +268,26 @@
 
   .proj-title    { font-size: 1.55rem; }
 
-  .proj-cards    { gap: 8px; }
+  .proj-cards    { gap: 10px; }
 
-  .proj-card     { padding: 10px 16px; font-size: 0.88rem; }
+  .proj-card     { padding: 18px 10px; font-size: 0.88rem; }
 
   .proj-panel    { padding: 20px 18px; }
+}
+
+/* ---- Reduced motion ------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .proj-card,
+  .proj-visible .proj-card,
+  .proj-panel {
+      animation: none;
+      opacity: 1;
+    }
+
+  .proj-card:hover,
+  .proj-card:focus-visible,
+  .proj-card.selected {
+      transform: none;
+    }
 }
