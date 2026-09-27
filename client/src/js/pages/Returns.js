@@ -3,6 +3,7 @@ import {
   Scissors, FlaskConical, Receipt, Package, Store, Shield, Coins, CreditCard,
   Gift, ScrollText, Phone, Truck, ClipboardList,
 } from 'lucide-react';
+import { ADDRESS, PHONES, hoursSummary } from '../utils/storeInfo';
 
 /** מציג את עמוד מדיניות ההחזרות. */
 function Returns() {
@@ -132,7 +133,7 @@ function Returns() {
               <span className="returns-item-icon"><Store size={24} aria-hidden="true" /></span>
               <div>
                 <strong>החזרה לחנות בלבד</strong>
-                <p>החזרת מוצרים מתבצעת פיזית בחנות בבר כוכבא 52, פתח תקווה בלבד.</p>
+                <p>החזרת מוצרים מתבצעת פיזית בחנות ב{ADDRESS.full} בלבד.</p>
               </div>
             </div>
           </div>
@@ -179,7 +180,7 @@ function Returns() {
           <div className="returns-steps">
             <div className="returns-step">
               <span className="step-number">1</span>
-              <p>צור קשר איתנו בטלפון <a href="tel:039315750">03-9315750</a> או <a href="tel:0506735040">050-6735040</a> לפני הגעה לחנות</p>
+              <p>צור קשר איתנו בטלפון <a href={`tel:${PHONES.store.tel}`}>{PHONES.store.display}</a> או <a href={`tel:${PHONES.mobile.tel}`}>{PHONES.mobile.display}</a> לפני הגעה לחנות</p>
             </div>
             <div className="returns-step">
               <span className="step-number">2</span>
@@ -187,7 +188,7 @@ function Returns() {
             </div>
             <div className="returns-step">
               <span className="step-number">3</span>
-              <p>הבא את המוצר לחנות בבר כוכבא 52, פתח תקווה — עם חשבונית או אישור הזמנה ואריזה מקורית</p>
+              <p>הבא את המוצר לחנות ב{ADDRESS.full} — עם חשבונית או אישור הזמנה ואריזה מקורית</p>
             </div>
             <div className="returns-step">
               <span className="step-number">4</span>
@@ -213,10 +214,10 @@ function Returns() {
           <h2>יש שאלה?</h2>
           <p>אנחנו כאן לעזור — אל תהסס לפנות אלינו</p>
           <div className="returns-contact-btns">
-            <a href="tel:039315750" className="returns-phone-btn">03-9315750</a>
-            <a href="tel:0506735040" className="returns-phone-btn secondary">050-6735040</a>
+            <a href={`tel:${PHONES.store.tel}`} className="returns-phone-btn">{PHONES.store.display}</a>
+            <a href={`tel:${PHONES.mobile.tel}`} className="returns-phone-btn secondary">{PHONES.mobile.display}</a>
           </div>
-          <p className="returns-hours">א׳-ה׳ 7:00-20:00 | ו׳ 7:00-15:00</p>
+          <p className="returns-hours">{hoursSummary(' | ')}</p>
         </section>
 
       </div>

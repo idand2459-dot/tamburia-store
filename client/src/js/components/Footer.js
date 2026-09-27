@@ -6,6 +6,9 @@
  */
 import { useNavigate } from 'react-router-dom';
 import { Wrench, MessageCircle, MapPin, Phone, Smartphone, Clock } from 'lucide-react';
+import {
+  ADDRESS, PHONES, WHATSAPP, whatsappUrl, OPEN_HOURS, hoursRangeDash,
+} from '../utils/storeInfo';
 
 /** מציג את תחתית האתר. */
 function Footer() {
@@ -45,7 +48,7 @@ function Footer() {
             מאז 1991 — יחס אישי, עזרה טכנית ומחירים טובים.
           </p>
           <a
-            href="https://wa.me/972506735040?text=שלום, אני מעוניין במוצר מהאתר שלכם"
+            href={whatsappUrl(WHATSAPP.defaultMessage)}
             target="_blank"
             rel="noopener noreferrer"
             className="footer-whatsapp-btn"
@@ -91,24 +94,22 @@ function Footer() {
           <ul className="footer-contact-list">
             <li>
               <span className="footer-contact-icon"><MapPin size={16} aria-hidden="true" /></span>
-              <span>בר כוכבא 52, פתח תקווה</span>
+              <span>{ADDRESS.full}</span>
             </li>
             <li>
               <span className="footer-contact-icon"><Phone size={16} aria-hidden="true" /></span>
-              <a href="tel:039315750" className="footer-contact-link">03-9315750</a>
+              <a href={`tel:${PHONES.store.tel}`} className="footer-contact-link">{PHONES.store.display}</a>
             </li>
             <li>
               <span className="footer-contact-icon"><Smartphone size={16} aria-hidden="true" /></span>
-              <a href="tel:0506735040" className="footer-contact-link">050-6735040</a>
+              <a href={`tel:${PHONES.mobile.tel}`} className="footer-contact-link">{PHONES.mobile.display}</a>
             </li>
-            <li>
-              <span className="footer-contact-icon"><Clock size={16} aria-hidden="true" /></span>
-              <span>א׳-ה׳: 7:00–20:00</span>
-            </li>
-            <li>
-              <span className="footer-contact-icon"><Clock size={16} aria-hidden="true" /></span>
-              <span>ו׳: 7:00–15:00</span>
-            </li>
+            {OPEN_HOURS.map((row) => (
+              <li key={row.id}>
+                <span className="footer-contact-icon"><Clock size={16} aria-hidden="true" /></span>
+                <span>{row.short}: {hoursRangeDash(row)}</span>
+              </li>
+            ))}
           </ul>
         </div>
 

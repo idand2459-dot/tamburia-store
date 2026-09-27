@@ -1,14 +1,16 @@
 import {
   Wrench, MapPin, Phone, Smartphone, Clock, Star, Handshake, Banknote, Headset,
 } from 'lucide-react';
+import { ADDRESS, PHONES, OPEN_HOURS, hoursRange } from '../utils/storeInfo';
 
 const ITEMS = [
   { Icon: Wrench,     text: 'טכניק טמבור' },
-  { Icon: MapPin,     text: 'בר כוכבא 52, פתח תקווה' },
-  { Icon: Phone,      text: '03-9315750' },
-  { Icon: Smartphone, text: '050-6735040' },
-  { Icon: Clock,      text: 'א׳-ה׳: 7:00-20:00' },
-  { Icon: Clock,      text: 'ו׳: 7:00-15:00' },
+  { Icon: MapPin,     text: ADDRESS.full },
+  { Icon: Phone,      text: PHONES.store.display },
+  { Icon: Smartphone, text: PHONES.mobile.display },
+  ...OPEN_HOURS.map((row) => (
+    { Icon: Clock,    text: `${row.short}: ${hoursRange(row)}` }
+  )),
   { Icon: Star,       text: 'נוסדה 1991' },
   { Icon: Handshake,  text: 'יחס אישי ואדיב' },
   { Icon: Banknote,   text: 'מחירים טובים' },

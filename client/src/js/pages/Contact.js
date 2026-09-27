@@ -1,4 +1,7 @@
 import { MapPin, Phone, Clock } from 'lucide-react';
+import {
+  ADDRESS, PHONES, HOURS, hoursRangePadded,
+} from '../utils/storeInfo';
 
 /** מציג את עמוד יצירת הקשר. */
 function Contact() {
@@ -14,10 +17,10 @@ function Contact() {
         <div className="contact-card">
           <div className="contact-icon"><MapPin size={32} aria-hidden="true" /></div>
           <h2>כתובת</h2>
-          <p>בר כוכבא 52</p>
-          <p>פתח תקווה</p>
+          <p>{ADDRESS.street}</p>
+          <p>{ADDRESS.city}</p>
           <a
-            href="https://maps.google.com/?q=בר+כוכבא+52+פתח+תקווה"
+            href={ADDRESS.mapsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="contact-link-btn"
@@ -31,13 +34,13 @@ function Contact() {
           <h2>טלפונים</h2>
           <div className="phone-list">
             <div className="phone-item">
-              <span className="phone-label">טלפון חנות</span>
-              <a href="tel:039315750" className="phone-number">03-9315750</a>
+              <span className="phone-label">{PHONES.store.label}</span>
+              <a href={`tel:${PHONES.store.tel}`} className="phone-number">{PHONES.store.display}</a>
             </div>
             <div className="phone-divider" />
             <div className="phone-item">
-              <span className="phone-label">פלאפון אישי</span>
-              <a href="tel:0506735040" className="phone-number">050-6735040</a>
+              <span className="phone-label">{PHONES.mobile.label}</span>
+              <a href={`tel:${PHONES.mobile.tel}`} className="phone-number">{PHONES.mobile.display}</a>
             </div>
           </div>
         </div>
@@ -46,18 +49,12 @@ function Contact() {
           <div className="contact-icon"><Clock size={32} aria-hidden="true" /></div>
           <h2>שעות פעילות</h2>
           <div className="contact-hours">
-            <div className="contact-hours-row">
-              <span>א׳ – ה׳</span>
-              <span>07:00 – 20:00</span>
-            </div>
-            <div className="contact-hours-row">
-              <span>ו׳</span>
-              <span>07:00 – 15:00</span>
-            </div>
-            <div className="contact-hours-row closed">
-              <span>שבת</span>
-              <span>סגור</span>
-            </div>
+            {HOURS.map((row) => (
+              <div key={row.id} className={`contact-hours-row${row.closed ? ' closed' : ''}`}>
+                <span>{row.spaced}</span>
+                <span>{hoursRangePadded(row)}</span>
+              </div>
+            ))}
           </div>
         </div>
  

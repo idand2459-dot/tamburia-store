@@ -6,6 +6,7 @@ import {
   X, ClipboardList, Search, Inbox, Settings, Truck, CheckCircle,
   Store, ChevronUp, ChevronDown, Phone, MessageCircle, Loader,
 } from 'lucide-react';
+import { PHONES, whatsappUrl } from '../utils/storeInfo';
 
 const STATUS_CONFIG = {
   new:        { label: 'התקבלה',  Icon: Inbox,       color: '#2563eb', bg: '#eff6ff' },
@@ -144,8 +145,8 @@ function OrderHistory({ onClose }) {
           <div className="order-history-contact">
             <p>שאלה על הזמנה? דברו איתנו:</p>
             <div className="order-history-contact-btns">
-              <a href="tel:039315750" className="order-history-btn"><Phone size={18} aria-hidden="true" /> 03-9315750</a>
-              <a href={`https://wa.me/972506735040`} target="_blank" rel="noopener noreferrer" className="order-history-btn whatsapp"><MessageCircle size={18} aria-hidden="true" /> וואטסאפ</a>
+              <a href={`tel:${PHONES.store.tel}`} className="order-history-btn"><Phone size={18} aria-hidden="true" /> {PHONES.store.display}</a>
+              <a href={whatsappUrl()} target="_blank" rel="noopener noreferrer" className="order-history-btn whatsapp"><MessageCircle size={18} aria-hidden="true" /> וואטסאפ</a>
             </div>
           </div>
         </div>

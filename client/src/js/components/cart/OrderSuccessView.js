@@ -8,6 +8,7 @@ import {
   PartyPopper, Store, Truck, CheckCircle, Mail, Phone, Smartphone, MessageCircle,
 } from 'lucide-react';
 import { useStore } from '../../context/storeContext';
+import { PHONES, whatsappUrl } from '../../utils/storeInfo';
 
 /** מציג את אישור ההזמנה. */
 function OrderSuccessView({ closeCart }) {
@@ -33,9 +34,9 @@ function OrderSuccessView({ closeCart }) {
       <div className="success-contact">
         <p>לכל שאלה ניתן לפנות אלינו:</p>
         <div className="success-contact-btns">
-          <a href="tel:039315750" className="success-contact-btn"><Phone size={18} aria-hidden="true" /> 03-9315750</a>
-          <a href="tel:0506735040" className="success-contact-btn"><Smartphone size={18} aria-hidden="true" /> 050-6735040</a>
-          <a href={`https://wa.me/972506735040?text=שלום, שאלה לגבי הזמנה מספר ${orderSuccess.id}`}
+          <a href={`tel:${PHONES.store.tel}`} className="success-contact-btn"><Phone size={18} aria-hidden="true" /> {PHONES.store.display}</a>
+          <a href={`tel:${PHONES.mobile.tel}`} className="success-contact-btn"><Smartphone size={18} aria-hidden="true" /> {PHONES.mobile.display}</a>
+          <a href={whatsappUrl(`שלום, שאלה לגבי הזמנה מספר ${orderSuccess.id}`)}
             target="_blank" rel="noopener noreferrer" className="success-contact-btn whatsapp">
             <MessageCircle size={18} aria-hidden="true" /> וואטסאפ
           </a>

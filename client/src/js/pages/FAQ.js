@@ -3,6 +3,7 @@
  */
 import { useState } from 'react';
 import { MessageCircle, Phone, Plus } from 'lucide-react';
+import { ADDRESS, PHONES, whatsappUrl, hoursSummary } from '../utils/storeInfo';
 
 const FAQS = [
   {
@@ -11,11 +12,11 @@ const FAQS = [
   },
   {
     q: 'באילו אזורים אתם מספקים משלוח?',
-    a: 'אנחנו מספקים משלוח לפתח תקווה, גני תקווה וקריית אונו בלבד — בעלות של ₪20. ללקוחות מחוץ לאזורים אלה ניתן לאסוף מהחנות בבר כוכבא 52, פתח תקווה.'
+    a: `אנחנו מספקים משלוח לפתח תקווה, גני תקווה וקריית אונו בלבד — בעלות של ₪20. ללקוחות מחוץ לאזורים אלה ניתן לאסוף מהחנות ב${ADDRESS.full}.`
   },
   {
     q: 'כמה זמן לוקח המשלוח?',
-    a: 'משלוח מגיע עד 2 ימי עסקים. איסוף עצמי זמין באותו יום בשעות הפעילות: א׳-ה׳ 7:00-20:00, ו׳ 7:00-15:00.'
+    a: `משלוח מגיע עד 2 ימי עסקים. איסוף עצמי זמין באותו יום בשעות הפעילות: ${hoursSummary(', ')}.`
   },
   {
     q: 'איך אני משלם?',
@@ -27,11 +28,11 @@ const FAQS = [
   },
   {
     q: 'האם יש לכם חנות פיזית?',
-    a: 'כן! אנחנו פועלים מאז 1991. החנות נמצאת ברחוב בר כוכבא 52, פתח תקווה. מוזמנים לבקר אותנו ולקבל ייעוץ אישי מאנרי.'
+    a: `כן! אנחנו פועלים מאז 1991. החנות נמצאת ברחוב ${ADDRESS.full}. מוזמנים לבקר אותנו ולקבל ייעוץ אישי מאנרי.`
   },
   {
     q: 'איך יוצרים קשר?',
-    a: 'ניתן להתקשר ל-03-9315750 או 050-6735040, לשלוח וואטסאפ, או להגיע לחנות. אנחנו זמינים א׳-ה׳ 7:00-20:00, ו׳ 7:00-15:00.'
+    a: `ניתן להתקשר ל-${PHONES.store.display} או ${PHONES.mobile.display}, לשלוח וואטסאפ, או להגיע לחנות. אנחנו זמינים ${hoursSummary(', ')}.`
   },
   {
     q: 'האם המחירים כוללים מע"מ?',
@@ -95,8 +96,8 @@ function FAQ() {
         <div className="faq-contact">
           <p>לא מצאתם תשובה? אנחנו כאן בשבילכם</p>
           <div className="faq-contact-btns">
-            <a href="tel:039315750" className="faq-btn"><Phone size={18} aria-hidden="true" /> 03-9315750</a>
-            <a href="https://wa.me/972506735040" target="_blank" rel="noopener noreferrer" className="faq-btn whatsapp"><MessageCircle size={18} aria-hidden="true" /> וואטסאפ</a>
+            <a href={`tel:${PHONES.store.tel}`} className="faq-btn"><Phone size={18} aria-hidden="true" /> {PHONES.store.display}</a>
+            <a href={whatsappUrl()} target="_blank" rel="noopener noreferrer" className="faq-btn whatsapp"><MessageCircle size={18} aria-hidden="true" /> וואטסאפ</a>
           </div>
         </div>
       </div>
