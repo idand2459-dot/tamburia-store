@@ -3,13 +3,14 @@
    and the dots
 
    Split out of features/_reviews.css when the two together passed
-   the 300-line target. That file owns the dark band this sits on
+   the 300-line target. That file owns the light band this sits on
    and the header above it; nothing is declared in both.
 
    ReviewsCarousel.js still shows exactly one review at a time and
-   still rotates every 4s — none of that logic moved. What changed
-   here is only how a card looks and how one is swapped for the
-   next: a cross-fade, in place of the horizontal slide.
+   still rotates every 4s — none of that logic moved, and neither
+   did the one-cell grid track, the cross-fade or the labelled
+   arrows and dots. What changed here is only colour: the card,
+   the arrows and the dots follow the section from navy to blush.
    ========================================================== */
 
 /* ---- Block --------------------------------------------------------------- */
@@ -32,18 +33,16 @@
   grid-template-areas: 'card';
 }
 
-/* Dark glass, the same family as the WhyUs point tiles: darker than the section
-   behind it rather than lighter, which is what keeps it reading as an inset on
-   an already-dark surface. It was a white card with a drop shadow. */
+/* The same white card as the categories and project tiles: a navy-tint
+   hairline and a 1px shadow, no blur. */
 .review-card {
   grid-area: card;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: rgba(var(--color-navy-950-rgb), 0.55);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
   border-radius: 18px;
   padding: 24px;
   opacity: 0;
@@ -58,9 +57,10 @@
 }
 
 /* The byline — avatar, name, date — is rendered from two places: this card and
-   the product page's review list, which is a white card on a light page. So the
-   three rules below carry the shape only, and each surface declares its own
-   text colour: the two .reviews-section rules underneath, and
+   the product page's review list. Both are white cards now, but the product
+   page follows the system theme and this section does not, so the three rules
+   below still carry the shape only and each surface declares its own text
+   colour: the two .reviews-section rules underneath, and
    `.product-review-top .reviewer-name` / `.review-date` in
    features/_product-reviews.css. The avatar's gradient is not split that way —
    red→purple is legible on both, so there is one of it. */
@@ -88,9 +88,9 @@
   margin-top: 2px;
 }
 
-.reviews-section .reviewer-name { color: white; }
+.reviews-section .reviewer-name { color: var(--color-navy); }
 
-.reviews-section .review-date { color: rgba(255, 255, 255, 0.55); }
+.reviews-section .review-date { color: rgba(var(--color-navy-rgb), 0.55); }
 
 .review-card-stars { margin-right: auto; }
 
@@ -98,7 +98,7 @@
    box would not move the paragraph below it. Same device as .whyus-quote-mark. */
 .review-quote-mark {
   display: block;
-  color: var(--color-red-soft);
+  color: var(--color-red);
 }
 
 /* Not italic: an oblique synthesised from a Hebrew face slants letterforms that
@@ -106,7 +106,7 @@
    running text in the section the hardest thing in it to read. */
 .review-text {
   font-size: var(--font-size-body);
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(var(--color-navy-rgb), 0.82);
   line-height: 1.7;
   margin: 0;
 }
@@ -125,13 +125,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.07);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: white;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.12);
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+  color: var(--color-navy);
   cursor: pointer;
-  transition: border-color var(--transition-base), background var(--transition-base);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
 .carousel-dots {
@@ -148,7 +147,7 @@
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(var(--color-navy-rgb), 0.22);
   border: none;
   cursor: pointer;
   padding: 0;
@@ -158,8 +157,8 @@
 /* ---- States -------------------------------------------------------------- */
 
 .carousel-arrow:hover {
-  background: rgba(255, 255, 255, 0.12);
   border-color: var(--color-red);
+  box-shadow: 0 6px 16px rgba(var(--color-red-rgb), 0.18);
 }
 
 /* ---- Variants ------------------------------------------------------------ */

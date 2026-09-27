@@ -1,79 +1,63 @@
 /* ==========================================================
-   Reviews section — the dark band, its header, and the review
-   form that opens on it
+   Reviews section — the light band, its layout, the header, the
+   shop photograph and the review form that opens on it
 
-   Fourth stop in the home page's dark rhythm: --color-navy-900,
-   one step lighter than the features strip above it, with a
-   single purple glow at the top centre. It used to be the point
-   where the page went light again — a --color-bg band with white
-   cards — and that band is what this file removes.
+   --color-blush-deep, the deeper of the two light tones, with
+   the project calculator's --color-blush above it and the FAQ's
+   --color-blush below. That half-step is the whole seam on both
+   sides: the red-to-purple hairline belongs to a dark/light
+   boundary and is drawn on the dark side of it, so the ::after
+   this section used to carry on its top edge is gone, along
+   with the purple glow on ::before and the stacking context the
+   two needed.
+
+   Layout, desktop: the header and the carousel share the start
+   column (the right one, in RTL) and the photograph is a framed
+   panel in the end column — beside the reviews, never behind
+   them, and mirroring the WhyUs panel with its red bar along
+   the top instead of the bottom. Below 900px the photograph
+   moves above the header as a 16:9 band, because a 4:5 portrait
+   at phone width is a screenful before a single review shows.
 
    The rotating card itself is features/_reviews-carousel.css,
-   split out when the two together passed the 300-line target. The
-   form's own styles are features/_review-form.css (this file only
-   repaints it for a dark surface), the moderation list is
-   features/_admin-reviews.css, the star row is
+   split out when the two together passed the 300-line target.
+   The form's own styles are features/_review-form.css (this
+   file only rescopes it to this section), the moderation list
+   is features/_admin-reviews.css, the star row is
    components/_stars.css, and the per-product block is
    features/_product-reviews.css.
 
-   Always dark, whatever the system theme, so there is no
-   prefers-color-scheme block at the bottom of this file. What
-   went with the old light look: the whole dark-mode block that
-   repainted the white cards, and the margin that used to leave a
-   gap above the section.
+   Art-directed in both themes, like the rest of the home page,
+   so there is no prefers-color-scheme block at the bottom of
+   this file.
    ========================================================== */
 
 /* ---- Block --------------------------------------------------------------- */
 
 .reviews-section {
-  background-color: var(--color-navy-900);
+  background-color: var(--color-blush-deep);
   padding: 90px 40px;
-  position: relative;
-  overflow: hidden;
-}
-
-/* The backdrop layer, the same one the categories and WhyUs sections carry: a
-   background image may be dropped in here later — add it as the last
-   (bottom-most) layer of the `background` below and the glow keeps sitting
-   over it. */
-.reviews-section::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: radial-gradient(ellipse 55% 55% at 50% 0%,
-    rgba(var(--color-purple-rgb), 0.16), transparent 70%);
-  pointer-events: none;
-}
-
-/* The seam with the features strip above: lit in the middle, faded out at both
-   ends, exactly as on .whyus-section. */
-.reviews-section::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  z-index: 1;
-  background: linear-gradient(90deg,
-    transparent,
-    rgba(var(--color-red-rgb), 0.6),
-    rgba(var(--color-purple-rgb), 0.6),
-    transparent);
-  pointer-events: none;
 }
 
 /* ---- Elements ------------------------------------------------------------ */
 
-/* z-index 1 is what lifts every child off ::before — and off the image layer
-   that may join it. 680px is the card's width too: the section is one column
-   holding one review, so the wrapper is the measure. */
+/* Two cells: the words on the start side, the photograph on the end side.
+   .reviews-col is a wrapper rather than three grid items because the middle
+   one — the form — only exists while it is open, and three items that come
+   and go cannot be placed in fixed rows. The column was 680px wide when it
+   was the only thing here; the 1.05fr/0.95fr split lands close to that. */
 .reviews-inner {
-  position: relative;
-  z-index: 1;
-  max-width: 680px;
+  max-width: 1100px;
   margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 56px;
+  align-items: center;
+}
+
+.reviews-col {
+  grid-column: 1;
+  min-width: 0;
 }
 
 /* Centred, like every other section header on the page. It used to be a
@@ -87,15 +71,17 @@
 .reviews-title {
   font-size: 2.2rem;
   font-weight: var(--font-weight-extrabold);
-  color: white;
+  color: var(--color-navy);
   line-height: 1.2;
   margin-bottom: 12px;
 }
 
-/* The empty stars in this section are white-on-dark rather than the light
-   surface's navy tint. One line, because components/_stars.css reads that
-   colour off a custom property. */
-.reviews-section .stars { --star-empty: rgba(255, 255, 255, 0.2); }
+/* components/_stars.css already defaults --star-empty to the navy tint a light
+   surface wants, so the white-on-dark override this section used to set is
+   gone. What is left is the guard: that file flips the default to white under
+   prefers-color-scheme: dark, for the pages that really do follow the system
+   theme, and this section does not — its cards are white in both. */
+.reviews-section .stars { --star-empty: rgba(var(--color-navy-rgb), 0.15); }
 
 .reviews-avg {
   display: inline-flex;
@@ -106,15 +92,15 @@
 .reviews-avg-num {
   font-size: 1.4rem;
   font-weight: var(--font-weight-extrabold);
-  color: white;
+  color: var(--color-navy);
 }
 
 .reviews-avg-count {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.62);
+  color: rgba(var(--color-navy-rgb), 0.6);
 }
 
-/* A ghost button. The filled navy pill it was belongs to _review-form.css,
+/* An outline button. The filled navy pill it was belongs to _review-form.css,
    where the product page still wants it, so this is scoped to the section —
    and it wins on specificity rather than on import order. */
 .reviews-section .add-review-btn {
@@ -123,8 +109,8 @@
   gap: 8px;
   margin-top: 20px;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: white;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.25);
+  color: var(--color-navy);
   transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
@@ -132,53 +118,81 @@
   text-align: center;
   padding: 40px;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.72);
-  background: rgba(var(--color-navy-950-rgb), 0.55);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(var(--color-navy-rgb), 0.7);
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
   border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
 }
 
-/* The review form, on this section's dark surface
+/* Photo panel
    -------------------------------------------------------------------------- */
 
-/* _review-form.css paints a white card, because the product page it also serves
-   is a light page. Opening the form here punched a white hole in the middle of
-   the section, so these rules repaint it — scoped, so the product page keeps
-   the white one. Nothing about the form's markup or behaviour changes. */
-.reviews-section .review-form-wrap {
-  background: rgba(var(--color-navy-950-rgb), 0.55);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: none;
+.reviews-media {
+  position: relative;
+  grid-column: 2;
 }
 
-.reviews-section .review-form h3 { color: white; }
+/* The WhyUs panel's red bar, mirrored to the top edge: the two panels face
+   each other down the page, and putting both bars at the bottom would read as
+   a repeat rather than as a pair. */
+.reviews-media::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 4px;
+  background: var(--color-red);
+  border-radius: 0 0 4px 4px;
+}
 
-.reviews-section .review-field label { color: rgba(255, 255, 255, 0.72); }
+.reviews-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 24px;
+  box-shadow: 0 24px 48px rgba(var(--color-navy-rgb), 0.18);
+}
+
+/* The review form, on this section's light surface
+   -------------------------------------------------------------------------- */
+
+/* _review-form.css paints the white card this section wants, so these rules
+   are no longer a repaint — they are a guard. That file carries a
+   prefers-color-scheme: dark block for the product page, which does follow the
+   system theme; this section does not, and without these the form would turn
+   navy inside a blush band. Nothing about the form's markup or behaviour
+   changes. */
+.reviews-section .review-form-wrap {
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+}
+
+.reviews-section .review-form h3 { color: var(--color-navy); }
+
+.reviews-section .review-field label { color: rgba(var(--color-navy-rgb), 0.7); }
 
 .reviews-section .review-field input,
 .reviews-section .review-field textarea {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.14);
-  color: white;
+  background: var(--color-surface);
+  border-color: rgba(var(--color-navy-rgb), 0.15);
+  color: var(--color-navy);
 }
 
 .reviews-section .review-field input::placeholder,
 .reviews-section .review-field textarea::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(var(--color-navy-rgb), 0.4);
 }
-
-.reviews-section .review-submitted { color: rgba(255, 255, 255, 0.85); }
 
 /* ---- States -------------------------------------------------------------- */
 
 .reviews-section .add-review-btn:hover {
   background: transparent;
   border-color: var(--color-red);
-  box-shadow: 0 0 20px rgba(var(--color-red-rgb), 0.25);
+  box-shadow: 0 6px 18px rgba(var(--color-red-rgb), 0.18);
 }
 
 .reviews-section .review-field input:focus,
@@ -187,6 +201,30 @@
 }
 
 /* ---- Responsive ---------------------------------------------------------- */
+
+/* One column, and the photograph moves to the top as a 16:9 band: it is the
+   section's opening image once nothing sits beside it, and a 4:5 portrait at
+   full phone width would fill the screen before the first review. */
+@media (max-width: 900px) {
+  .reviews-inner {
+      grid-template-columns: 1fr;
+      gap: 32px;
+      max-width: 680px;
+    }
+
+  .reviews-media {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+  .reviews-col {
+      grid-row: 2;
+    }
+
+  .reviews-photo {
+      aspect-ratio: 16 / 9;
+    }
+}
 
 @media (max-width: 768px) {
   .reviews-section { padding: 64px 20px; }

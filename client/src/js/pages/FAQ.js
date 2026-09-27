@@ -52,7 +52,7 @@ function FAQ() {
     <section className="faq-section">
       <div className="faq-content">
         <div className="faq-header">
-          <span className="section-pill">שאלות נפוצות</span>
+          <span className="section-pill section-pill--light">שאלות נפוצות</span>
           <h2 className="faq-title">יש לכם שאלות? יש לנו תשובות</h2>
           <p className="faq-subtitle">כל מה שרציתם לדעת על טכניק טמבור</p>
         </div>
