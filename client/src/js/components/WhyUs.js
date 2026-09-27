@@ -1,17 +1,18 @@
 import { Trophy, Handshake, Headset, Banknote, Quote } from 'lucide-react';
 import Reveal, { stagger } from './Reveal';
+import whyusPhoto600 from '../../assets/images/sections/whyus-photo-600.webp';
+import whyusPhoto1000 from '../../assets/images/sections/whyus-photo-1000.webp';
 
 /** מציג את המקטע. */
 function WhyUs() {
   return (
     <section className="whyus-section">
-      {/* .whyus-inner מרים את כל התוכן מעל שכבת הרקע של ::before */}
       <div className="whyus-inner">
         <div className="whyus-content">
 
           {/* טקסט ראשי */}
           <Reveal as="div" variant="up" className="whyus-text">
-            <span className="section-pill">למה טכניק טמבור?</span>
+            <span className="section-pill section-pill--light">למה טכניק טמבור?</span>
             <h2 className="whyus-title">
               לא סתם חנות —<br />
               <span className="whyus-title-accent">שותף לכל פרויקט</span>
@@ -27,6 +28,21 @@ function WhyUs() {
               אלא כי הם יודעים שאצלנו הם בידיים טובות.
             </p>
           </Reveal>
+
+          {/* התצלום — לוח ממוסגר לצד הטקסט, לעולם לא מאחוריו. הוא נושא תוכן
+              (החנות עצמה) ולכן יש לו alt ולא aria-hidden. lazy: הוא נמצא
+              מתחת לקיפול בכל רוחב מסך. */}
+          <div className="whyus-media">
+            <img
+              className="whyus-photo"
+              src={whyusPhoto1000}
+              srcSet={`${whyusPhoto600} 600w, ${whyusPhoto1000} 1000w`}
+              sizes="(max-width: 900px) calc(100vw - 48px), 500px"
+              alt="מוכר מגיש ללקוח פחית צבע מעל הדלפק"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
 
           {/* יתרונות */}
           <div className="whyus-points">
