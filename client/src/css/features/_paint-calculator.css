@@ -279,9 +279,13 @@
 
 .paint-coat-btn.active span { color: rgba(255, 255, 255, 0.72); }
 
+/* A switched-off red button, not a grey ghost of one: the 0.1 white fill this
+   had all but vanished against the card behind it, so nothing on screen said
+   the button was there, waiting for a wall measurement. */
 .paint-calc-btn.disabled {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.4);
+  background: rgba(var(--color-red-rgb), 0.12);
+  border: 1px solid rgba(var(--color-red-rgb), 0.3);
+  color: rgba(255, 255, 255, 0.55);
   cursor: not-allowed;
 }
 

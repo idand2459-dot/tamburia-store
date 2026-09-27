@@ -3,7 +3,7 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import {
-  ShowerHead, DoorOpen, Flower2, Wrench, Crown, Check, Circle, ShoppingCart,
+  ShowerHead, DoorOpen, Sprout, Wrench, Crown, Check, Circle, ShoppingCart,
 } from 'lucide-react';
 
 /* ─── Project definitions ──────────────────────────────────────────────── */
@@ -51,7 +51,7 @@ const PROJECTS = [
   },
   {
     id: 'garden',
-    Icon: Flower2,
+    Icon: Sprout,
     name: 'סידור גינה',
     inputs: [
       {
