@@ -1,18 +1,29 @@
 /* ==========================================================
-   404 page — the wiggling icon, the code and the two ways out
+   404 page — the code, the two ways out
+
+   The one content page with no dark header: it is not a page
+   you meant to arrive at, and a full band across the top would
+   give it the weight of one. Blush, centred, and over as
+   quickly as possible.
+
+   The wiggling icon is gone. An error screen that jiggles at
+   you forever is a distraction in a place where the whole aim
+   is to get you somewhere else, and it ran regardless of what
+   the OS had been asked for.
    ========================================================== */
 
-/* ===== דף 404 ===== */
+/* ---- Block --------------------------------------------------------------- */
+
 .not-found {
   min-height: calc(100vh - 64px);
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--color-bg);
-  padding: 40px 20px;
+  padding: 64px 24px;
 }
 
-/* ---- Elements -------------------------------------------------------------- */
+/* ---- Elements ------------------------------------------------------------ */
 
 .not-found-content {
   text-align: center;
@@ -20,38 +31,48 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
 }
 
 .not-found-icon {
-  font-size: 4rem;
-  animation: wiggle 2s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 62px;
+  border-radius: var(--radius-lg);
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+  margin-bottom: 20px;
 }
 
+/* Navy, with only the middle zero in red. The gradient-clipped text this used
+   to be needed three vendor-prefixed declarations to say something a single
+   span says outright, and fell back to invisible where they were unsupported. */
 .not-found-code {
-  font-size: 7rem;
-  font-weight: 800;
-  color: var(--color-text);
+  font-size: 5.5rem;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-navy);
   line-height: 1;
+  letter-spacing: -2px;
   margin: 0;
-  background: linear-gradient(135deg, var(--color-navy), var(--color-red));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+}
+
+.not-found-code-accent {
+  color: var(--color-red);
 }
 
 .not-found-title {
   font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--color-text);
-  margin: 0;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  margin: 18px 0 0;
 }
 
 .not-found-desc {
-  color: #666;
   font-size: 1rem;
+  color: rgba(var(--color-navy-rgb), 0.65);
   line-height: 1.7;
-  margin: 0;
+  margin: 12px 0 0;
 }
 
 .not-found-actions {
@@ -59,82 +80,85 @@
   gap: 12px;
   flex-wrap: wrap;
   justify-content: center;
-  margin-top: 8px;
+  margin-top: 28px;
 }
 
 .not-found-btn {
-  padding: 12px 28px;
-  border-radius: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 12px 26px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-family-base);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  border: none;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  transition: all 0.2s;
+  transition: background var(--transition-base), color var(--transition-base),
+              border-color var(--transition-base), transform var(--transition-base);
 }
 
 .not-found-info {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 8px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  color: rgba(var(--color-navy-rgb), 0.5);
+  margin: 32px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.1);
   width: 100%;
 }
 
-.not-found-info span {
-  font-size: 0.88rem;
-  color: #999;
+/* ---- States -------------------------------------------------------------- */
+
+.not-found-btn--primary:hover {
+  background: var(--color-red-dark);
+  transform: translateY(-2px);
 }
 
-/* ---- States ---------------------------------------------------------------- */
+.not-found-btn--outline:hover {
+  background: var(--color-navy);
+  color: white;
+  transform: translateY(-2px);
+}
 
-.not-found-btn.primary:hover {
+/* ---- Variants ------------------------------------------------------------ */
+
+.not-found-btn--primary {
   background: var(--color-red);
-  transform: translateY(-2px);
-}
-
-.not-found-btn.secondary:hover {
-  background: var(--color-navy);
-  color: white;
-  transform: translateY(-2px);
-}
-
-/* ---- Variants -------------------------------------------------------------- */
-
-.not-found-btn.primary {
-  background: var(--color-navy);
   color: white;
 }
 
-.not-found-btn.secondary {
-  background: white;
-  color: var(--color-text);
-  border: 2px solid var(--color-navy);
+.not-found-btn--outline {
+  background: transparent;
+  color: var(--color-navy);
+  border-color: rgba(var(--color-navy-rgb), 0.35);
 }
 
-/* ---- Animations ------------------------------------------------------------ */
+/* ---- Responsive ---------------------------------------------------------- */
 
-@keyframes wiggle {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-10deg); }
-  75% { transform: rotate(10deg); }
+@media (max-width: 560px) {
+  .not-found {
+      padding: 48px 20px;
+    }
+
+  .not-found-code {
+      font-size: 4.2rem;
+    }
+
+  .not-found-title {
+      font-size: 1.35rem;
+    }
+
+  .not-found-actions .not-found-btn {
+      width: 100%;
+      justify-content: center;
+    }
 }
 
-/* ---- Dark mode ------------------------------------------------------------- */
+/* ---- Reduced motion ------------------------------------------------------ */
 
-@media (prefers-color-scheme: dark) {
-  .not-found { background: var(--color-bg-dark); }
-
-  .not-found-title { color: var(--color-text-dark); }
-
-  .not-found-desc { color: #777; }
-
-  .not-found-btn.secondary {
-      background: var(--color-navy);
-      color: var(--color-text-dark);
-      border-color: var(--color-surface-dark);
+@media (prefers-reduced-motion: reduce) {
+  .not-found-btn:hover {
+      transform: none;
     }
 }

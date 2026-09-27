@@ -4,7 +4,11 @@
 import { useNavigate } from 'react-router-dom';
 import NotFound from '../components/NotFound';
 
-const PATHS = { home: '/', about: '/about', contact: '/contact', returns: '/returns' };
+// 'categories' נופל על דף הבית מפני ששם רשת הקטגוריות יושבת — אין לה
+// נתיב משלה, והוספת נתיב היא לא עניין של מסך ה-404.
+const PATHS = {
+  home: '/', categories: '/', about: '/about', contact: '/contact', returns: '/returns',
+};
 
 /** מציג את מסך ה-404 ומתרגם את הניווט שלו לכתובות. */
 function NotFoundPage() {
