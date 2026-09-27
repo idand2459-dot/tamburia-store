@@ -2,8 +2,9 @@
    Admin orders — the orders tab: the stat row, the filter, and
    each order's expandable card
 
-   The customer-facing confirmation screen is a different
-   component and lives in features/_orders.css.
+   The customer-facing screens are different components:
+   features/_order-success.css is the cart's confirmation step
+   and features/_order-history.css is the lookup page.
    ========================================================== */
 
 /* ===== ADMIN ORDERS ===== */
@@ -113,7 +114,6 @@
   white-space: nowrap;
 }
 
-
 /* ── The expandable order card ─────────────────────────────────────────────
    Moved in from _orders.css. OrdersTab renders these alongside the stat row and
    the status buttons above, so the tab's styles were split across two partials.
@@ -164,6 +164,7 @@
 .order-detail-item a { color: var(--color-text); text-decoration: none; font-weight: 600; }
 .order-status-select { display: flex; align-items: center; gap: 12px; }
 .order-status-select label { font-size: 0.88rem; font-weight: 600; color: var(--color-text-muted); }
+
 /* ---- States -------------------------------------------------------------------- */
 
 .status-btn:hover { border-color: var(--color-navy); color: var(--color-navy); }
@@ -176,6 +177,7 @@
 
 .order-card-header:hover { background: #fafafa; }
 .order-detail-item a:hover { color: var(--color-red); }
+
 /* ---- Variants -------------------------------------------------------------- */
 
 .order-detail-item.full { grid-column: 1 / -1; }
