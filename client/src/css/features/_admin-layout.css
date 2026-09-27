@@ -1,0 +1,115 @@
+/* ==========================================================
+   Admin layout — the dashboard frame, its tab bar and the
+   shared empty / error states
+
+   Each tab's own styles are in _admin-products.css,
+   _admin-form.css, _admin-filters.css, _admin-import.css,
+   _admin-orders.css and _admin-stats.css.
+
+   Two rules the old file opened with are gone: a first .admin
+   block that the redesign further down overrode in every
+   declaration (900px max-width, 40px margin) and
+   `.admin-products h2`, whose container no JSX renders.
+   ========================================================== */
+
+/* ===== ADMIN REDESIGN ===== */
+.admin {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px 60px;
+  direction: rtl;
+}
+
+/* ---- Elements ------------------------------------------------------------------ */
+
+.admin h1 {
+  font-size: 1.8rem;
+  margin-bottom: 30px;
+  color: var(--color-text);
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 0 0;
+  margin-bottom: 24px;
+}
+
+.admin-header h1 {
+  font-size: 1.6rem;
+  color: var(--color-text);
+  flex: 1;
+}
+
+.admin-count {
+  background: var(--color-border-soft);
+  color: #666;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+}
+
+/* Tabs */
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+  border-bottom: 2px solid var(--color-border-soft);
+  padding-bottom: 0;
+}
+
+.admin-tab {
+  background: none;
+  border: none;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: var(--color-text-subtle);
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+}
+
+.admin-empty {
+  text-align: center;
+  color: var(--color-text-faint);
+  padding: 60px 0;
+  font-size: 1rem;
+}
+
+/* הודעת כישלון של פעולת כתיבה בניהול.
+   אותה שפה חזותית של .delivery-area-error בעגלה, אבל מחלקה משל
+   הניהול — שם שמדבר על משלוחים בתוך מסך המוצרים היה מבלבל. */
+.admin-error {
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-red);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: var(--color-red-dark);
+  line-height: 1.5;
+  margin: 12px 0;
+}
+
+/* ---- States -------------------------------------------------------------------- */
+
+.admin-tab:hover {
+  color: var(--color-text);
+}
+
+.admin-tab.active {
+  color: var(--color-text);
+  font-weight: 600;
+  border-bottom-color: var(--color-navy);
+}
+
+/* ---- Dark mode ----------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  /* אדמין */
+  .admin { background: var(--color-bg-dark); }
+
+  .admin-header h1 { color: var(--color-text-dark); }
+}
