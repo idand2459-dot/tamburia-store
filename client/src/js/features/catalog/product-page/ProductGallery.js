@@ -1,11 +1,24 @@
 /**
- * גלריית המוצר: התמונה הראשית, החצים, הנקודות והתמונות הקטנות.
+ * גלריית המוצר: התמונה הראשית, החצים והתמונות הקטנות.
  *
  * מחזיק את התמונה המוצגת ואת רשימת התמונות השבורות, כי שתיהן לא
  * מעניינות שום חלק אחר בעמוד. איפוס התמונה המוצגת במעבר מוצר נעשה
  * כאן ולא בהורה, מאותה סיבה — זה ה-state של הרכיב הזה.
+ *
+ * למוצר בלי תמונה מוצג אייקון הקטגוריה מ-CATEGORY_ICONS, כמו בכרטיס
+ * המוצר ברשת, ולא בלוק אפור עם המילים "אין תמונה".
+ *
+ * החלקה בטלפון היא תוספת קטנה על אותו state: הפרש ה-X בין תחילת
+ * הנגיעה לסופה, בלי גרירה ובלי אנימציה. בעברית הרצועה רצה מימין
+ * לשמאל, ולכן התמונה הבאה שוכנת *שמאלה* מהנוכחית — מי שמושך את
+ * הרצועה ימינה (dx חיובי) מביא אותה, וזה גם הכפתור שבצד שמאל.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
+import CATEGORY_ICONS from '../../../utils/categoryIcons';
+
+/* מתחת לזה זו נגיעה ולא החלקה. */
+const SWIPE_MIN_PX = 40;
 
 /** גוזר את רשימת התמונות של המוצר, בלי כפילויות. */
 function imagesOf(product) {
@@ -26,45 +39,90 @@ function ProductGallery({ product }) {
   const [brokenImages, setBrokenImages] = useState(() => new Set());
   const markBroken = (src) => setBrokenImages((prev) => new Set(prev).add(src));
 
+  const touchStartX = useRef(null);
+
   useEffect(() => { setCurrentImageIndex(0); }, [product.id]);
 
   const allImages = imagesOf(product);
   const hasMultipleImages = allImages.length > 1;
+  const currentImage = allImages[currentImageIndex];
+  const showImage = Boolean(currentImage) && !brokenImages.has(currentImage);
+  const Icon = CATEGORY_ICONS[product.category];
 
   /** עובר לתמונה הקודמת בגלריה. */
   function prevImage() { setCurrentImageIndex(i => i === 0 ? allImages.length - 1 : i - 1); }
   /** עובר לתמונה הבאה בגלריה. */
   function nextImage() { setCurrentImageIndex(i => i === allImages.length - 1 ? 0 : i + 1); }
 
+  /** שומר את נקודת ההתחלה של הנגיעה. */
+  function handleTouchStart(e) {
+    touchStartX.current = e.changedTouches[0].clientX;
+  }
+
+  /** מחליף תמונה אם הנגיעה הייתה החלקה לרוחב. */
+  function handleTouchEnd(e) {
+    const startX = touchStartX.current;
+    touchStartX.current = null;
+    if (startX === null || !hasMultipleImages) return;
+
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) < SWIPE_MIN_PX) return;
+    if (dx > 0) nextImage(); else prevImage();
+  }
+
   return (
-    <div className="product-page-gallery">
-      <div className="product-page-image-wrap">
-        {allImages.length > 0 && !brokenImages.has(allImages[currentImageIndex])
-          ? <img
-              src={allImages[currentImageIndex]}
-              alt={product.name}
-              className="product-page-image"
-              onError={() => markBroken(allImages[currentImageIndex])}
-            />
-          : <div className="product-page-no-image">אין תמונה</div>
-        }
+    <div className="product-gallery">
+      <div className="product-gallery-frame">
+        <div
+          className="product-gallery-window"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {showImage
+            ? <img
+                src={currentImage}
+                alt={product.name}
+                className="product-gallery-image"
+                onError={() => markBroken(currentImage)}
+              />
+            : <div className="product-gallery-empty">
+                {Icon && <Icon size={72} strokeWidth={1.25} aria-hidden="true" />}
+                <span>אין עדיין תמונה למוצר הזה</span>
+              </div>
+          }
+        </div>
+
         {hasMultipleImages && (
           <>
-            <button className="gallery-arrow gallery-arrow-right" onClick={prevImage}>‹</button>
-            <button className="gallery-arrow gallery-arrow-left" onClick={nextImage}>›</button>
-            <div className="gallery-dots">
-              {allImages.map((_, i) => (
-                <button key={i} className={`gallery-dot ${i === currentImageIndex ? 'active' : ''}`} onClick={() => setCurrentImageIndex(i)} />
-              ))}
-            </div>
+            <button
+              type="button"
+              className="product-gallery-arrow product-gallery-arrow--prev"
+              onClick={prevImage}
+              aria-label="התמונה הקודמת">
+              <ChevronRight size={20} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="product-gallery-arrow product-gallery-arrow--next"
+              onClick={nextImage}
+              aria-label="התמונה הבאה">
+              <ChevronLeft size={20} aria-hidden="true" />
+            </button>
           </>
         )}
       </div>
+
       {hasMultipleImages && (
-        <div className="gallery-thumbnails">
+        <div className="product-gallery-thumbs">
           {allImages.map((img, i) => (
-            <button key={i} className={`gallery-thumb ${i === currentImageIndex ? 'active' : ''}`} onClick={() => setCurrentImageIndex(i)}>
-              <img src={img} alt={`תמונה ${i + 1}`} onError={() => markBroken(img)} />
+            <button
+              key={i}
+              type="button"
+              className={`product-gallery-thumb ${i === currentImageIndex ? 'is-active' : ''}`}
+              aria-label={`תמונה ${i + 1}`}
+              aria-pressed={i === currentImageIndex}
+              onClick={() => setCurrentImageIndex(i)}>
+              <img src={img} alt="" onError={() => markBroken(img)} />
             </button>
           ))}
         </div>
