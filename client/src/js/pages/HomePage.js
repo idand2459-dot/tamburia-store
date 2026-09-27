@@ -3,7 +3,7 @@
  * שני המחשבונים, חוות הדעת ושאלות נפוצות.
  */
 import { useState, useEffect, useRef, Fragment } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Crown, Star } from 'lucide-react';
 import CategoryPage from './CategoryPage';
 import WhyUs from '../components/WhyUs';
@@ -18,10 +18,36 @@ import heroWide from '../../assets/images/sections/hero-tools-1916.webp';
 import heroMid from '../../assets/images/sections/hero-tools-1600.webp';
 import heroMobile from '../../assets/images/sections/hero-tools-mobile-900.webp';
 
+/**
+ * גולל אל מקטע בעמוד כשההגעה אליו ביקשה את זה ב-state של הניווט.
+ * כרגע יש צרכן אחד: כפתור "לקטגוריות" במסך ה-404, שאין לו נתיב משלו
+ * לנווט אליו כי רשת הקטגוריות היא מקטע בעמוד הזה.
+ *
+ * ה-requestAnimationFrame אינו קישוט. StoreLayout מאפס את הגלילה
+ * לראש העמוד בכל מעבר כתובת, ואפקט של רכיב אב רץ *אחרי* האפקטים של
+ * ילדיו — כלומר אחרי זה. דחייה של פריים אחד מציבה את הגלילה אחרי
+ * האיפוס, וזה גם נראה טוב יותר: העמוד נפתח בראשו וגולל משם.
+ */
+function useScrollToSection(state) {
+  useEffect(() => {
+    const selector = state?.scrollTo;
+    if (!selector) return undefined;
+
+    const frame = requestAnimationFrame(() => {
+      const el = document.querySelector(selector);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [state]);
+}
+
 /** מציג את עמוד הבית. */
 function HomePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { addBundleToCart } = useStore();
+
+  useScrollToSection(location.state);
 
   // הדירוג מגיע מחוות הדעת המאושרות בפועל. אם אין אף אחת, הפריט
   // נעלם — עדיף בלי מספר מאשר מספר שאינו מבוסס על כלום.
