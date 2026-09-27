@@ -1,6 +1,32 @@
-import { BookOpen, Star, Headset, Handshake, Banknote, CalendarDays, Clock } from 'lucide-react';
+/**
+ * עמוד אודות — הסיפור, ארבעת היתרונות ושעות הפעילות.
+ */
+import { BookOpen, Headset, Handshake, Banknote, CalendarDays, Clock } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import { HoursTable } from './Contact';
+
+const POINTS = [
+  {
+    Icon: Headset,
+    title: 'עזרה טכנית מקצועית',
+    text: 'יש שאלה? אנחנו כאן לעזור. אנרי ישמח לייעץ על כל בעיה טכנית',
+  },
+  {
+    Icon: Handshake,
+    title: 'יחס אישי ואדיב',
+    text: 'כל לקוח מקבל תשומת לב אישית — אנחנו לא חנות אנונימית',
+  },
+  {
+    Icon: Banknote,
+    title: 'מחירים טובים',
+    text: 'איכות גבוהה במחיר הוגן — בלי הפתעות ובלי מחירים מנופחים',
+  },
+  {
+    Icon: CalendarDays,
+    title: 'ניסיון של 30+ שנה',
+    text: 'מאז 1991 אנחנו נותנים שירות לאלפי לקוחות מרוצים באזור',
+  },
+];
 
 /** מציג את עמוד האודות. */
 function About() {
@@ -12,13 +38,13 @@ function About() {
         accent="מאז 1991"
         subtitle="המומחים שלך לצביעה, בנייה וכלי עבודה"
       />
- 
+
       <div className="about-sections">
- 
-        {/* Story */}
-        <section className="about-card">
-          <div className="about-card-icon"><BookOpen size={32} aria-hidden="true" /></div>
-          <h2>הסיפור שלנו</h2>
+
+        {/* הסיפור */}
+        <section className="about-card about-story">
+          <span className="about-card-icon"><BookOpen size={22} strokeWidth={1.75} aria-hidden="true" /></span>
+          <h2 className="about-card-title">הסיפור שלנו</h2>
           <p>
             טכניק טמבור נוסדה בשנת 1991 על ידי אנרי דביר, איש מקצוע בעל ניסיון של למעלה משלושה עשורים בתחום.
             מה שהתחיל כחנות שכונתית קטנה בפתח תקווה הפך לאחד מהגורמים המקצועיים והאמינים ביותר באזור.
@@ -28,45 +54,36 @@ function About() {
             אלא קבלת ייעוץ מקצועי אמיתי ממי שחי ונושם את התחום.
           </p>
         </section>
- 
-        {/* Why us */}
-        <section className="about-card">
-          <div className="about-card-icon"><Star size={32} aria-hidden="true" /></div>
-          <h2>למה לבחור בנו?</h2>
+
+        {/* היתרונות — ארבעה כרטיסים, לא כרטיס אחד עם רשת בתוכו */}
+        <section className="about-points">
+          <div className="about-points-head">
+            <span className="section-pill section-pill--light">היתרונות שלנו</span>
+            <h2 className="about-points-title">
+              למה לבחור <span className="about-points-accent">בנו?</span>
+            </h2>
+          </div>
           <div className="why-us-grid">
-            <div className="why-us-item">
-              <span className="why-icon"><Headset size={28} aria-hidden="true" /></span>
-              <h3>עזרה טכנית מקצועית</h3>
-              <p>יש שאלה? אנחנו כאן לעזור. אנרי ישמח לייעץ על כל בעיה טכנית</p>
-            </div>
-            <div className="why-us-item">
-              <span className="why-icon"><Handshake size={28} aria-hidden="true" /></span>
-              <h3>יחס אישי ואדיב</h3>
-              <p>כל לקוח מקבל תשומת לב אישית — אנחנו לא חנות אנונימית</p>
-            </div>
-            <div className="why-us-item">
-              <span className="why-icon"><Banknote size={28} aria-hidden="true" /></span>
-              <h3>מחירים טובים</h3>
-              <p>איכות גבוהה במחיר הוגן — בלי הפתעות ובלי מחירים מנופחים</p>
-            </div>
-            <div className="why-us-item">
-              <span className="why-icon"><CalendarDays size={28} aria-hidden="true" /></span>
-              <h3>ניסיון של 30+ שנה</h3>
-              <p>מאז 1991 אנחנו נותנים שירות לאלפי לקוחות מרוצים באזור</p>
-            </div>
+            {POINTS.map(({ Icon, title, text }) => (
+              <div className="why-us-item" key={title}>
+                <span className="why-icon"><Icon size={22} strokeWidth={1.75} aria-hidden="true" /></span>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </div>
+            ))}
           </div>
         </section>
- 
-        {/* Hours */}
-        <section className="about-card">
-          <div className="about-card-icon"><Clock size={32} aria-hidden="true" /></div>
-          <h2>שעות פעילות</h2>
+
+        {/* שעות פעילות */}
+        <section className="about-card about-hours">
+          <span className="about-card-icon"><Clock size={22} strokeWidth={1.75} aria-hidden="true" /></span>
+          <h2 className="about-card-title">שעות פעילות</h2>
           <HoursTable />
         </section>
- 
+
       </div>
     </div>
   );
 }
- 
+
 export default About;
