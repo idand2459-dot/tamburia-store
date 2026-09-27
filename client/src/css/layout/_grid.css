@@ -17,5 +17,5 @@ main {
 
 @media (prefers-color-scheme: dark) {
   /* דפי about/contact/returns */
-  .page-container { background: #0f0f1a; }
+  .page-container { background: var(--color-bg-dark); }
 }

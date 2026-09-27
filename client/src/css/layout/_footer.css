@@ -4,7 +4,7 @@
 
 /* ===== FOOTER ===== */
 .site-footer {
-  background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%);
+  background: linear-gradient(135deg, var(--color-bg-dark-deep) 0%, var(--color-navy) 100%);
   color: #ccc;
   margin-top: 60px;
   direction: rtl;
@@ -31,7 +31,7 @@
 
 .footer-about-text {
   font-size: 0.88rem;
-  color: #888;
+  color: var(--color-text-subtle);
   line-height: 1.7;
   margin-bottom: 20px;
 }
@@ -40,7 +40,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #25d366;
+  background: var(--color-whatsapp);
   color: white;
   padding: 9px 18px;
   border-radius: 20px;
@@ -62,7 +62,7 @@
   color: white;
   margin-bottom: 16px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #e63946;
+  border-bottom: 2px solid var(--color-red);
   display: inline-block;
 }
 
@@ -83,7 +83,7 @@
 .footer-link {
   background: none;
   border: none;
-  color: #888;
+  color: var(--color-text-subtle);
   font-size: 0.85rem;
   cursor: pointer;
   font-family: 'Heebo', 'Segoe UI', sans-serif;
@@ -92,7 +92,7 @@
   transition: color 0.15s;
 }
 
-.footer-link:hover { color: #e63946; }
+.footer-link:hover { color: var(--color-red); }
 
 /* צור קשר */
 .footer-contact-list {
@@ -107,18 +107,18 @@
   align-items: center;
   gap: 10px;
   font-size: 0.85rem;
-  color: #888;
+  color: var(--color-text-subtle);
 }
 
 .footer-contact-icon { font-size: 1rem; flex-shrink: 0; }
 
 .footer-contact-link {
-  color: #aaa;
+  color: var(--color-text-faint);
   text-decoration: none;
   transition: color 0.15s;
 }
 
-.footer-contact-link:hover { color: #e63946; }
+.footer-contact-link:hover { color: var(--color-red); }
 
 /* תחתית */
 .footer-bottom {
@@ -129,7 +129,7 @@
   justify-content: center;
   gap: 12px;
   font-size: 0.78rem;
-  color: #555;
+  color: var(--color-text-muted);
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -139,19 +139,19 @@
 .footer-bottom-link {
   background: none;
   border: none;
-  color: #555;
+  color: var(--color-text-muted);
   font-size: 0.78rem;
   cursor: pointer;
   font-family: 'Heebo', 'Segoe UI', sans-serif;
   transition: color 0.15s;
 }
 
-.footer-bottom-link:hover { color: #e63946; }
+.footer-bottom-link:hover { color: var(--color-red); }
 
 /* Dark mode */
 @media (prefers-color-scheme: dark) {
   .site-footer {
-      background: linear-gradient(135deg, #050510 0%, #0a0a1a 100%);
+      background: linear-gradient(135deg, #050510 0%, var(--color-bg-dark-deep) 100%);
     }
 }
 
@@ -180,7 +180,6 @@
   .footer-bottom-sep { display: none; }
 }
 
-.site-footer         { margin-top: 60px; }
 
 @media (max-width: 768px) {
   .site-footer      { margin-top: 40px; }

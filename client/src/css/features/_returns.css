@@ -5,7 +5,7 @@
 
 /* ===== RETURNS PAGE ===== */
 .returns-hero {
-  background: linear-gradient(135deg, var(--color-navy) 0%, #16213e 60%, #0f3460 100%);
+  background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-deep) 60%, #0f3460 100%);
   color: white;
   padding: 60px 40px;
   text-align: center;
@@ -129,10 +129,12 @@
   margin: 0;
 }
 
+/* The !important this used to carry did nothing: the rule it was fighting,
+   `.refund-option p`, sets margin: 0 as well. */
 .refund-note {
   font-size: 0.82rem;
   color: #999;
-  margin: 0 !important;
+  margin: 0;
 }
 
 /* Steps */
@@ -230,7 +232,7 @@
 }
 
 .returns-list-item.red {
-  background: #fff5f5;
+  background: var(--color-error-bg);
   border: 1px solid #ffc0c0;
 }
 

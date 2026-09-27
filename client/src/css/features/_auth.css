@@ -5,7 +5,7 @@
 /* ===== ADMIN LOGIN ===== */
 .admin-login-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+  background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-deep) 60%, #0f3460 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -30,13 +30,13 @@
 .admin-login-title {
   font-size: 1.6rem;
   font-weight: 800;
-  color: #1a1a2e;
+  color: var(--color-text);
   margin-bottom: 4px;
 }
 
 .admin-login-sub {
   font-size: 0.9rem;
-  color: #aaa;
+  color: var(--color-text-faint);
   margin-bottom: 32px;
 }
 
@@ -48,7 +48,7 @@
 
 .admin-login-input {
   padding: 14px 18px;
-  border: 2px solid #e0e0e0;
+  border: 2px solid var(--color-border);
   border-radius: 12px;
   font-size: 1rem;
   font-family: 'Heebo', 'Segoe UI', sans-serif;
@@ -60,23 +60,23 @@
 }
 
 .admin-login-input:focus {
-  border-color: #1a1a2e;
+  border-color: var(--color-navy);
 }
 
 .admin-login-input.error {
-  border-color: #e63946;
-  background: #fff5f5;
+  border-color: var(--color-red);
+  background: var(--color-error-bg);
 }
 
 .admin-login-error {
   font-size: 0.85rem;
-  color: #e63946;
+  color: var(--color-red);
   margin: 0;
 }
 
 .admin-login-btn {
   padding: 14px;
-  background: #1a1a2e;
+  background: var(--color-navy);
   color: white;
   border: none;
   border-radius: 12px;
@@ -89,7 +89,7 @@
 }
 
 .admin-login-btn:hover {
-  background: #e63946;
+  background: var(--color-red);
 }
 
 /* אנימציית רעידה */

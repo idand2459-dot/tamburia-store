@@ -9,7 +9,7 @@
 
 /* ===== ABOUT PAGE ===== */
 .about-hero {
-  background: linear-gradient(135deg, var(--color-navy) 0%, #16213e 60%, #0f3460 100%);
+  background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-deep) 60%, #0f3460 100%);
   color: white;
   padding: 60px 40px;
   text-align: center;

@@ -6,7 +6,7 @@
 .back-btn {
   margin-bottom: 20px;
   padding: 8px 20px;
-  background-color: #1a1a2e;
+  background-color: var(--color-navy);
   color: white;
   border: none;
   border-radius: 8px;
@@ -15,7 +15,7 @@
 }
 
 .back-btn:hover {
-  background-color: #e63946;
+  background-color: var(--color-red);
 }
 
 /* ===== WHATSAPP BUTTON ===== */
@@ -25,20 +25,21 @@
   right: 28px;
   width: 58px;
   height: 58px;
-  background: #25d366;
+  background: var(--color-whatsapp);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(37, 211, 102, 0.45);
+  box-shadow: 0 4px 16px rgba(var(--color-whatsapp-rgb), 0.45);
   z-index: 999;
   transition: transform 0.2s, box-shadow 0.2s;
   text-decoration: none;
+  animation: whatsapp-pop 0.4s ease 1s both;
 }
 
 .whatsapp-float:hover {
   transform: scale(1.1);
-  box-shadow: 0 6px 24px rgba(37, 211, 102, 0.6);
+  box-shadow: 0 6px 24px rgba(var(--color-whatsapp-rgb), 0.6);
 }
 
 .whatsapp-float svg {
@@ -50,7 +51,7 @@
 .whatsapp-tooltip {
   position: absolute;
   right: 68px;
-  background: #1a1a2e;
+  background: var(--color-navy);
   color: white;
   padding: 6px 12px;
   border-radius: 8px;
@@ -69,10 +70,10 @@
   left: 100%;
   transform: translateY(-50%);
   border: 6px solid transparent;
-  border-right-color: #1a1a2e;
+  border-right-color: var(--color-navy);
   /* flip for RTL */
   border-right: none;
-  border-left: 6px solid #1a1a2e;
+  border-left: 6px solid var(--color-navy);
   left: auto;
   right: 100%;
 }
@@ -88,23 +89,6 @@
   100% { transform: scale(1); opacity: 1; }
 }
 
-.whatsapp-float {
-  animation: whatsapp-pop 0.4s ease 1s both;
-}
-
-/* מובייל — קצת יותר קטן */
-@media (max-width: 480px) {
-  .whatsapp-float {
-      bottom: 20px;
-      right: 20px;
-      width: 52px;
-      height: 52px;
-    }
-
-  .whatsapp-tooltip {
-      display: none;
-    }
-}
 
 /* ===== כפתור חזור למעלה ===== */
 .scroll-to-top {
@@ -113,7 +97,7 @@
   right: 28px;
   width: 44px;
   height: 44px;
-  background: #1a1a2e;
+  background: var(--color-navy);
   color: white;
   border: none;
   border-radius: 50%;
@@ -129,7 +113,7 @@
 }
 
 .scroll-to-top:hover {
-  background: #e63946;
+  background: var(--color-red);
   transform: translateY(-3px);
 }
 
@@ -138,6 +122,26 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-@media (max-width: 480px) {
-  .scroll-to-top { bottom: 90px; right: 20px; }
+/* ---- Responsive --------------------------------------------------------- */
+
+/* Was two separate 480px blocks. Merged, and moved to 430: every declaration
+   here only makes the floating buttons a little smaller and tucks them closer to
+   the corner, so nothing in the page layout depends on where the line falls.
+   Between 431 and 480px they now stay at their full size. */
+@media (max-width: 430px) {
+  .whatsapp-float {
+      bottom: 20px;
+      right: 20px;
+      width: 52px;
+      height: 52px;
+    }
+
+  .whatsapp-tooltip {
+      display: none;
+    }
+
+  .scroll-to-top {
+      bottom: 90px;
+      right: 20px;
+    }
 }
