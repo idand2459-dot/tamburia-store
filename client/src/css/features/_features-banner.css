@@ -1,18 +1,25 @@
 /* ==========================================================
    Features banner — the four-up strip of selling points
 
-   Rendered by FeaturesBanner.js. Third stop in the home page's
-   dark rhythm, and the quietest: --color-navy-950 again, but
-   with no glow at all and only a hairline at each edge. It is
-   meant to read as a breath between two worked sections, not
-   as a section of its own — hence the shallow padding, the
-   absence of cards, and no hover state anywhere in this file.
+   Rendered by FeaturesBanner.js, directly under the Hero. Same
+   --color-navy-950, no glow, no cards and no hover state
+   anywhere in this file: the strip is the Hero's base, not a
+   section of its own. Delivery area, same-day pickup, 30 years
+   and technical advice are what a visitor wants in the first
+   seconds, which is why the strip sits here rather than further
+   down the page.
 
-   What went: the --color-bg-alt band, the white-card look, the
-   3px red border-top, the drop shadow, the per-item light
-   borders and the whole dark-mode block that repainted them.
-   The strip is dark in both themes now, so nothing is left to
-   override.
+   One hairline, along the bottom edge only. The top edge is
+   inside a continuous dark block — the Hero's bottom fade lands
+   on this exact colour — so a seam there would draw a line
+   across nothing. The bottom edge is where the dark block meets
+   the first light section, and that is what the hairline marks.
+
+   What went: the light band it used to sit on, the white-card
+   look, the 3px red border-top, the drop shadow, the per-item
+   light borders and the whole dark-mode block that repainted
+   them. The strip is dark in both themes now, so nothing is
+   left to override.
    ========================================================== */
 
 /* ---- Block --------------------------------------------------------------- */
@@ -23,12 +30,15 @@
   position: relative;
 }
 
-/* The two hairlines, the same gradient as the one along the top of the WhyUs
-   section: lit in the middle, faded out at both ends. */
-.features-strip::before,
+/* The seam with the first light section below: the shared hairline of every
+   dark/light boundary on the page — lit in the middle, faded out at both ends,
+   and always drawn on the dark side of the edge. A dark surface dissolving into
+   a near-white one over a gradient just turns grey, so the edge itself is hard
+   and this 1px is the only thing on it. */
 .features-strip::after {
   content: '';
   position: absolute;
+  bottom: 0;
   left: 0;
   right: 0;
   height: 1px;
@@ -39,10 +49,6 @@
     transparent);
   pointer-events: none;
 }
-
-.features-strip::before { top: 0; }
-
-.features-strip::after { bottom: 0; }
 
 /* ---- Elements ------------------------------------------------------------ */
 

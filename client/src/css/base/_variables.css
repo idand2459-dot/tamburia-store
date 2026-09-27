@@ -31,10 +31,9 @@
   --color-green-dark: #1b4332;
   --color-whatsapp: #25d366;
   --color-whatsapp-dark: #1ebe59;  /* the WhatsApp buttons' hover */
-  /* two accent colours used on single buttons in the calculators. They are here
-     because both are used with an alpha and rule 5 wants a triple for that; the
-     darker stops they sit beside in those gradients are still literals. */
-  --color-teal: #2a9d8f;
+  /* an accent used on a single button in the calculators. It is here because it
+     is used with an alpha and rule 5 wants a triple for that; the darker stop it
+     sits beside in that gradient is still a literal. */
   --color-green-bright: #16a34a;
 
   /* Brand colours as RGB triples, for the cases that need an alpha:
@@ -51,18 +50,29 @@
   --color-purple-rgb: 124, 58, 237;       /* --color-purple    #7c3aed */
   --color-green-rgb: 45, 106, 79;         /* --color-green     #2d6a4f */
   --color-whatsapp-rgb: 37, 211, 102;     /* --color-whatsapp  #25d366 */
-  --color-bg-dark-rgb: 15, 15, 26;        /* --color-bg-dark   #0f0f1a */
-  --color-teal-rgb: 42, 157, 143;         /* --color-teal      #2a9d8f */
   --color-green-bright-rgb: 22, 163, 74;  /* --color-green-bright #16a34a */
+  --color-blush-rgb: 251, 241, 242;       /* --color-blush      #fbf1f2 */
+  --color-blush-deep-rgb: 246, 231, 234;  /* --color-blush-deep #f6e7ea */
 
   /* Light theme surfaces.
      --color-bg is the backdrop *behind* content and must stay in the brand
-     family — a cool tint of the navy, never cream or white. --color-surface is
-     what sits *on* it (cards, inputs, tables, modal panels) and does stay
-     white. --color-bg-alt is one step deeper, for a full-width band that has
-     to separate from the page around it. */
-  --color-bg: #eceef5;            /* page background */
-  --color-bg-alt: #e3e6ef;        /* section band, one step deeper */
+     family — never cream, never white. It is now the blush below: a very light
+     tint of the brand red, so a storefront page reads as warm rather than as
+     office grey. --color-surface is what sits *on* it (cards, inputs, tables,
+     modal panels) and does stay white.
+
+     The blush pair are the home page's two light surfaces. Adjacent light
+     sections alternate between them, and the half-step between the two is the
+     only thing separating them — there is no hairline on a light/light seam.
+
+     --color-bg-admin is the one page that opts out: the admin panel is a work
+     tool, not the shop, so it keeps the neutral cool slate --color-bg used to
+     be. It is applied in features/_admin-layout.css and features/_auth.css,
+     because body still paints --color-bg under everything. */
+  --color-blush: #fbf1f2;         /* main light surface */
+  --color-blush-deep: #f6e7ea;    /* a half-step deeper, for the neighbour */
+  --color-bg: var(--color-blush);  /* page background */
+  --color-bg-admin: #eceef5;      /* admin only: neutral cool slate */
   --color-surface: #ffffff;
   --color-surface-alt: #f5f5f5;
   --color-border: #e0e0e0;

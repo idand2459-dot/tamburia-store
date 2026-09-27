@@ -20,6 +20,24 @@
   direction: rtl;
 }
 
+/* The admin's own page backdrop. --color-bg turned blush when the storefront
+   went warm, and the panel is a work tool rather than the shop, so it keeps the
+   neutral cool slate that --color-bg used to be.
+
+   Why a fixed pseudo-element and not `background` on .admin: .admin is the
+   outermost element the /admin route renders, but it is a centred 1100px
+   column, so painting it would leave the page background showing down both
+   sides. This covers the viewport instead. z-index: -1 puts it under the
+   panel's own content while still painting over the root background. */
+.admin::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--color-bg-admin);
+  pointer-events: none;
+}
+
 /* ---- Elements ------------------------------------------------------------------ */
 
 .admin h1 {

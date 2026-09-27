@@ -3,9 +3,15 @@
    ========================================================================== */
 
 /* ===== ADMIN LOGIN ===== */
+/* background-color and background-image rather than the `background` shorthand:
+   the gradient covers the viewport, but a short viewport with a tall login box
+   scrolls past it, and what showed through was the page background — blush,
+   since the storefront went warm. The admin is a work tool and keeps the
+   neutral slate, here and in _admin-layout.css. */
 .admin-login-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-deep) 60%, #0f3460 100%);
+  background-color: var(--color-bg-admin);
+  background-image: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-deep) 60%, #0f3460 100%);
   display: flex;
   align-items: center;
   justify-content: center;

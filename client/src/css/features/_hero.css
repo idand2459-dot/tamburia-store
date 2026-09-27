@@ -83,9 +83,13 @@
 /* Bottom fade
    NOTE: this used to fade into --color-bg, the page background, and therefore
    needed a dark-mode twin. It no longer does either: what sits below the Hero
-   is the categories section, which is --color-navy-950 in both themes, so the
-   fade now names that colour directly and the Hero flows into it as one
-   surface. The dark-mode block that overrode this rule is gone with it.
+   is the features strip, which is --color-navy-950 in both themes, so the fade
+   names that colour directly and the two read as one continuous dark block —
+   the strip is the Hero's base, not a section of its own. The dark-mode block
+   that overrode this rule is gone with it, and so is the strip's top hairline.
+
+   80px, not the 140 it had: the fade only has to land the photograph on the
+   colour below it. Over 140px it was eating the bottom of the frame.
 
    Straight from transparent to the colour below — the 40% stop this used to
    have was rgba(248,248,246,0.02), a leftover of the old cream page
@@ -96,7 +100,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 140px;
+  height: 80px;
   z-index: 2;
   background: linear-gradient(to bottom, transparent, var(--color-navy-950));
   pointer-events: none;
