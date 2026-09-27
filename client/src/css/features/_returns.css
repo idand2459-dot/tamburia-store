@@ -1,252 +1,183 @@
 /* ==========================================================
-   Returns page — the policy cards, the refund options and the
-   numbered steps
+   Returns page — the frame: the policy cards, the yes/no lists
+   and the two legal notes
 
    The page's dark header is the shared
    components/_page-header.css, which replaced this file's
-   .returns-hero.
+   .returns-hero. The three blocks that sit inside these cards
+   and say what to do — the refund options, the numbered steps
+   and the contact block — are features/_returns-steps.css,
+   split out when this file passed the 300-line target.
+
+   This is the longest text on the site, so everything here
+   serves reading: an 820px measure, 1rem at 1.8, and one card
+   per topic on the blush background rather than one wall.
+
+   No green. The "what you can return" lists carry a navy/purple
+   Check and the "what you cannot" list a red X — green/red is
+   the one pairing a red-green colour blindness erases, and on a
+   page whose whole job is telling those two apart that is the
+   wrong place to lean on hue. The tiles differ in shape of mark
+   as well as in colour.
    ========================================================== */
 
-/* ---- Elements -------------------------------------------------------------- */
+/* ---- Block --------------------------------------------------------------- */
 
 .returns-sections {
-  max-width: 760px;
-  margin: 40px auto;
-  padding: 0 20px 60px;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 56px 24px 80px;
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
+/* ---- Elements ------------------------------------------------------------ */
+
+/* Cards
+   -------------------------------------------------------------------------- */
+
+/* relative for the legal note's red bar below — every card carries it so the
+   variant does not have to redeclare positioning. */
 .returns-card {
-  background: white;
-  border-radius: 20px;
+  position: relative;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   padding: 32px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
 }
 
 .returns-card-icon {
-  font-size: 2rem;
-  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+  margin-bottom: 16px;
 }
 
-.returns-card h2 {
+.returns-card-title {
   font-size: 1.3rem;
-  color: var(--color-text);
-  font-weight: 700;
-  margin-bottom: 14px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  margin: 0 0 14px;
 }
 
-.returns-card > p {
-  color: var(--color-text-muted);
-  line-height: 1.8;
+.returns-text {
   font-size: 1rem;
+  color: rgba(var(--color-navy-rgb), 0.75);
+  line-height: 1.8;
+  margin: 0;
 }
 
-/* Lists */
+.returns-text strong {
+  color: var(--color-navy);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Lists
+   -------------------------------------------------------------------------- */
+
 .returns-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
+/* No fill and no border on the row itself: the tinted panels this used to
+   have made five stacked rows read as five cards inside a card. The mark
+   carries the colour and the row carries the words. */
 .returns-list-item {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   align-items: flex-start;
-  padding: 16px;
-  border-radius: 12px;
+  padding: 10px 0;
 }
 
 .returns-item-icon {
-  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
   margin-top: 2px;
 }
 
 .returns-list-item strong {
-  font-size: 1rem;
-  color: var(--color-text);
   display: block;
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
   margin-bottom: 4px;
 }
 
 .returns-list-item p {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  line-height: 1.6;
+  font-size: 0.94rem;
+  color: rgba(var(--color-navy-rgb), 0.7);
+  line-height: 1.75;
   margin: 0;
 }
 
-/* Refund options */
-.refund-options {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 14px;
+/* ---- Variants ------------------------------------------------------------ */
+
+/* "Yes" — purple tile, purple mark. Purple because navy on a navy tint is
+   invisible, and red here belongs to the other list. */
+.returns-list--allow .returns-item-icon {
+  background: rgba(var(--color-purple-rgb), 0.12);
+  color: var(--color-purple);
 }
 
-.refund-option {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  padding: 16px;
-  background: #f8f8f6;
-  border-radius: 12px;
-}
-
-.refund-icon {
-  font-size: 1.5rem;
-  margin-top: 2px;
-}
-
-.refund-option strong {
-  font-size: 1rem;
-  color: var(--color-text);
-  display: block;
-  margin-bottom: 4px;
-}
-
-.refund-option p {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  line-height: 1.6;
-  margin: 0;
-}
-
-/* The !important this used to carry did nothing: the rule it was fighting,
-   `.refund-option p`, sets margin: 0 as well. */
-.refund-note {
-  font-size: 0.82rem;
-  color: #999;
-  margin: 0;
-}
-
-/* Steps */
-.returns-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.returns-step {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.step-number {
-  background: var(--color-navy);
-  color: white;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.9rem;
-  flex-shrink: 0;
-}
-
-.returns-step p {
-  color: #444;
-  line-height: 1.7;
-  margin: 4px 0 0;
-  font-size: 0.95rem;
-}
-
-.returns-step a {
-  color: var(--color-text);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-/* Contact */
-.returns-contact {
-  text-align: center;
-}
-
-.returns-contact p {
-  color: #666;
-  margin-bottom: 20px;
-}
-
-.returns-contact-btns {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.returns-phone-btn {
-  padding: 12px 28px;
-  background: var(--color-navy);
-  color: white;
-  border-radius: 24px;
-  text-decoration: none;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: background 0.2s;
-}
-
-/* ---- States ---------------------------------------------------------------- */
-
-.returns-step a:hover {
+/* "No" — red tile, red mark. */
+.returns-list--deny .returns-item-icon {
+  background: rgba(var(--color-red-rgb), 0.1);
   color: var(--color-red);
 }
 
-.returns-phone-btn:hover {
+/* The two legal notes. Blush-deep instead of white and a red bar on the start
+   edge, so they read as an aside about the law rather than as another topic
+   the page is explaining. */
+.returns-card--note {
+  background: var(--color-blush-deep);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.returns-card--note::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
   background: var(--color-red);
 }
 
-.returns-phone-btn.secondary:hover {
-  background: var(--color-navy);
-  color: white;
+/* on blush-deep the 10% red of the other cards' tile all but disappears */
+.returns-card--note .returns-card-icon {
+  background: rgba(var(--color-red-rgb), 0.14);
 }
 
-/* ---- Variants -------------------------------------------------------------- */
+/* ---- Responsive ---------------------------------------------------------- */
 
-.returns-card.highlight {
-  border-right: 5px solid var(--color-navy);
-}
-
-.returns-list-item.green {
-  background: #f0fff4;
-  border: 1px solid #b7e4c7;
-}
-
-.returns-list-item.red {
-  background: var(--color-error-bg);
-  border: 1px solid #ffc0c0;
-}
-
-.returns-phone-btn.secondary {
-  background: white;
-  color: var(--color-text);
-  border: 2px solid var(--color-navy);
-}
-
-/* ---- Dark mode ------------------------------------------------------------- */
-
-@media (prefers-color-scheme: dark) {
-  .returns-card {
-      background: var(--color-navy);
-      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+@media (max-width: 768px) {
+  .returns-sections {
+      padding: 40px 20px 64px;
     }
 
-  .returns-card h2 { color: var(--color-text-dark); }
+  .returns-card {
+      padding: 24px 20px;
+    }
 
-  .refund-option { background: var(--color-bg-dark); }
-
-  .refund-option strong { color: var(--color-text-dark); }
-
-  .refund-option p { color: var(--color-text-faint); }
-
-  .returns-list-item.green { background: #0d1f15; border-color: #1a3d28; }
-
-  .returns-list-item.red { background: #1f0d0d; border-color: #3d1a1a; }
-
-  .returns-step p { color: var(--color-text-faint); }
-
-  .returns-step a { color: var(--color-text-faint); }
+  .returns-card-title {
+      font-size: 1.15rem;
+    }
 }
