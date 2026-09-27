@@ -3,16 +3,19 @@ import {
   Scissors, FlaskConical, Receipt, Package, Store, Shield, Coins, CreditCard,
   Gift, ScrollText, Phone, Truck, ClipboardList,
 } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 import { ADDRESS, PHONES, hoursSummary } from '../utils/storeInfo';
 
 /** מציג את עמוד מדיניות ההחזרות. */
 function Returns() {
   return (
     <div className="page-container">
-      <div className="returns-hero">
-        <h1>מדיניות החזרים</h1>
-        <p>אנחנו כאן לעזור — קראו את המדיניות שלנו</p>
-      </div>
+      <PageHeader
+        pill="מדיניות"
+        title="מדיניות"
+        accent="החזרים"
+        subtitle="אנחנו כאן לעזור — קראו את המדיניות שלנו"
+      />
 
       <div className="returns-sections">
 

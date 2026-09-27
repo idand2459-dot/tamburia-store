@@ -1,33 +1,12 @@
 /* ==========================================================
-   About page — the intro hero, the three cards and the opening
-   hours table
+   About page — the story card, the four points and the hours
 
-   The hero h1's font-family used to sit in one rule shared with
-   the contact and returns heroes; each page now declares its
-   own, so no partial reaches into another.
+   The page's dark header is not here: it is the shared
+   components/_page-header.css, which replaced this file's
+   .about-hero along with the contact and returns twins.
    ========================================================== */
 
-/* ===== ABOUT PAGE ===== */
-.about-hero {
-  background: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-deep) 60%, #0f3460 100%);
-  color: white;
-  padding: 60px 40px;
-  text-align: center;
-}
-
 /* ---- Elements -------------------------------------------------------------- */
-
-.about-hero h1 {
-  font-size: 2.8rem;
-  font-weight: 800;
-  margin-bottom: 12px;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-}
-
-.about-hero p {
-  font-size: 1.1rem;
-  color: var(--color-text-faint);
-}
 
 .about-sections {
   max-width: 860px;
@@ -143,10 +122,6 @@
 /* ---- Responsive ------------------------------------------------------------ */
 
 @media (max-width: 768px) {
-  .about-hero h1 {
-      font-size: 2rem;
-    }
-
   .why-us-grid {
       grid-template-columns: 1fr;
     }

@@ -32,6 +32,9 @@
 /* the purple label above every section title on the home page; the five
    sections that wear it all import nothing, they just use the class */
 @import './components/_section-pill.css';
+/* the dark band that opens about, contact and returns. After _section-pill.css
+   because it wears that pill, though it overrides nothing in it. */
+@import './components/_page-header.css';
 
 /* 4. Feature modules */
 /* The admin dashboard, one partial per tab. No two of these carry the same
