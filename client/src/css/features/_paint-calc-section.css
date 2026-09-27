@@ -1,0 +1,160 @@
+/* ==========================================================
+   Paint calculator section — the dark band the calculator sits
+   in: surface, background photograph, top hairline and header
+
+   Split out of _paint-calculator.css, which owns the form and
+   was over the 300-line ceiling once the photograph and the
+   header pill landed. That file is now only the input side;
+   _paint-pigment.css is the colour picker and
+   _paint-calc-results.css the output panel.
+
+   Fourth stop in the home page's dark rhythm: back to
+   --color-navy-950 after the WhyUs section's navy-900, and the
+   only section whose light comes from a photograph rather than
+   a gradient. Always dark, so no prefers-color-scheme block.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+/* The bottom padding is the photograph's clearance, not a spacing choice. The
+   image is laid out at width: 100%, so its height — and with it the height of
+   the paint items standing along its bottom edge — scales with the viewport.
+   Measured, not guessed: in the outer thirds of the frame — the only part the
+   700px content column can reach — the items' lit mass begins 32% of the image
+   height above its bottom edge, and the image is 16:9, so 0.32 x 0.5622 =
+   18vw is the true clearance. 20vw takes it with ~15px to spare at every
+   width; the clamp stops it running away on an ultrawide monitor and keeps a
+   floor on a narrow one. Thin rim-light on the tall bucket does pass behind
+   the lowest card, which is the point of glass. See .paint-calc-bg below. */
+.paint-calc-section {
+  background-color: var(--color-navy-950);
+  padding: 100px 40px clamp(200px, 20vw, 380px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* The boundary with the WhyUs section above, the same hairline that section
+   carries on its own top edge and the features strip on both of its. */
+.paint-calc-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  z-index: 2;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(var(--color-red-rgb), 0.6),
+    rgba(var(--color-purple-rgb), 0.6),
+    transparent);
+  pointer-events: none;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* Anchored to the bottom and never stretched: the section is far taller than a
+   16:9 image, so object-fit: cover would have to crop left and right — which is
+   exactly where the paint buckets, the brush, the roller tray and the swatch
+   fan are. Full width, natural height, bottom edge flush with the section's.
+
+   The mask is the top fade: the photograph's top is near-black but not quite
+   --color-navy-950, and 90px of dissolve is enough that no seam shows. */
+.paint-calc-bg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: auto;
+  z-index: 0;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 90px);
+  mask-image: linear-gradient(to bottom, transparent, #000 90px);
+}
+
+.paint-calc-content {
+  max-width: 700px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.paint-calc-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+/* This section used to borrow .faq-tag from the FAQ page, which is a red pill
+   on a light background. It has its own now, matching the purple pill the
+   categories and WhyUs sections wear. */
+.calc-tag {
+  display: inline-block;
+  background: rgba(var(--color-purple-rgb), 0.18);
+  border: 1px solid rgba(var(--color-purple-rgb), 0.35);
+  color: var(--color-purple-soft);
+  padding: 6px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 18px;
+}
+
+/* flex, because the title carries a Lucide brush ahead of the words */
+.paint-calc-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 2.2rem;
+  font-weight: var(--font-weight-extrabold);
+  color: white;
+  margin-bottom: 10px;
+}
+
+.paint-calc-subtitle {
+  font-size: var(--font-size-body);
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* Below this the photograph goes away entirely. display: none on a
+   loading="lazy" image means the browser never fetches it, so phones pay
+   nothing for it — and with the image gone the huge bottom padding it needed
+   goes with it. What replaces it is a glow, declared only in this block
+   because there is nothing for it to do on desktop. */
+@media (max-width: 768px) {
+  .paint-calc-section {
+      padding: 64px 24px 72px;
+    }
+
+  .paint-calc-bg {
+      display: none;
+    }
+
+  .paint-calc-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background: radial-gradient(ellipse 70% 40% at 50% 100%,
+        rgba(var(--color-red-rgb), 0.16), transparent 70%);
+      pointer-events: none;
+    }
+}
+
+/* Kept at 600px rather than moved to 560: the results grid drops to one column
+   here and .paint-coats turns into a column, and the title shrinks because the
+   section just got narrower. Splitting the cosmetic half off to 560 would
+   desynchronise the two. */
+@media (max-width: 600px) {
+  .paint-calc-section {
+      padding: 50px 20px 60px;
+    }
+
+  .paint-calc-title {
+      font-size: 1.5rem;
+    }
+}
