@@ -1,7 +1,7 @@
 /**
  * עמוד הבית: כרזה, בחירת קטגוריה, שני המחשבונים וחוות הדעת.
  */
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Crown, Star } from 'lucide-react';
 import CategoryPage from './CategoryPage';
@@ -25,6 +25,17 @@ function HomePage() {
   // הדירוג מגיע מחוות הדעת המאושרות בפועל. אם אין אף אחת, הפריט
   // נעלם — עדיף בלי מספר מאשר מספר שאינו מבוסס על כלום.
   const [rating, setRating] = useState(null);
+
+  // אנימציית הכניסה של תמונת הכרזה מתחילה בטעינה שלה ולא ביצירת האלמנט,
+  // כדי שבחיבור איטי היא לא תופיע בבת אחת אחרי שהאנימציה כבר נגמרה.
+  const [heroLoaded, setHeroLoaded] = useState(false);
+  const heroImgRef = useRef(null);
+
+  useEffect(() => {
+    // תמונה שכבר ב-cache מסיימת להיטען לפני שה-onLoad מחובר, ואז האירוע
+    // לא יירה לעולם. complete מכסה גם את המקרה הזה.
+    if (heroImgRef.current?.complete) setHeroLoaded(true);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,9 +76,11 @@ function HomePage() {
             בלי aria-hidden על ה-picture: הוא אינו אלמנט מרונדר ואינו תומך
             ב-ARIA (eslint מתלונן בצדק). alt="" על ה-img הוא מה שמוציא תמונה
             דקורטיבית מעץ הנגישות. */}
-        <picture className="hero-media">
+        <picture className={`hero-media ${heroLoaded ? 'is-loaded' : ''}`}>
           <source media="(max-width: 767px)" srcSet={heroMobile} />
           <img
+            ref={heroImgRef}
+            onLoad={() => setHeroLoaded(true)}
             src={heroMid}
             srcSet={`${heroMid} 1600w, ${heroWide} 1916w`}
             sizes="100vw"

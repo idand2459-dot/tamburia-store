@@ -47,7 +47,12 @@
    Always dark, like the Hero: the colours are fixed and there is no
    prefers-color-scheme override for .navbar. */
 .navbar {
-  background: rgba(7, 11, 20, 0.72);
+  /* Nearly opaque, matching the ticker's #070b14 below it, so the two read as
+     one dark unit. It cannot be lighter than that: the navbar sits at the very
+     top of the document, so at scroll 0 there is no Hero behind it to darken
+     the glass — only the page's own slate background, which showed through as
+     grey. The blur still does its job once content scrolls underneath. */
+  background: rgba(7, 11, 20, 0.94);
   -webkit-backdrop-filter: saturate(160%) blur(14px);
   backdrop-filter: saturate(160%) blur(14px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -595,6 +600,20 @@
    and the CTAs. It reads as one unit with the navbar, so it lives in one file
    with it — and keeping it in a partial that loads after this one would have
    let the old rules win over the new ones. */
+/* direction: ltr on the strip, rtl back on each item, and that is a bug fix
+   rather than a preference.
+
+   The track is several screens wide. In an RTL block an inline box that does not
+   fit anchors its *right* edge to the container and overflows leftwards — so the
+   track started with its end on screen and everything else off to the left, and
+   translateX(-50%) then walked it further left until the bar was empty. It is
+   most obvious on a narrow screen, where one item is left hanging at the edge
+   with blank space beside it.
+
+   Anchored LTR the track starts at the left edge, so -50% lands exactly on the
+   second copy and the loop closes on itself. Each item keeps direction: rtl, so
+   the Hebrew and the icon order inside it are unchanged, and the strip still
+   travels the same way it did. */
 .marquee-banner {
   background: #070b14;
   color: rgba(255, 255, 255, 0.72);
@@ -602,6 +621,7 @@
   white-space: nowrap;
   padding: 9px 0;
   position: relative;
+  direction: ltr;
 }
 
 /* the only colour in the strip */
@@ -620,9 +640,13 @@
   pointer-events: none;
 }
 
+/* width: max-content, not the default 100%: -50% below has to be half of the
+   *content*, and a block-level flex container would have measured half of the
+   viewport instead. */
 .marquee-track {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  width: max-content;
   animation: marquee-scroll 35s linear infinite;
 }
 
@@ -630,14 +654,28 @@
   animation-play-state: paused;
 }
 
-/* MarqueeBanner.js renders the item list exactly twice, so -50% of the track
-   is exactly the start of the second copy and the loop has no seam. */
+/* One group per copy of the item list, and min-width: 100vw is what makes the
+   loop seamless at *any* width. -50% of the track is exactly one group, so the
+   frame at 100% is identical to the frame at 0% — but only while a single group
+   is at least as wide as the screen. The ten items come to roughly 1500px, so
+   without the min-width a monitor wider than that would show blank space at the
+   end of every pass. Padded out, space-around spreads the items over the extra
+   room instead, which reads as deliberate. */
+.marquee-group {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 100vw;
+  justify-content: space-around;
+}
+
 @keyframes marquee-scroll {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
 
 .marquee-item {
+  direction: rtl;
   font-size: 0.82rem;
   font-weight: 500;
   font-family: 'Heebo', 'Segoe UI', sans-serif;
