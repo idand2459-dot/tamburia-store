@@ -17,12 +17,29 @@ import { errorMessageFrom, NETWORK_ERROR } from '../utils/apiErrors';
 // מגיעה תוך פחות משנייה, והסקר נשאר רק למקרה שהחיבור למטה.
 const POLL_MS = 120000;
 
-/** מנהל את ההזמנות, את זיהוי החדשות ואת חישובי הסטטיסטיקות. */
-export function useAdminOrders(api) {
+/**
+ * מנהל את ההזמנות, את זיהוי החדשות ואת חישובי הסטטיסטיקות.
+ *
+ * onNewOrder נקרא בשני המקומות שבהם מתגלית הזמנה חדשה — הודעת
+ * ה-WebSocket והסקר החלופי — ליד הקונפטי. ההוק אינו יודע מה עושים
+ * בהתראה, ולכן הצליל אינו כאן אלא ב-useNewOrderChime שהמסך מרכיב.
+ */
+export function useAdminOrders(api, { onNewOrder } = {}) {
   const [orders, setOrders] = useState([]);
   const [showConfetti, setShowConfetti] = useState(false);
   const [ordersError, setOrdersError] = useState('');
   const prevOrdersCount = useRef(null);
+
+  // דרך ref, כדי שפונקציה חדשה בכל רינדור לא תרשום מחדש את מאזין
+  // ה-WebSocket ולא תאפס את שעון הסקר.
+  const onNewOrderRef = useRef(onNewOrder);
+  onNewOrderRef.current = onNewOrder;
+
+  /** מודיע על הזמנה חדשה: קונפטי, ומה שהמסך ביקש להוסיף. */
+  const announceNewOrder = useCallback(() => {
+    setShowConfetti(true);
+    onNewOrderRef.current?.();
+  }, []);
 
   /**
    * שולף את ההזמנות. שלושת הקוראים צריכים אותו שליפה אבל התייחסות
@@ -45,13 +62,13 @@ export function useAdminOrders(api) {
     }
 
     if (detectNew && prevOrdersCount.current !== null && arr.length > prevOrdersCount.current) {
-      setShowConfetti(true);
+      announceNewOrder();
     }
     if (prevOrdersCount.current === null || detectNew || markSeen) {
       prevOrdersCount.current = arr.length;
     }
     setOrders(arr);
-  }, [api]);
+  }, [api, announceNewOrder]);
 
   /** טוען את ההזמנות מחדש, בלי לגעת בספירה שנראתה לאחרונה. */
   const fetchOrders = useCallback(() => loadOrders(), [loadOrders]);
@@ -63,7 +80,7 @@ export function useAdminOrders(api) {
   // order:created אומר.
   useWebSocket({
     'order:created': () => {
-      setShowConfetti(true);
+      announceNewOrder();
       loadOrders({ markSeen: true });
     },
   });

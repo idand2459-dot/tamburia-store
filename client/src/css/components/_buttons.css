@@ -2,22 +2,6 @@
    Buttons and floating action buttons
    ========================================================================== */
 
-/* Back button */
-.back-btn {
-  margin-bottom: 20px;
-  padding: 8px 20px;
-  background-color: var(--color-navy);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.back-btn:hover {
-  background-color: var(--color-red);
-}
-
 /* ===== WHATSAPP BUTTON ===== */
 .whatsapp-float {
   position: fixed;

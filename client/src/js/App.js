@@ -59,7 +59,7 @@ function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
 
-        <Route path="/admin" element={<Navigate to="/admin/stats" replace />} />
+        <Route path="/admin" element={<Navigate to="/admin/orders" replace />} />
         <Route path="/admin/:tab" element={<AdminRoute />} />
       </Routes>
     </StoreContext.Provider>

@@ -20,7 +20,8 @@
    .order-history-totals. The chevron stopped borrowing the
    admin's .order-expand-btn — it was a span pretending to be a
    button — because the whole head of the card is one
-   <button aria-expanded> now.
+   <button aria-expanded> now. The admin's own card has since
+   followed, and that class is gone from the stylesheet.
    ========================================================== */
 
 /* ---- Block --------------------------------------------------------------- */
