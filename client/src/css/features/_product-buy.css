@@ -1,0 +1,150 @@
+/* ==========================================================
+   Product buy row — quantity, add to cart, wishlist
+
+   One row, 48px tall: the stepper, the one red button this page
+   is built around, and the wishlist square. What it replaces was
+   a navy "הוסף לעגלה" with no quantity at all — buying three of
+   something meant pressing it three times — and a green WhatsApp
+   share button the same width underneath it.
+
+   The phone's version of this row, once it has scrolled out of
+   sight, is features/_product-buy-bar.css. Both use this page's
+   one add handler, so the two can never disagree about quantity
+   or about which variant is selected.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.product-buy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.product-buy-qty {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 48px;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.15);
+  border-radius: 14px;
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.product-buy-qty button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 100%;
+  border: none;
+  background: none;
+  color: var(--color-navy);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+/* tabular-nums so the row does not shift a pixel between 1 and 11 */
+.product-buy-qty-value {
+  min-width: 26px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-navy);
+}
+
+.product-buy-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  height: 48px;
+  border: none;
+  border-radius: 14px;
+  background: var(--color-red);
+  color: white;
+  font-family: var(--font-family-base);
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.product-buy-wish {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.15);
+  border-radius: 14px;
+  background: var(--color-surface);
+  color: var(--color-navy);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+/* ---- States ------------------------------------------------------------- */
+
+.product-buy-qty button:hover:not(:disabled) {
+  background: rgba(var(--color-navy-rgb), 0.05);
+}
+
+.product-buy-qty button:disabled {
+  color: rgba(var(--color-navy-rgb), 0.25);
+  cursor: not-allowed;
+}
+
+/* :not(.is-added) rather than a stronger rule below: the pointer is still over
+   the button at the moment the confirmation class goes on, and :hover:not(…)
+   outweighs a second class, so the hover colour is excluded here instead of
+   overridden with !important there. Two :not()s rather than :not(a, b) — the
+   selector list inside :not() is newer than the browsers this builds for. */
+.product-buy-add:hover:not(:disabled):not(.is-added) {
+  background: var(--color-red-dark);
+}
+
+/* The confirmation flash, the same green the product card's cart button uses
+   for the same moment. */
+.product-buy-add.is-added {
+  background: var(--color-green);
+}
+
+.product-buy-add:disabled {
+  background: rgba(var(--color-navy-rgb), 0.12);
+  color: rgba(var(--color-navy-rgb), 0.4);
+  cursor: not-allowed;
+}
+
+.product-buy-wish:hover,
+.product-buy-wish[aria-pressed='true'] {
+  border-color: var(--color-red);
+  color: var(--color-red);
+}
+
+.product-buy-qty button:focus-visible,
+.product-buy-add:focus-visible,
+.product-buy-wish:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+/* ---- Responsive --------------------------------------------------------- */
+
+/* The row still fits at 390px — 48 + stepper + a flexible button — but the
+   label needs the extra room, so the stepper gives some back. */
+@media (max-width: 430px) {
+  .product-buy-qty button {
+      width: 32px;
+    }
+
+  .product-buy-add {
+      font-size: 0.95rem;
+    }
+}

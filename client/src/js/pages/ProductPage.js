@@ -2,22 +2,36 @@
  * עמוד המוצר: מרכיב את הגלריה, הבוררים, חוות הדעת והמוצרים הדומים.
  *
  * כאן נשאר רק מה שיותר מחלק אחד צריך: הגרסה, הצבע והמידה שנבחרו
- * (כי מהם מורכב הפריט שנכנס לעגלה), מצב ההוספה והמועדפים, השליפות,
- * והאיפוס במעבר בין מוצרים. כל חלק שמחזיק state שרק הוא צריך —
- * התמונה המוצגת בגלריה, מצב טופס הביקורת — מחזיק אותו בעצמו.
+ * (כי מהם מורכב הפריט שנכנס לעגלה), הכמות — שגם שורת הקנייה וגם הפס
+ * הצף בטלפון מוסיפים לפיה — מצב ההוספה והמועדפים, השליפות, והאיפוס
+ * במעבר בין מוצרים. כל חלק שמחזיק state שרק הוא צריך — התמונה
+ * המוצגת בגלריה, מצב טופס הביקורת — מחזיק אותו בעצמו.
+ *
+ * הבדיקה שלפני ההוספה לעגלה לא פותחת יותר alert של הדפדפן: היא
+ * מסמנת איזה בורר חסר (missing) ומעבירה אליו את המיקוד, והבורר עצמו
+ * מציג את השורה האדומה.
  */
-import { useState, useEffect } from 'react';
-import { Check, ShoppingCart, Heart } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { Check, Share2 } from 'lucide-react';
 import { toggleWishlist, isInWishlist } from '../utils/wishlistUtils';
+import categories from '../features/catalog/categories';
 import ProductBreadcrumb from '../features/catalog/product-page/ProductBreadcrumb';
 import ProductGallery from '../features/catalog/product-page/ProductGallery';
 import ProductVariantSelector from '../features/catalog/product-page/ProductVariantSelector';
+import ProductBuyRow from '../features/catalog/product-page/ProductBuyRow';
+import ProductTrustRow from '../features/catalog/product-page/ProductTrustRow';
+import ProductBuyBar from '../features/catalog/product-page/ProductBuyBar';
 import ProductReviewsSection from '../features/catalog/product-page/ProductReviewsSection';
 import RelatedProducts from '../features/catalog/product-page/RelatedProducts';
 import Stars from '../features/catalog/product-page/Stars';
 
 const MAX_RECENT = 6;
 const MAX_RELATED = 3;
+
+/* כמה זמן הכפתור מראה "נוסף לעגלה". מספיק כדי להיראות, קצר מכדי
+   להיראות כמו מצב תקוע — בערך כמו כרטיס המוצר ברשת. */
+const ADDED_MS = 1500;
 
 /** קורא את רשימת המוצרים שנצפו לאחרונה. */
 function getRecentlyViewed() {
@@ -28,8 +42,33 @@ function getRecentlyViewed() {
 /** מוסיף מוצר לראש רשימת הנצפים לאחרונה. */
 function addToRecentlyViewed(product) {
   const recent = getRecentlyViewed().filter(p => p.id !== product.id);
-  const updated = [{ id: product.id, name: product.name, price: product.price, image_url: product.image_url, in_stock: product.in_stock }, ...recent].slice(0, MAX_RECENT);
+  const updated = [{ id: product.id, name: product.name, price: product.price, image_url: product.image_url, in_stock: product.in_stock, category: product.category }, ...recent].slice(0, MAX_RECENT);
   localStorage.setItem('tamburia-recent', JSON.stringify(updated));
+}
+
+/**
+ * מדווח כשהאלמנט שב-ref יצא מהמסך.
+ *
+ * זה מה שמחליט אם הפס הצף בטלפון מוצג. בדפדפן בלי IntersectionObserver
+ * התשובה נשארת "בתוך המסך", כלומר הפס פשוט לא יופיע — כפתור ההוספה
+ * האמיתי תמיד שם, וה-CSS מציג את הפס רק בטלפון בכל מקרה.
+ */
+function useOutOfView(ref, resetKey) {
+  const [outOfView, setOutOfView] = useState(false);
+
+  useEffect(() => {
+    setOutOfView(false);
+    const element = ref.current;
+    if (!element || typeof IntersectionObserver !== 'function') return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setOutOfView(!entry.isIntersecting),
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [ref, resetKey]);
+
+  return outOfView;
 }
 
 /** מציג את עמוד המוצר. */
@@ -38,16 +77,31 @@ function ProductPage({ product, onAddToCart, onSelectProduct }) {
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(hasVariants ? product.variants[0] : null);
+  const [quantity, setQuantity] = useState(1);
+  const [missing, setMissing] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [addedToCart, setAddedToCart] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [inWishlist, setInWishlist] = useState(false);
 
+  const addBtnRef = useRef(null);
+  const reviewsRef = useRef(null);
+  const variantRef = useRef(null);
+  const colorRef = useRef(null);
+  const sizeRef = useRef(null);
+  const addedTimer = useRef(null);
+
   const inStock = product.in_stock !== false;
+  const category = categories.find(c => c.id === product.category);
+  const price = selectedVariant ? selectedVariant.price : product.price;
+  const showBuyBar = useOutOfView(addBtnRef, product.id);
+
+  useEffect(() => () => clearTimeout(addedTimer.current), []);
 
   useEffect(() => {
     setSelectedColor(null); setSelectedSize(null); setAddedToCart(false);
+    setQuantity(1); setMissing(null);
     setSelectedVariant(hasVariants ? product.variants[0] : null);
 
     addToRecentlyViewed(product);
@@ -70,22 +124,29 @@ function ProductPage({ product, onAddToCart, onSelectProduct }) {
       .then(r => r.json()).then(setReviews).catch(() => {});
   }, [product.id]);
 
+  /** מחזיר את שם הבורר הראשון שחסרה בו בחירה, או null. */
+  function firstMissingChoice() {
+    if (hasVariants && !selectedVariant) return 'variant';
+    if (product.colors && product.colors.length > 0 && !selectedColor) return 'color';
+    if (product.sizes && product.sizes.length > 0 && !selectedSize) return 'size';
+    return null;
+  }
+
   /** מוסיף את המוצר לעגלה לאחר בחירת הגרסה, הצבע והמידה. */
   function handleAddToCart() {
-    if (hasVariants && !selectedVariant) {
-      alert('אנא בחר גרסה לפני ההוספה לעגלה'); return;
+    const missingChoice = firstMissingChoice();
+    if (missingChoice) {
+      setMissing(missingChoice);
+      const focusTarget = { variant: variantRef, color: colorRef, size: sizeRef }[missingChoice];
+      focusTarget.current?.focus();
+      return;
     }
-    if (product.colors && product.colors.length > 0 && !selectedColor) {
-      alert('אנא בחר צבע לפני ההוספה לעגלה'); return;
-    }
-    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
-      alert('אנא בחר מידה לפני ההוספה לעגלה'); return;
-    }
-    const effectivePrice = selectedVariant ? selectedVariant.price : product.price;
+
     const variantLabel = selectedVariant ? selectedVariant.label : null;
-    onAddToCart({ ...product, price: effectivePrice, selectedColor, selectedSize, selectedVariant: variantLabel });
+    onAddToCart({ ...product, price, selectedColor, selectedSize, selectedVariant: variantLabel }, quantity);
     setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2000);
+    clearTimeout(addedTimer.current);
+    addedTimer.current = setTimeout(() => setAddedToCart(false), ADDED_MS);
   }
 
   /** משתף את המוצר בוואטסאפ. */
@@ -93,6 +154,11 @@ function ProductPage({ product, onAddToCart, onSelectProduct }) {
     const url = window.location.href;
     const text = `היי! ראיתי את המוצר הזה בטכניק טמבור ונראה לי מעניין 🔧\n*${product.name}* — ₪${product.price}\n${url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  }
+
+  /** גולל לחוות הדעת, מסיכום הדירוג שליד שם המוצר. */
+  function scrollToReviews() {
+    reviewsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   const avgRating = reviews.length > 0
@@ -108,77 +174,101 @@ function ProductPage({ product, onAddToCart, onSelectProduct }) {
 
         {/* Details */}
         <div className="product-page-details">
-          <h1 className="product-page-name">{product.name}</h1>
-          {product.sku && <p className="product-page-sku">מק"ט: <span>{product.sku}</span></p>}
+          <div className="product-detail-head">
+            {category && (
+              <Link className="product-detail-category" to={`/category/${category.id}`}>
+                {category.name}
+              </Link>
+            )}
 
-          {avgRating && (
-            <div className="product-rating-summary">
-              <Stars rating={Math.round(avgRating)} />
-              <span className="product-rating-avg">{avgRating}</span>
-              <span className="product-rating-count">({reviews.length} ביקורות)</span>
+            <div className="product-detail-name-row">
+              <h1 className="product-detail-name">{product.name}</h1>
+              <button
+                type="button"
+                className="product-detail-share"
+                onClick={handleShare}
+                aria-label="שיתוף בוואטסאפ">
+                <Share2 size={18} aria-hidden="true" />
+              </button>
             </div>
-          )}
 
-          <p className="product-page-price">
-            ₪{selectedVariant ? selectedVariant.price : product.price}
-            {hasVariants && !selectedVariant && <span className="price-from"> (בחר גרסה)</span>}
-          </p>
+            {product.sku && <p className="product-detail-sku">מק"ט: {product.sku}</p>}
 
-          <div className={`product-page-stock ${inStock ? 'in-stock' : 'out-of-stock'}`}>
-            <span className="stock-dot" />
-            {inStock ? 'יש במלאי' : 'אזל מהמלאי'}
+            {avgRating && (
+              <button type="button" className="product-detail-rating" onClick={scrollToReviews}>
+                <Stars rating={Math.round(avgRating)} />
+                <span className="product-detail-rating-avg">{avgRating}</span>
+                <span className="product-detail-rating-count">({reviews.length} ביקורות)</span>
+              </button>
+            )}
+          </div>
+
+          <div className="product-detail-pricing">
+            <span className="product-detail-price">₪{price}</span>
+            {hasVariants && !selectedVariant && (
+              <span className="product-detail-price-note">בחר גרסה</span>
+            )}
+            <span className={`product-detail-stock ${inStock ? 'product-detail-stock--in' : 'product-detail-stock--out'}`}>
+              {inStock
+                ? <><Check size={14} aria-hidden="true" /> יש במלאי</>
+                : 'אזל מהמלאי'}
+            </span>
           </div>
 
           <ProductVariantSelector
             product={product}
             hasVariants={hasVariants}
             selectedVariant={selectedVariant}
-            onSelectVariant={setSelectedVariant}
+            onSelectVariant={v => { setSelectedVariant(v); setMissing(null); }}
             selectedColor={selectedColor}
-            onSelectColor={setSelectedColor}
+            onSelectColor={c => { setSelectedColor(c); setMissing(null); }}
             selectedSize={selectedSize}
-            onSelectSize={setSelectedSize}>
+            onSelectSize={s => { setSelectedSize(s); setMissing(null); }}
+            missing={missing}
+            variantRef={variantRef}
+            colorRef={colorRef}
+            sizeRef={sizeRef}>
             {product.description && (
-              <div className="product-page-description">
-                <h3>תיאור המוצר</h3>
+              <div className="product-detail-description">
+                <h2>תיאור המוצר</h2>
                 <p>{product.description}</p>
               </div>
             )}
           </ProductVariantSelector>
 
-          <div className="product-page-actions">
-            <button
-              className={`product-page-add-btn ${!inStock ? 'disabled' : ''} ${addedToCart ? 'added' : ''}`}
-              onClick={handleAddToCart} disabled={!inStock}>
-              {!inStock ? 'אזל מהמלאי'
-                : addedToCart ? <><Check size={18} aria-hidden="true" /> נוסף לעגלה!</>
-                : <><ShoppingCart size={18} aria-hidden="true" /> הוסף לעגלה</>}
-            </button>
-            <button
-              className={`product-wishlist-btn ${inWishlist ? 'active' : ''}`}
-              onClick={() => { const added = toggleWishlist(product); setInWishlist(added); }}
-              title={inWishlist ? 'הסר מרשימת המשאלות' : 'הוסף לרשימת המשאלות'}>
-              <Heart size={20} fill={inWishlist ? 'currentColor' : 'none'} aria-hidden="true" />
-            </button>
-          </div>
+          <ProductBuyRow
+            quantity={quantity}
+            onQuantity={setQuantity}
+            inStock={inStock}
+            added={addedToCart}
+            onAdd={handleAddToCart}
+            addRef={addBtnRef}
+            productName={product.name}
+            inWishlist={inWishlist}
+            onToggleWishlist={() => setInWishlist(toggleWishlist(product))}
+          />
 
-          {/* שתף בוואטסאפ */}
-          <button className="product-share-btn" onClick={handleShare}>
-            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-            </svg>
-            שתף בוואטסאפ
-          </button>
+          <ProductTrustRow />
         </div>
       </div>
 
-      <ProductReviewsSection productId={product.id} reviews={reviews} />
+      <ProductReviewsSection ref={reviewsRef} productId={product.id} reviews={reviews} />
 
       <RelatedProducts
         recentlyViewed={recentlyViewed}
         relatedProducts={relatedProducts}
         onSelectProduct={onSelectProduct}
       />
+
+      {showBuyBar && (
+        <ProductBuyBar
+          price={price}
+          quantity={quantity}
+          inStock={inStock}
+          added={addedToCart}
+          onAdd={handleAddToCart}
+        />
+      )}
     </div>
   );
 }

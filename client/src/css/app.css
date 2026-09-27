@@ -71,13 +71,21 @@
 @import './features/_project-calc-items.css';
 @import './features/_category-grid.css';
 /* The product page, outermost first: the page and its two columns, then the
-   image column and the trail above them. No selector appears in more than one
-   of these, so the order is the reading order rather than a cascade
-   constraint. */
+   image column, the trail above them, and the details card's contents from the
+   name down to the trust row. No selector appears in more than one of these, so
+   the order is the reading order rather than a cascade constraint — with one
+   exception, noted on _product-buy-bar.css. */
 @import './features/_product-page.css';
 @import './features/_product-gallery.css';
 @import './features/_breadcrumb.css';
+@import './features/_product-detail.css';
 @import './features/_product-options.css';
+@import './features/_product-buy.css';
+@import './features/_product-trust.css';
+/* The exception: while the phone's buy strip is up it lifts the two floating
+   buttons clear of it, so it has to come after components/_buttons.css, which
+   declares where they sit. It does — that file is in section 3 above. */
+@import './features/_product-buy-bar.css';
 @import './features/_related-products.css';
 @import './features/_product-reviews.css';
 /* The three steps of the cart flow, in order. */

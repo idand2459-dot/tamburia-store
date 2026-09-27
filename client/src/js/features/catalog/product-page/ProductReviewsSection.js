@@ -7,6 +7,9 @@
  *
  * ביקורת שנשלחה אינה מרעננת את הרשימה, כמו קודם: היא מתפרסמת רק
  * לאחר אישור בניהול, ולכן שליפה מחדש לא הייתה מציגה אותה בכל מקרה.
+ *
+ * ה-ref שמגיע בפרופס יושב על העוטף, ודרכו סיכום הדירוג שליד שם המוצר
+ * גולל לכאן. ב-React 19 ref הוא prop רגיל ואין צורך ב-forwardRef.
  */
 import { useState, useEffect } from 'react';
 import { X, PenLine, CheckCircle } from 'lucide-react';
@@ -15,7 +18,7 @@ import Stars from './Stars';
 const EMPTY_FORM = { reviewer_name: '', rating: 5, text: '' };
 
 /** מציג את רשימת חוות הדעת ואת טופס הכתיבה. */
-function ProductReviewsSection({ productId, reviews }) {
+function ProductReviewsSection({ productId, reviews, ref }) {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewForm, setReviewForm] = useState(EMPTY_FORM);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
@@ -39,7 +42,7 @@ function ProductReviewsSection({ productId, reviews }) {
   }
 
   return (
-    <div className="product-reviews">
+    <div className="product-reviews" ref={ref}>
       <div className="product-reviews-header">
         <h2>ביקורות על המוצר</h2>
         <button className="add-review-btn" onClick={() => setShowReviewForm(!showReviewForm)}>
