@@ -11,12 +11,23 @@
 
 /* ---- כתובת ---- */
 
+const STREET = 'בר כוכבא 52';
+const CITY = 'פתח תקווה';
+
+/* מה שנשלח לגוגל. שני הקישורים למטה נגזרים ממנו, כדי שכתובת שמשתנה
+   תשנה גם את הכפתור וגם את המפה המוטמעת. */
+const MAPS_QUERY = `${STREET} ${CITY}`;
+
 export const ADDRESS = {
-  street: 'בר כוכבא 52',
-  city: 'פתח תקווה',
+  street: STREET,
+  city: CITY,
   /** הצורה שרוב העמודים מציגים: "בר כוכבא 52, פתח תקווה" */
-  full: 'בר כוכבא 52, פתח תקווה',
-  mapsUrl: 'https://maps.google.com/?q=בר+כוכבא+52+פתח+תקווה',
+  full: `${STREET}, ${CITY}`,
+  /** הקישור שנפתח בלשונית חדשה מכפתור "פתח במפות". */
+  mapsUrl: `https://maps.google.com/?q=${MAPS_QUERY.replace(/ /g, '+')}`,
+  /** המפה המוטמעת בעמוד צור קשר. output=embed הוא מה שמחזיר מפה
+      נקייה בלי הממשק המלא של גוגל מפות. */
+  mapsEmbedUrl: `https://www.google.com/maps?q=${encodeURIComponent(MAPS_QUERY)}&output=embed`,
 };
 
 /* ---- טלפונים ---- */

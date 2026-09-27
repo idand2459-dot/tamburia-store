@@ -1,9 +1,8 @@
 /**
- * עמוד צור קשר — תצלום החזית לצד שלושת כרטיסי המידע.
+ * עמוד צור קשר — שלושת כרטיסי המידע ומפה מוטמעת מתחתם.
  */
 import { MapPin, Phone, Clock, ArrowLeft } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
-import storefrontPhoto from '../../assets/images/sections/contact-storefront-294.webp';
 import {
   ADDRESS, PHONES, HOURS, hoursRangePadded, todayRow,
 } from '../utils/storeInfo';
@@ -25,27 +24,6 @@ function Contact() {
 
       <div className="contact-layout">
 
-        {/* תצלום החזית. התמונה קטנה (294px רוחב מקורי), ולכן ה-CSS
-            תוחם את הלוח כדי שלא תימתח מעבר לגודלה האמיתי. */}
-        <figure className="contact-photo-panel">
-          {/* ה-div הוא מה שנושא את הפס האדום: figure עוטף גם את הכיתוב,
-              ופס שמוצמד לתחתיתו היה יושב מתחת לטקסט ולא מתחת לתמונה. */}
-          <div className="contact-photo-frame">
-            <img
-              className="contact-photo"
-              src={storefrontPhoto}
-              width="294"
-              height="160"
-              alt="חזית החנות טכניק טמבור ברחוב בר כוכבא 52 בפתח תקווה"
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-          <figcaption className="contact-photo-caption">
-            כך תזהו אותנו — הסוכך האדום בבר כוכבא 52
-          </figcaption>
-        </figure>
-
         <div className="contact-cards">
 
           {/* כתובת */}
@@ -53,6 +31,9 @@ function Contact() {
             <span className="contact-card-icon"><MapPin size={22} strokeWidth={1.75} aria-hidden="true" /></span>
             <h2 className="contact-card-title">כתובת</h2>
             <p className="contact-card-text">{ADDRESS.street}<br />{ADDRESS.city}</p>
+            {/* mt:auto ב-CSS דוחף את הכפתור לתחתית הכרטיס, כדי ששלושת
+                הכרטיסים בשורה ייגמרו באותו גובה גם כששניים מהם ארוכים
+                יותר ממנו. */}
             <a
               href={ADDRESS.mapsUrl}
               target="_blank"
@@ -87,6 +68,18 @@ function Contact() {
           </section>
 
         </div>
+
+        {/* המפה. title ולא alt — iframe נקרא לפי ה-title שלו, וזה מה
+            שקורא מסך ישמיע במקום כתובת גוגל. */}
+        <div className="contact-map">
+          <iframe
+            src={ADDRESS.mapsEmbedUrl}
+            title={`מפה: טכניק טמבור, ${ADDRESS.street} ${ADDRESS.city}`}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
+
       </div>
     </div>
   );
