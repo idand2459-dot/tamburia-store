@@ -1,96 +1,148 @@
 /* ==========================================================
    Features banner — the four-up strip of selling points
 
-   Rendered by FeaturesBanner.js. A full-width band, so it takes
-   the deeper slate rather than white: as a white stripe between
-   two slate sections it read as an unfinished area.
+   Rendered by FeaturesBanner.js. Third stop in the home page's
+   dark rhythm, and the quietest: --color-navy-950 again, but
+   with no glow at all and only a hairline at each edge. It is
+   meant to read as a breath between two worked sections, not
+   as a section of its own — hence the shallow padding, the
+   absence of cards, and no hover state anywhere in this file.
+
+   What went: the --color-bg-alt band, the white-card look, the
+   3px red border-top, the drop shadow, the per-item light
+   borders and the whole dark-mode block that repainted them.
+   The strip is dark in both themes now, so nothing is left to
+   override.
    ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.features-strip {
+  background-color: var(--color-navy-950);
+  padding: 40px 24px;
+  position: relative;
+}
+
+/* The two hairlines, the same gradient as the one along the top of the WhyUs
+   section: lit in the middle, faded out at both ends. */
+.features-strip::before,
+.features-strip::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(var(--color-red-rgb), 0.6),
+    rgba(var(--color-purple-rgb), 0.6),
+    transparent);
+  pointer-events: none;
+}
+
+.features-strip::before { top: 0; }
+
+.features-strip::after { bottom: 0; }
+
+/* ---- Elements ------------------------------------------------------------ */
 
 .features-banner {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  border-top: 3px solid var(--color-red);
-  background: var(--color-bg-alt);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  margin-top: 60px;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
 }
 
-/* ---- Elements -------------------------------------------------------------- */
-
+/* position: relative is for the divider below, which hangs off the item's
+   inline-end edge. */
 .feature-item {
+  position: relative;
   display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 28px 24px;
-  border-left: 1px solid var(--color-border-soft);
-  transition: background 0.2s;
+  align-items: center;
+  gap: 14px;
+  padding: 0 24px;
 }
+
+/* The divider between two items, built the way .hero-stat-div is: a gradient
+   that fades out at both ends rather than a hairline that stops dead. It is a
+   pseudo-element instead of an element of its own so the four items stay a
+   plain map in the JSX. left, not inset-inline-end: in RTL the inline-end edge
+   is the left one, and writing the physical side keeps this readable next to
+   the :last-child that switches it off. */
+.feature-item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 44px;
+  background: linear-gradient(to bottom,
+    transparent,
+    rgba(255, 255, 255, 0.12),
+    transparent);
+}
+
+.feature-item:last-child::after {
+  content: none;
+}
+
+/* Outlined, not filled: the WhyUs point tiles are the filled ones, and this
+   strip stays a step quieter than the section above it. */
 .feature-icon {
-  width: 48px;
-  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  color: var(--color-red);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--color-red-rgb), 0.35);
+  color: var(--color-red-soft);
 }
-.feature-icon svg {
-  width: 100%;
-  height: 100%;
-}
+
 .feature-text h3 {
   font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: 6px;
+  font-weight: var(--font-weight-bold);
+  color: white;
+  margin-bottom: 4px;
 }
+
 .feature-text p {
   font-size: 0.82rem;
-  color: #777;
+  color: rgba(255, 255, 255, 0.62);
   line-height: 1.5;
   margin: 0;
 }
 
-/* ---- States ---------------------------------------------------------------- */
-
-.feature-item:hover { background: #fafafa; }
-
-/* ---- Variants -------------------------------------------------------------- */
-
-.feature-item:last-child { border-left: none; }
-.feature-item:first-child { border-right: none; }
-
-/* ---- Responsive ------------------------------------------------------------ */
+/* ---- Responsive ---------------------------------------------------------- */
 
 @media (max-width: 900px) {
-  .features-banner { grid-template-columns: repeat(2, 1fr); }
+  .features-banner {
+      grid-template-columns: repeat(2, 1fr);
+      row-gap: var(--spacing-lg);
+    }
 
-  .feature-item:nth-child(2) { border-left: none; }
-
-  .feature-item:nth-child(3) { border-top: 1px solid var(--color-border-soft); }
-
-  .feature-item:nth-child(4) { border-top: 1px solid var(--color-border-soft); }
+  /* Two columns make the dividers a grid of lines rather than a row of
+     separators, so they come off entirely and the row gap does the work. */
+  .feature-item::after {
+      content: none;
+    }
 }
 
 @media (max-width: 560px) {
-  .features-banner { grid-template-columns: 1fr; }
+  .features-strip {
+      padding: 28px 20px;
+    }
 
-  .feature-item { border-left: none; border-top: 1px solid var(--color-border-soft); }
+  .features-banner {
+      grid-template-columns: 1fr;
+      row-gap: 18px;
+    }
 
-  .feature-item:first-child { border-top: none; }
-}
-
-@media (max-width: 768px) {
-  .features-banner { margin-top: 40px; }
-}
-
-/* ---- Dark mode ------------------------------------------------------------- */
-
-@media (prefers-color-scheme: dark) {
-  .features-banner { background: var(--color-navy); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-
-  .feature-item { border-left-color: var(--color-surface-dark); }
-
-  .feature-item:hover { background: var(--color-bg-dark); }
-
-  .feature-text h3 { color: var(--color-text-dark); }
-
-  .feature-text p { color: var(--color-text-subtle); }
+  /* A single column is a list, and a list reads from its inline-start edge —
+     so the items lose the side padding that was centring them in a cell. */
+  .feature-item {
+      padding: 0;
+    }
 }
