@@ -9,13 +9,13 @@ import CATEGORY_ICONS from '../utils/categoryIcons';
 import Reveal, { stagger } from '../components/Reveal';
 import { ArrowLeft } from 'lucide-react';
 
-/** מציג את כל הקטגוריות ככרטיסי זכוכית כהים על מקטע כהה. */
+/** מציג את כל הקטגוריות ככרטיסים לבנים על מקטע בהיר. */
 function CategoryPage({ onSelectCategory }) {
   return (
     <section className="category-section">
       <div className="category-section-inner">
         <Reveal as="div" variant="up" className="category-header">
-          <span className="section-pill">קטגוריות</span>
+          <span className="section-pill section-pill--light">קטגוריות</span>
           <h2 className="category-title">מה אתם <span>מחפשים?</span></h2>
           <p className="category-subtitle">
             {categories.length} קטגוריות · מאות מוצרים לבית ולעבודה
