@@ -1,6 +1,6 @@
 import { BookOpen, Star, Headset, Handshake, Banknote, CalendarDays, Clock } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
-import { HOURS, hoursRangePadded } from '../utils/storeInfo';
+import { HoursTable } from './Contact';
 
 /** מציג את עמוד האודות. */
 function About() {
@@ -61,14 +61,7 @@ function About() {
         <section className="about-card">
           <div className="about-card-icon"><Clock size={32} aria-hidden="true" /></div>
           <h2>שעות פעילות</h2>
-          <div className="hours-table">
-            {HOURS.map((row) => (
-              <div key={row.id} className={`hours-row${row.closed ? ' closed' : ''}`}>
-                <span className="hours-day">{row.long}</span>
-                <span className="hours-time">{hoursRangePadded(row)}</span>
-              </div>
-            ))}
-          </div>
+          <HoursTable />
         </section>
  
       </div>
