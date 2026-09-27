@@ -1,0 +1,324 @@
+/* ==========================================================
+   Admin import — the CSV import tab: instructions, upload area,
+   error list, preview table and result
+   ========================================================== */
+
+/* ===== CSV IMPORT ===== */
+.import-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ---- Elements ------------------------------------------------------------------ */
+
+.import-instructions {
+  background: white;
+  border-radius: 20px;
+  padding: 28px 32px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+
+.import-instructions h2 {
+  font-size: 1.3rem;
+  color: var(--color-text);
+  margin-bottom: 10px;
+}
+
+.import-instructions > p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.import-columns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.import-column-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #f8f8f6;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.import-column-row code {
+  background: var(--color-navy);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  min-width: 100px;
+  text-align: center;
+}
+
+.import-column-row span:nth-child(2) {
+  flex: 1;
+  color: #444;
+}
+
+.req-badge {
+  font-size: 0.75rem;
+  background: var(--color-error-border);
+  color: var(--color-red-dark);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.opt-badge {
+  font-size: 0.75rem;
+  background: var(--color-border-soft);
+  color: var(--color-text-subtle);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.import-categories-list {
+  margin-bottom: 20px;
+}
+
+.import-categories-list strong {
+  font-size: 0.9rem;
+  color: #333;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.import-cat-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.import-cat-tag {
+  background: #f0f4ff;
+  border: 1px solid #dde6ff;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 0.82rem;
+  color: #444;
+}
+
+.import-cat-tag code {
+  background: none;
+  color: var(--color-text);
+  font-weight: 700;
+  padding: 0;
+}
+
+.download-template-btn {
+  padding: 10px 22px;
+  background: var(--color-navy);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-family: 'Segoe UI', sans-serif;
+  transition: background 0.2s;
+}
+
+/* Upload area */
+.import-upload-area {
+  border: 2px dashed #ccc;
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.import-upload-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.import-upload-area p {
+  color: #444;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.import-upload-sub {
+  color: var(--color-text-faint) !important;
+  font-size: 0.85rem !important;
+  margin-top: 4px !important;
+}
+
+/* Errors */
+.import-errors {
+  background: var(--color-error-bg);
+  border: 1px solid #ffc0c0;
+  border-radius: 14px;
+  padding: 20px 24px;
+}
+
+.import-errors h4 {
+  color: var(--color-red-dark);
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
+
+.import-errors ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.import-errors ul li {
+  font-size: 0.88rem;
+  color: var(--color-red-dark);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--color-error-border);
+}
+
+/* Preview */
+.import-preview {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+
+.import-preview h4 {
+  font-size: 1rem;
+  color: var(--color-text);
+  margin-bottom: 16px;
+}
+
+.import-preview-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.import-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  direction: rtl;
+}
+
+.import-preview-table th {
+  background: var(--color-navy);
+  color: white;
+  padding: 10px 14px;
+  text-align: right;
+  font-weight: 600;
+}
+
+.import-preview-table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--color-border-soft);
+  color: #444;
+}
+
+.import-preview-table tr:nth-child(even) td {
+  background: #f8f8f6;
+}
+
+.import-preview-more {
+  text-align: center;
+  color: var(--color-text-faint);
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+
+.import-confirm-btn {
+  padding: 13px 28px;
+  background: var(--color-green);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Segoe UI', sans-serif;
+  transition: background 0.2s;
+}
+
+/* Result */
+.import-result {
+  background: #f0fff4;
+  border: 1px solid #b7e4c7;
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.import-result-icon {
+  font-size: 2.5rem;
+}
+
+.import-result h4 {
+  font-size: 1.2rem;
+  color: var(--color-green-dark);
+}
+
+.import-result p {
+  color: var(--color-green);
+  font-size: 1rem;
+}
+
+/* ---- States -------------------------------------------------------------------- */
+
+.download-template-btn:hover {
+  background: var(--color-red);
+}
+
+.import-upload-area:hover {
+  border-color: var(--color-navy);
+  background: #f8f8f6;
+}
+
+.import-confirm-btn:hover:not(:disabled) {
+  background: var(--color-green-dark);
+}
+
+.import-confirm-btn:disabled {
+  background: var(--color-text-faint);
+  cursor: not-allowed;
+}
+
+/* ---- Dark mode ----------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  /* import */
+  .import-instructions { background: var(--color-navy); }
+
+  .import-instructions h2 { color: var(--color-text-dark); }
+
+  .import-instructions p { color: var(--color-text-faint); }
+
+  .import-column-row { background: var(--color-bg-dark); }
+
+  .import-column-row span:nth-child(2) { color: var(--color-text-faint); }
+
+  .import-upload-area { background: var(--color-navy); border-color: var(--color-surface-dark); }
+
+  .import-upload-area:hover { background: var(--color-bg-dark); border-color: var(--color-blue); }
+
+  .import-upload-area p { color: var(--color-text-faint); }
+
+  .import-preview { background: var(--color-navy); }
+
+  .import-preview h4 { color: var(--color-text-dark); }
+
+  .import-preview-table th { background: var(--color-bg-dark); color: var(--color-text-faint); }
+
+  .import-preview-table td { color: #ccc; border-bottom-color: var(--color-surface-dark); }
+
+  .import-preview-table tr:nth-child(even) td { background: var(--color-bg-dark); }
+}

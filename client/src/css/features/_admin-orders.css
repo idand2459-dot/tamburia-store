@@ -1,0 +1,148 @@
+/* ==========================================================
+   Admin orders — the orders tab: the stat row, the filter, and
+   each order's expandable card
+
+   The customer-facing confirmation screen is a different
+   component and lives in features/_orders.css.
+   ========================================================== */
+
+/* ===== ADMIN ORDERS ===== */
+.orders-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* ---- Elements ------------------------------------------------------------------ */
+
+.orders-stat-card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.stat-number { font-size: 2rem; font-weight: 800; }
+
+.stat-label { font-size: 0.85rem; color: var(--color-text-subtle); margin-top: 4px; }
+
+.orders-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.orders-new-badge {
+  background: var(--color-red);
+  color: white;
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.orders-list { display: flex; flex-direction: column; gap: 12px; }
+
+.order-id { font-size: 0.85rem; color: var(--color-text-faint); font-weight: 600; min-width: 36px; }
+
+.order-customer-name { font-size: 1rem; font-weight: 600; color: var(--color-text); }
+
+.order-meta { font-size: 0.82rem; color: #999; margin-top: 2px; }
+
+.order-total-badge {
+  font-weight: 700; color: var(--color-red); font-size: 1rem;
+}
+
+.order-delivery-badge {
+  font-size: 0.78rem; background: var(--color-border-soft); color: var(--color-text-muted);
+  padding: 3px 8px; border-radius: 20px;
+}
+
+.order-expand-btn { color: var(--color-text-faint); font-size: 0.8rem; margin-right: 4px; }
+
+.order-items strong { font-size: 0.9rem; color: var(--color-text); display: block; margin-bottom: 10px; }
+
+.order-items-table {
+  width: 100%; border-collapse: collapse; font-size: 0.88rem; direction: rtl;
+}
+
+.order-items-table th {
+  background: #f8f8f6; padding: 8px 12px; text-align: right;
+  font-weight: 600; color: var(--color-text-muted); border-bottom: 1px solid #eee;
+}
+
+.order-items-table td { padding: 8px 12px; border-bottom: 1px solid var(--color-surface-alt); color: #333; }
+
+.order-totals {
+  display: flex; gap: 20px; justify-content: flex-end;
+  font-size: 0.88rem; color: var(--color-text-muted); margin-top: 10px; padding-top: 8px;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.order-totals strong { color: var(--color-text); }
+
+.order-actions {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+
+.status-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.status-btn {
+  padding: 6px 14px; border: 1.5px solid var(--color-border); border-radius: 20px;
+  background: white; font-size: 0.82rem; cursor: pointer;
+  font-family: 'Segoe UI', sans-serif; color: var(--color-text-muted); transition: all 0.15s;
+}
+
+/* ===== כפתור ייצוא הזמנות ===== */
+.export-orders-btn {
+  margin-right: auto;
+  padding: 8px 16px;
+  background: var(--color-green);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+/* ---- States -------------------------------------------------------------------- */
+
+.status-btn:hover { border-color: var(--color-navy); color: var(--color-navy); }
+
+.status-btn.active { border-color: transparent; }
+
+.export-orders-btn:hover {
+  background: var(--color-green-dark);
+}
+
+/* ---- Responsive ---------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .orders-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ---- Dark mode ----------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .order-customer-name { color: var(--color-text-dark); }
+
+  .order-items-table th { background: var(--color-bg-dark); color: var(--color-text-faint); }
+
+  .order-items-table td { color: #ccc; border-bottom-color: var(--color-surface-dark); }
+
+  .order-totals { border-top-color: var(--color-surface-dark); }
+
+  .order-totals strong { color: var(--color-text-dark); }
+
+  .status-btn { background: var(--color-bg-dark); border-color: var(--color-surface-dark); color: var(--color-text-faint); }
+
+  .status-btn:hover { border-color: var(--color-blue); color: var(--color-text-dark); }
+}

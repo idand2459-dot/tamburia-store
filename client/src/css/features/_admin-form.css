@@ -1,0 +1,312 @@
+/* ==========================================================
+   Admin form — the add / edit product form in ProductFormTab
+
+   `.admin-form button` carries an element selector, so it beats
+   every single-class button rule inside the form on
+   specificity. That is long-standing behaviour and the reason
+   the rule is still here rather than folded into the individual
+   buttons.
+
+   The image manager is _admin-images.css; the stock toggle and
+   the variant editor rows came from _catalog.css in the
+   previous step and belong to this form.
+   ========================================================== */
+
+.admin-form {
+  background: white;
+  padding: 32px;
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  margin-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---- Elements ------------------------------------------------------------------ */
+
+.admin-form h2 {
+  font-size: 1.2rem;
+  color: var(--color-text);
+  margin-bottom: 24px;
+}
+
+.admin-form input, .admin-form select {
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: 'Segoe UI', sans-serif;
+  direction: rtl;
+}
+
+.admin-form button {
+  padding: 12px;
+  background-color: var(--color-navy);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.admin-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-form-group label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #444;
+}
+
+/* ── Variant form in Admin ────────────────────── */
+.admin-label-hint {
+  font-size: 0.78rem;
+  color: #999;
+  font-weight: 400;
+  margin-right: 6px;
+}
+
+.admin-form-group input,
+.admin-form-group select,
+.admin-form-group textarea {
+  padding: 10px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: 'Segoe UI', sans-serif;
+  direction: rtl;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.admin-form-group textarea {
+  resize: vertical;
+}
+
+/* ===== TOGGLE בטופס ===== */
+.instock-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.instock-toggle {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  border-radius: 13px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.instock-toggle-knob {
+  position: absolute;
+  top: 3px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: right 0.2s, left 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.instock-toggle-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* the variant editor rows from ProductFormTab */
+.variants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.variant-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.variant-label-input {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  direction: rtl;
+}
+
+.variant-price-symbol {
+  font-size: 1rem;
+  color: var(--color-red);
+  font-weight: 700;
+}
+
+.variant-price-input {
+  width: 90px;
+  padding: 9px 10px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  text-align: center;
+}
+
+.variant-remove-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.variant-add-btn {
+  padding: 8px 16px;
+  background: #f0f4ff;
+  color: var(--color-text);
+  border: 1.5px dashed #a0b0cc;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.variant-hint {
+  font-size: 0.78rem;
+  color: var(--color-text-subtle);
+  margin-top: 6px;
+}
+
+.admin-form-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.admin-submit-btn {
+  padding: 12px 28px;
+  background: var(--color-navy);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Segoe UI', sans-serif;
+  transition: background 0.2s;
+}
+
+.admin-cancel-btn {
+  padding: 12px 24px;
+  background: var(--color-border-soft);
+  color: #666;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* ---- States -------------------------------------------------------------------- */
+
+.admin-form button:hover {
+  background-color: var(--color-red);
+}
+
+.admin-form-group input:focus,
+.admin-form-group select:focus,
+.admin-form-group textarea:focus {
+  border-color: var(--color-navy);
+}
+
+.admin-submit-btn:hover {
+  background: var(--color-red);
+}
+
+.admin-cancel-btn:hover {
+  background: var(--color-border);
+}
+
+.variant-label-input:focus { border-color: var(--color-navy); outline: none; }
+
+.variant-price-input:focus { border-color: var(--color-red); outline: none; }
+
+.variant-remove-btn:hover { background: #fecaca; }
+
+.variant-add-btn:hover { background: #e0e8ff; }
+
+/* ---- Variants ------------------------------------------------------------------ */
+
+.admin-form-group.full {
+  grid-column: 1 / -1;
+}
+
+.instock-toggle.in { background: var(--color-green); }
+
+.instock-toggle.out { background: #ccc; }
+
+.instock-toggle.in .instock-toggle-knob { right: 3px; left: auto; }
+
+.instock-toggle.out .instock-toggle-knob { right: auto; left: 3px; }
+
+.instock-toggle-label.in { color: var(--color-green); }
+
+.instock-toggle-label.out { color: var(--color-red-dark); }
+
+/* ---- Responsive ---------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .admin-form-grid {
+      grid-template-columns: 1fr;
+    }
+
+  .admin-form-group.full {
+      grid-column: 1;
+    }
+}
+
+/* ---- Dark mode ----------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .admin-form { background: var(--color-navy); }
+
+  .admin-form h2 { color: var(--color-text-dark); }
+
+  .admin-form-group label { color: var(--color-text-faint); }
+
+  .admin-form-group input,
+    .admin-form-group select,
+    .admin-form-group textarea {
+      background: var(--color-bg-dark);
+      border-color: var(--color-surface-dark);
+      color: var(--color-text-dark);
+    }
+
+  .admin-form-group input:focus,
+    .admin-form-group select:focus,
+    .admin-form-group textarea:focus { border-color: var(--color-blue); }
+}
