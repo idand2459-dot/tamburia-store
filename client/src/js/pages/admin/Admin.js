@@ -122,6 +122,7 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
 
       {activeTab === 'stats' && (
         <StatsTab
+          api={api}
           products={products}
           getStats={getStats}
           onToggleStock={toggleStock}

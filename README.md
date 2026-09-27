@@ -414,11 +414,17 @@ Everything is under `/api`. Routes marked 🔒 require an admin session.
 | **Orders** | `POST /orders` · `GET /orders/by-phone/:phone` · 🔒 `GET /orders` `GET /:id` `GET /stats` `PUT /:id` `PUT /:id/status` `DELETE /:id` |
 | **Reviews** | `GET /reviews` · `GET /reviews/stats` · `POST /reviews` · 🔒 `GET /reviews/all` `GET /:id` `PUT /:id` `PUT /:id/approve` `DELETE /:id` |
 | **Pigment formulas** | `GET /pigment-formulas` · `GET /pigment-formulas/:id` · `GET /pigment-formulas/code/:code` · 🔒 `POST` `PUT /:id` `DELETE /:id` |
+| **Settings** | 🔒 `GET /settings/:key` · 🔒 `PUT /settings/:key` |
 | **Uploads** | 🔒 `POST /upload` · 🔒 `POST /upload-multiple` |
 | **Health** | `GET /health` |
 
 List endpoints accept `limit`, `offset`, `sort`, `order` and per-domain filters. Without
 `limit` or `offset` they return a flat array; with them, an object carrying pagination.
+
+`:key` in **Settings** is not free-form: the server knows a closed list of keys and
+returns 404 for anything else. There is one today, `stats-counting-from`, which holds the
+date the statistics tab counts its sums from. `PUT` with `value: null` deletes it, which is
+how the reset is undone.
 
 ---
 
