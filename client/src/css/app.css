@@ -25,7 +25,6 @@
 /* 3. Reusable components */
 @import './components/_buttons.css';
 @import './components/_modals.css';
-@import './components/_notifications.css';
 @import './components/_loading.css';
 @import './components/_reveal.css';
 @import './components/_product-card.css';
@@ -65,7 +64,10 @@
 @import './features/_related-products.css';
 @import './features/_products-toolbar.css';
 @import './features/_product-reviews.css';
+/* The three steps of the cart flow, in order. */
 @import './features/_cart.css';
+@import './features/_delivery-options.css';
+@import './features/_checkout-form.css';
 @import './features/_orders.css';
 @import './features/_wishlist.css';
 @import './features/_reviews.css';
