@@ -1,5 +1,5 @@
 import {
-  AlertTriangle, CalendarDays, CheckCircle, XCircle, Hammer, PaintRoller, Wrench,
+  AlertTriangle, CalendarDays, CheckCircle, XCircle, Hammer, PaintRoller, Wrench, PackageX,
   Scissors, FlaskConical, Receipt, Package, Store, Shield, Coins, CreditCard,
   Gift, ScrollText, Phone, Truck, ClipboardList,
 } from 'lucide-react';
@@ -43,7 +43,7 @@ function Returns() {
           <h2>מתי מקבלים החזר?</h2>
           <div className="returns-list">
             <div className="returns-list-item green">
-              <span className="returns-item-icon"><Wrench size={24} aria-hidden="true" /></span>
+              <span className="returns-item-icon"><PackageX size={24} aria-hidden="true" /></span>
               <div>
                 <strong>מוצר פגום או תקול</strong>
                 <p>קיבלת מוצר שאינו תקין? נחליף אותו או נחזיר את הכסף במלואו — ללא עלות נוספת.</p>
