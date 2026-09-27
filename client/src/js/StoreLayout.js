@@ -88,12 +88,9 @@ function StoreLayout() {
 
       {onOrderLookup && <OrderHistory onClose={closeOverlay} />}
 
-      {onWishlist && (
-        <Wishlist
-          onClose={closeOverlay}
-          onSelectProduct={(product) => navigate(`/product/${product.id}`)}
-        />
-      )}
+      {/* הניווט לעמוד מוצר הוא קישור בתוך החלון עצמו, ולכן אין כאן
+          onSelectProduct: מעבר הכתובת הוא גם הסגירה. */}
+      {onWishlist && <Wishlist onClose={closeOverlay} />}
 
       <WhatsAppButton />
       <ScrollToTop />

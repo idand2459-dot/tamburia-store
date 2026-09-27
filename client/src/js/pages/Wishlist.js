@@ -1,13 +1,25 @@
 /**
  * חלון המועדפים ורשימת המוצרים שנשמרו.
+ *
+ * כל שורה נפתחת לעמוד המוצר דרך Link אמיתי שה-::after שלו נמתח על
+ * השורה — אותו דפוס של כרטיס המוצר. קודם זו הייתה שורה של divים עם
+ * onClick: אי אפשר היה להגיע אליה ב-Tab, ולחיצה אמצעית או "פתח
+ * בלשונית חדשה" לא עשו כלום. כפתור ההסרה יושב מעל אותה שכבה ולכן
+ * אינו מנווט.
+ *
+ * onSelectProduct ירד מהפרופס: הוא היה קורא ל-navigate במסגרת, ועכשיו
+ * הקישור עושה זאת בעצמו. הסגירה נשארת כמו שהייתה — היא חלק מהניווט,
+ * כי /wishlist הוא כתובת ומעבר למוצר מוריד את החלון.
  */
 import { useState, useEffect } from 'react';
-import { X, Heart, ImageOff, Check } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Heart, Trash2, Check, X } from 'lucide-react';
 import Drawer from '../components/Drawer';
+import CATEGORY_ICONS from '../utils/categoryIcons';
 import { getWishlist, toggleWishlist } from '../utils/wishlistUtils';
 
 /** מציג את חלון המועדפים. */
-function Wishlist({ onClose, onSelectProduct }) {
+function Wishlist({ onClose }) {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
@@ -21,45 +33,61 @@ function Wishlist({ onClose, onSelectProduct }) {
   }
 
   return (
-    <Drawer title="רשימת המשאלות שלי" icon={Heart} onClose={onClose}>
-      <div className="wishlist-body">
-        {items.length === 0 ? (
-          <div className="wishlist-empty">
-            <span><Heart size={48} aria-hidden="true" /></span>
-            <p>רשימת המשאלות ריקה</p>
-            <small>לחץ על <Heart size={14} fill="currentColor" aria-hidden="true" /> על מוצר כדי להוסיף אותו</small>
-          </div>
-        ) : (
-          <>
-            <div className="wishlist-count">{items.length} מוצרים ברשימה</div>
-            <div className="wishlist-list">
-              {items.map(product => (
-                <div key={product.id} className="wishlist-item">
-                  {/* רק onSelectProduct: הסגירה היא כבר חלק מהניווט
-                      לעמוד המוצר, וקריאה ל-onClose אחריו הייתה
-                      מחזירה אחורה ומבטלת אותו. */}
-                  <div className="wishlist-item-img" onClick={() => onSelectProduct(product)}>
-                    {product.image_url
-                      ? <img src={product.image_url} alt={product.name} />
-                      : <span><ImageOff size={28} aria-hidden="true" /></span>
-                    }
-                  </div>
-                  <div className="wishlist-item-info" onClick={() => onSelectProduct(product)}>
-                    <span className="wishlist-item-name">{product.name}</span>
-                    <span className="wishlist-item-price">₪{product.price}</span>
-                    <span className={`wishlist-item-stock ${product.in_stock !== false ? 'in' : 'out'}`}>
-                      {product.in_stock !== false ? <><Check size={14} aria-hidden="true" /> יש במלאי</> : <><X size={14} aria-hidden="true" /> אזל</>}
-                    </span>
-                  </div>
-                  <button className="wishlist-remove-btn" onClick={() => handleRemove(product)} title="הסר מהרשימה" aria-label="הסר מהרשימה">
-                    <X size={18} aria-hidden="true" />
-                  </button>
+    <Drawer title="המועדפים שלי" icon={Heart} onClose={onClose}>
+      {items.length === 0 ? (
+        <div className="wishlist-empty">
+          <span className="wishlist-empty-icon" aria-hidden="true">
+            <Heart size={28} strokeWidth={1.5} />
+          </span>
+          <p className="wishlist-empty-title">עוד לא שמרת מוצרים</p>
+          <p className="wishlist-empty-text">
+            לחיצה על הלב שעל כרטיס מוצר שומרת אותו כאן, גם אחרי סגירת הדף.
+          </p>
+          <button type="button" className="cart-cta cart-cta--outline" onClick={onClose}>
+            להמשך קנייה
+          </button>
+        </div>
+      ) : (
+        <ul className="wishlist-rows">
+          {items.map(product => {
+            const Icon = CATEGORY_ICONS[product.category];
+            const inStock = product.in_stock !== false;
+            return (
+              <li key={product.id} className="wishlist-row">
+                <div className="wishlist-row-well">
+                  {product.image_url
+                    ? <img className="wishlist-row-img" src={product.image_url} alt={product.name} />
+                    : (
+                      <span className="wishlist-row-fallback" aria-hidden="true">
+                        {Icon && <Icon size={22} strokeWidth={1.5} />}
+                      </span>
+                    )}
                 </div>
-              ))}
-            </div>
-          </>
-        )}
-    </div>
+
+                <div className="wishlist-row-main">
+                  <span className="wishlist-row-name">
+                    <Link className="wishlist-row-link" to={`/product/${product.id}`}>{product.name}</Link>
+                  </span>
+                  <span className="wishlist-row-price">₪{product.price}</span>
+                  <span className={`wishlist-row-stock ${inStock ? 'is-in' : 'is-out'}`}>
+                    {inStock
+                      ? <><Check size={13} aria-hidden="true" /> במלאי</>
+                      : <><X size={13} aria-hidden="true" /> אזל</>}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  className="wishlist-row-remove"
+                  onClick={() => handleRemove(product)}
+                  aria-label={`הסר מהמועדפים: ${product.name}`}>
+                  <Trash2 size={16} aria-hidden="true" />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </Drawer>
   );
 }
