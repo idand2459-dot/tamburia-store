@@ -9,6 +9,7 @@
 import { useState, useEffect } from 'react';
 import { Check, ShoppingCart, Heart } from 'lucide-react';
 import { toggleWishlist, isInWishlist } from '../utils/wishlistUtils';
+import ProductBreadcrumb from '../features/catalog/product-page/ProductBreadcrumb';
 import ProductGallery from '../features/catalog/product-page/ProductGallery';
 import ProductVariantSelector from '../features/catalog/product-page/ProductVariantSelector';
 import ProductReviewsSection from '../features/catalog/product-page/ProductReviewsSection';
@@ -17,13 +18,6 @@ import Stars from '../features/catalog/product-page/Stars';
 
 const MAX_RECENT = 6;
 const MAX_RELATED = 3;
-
-const CATEGORY_LABELS = {
-  painting: 'מוצרי צביעה', kitchen: 'מוצרי מטבח', bathroom: 'מוצרי אמבטיה',
-  tools: 'כלי עבודה', cleaning: 'ניקיון', garden: 'גינה',
-  plumbing: 'אינסטלציה', adhesives: 'דבקים', locks: 'צילינדרים ומנעולים',
-  faucets: 'ברזים', electrical: 'מוצרי חשמל', home: 'בית'
-};
 
 /** קורא את רשימת המוצרים שנצפו לאחרונה. */
 function getRecentlyViewed() {
@@ -39,7 +33,7 @@ function addToRecentlyViewed(product) {
 }
 
 /** מציג את עמוד המוצר. */
-function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
+function ProductPage({ product, onAddToCart, onSelectProduct }) {
   const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
@@ -107,21 +101,13 @@ function ProductPage({ product, onBack, onAddToCart, onSelectProduct }) {
 
   return (
     <div className="product-page">
-      <button className="back-btn product-page-back" onClick={onBack}>← חזרה למוצרים</button>
+      <ProductBreadcrumb categoryId={product.category} productName={product.name} />
 
       <div className="product-page-content">
         <ProductGallery product={product} />
 
         {/* Details */}
         <div className="product-page-details">
-          <div className="breadcrumb">
-            <button onClick={onBack}>ראשי</button>
-            <span>←</span>
-            <button onClick={onBack}>{CATEGORY_LABELS[product.category] || product.category}</button>
-            <span>←</span>
-            <span className="breadcrumb-current">{product.name}</span>
-          </div>
-
           <h1 className="product-page-name">{product.name}</h1>
           {product.sku && <p className="product-page-sku">מק"ט: <span>{product.sku}</span></p>}
 

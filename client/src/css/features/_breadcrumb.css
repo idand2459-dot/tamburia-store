@@ -1,61 +1,67 @@
 /* ==========================================================
-   Breadcrumb — the navigation trail above a product's title
+   Breadcrumb — the trail that opens a product page
+
+   It replaces the dark navy "חזרה למוצרים" pill that used to sit
+   above the product: the same journey, said in one quiet line
+   instead of a button heavy enough to compete with "הוסף לעגלה".
+
+   Real links, not buttons wired to history: the category crumb
+   goes to /category/:id, so it works on a product opened from a
+   shared link — where there is no history to go back through —
+   and middle-click and "open in new tab" behave like anywhere
+   else. The category page's own trail, inside its banner, is
+   features/_category-banner.css; that one is white on a
+   photograph and shares nothing with this.
    ========================================================== */
 
+/* ---- Block --------------------------------------------------------------- */
+
+/* nowrap and the min-width: 0 below are one pair: the trail stays on one line
+   and the product's own name is what gives way, with an ellipsis. */
 .breadcrumb {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
+  min-width: 0;
+  margin-bottom: 20px;
+  font-size: var(--font-size-small);
+  color: rgba(var(--color-navy-rgb), 0.6);
+  white-space: nowrap;
 }
 
 /* ---- Elements ------------------------------------------------------------ */
 
-.breadcrumb button {
-  background: none;
-  border: none;
-  color: #999;
-  font-size: 0.82rem;
-  cursor: pointer;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  padding: 0;
-  transition: color 0.15s;
+.breadcrumb a {
+  color: inherit;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
 }
 
-/* the separator between two crumbs */
-.breadcrumb span {
-  color: #ccc;
-  font-size: 0.78rem;
+.breadcrumb-sep {
+  color: rgba(var(--color-navy-rgb), 0.3);
+  flex-shrink: 0;
 }
 
-/* The last crumb, which is text rather than a button. !important because
-   `.breadcrumb span` above matches it too and wins on specificity — it carries
-   an element selector this one does not. */
+/* The last crumb: the product itself, and the only part of the line long
+   enough to need clipping. No !important — the rule it used to fight
+   (`.breadcrumb span`) is gone, the separators carry a class of their own. */
 .breadcrumb-current {
-  color: var(--color-text-muted) !important;
-  font-size: 0.82rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-navy);
   font-weight: 600;
 }
 
 /* ---- States ------------------------------------------------------------- */
 
-.breadcrumb button:hover {
-  color: var(--color-text);
+.breadcrumb a:hover {
+  color: var(--color-red);
 }
 
-/* ---- Dark mode ---------------------------------------------------------- */
-
-@media (prefers-color-scheme: dark) {
-  .breadcrumb button {
-      color: #666;
-    }
-
-  .breadcrumb button:hover {
-      color: var(--color-text-dark);
-    }
-
-  .breadcrumb-current {
-      color: var(--color-text-faint) !important;
-    }
+.breadcrumb a:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+  border-radius: 4px;
 }

@@ -1,66 +1,79 @@
 /* ==========================================================
-   Product page — the single-product detail view
+   Product page — the frame the product's two columns sit in
 
-   The image area is features/_product-gallery.css, the size /
-   colour / variant pickers are features/_product-options.css,
-   and the trail above the title is features/_breadcrumb.css.
-   The WhatsApp share button sits here because it is one of this
-   page's two actions, next to "add to cart".
+   No banner above it, unlike a category page: the customer came
+   for this product, so the page opens straight on it and the only
+   chrome above the columns is the trail
+   (features/_breadcrumb.css).
+
+   The image column is features/_product-gallery.css. The details
+   column's contents are still below in this file and move out to
+   features/_product-detail.css in the next step; what this file
+   keeps for good is the page, the two columns and the card the
+   details sit in.
+
+   What the block above replaces: a 1000px page opened by a dark
+   navy "חזרה למוצרים" pill, with the details as a bare column of
+   text on the page background rather than on a card.
    ========================================================== */
 
+/* ---- Block --------------------------------------------------------------- */
+
 .product-page {
-  max-width: 1000px;
+  max-width: var(--content-max-width);
   margin: 0 auto;
-  padding: 24px 20px 60px;
+  padding: 32px 24px 64px;
 }
 
 /* ---- Elements ------------------------------------------------------------ */
 
-.product-page-back {
-  margin-bottom: 24px;
-}
-
+/* minmax(0, 1fr) twice rather than 1fr 1fr: a long product name with no break
+   opportunity would otherwise set its column's minimum width and push the
+   gallery out of the grid. align-items: start is what gives the details card
+   room to be sticky — stretched to the row's height (the grid default) it
+   would have nothing to travel in. */
 .product-page-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 48px;
   align-items: start;
 }
 
-.product-page-no-image {
-  width: 100%;
-  height: 100%;
-  min-height: 300px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-faint);
-  font-size: 1rem;
-}
-
+/* The details card. Sticky against the navbar's 68px plus air, like the
+   category page's sidebar — and, like any sticky grid item, it can only travel
+   as far as its own grid area, so it holds still beside a gallery taller than
+   itself and simply scrolls with the page when it is the taller of the two. */
 .product-page-details {
+  position: sticky;
+  top: 84px;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+  padding: 28px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* the two .product-page-name rules of the old file, folded into one */
+/* ---- Elements: details (moving to features/_product-detail.css) ---------- */
+
 .product-page-name {
   font-size: 1.8rem;
   font-weight: 700;
   color: var(--color-text);
   line-height: 1.3;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  font-family: var(--font-family-base);
 }
 
 .product-page-sku {
   font-size: 0.85rem;
-  color: #999;
+  color: var(--color-text-subtle);
 }
 
 .product-page-sku span {
   font-weight: 600;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .product-page-price {
@@ -72,7 +85,7 @@
 /* the "from" prefix when a product's price depends on the chosen variant */
 .price-from {
   font-size: 0.75rem;
-  color: #999;
+  color: var(--color-text-subtle);
   font-weight: 400;
   margin-right: 4px;
 }
@@ -112,14 +125,10 @@
   display: flex;
   gap: 10px;
   align-items: stretch;
-  margin-top: 8px;
 }
 
-/* The two .product-page-add-btn rules of the old file, folded into one. The
-   second only restated the transition with !important so it would beat the
-   first; merged, nothing competes — no other rule in the stylesheet sets a
-   transition on this button — so the !important is gone with it. */
 .product-page-add-btn {
+  flex: 1;
   padding: 16px;
   background: var(--color-navy);
   color: white;
@@ -128,14 +137,8 @@
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: var(--font-family-base);
   transition: background 0.2s, transform 0.15s;
-  margin-top: 8px;
-}
-
-.product-page-actions .product-page-add-btn {
-  flex: 1;
-  margin-top: 0;
 }
 
 .product-share-btn {
@@ -152,9 +155,8 @@
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  font-family: var(--font-family-base);
   transition: all 0.2s;
-  margin-top: 8px;
 }
 
 /* ---- States ------------------------------------------------------------- */
@@ -203,40 +205,26 @@
 
 /* ---- Responsive --------------------------------------------------------- */
 
-@media (max-width: 768px) {
+/* One column, gallery first — which is also its order in the DOM, so nothing
+   has to be reordered. The card stops being sticky: on a phone it is the whole
+   screen and has nothing to stay visible beside. */
+@media (max-width: 900px) {
   .product-page-content {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: 24px;
+    }
+
+  .product-page-details {
+      position: static;
     }
 }
 
-/* ---- Dark mode ---------------------------------------------------------- */
-
-@media (prefers-color-scheme: dark) {
+@media (max-width: 768px) {
   .product-page {
-      background: var(--color-bg-dark);
+      padding: 20px 16px 56px;
     }
 
-  .product-page-name {
-      color: var(--color-text-dark);
-    }
-
-  .product-page-description h3 {
-      color: var(--color-text-dark);
-    }
-
-  .product-page-description p {
-      color: var(--color-text-faint);
-    }
-
-  .product-share-btn {
-      background: #0d1f15;
-      border-color: var(--color-whatsapp);
-      color: var(--color-whatsapp);
-    }
-
-  .product-share-btn:hover {
-      background: var(--color-whatsapp);
-      color: white;
+  .product-page-details {
+      padding: 20px;
     }
 }

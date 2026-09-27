@@ -69,15 +69,15 @@
 @import './features/_project-calculator.css';
 @import './features/_project-calc-inputs.css';
 @import './features/_project-calc-items.css';
-/* What used to be features/_catalog.css, in the order its rules had inside it,
-   because that order is the cascade. _product-gallery.css after
-   _product-page.css is the one place it matters: the gallery owns the two
-   .product-page-image* rules the old file declared in both sections. */
 @import './features/_category-grid.css';
+/* The product page, outermost first: the page and its two columns, then the
+   image column and the trail above them. No selector appears in more than one
+   of these, so the order is the reading order rather than a cascade
+   constraint. */
 @import './features/_product-page.css';
-@import './features/_product-options.css';
 @import './features/_product-gallery.css';
 @import './features/_breadcrumb.css';
+@import './features/_product-options.css';
 @import './features/_related-products.css';
 @import './features/_product-reviews.css';
 /* The three steps of the cart flow, in order. */

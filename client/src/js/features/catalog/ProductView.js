@@ -5,9 +5,14 @@
  * מהרשימה, ולכן פתיחת הכתובת ישירות לא הייתה יכולה לעבוד. כאן
  * המוצר נטען לפי המזהה מ-GET /api/products/:id, כך ש-/product/123
  * עובד גם בטאב חדש, גם ברענון וגם בשיתוף הקישור.
+ *
+ * אין כאן יותר פונקציית "חזור": כפתור החזרה הכבד שמעל המוצר הוחלף
+ * בשביל ניווט, וחוליית הקטגוריה שבו היא בדיוק מה שאותה פונקציה
+ * עשתה בקישור ישיר — /category/:id. מחוות ה"חזור" של הדפדפן עובדת
+ * כתמיד, היא לא הייתה שלנו מלכתחילה.
  */
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import ProductPage from '../../pages/ProductPage';
 import NotFoundPage from '../../pages/NotFoundPage';
 import { ProductCardSkeleton } from '../../components/LoadingStates';
@@ -17,7 +22,6 @@ import { useStore } from '../../context/storeContext';
 function ProductView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const { addToCart } = useStore();
 
   const [product, setProduct] = useState(null);
@@ -50,29 +54,18 @@ function ProductView() {
 
   if (status === 'loading') {
     return (
-      <main>
-        {/* אותה רשת שהקטגוריה משתמשת בה, כי אותו שלד יושב בה. עמוד
-            המוצר עצמו עובר לכרטיס המשותף בשלב הבא. */}
+      <main className="product-page">
+        {/* אותה רשת שהקטגוריה משתמשת בה, כי אותו שלד יושב בה. */}
         <div className="product-grid">
-          {Array(3).fill(0).map((_, i) => <ProductCardSkeleton key={i} />)}
+          {Array(4).fill(0).map((_, i) => <ProductCardSkeleton key={i} />)}
         </div>
       </main>
     );
   }
 
-  /**
-   * חוזר אחורה כשיש לאן. בקישור ישיר אין היסטוריה באתר, ולכן
-   * "חזור" עולה לקטגוריה של המוצר במקום להוציא מהאתר.
-   */
-  function goBack() {
-    if (location.key !== 'default') navigate(-1);
-    else navigate(product?.category ? `/category/${product.category}` : '/');
-  }
-
   return (
     <ProductPage
       product={product}
-      onBack={goBack}
       onAddToCart={addToCart}
       onSelectProduct={(next) => navigate(`/product/${next.id}`)}
     />
