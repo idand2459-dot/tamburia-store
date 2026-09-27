@@ -27,7 +27,12 @@ const OUT_DIR = path.join(__dirname, '..', 'client', 'src', 'assets', 'images', 
 
 /* שני הרוחבים שה-srcSet של הבאנר מציע. 1920 הוא הרוחב המלא של מסך רחב,
    960 הוא מסך רגיל ומסכי טלפון ב-DPR 2. quality 82 הוא אותו איזון שבו
-   הומרו תמונות המקטעים: מעבר לזה הקובץ גדל בלי שההפרש נראה. */
+   הומרו תמונות המקטעים: מעבר לזה הקובץ גדל בלי שההפרש נראה.
+
+   אלה רוחבים מבוקשים ולא בהכרח מה שייצא: מקור צר מהם לא מנופח (ראה
+   withoutEnlargement למטה), ושם הקובץ נושא את הרוחב שיצא בפועל. זה מה
+   שמאפשר ל-srcSet של הבאנר להיגזר משם הקובץ ולהיות נכון — בדיוק כמו
+   ה-hero-tools-1916.webp של עמוד הבית, ששמו אומר 1916 ולא 2400. */
 const WIDTHS = [960, 1920];
 const QUALITY = 82;
 
@@ -39,13 +44,36 @@ function isStale(srcPath, outPath) {
   return fs.statSync(srcPath).mtimeMs > fs.statSync(outPath).mtimeMs;
 }
 
+/**
+ * מוחק פלט ישן של אותה קטגוריה שאינו ברשימת הקבצים שהריצה הזו מייצרת.
+ * בלי זה, שינוי ברוחב המקור או ב-WIDTHS היה משאיר קובץ יתום בתיקייה,
+ * ו-CategoryBanner — שמגלה את התמונות לפי תוכן התיקייה — היה מגיש אותו.
+ */
+function pruneStale(id, keep) {
+  fs.readdirSync(OUT_DIR)
+    .filter((f) => f.startsWith(`${id}-`) && f.endsWith('.webp') && !keep.includes(f))
+    .forEach((f) => {
+      fs.unlinkSync(path.join(OUT_DIR, f));
+      console.log(`  ✗  ${f}  (יתום, נמחק)`);
+    });
+}
+
 /** ממיר תמונה אחת לכל הרוחבים, ומחזיר כמה קבצים נכתבו בפועל. */
 async function convert(fileName) {
   const id = path.basename(fileName, '.png');
   const srcPath = path.join(SRC_DIR, fileName);
+  const srcWidth = (await sharp(srcPath).metadata()).width;
+
+  // withoutEnlargement למטה אומר שמקור צר מהרוחב המבוקש יוצא ברוחב שלו.
+  // כאן מחשבים את זה מראש, כי שם הקובץ צריך לשאת את הרוחב האמיתי. Set
+  // כדי ששני רוחבים מבוקשים שנחתכים לאותו רוחב לא ייכתבו פעמיים.
+  const outWidths = [...new Set(WIDTHS.map((w) => Math.min(w, srcWidth)))].sort((a, b) => a - b);
+
+  pruneStale(id, outWidths.map((w) => `${id}-${w}.webp`));
+
   let written = 0;
 
-  for (const width of WIDTHS) {
+  for (const width of outWidths) {
     const outPath = path.join(OUT_DIR, `${id}-${width}.webp`);
 
     if (!isStale(srcPath, outPath)) {
@@ -53,8 +81,6 @@ async function convert(fileName) {
       continue;
     }
 
-    // withoutEnlargement: מקור צר מ-1920 לא ינופח — זה היה עולה בבתים
-    // בלי להוסיף פרט, בדיוק כמו בתמונת הכרזה של עמוד הבית.
     await sharp(srcPath)
       .resize({ width, withoutEnlargement: true })
       .webp({ quality: QUALITY })
