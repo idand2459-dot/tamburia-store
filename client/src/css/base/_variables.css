@@ -8,6 +8,16 @@
    ~600 colour declarations is a behaviour-changing edit, not a file split, so
    it belongs in its own pass. Migrate a component's literals to these tokens
    when you next touch that component.
+
+   BREAKPOINTS. Custom properties cannot be used inside @media, so the five
+   breakpoints in CONVENTIONS.md are a convention rather than a token. They are
+   written out here so there is one place to read them off:
+
+     xl  (max-width: 1200px)
+     lg  (max-width: 900px)
+     md  (max-width: 768px)
+     sm  (max-width: 560px)
+     xs  (max-width: 430px)
    ========================================================================== */
 
 :root {
@@ -20,6 +30,20 @@
   --color-green: #2d6a4f;         /* success, in-stock */
   --color-green-dark: #1b4332;
   --color-whatsapp: #25d366;
+
+  /* Brand colours as RGB triples, for the cases that need an alpha:
+     rgba(var(--color-red-rgb), 0.15). A hex token cannot take an alpha without
+     color-mix(), so a colour used transparently carries a triple as well, and
+     the two always describe the same colour — change one, change the other.
+     Plain white and black are exempt: they are not brand colours, they never
+     change, and rgba(255, 255, 255, 0.1) reads better than the token form. */
+  --color-navy-rgb: 26, 26, 46;           /* --color-navy      #1a1a2e */
+  --color-navy-950-rgb: 7, 11, 20;        /* --color-navy-950  #070b14 */
+  --color-red-rgb: 230, 57, 70;           /* --color-red       #e63946 */
+  --color-purple-rgb: 124, 58, 237;       /* --color-purple    #7c3aed */
+  --color-green-rgb: 45, 106, 79;         /* --color-green     #2d6a4f */
+  --color-whatsapp-rgb: 37, 211, 102;     /* --color-whatsapp  #25d366 */
+  --color-bg-dark-rgb: 15, 15, 26;        /* --color-bg-dark   #0f0f1a */
 
   /* Light theme surfaces.
      --color-bg is the backdrop *behind* content and must stay in the brand
