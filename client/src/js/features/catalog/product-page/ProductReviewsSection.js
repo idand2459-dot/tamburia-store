@@ -7,6 +7,11 @@
  *
  * ביקורת שנשלחה אינה מרעננת את הרשימה, כמו קודם: היא מתפרסמת רק
  * לאחר אישור בניהול, ולכן שליפה מחדש לא הייתה מציגה אותה בכל מקרה.
+ * מה שכן מוצג הוא התודה: השליחה סוגרת את *הטופס* ולא את המסגרת שבה
+ * הוא יושב, ובמקומו נכנסת הודעת האישור. קודם השליחה כיבתה את
+ * showReviewForm, ולכן המסגרת נעלמה עם ההודעה שבתוכה ואי אפשר היה
+ * להגיע אליה בכלל. פתיחה מחדש של הטופס מאפסת את reviewSubmitted, כדי
+ * שמי שכתב ביקורת ורוצה לכתוב עוד אחת יקבל טופס ריק ולא את התודה.
  *
  * ה-ref שמגיע בפרופס יושב על העוטף, ודרכו סיכום הדירוג שליד שם המוצר
  * גולל לכאן. ב-React 19 ref הוא prop רגיל ואין צורך ב-forwardRef.
@@ -52,7 +57,6 @@ function ProductReviewsSection({ productId, reviews, ref }) {
       body: JSON.stringify({ ...reviewForm, type: 'product', product_id: productId })
     });
     setReviewSubmitted(true);
-    setShowReviewForm(false);
     setReviewForm(EMPTY_FORM);
   }
 
@@ -60,7 +64,15 @@ function ProductReviewsSection({ productId, reviews, ref }) {
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : null;
 
-  const toggleForm = () => setShowReviewForm(!showReviewForm);
+  /** פותח או סוגר את הטופס. פתיחה תמיד מתחילה מטופס נקי. */
+  function toggleForm() {
+    if (showReviewForm) {
+      setShowReviewForm(false);
+      return;
+    }
+    setReviewSubmitted(false);
+    setShowReviewForm(true);
+  }
 
   return (
     <div className="product-reviews" ref={ref}>
