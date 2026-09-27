@@ -10,6 +10,7 @@ const mailer = require('./email');
 const { broadcast } = require('./realtime');
 const {
   assertDeliveryCityAllowed, assertDeliveryAddressPresent,
+  assertStatusFitsDeliveryMethod,
 } = require('../validators/order.validator');
 const { badRequest, notFound } = require('../utils/AppError');
 
@@ -82,6 +83,10 @@ async function updateOrder(id, data) {
   assertDeliveryAddressPresent(method, address);
   assertDeliveryCityAllowed(method, address);
 
+  // מאותה סיבה: עדכון יכול להחליף את אופן הקבלה, את הסטטוס, או את
+  // שניהם, ורק כאן ידוע מה יהיה הזיווג אחרי הכתיבה.
+  if (data.status) assertStatusFitsDeliveryMethod(data.status, method);
+
   const order = await Order.update(id, data);
 
   if (data.status && data.status !== existing.status) {
@@ -92,12 +97,15 @@ async function updateOrder(id, data) {
 }
 
 /**
- * משנה סטטוס הזמנה ומעדכן את הלקוח.
+ * משנה סטטוס הזמנה ומעדכן את הלקוח. סטטוס שאינו מתאים לאופן הקבלה
+ * של ההזמנה נדחה ב-400 לפני שנכתב דבר.
  * כשהסטטוס נשלח שוב באותו ערך הכתיבה מתבצעת כרגיל, אבל המייל
  * נחסם — אחרת לחיצה כפולה במסך הניהול הייתה שולחת ללקוח כפילות.
  */
 async function updateOrderStatus(id, status) {
   const existing = await requireOrder(id);
+  assertStatusFitsDeliveryMethod(status, existing.delivery_method);
+
   const order = await Order.update(id, { status });
 
   // TODO: replace with project logger

@@ -6,6 +6,7 @@
  * בכל קובץ. formatDate נמצא כאן מאותה סיבה — גם לשונית ההזמנות וגם
  * ייצוא האקסל שב-useAdminOrders מציגים תאריכים באותה צורה.
  */
+import { Inbox, Settings, PackageCheck, Truck, CheckCircle } from 'lucide-react';
 
 /* אין כאן שדה icon: אייקון הקטגוריה נשלף מ-CATEGORY_ICONS לפי ה-id
    (רכיב Lucide, לא מחרוזת), כדי שהאדמין והחנות יציגו את אותו אייקון. */
@@ -24,12 +25,32 @@ export const CATEGORIES = [
   { id: 'home', label: 'בית' },
 ];
 
+/* תווית ואייקון בלבד — הצבע הוא מחלקה ב-features/_admin-orders.css,
+   כמו בכרטיס ההזמנה של הלקוח. הכחול והכתום שהיו כאן כהקסים לא קיימים
+   בשום מקום אחר באתר, וסטטוס זהה נראה עכשיו אותו דבר בשני הצדדים. */
 export const STATUS_CONFIG = {
-  new:        { label: 'חדשה',   color: '#2563eb', bg: '#eff6ff' },
-  processing: { label: 'בטיפול', color: '#d97706', bg: '#fffbeb' },
-  shipped:    { label: 'נשלחה',  color: '#7c3aed', bg: '#f5f3ff' },
-  completed:  { label: 'הושלמה', color: '#16a34a', bg: '#f0fdf4' },
+  new:              { label: 'חדשה',          Icon: Inbox },
+  processing:       { label: 'בטיפול',         Icon: Settings },
+  ready_for_pickup: { label: 'מוכנה לאיסוף',   Icon: PackageCheck },
+  shipped:          { label: 'נשלחה',          Icon: Truck },
+  completed:        { label: 'הושלמה',         Icon: CheckCircle },
 };
+
+/* הסטטוסים שאינם מתאימים לכל אופן קבלה. תמונת מראה של
+   STATUS_ONLY_FOR_METHOD ב-server/validators/order.validator.js: השרת
+   דוחה זיווג פסול ב-400, וכאן הוא פשוט לא מוצע. */
+const STATUS_ONLY_FOR_METHOD = {
+  ready_for_pickup: 'pickup',
+  shipped: 'delivery',
+};
+
+/** מחזיר את מפתחות הסטטוס החוקיים לאופן קבלה נתון, בסדר ההתקדמות. */
+export function statusesForMethod(deliveryMethod) {
+  return Object.keys(STATUS_CONFIG).filter((key) => {
+    const required = STATUS_ONLY_FOR_METHOD[key];
+    return !required || required === deliveryMethod;
+  });
+}
 
 /** ממיר תאריך לתצוגה בעברית. */
 export function formatDate(d) {

@@ -8,7 +8,7 @@
  */
 import { useState } from 'react';
 import {
-  ClipboardList, Search, Inbox, Settings, Truck, CheckCircle,
+  ClipboardList, Search, Inbox, Settings, PackageCheck, Truck, CheckCircle,
   Store, ChevronDown, Phone, MessageCircle,
 } from 'lucide-react';
 import Drawer from '../components/Drawer';
@@ -18,6 +18,7 @@ import { PHONES, whatsappUrl } from '../utils/storeInfo';
 const STATUS_CONFIG = {
   new: { label: 'התקבלה', Icon: Inbox },
   processing: { label: 'בטיפול', Icon: Settings },
+  ready_for_pickup: { label: 'מוכנה לאיסוף', Icon: PackageCheck },
   shipped: { label: 'נשלחה', Icon: Truck },
   completed: { label: 'הושלמה', Icon: CheckCircle },
 };

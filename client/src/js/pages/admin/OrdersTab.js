@@ -6,7 +6,7 @@
  */
 import { useState } from 'react';
 import { BarChart3, AlertTriangle, Store, Truck, ChevronUp, ChevronDown } from 'lucide-react';
-import { STATUS_CONFIG, formatDate } from './adminConstants';
+import { STATUS_CONFIG, statusesForMethod, formatDate } from './adminConstants';
 
 /** מציג את לשונית ההזמנות. */
 function OrdersTab({ orders, onStatusChange, onDeleteOrder, onExport, ordersError }) {
@@ -19,8 +19,8 @@ function OrdersTab({ orders, onStatusChange, onDeleteOrder, onExport, ordersErro
     <div>
       <div className="orders-stats">
         {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-          <div key={key} className="orders-stat-card" style={{ borderTop: `3px solid ${cfg.color}` }}>
-            <div className="stat-number" style={{ color: cfg.color }}>{orders.filter(o => o.status === key).length}</div>
+          <div key={key} className={`orders-stat-card is-${key}`}>
+            <div className="stat-number">{orders.filter(o => o.status === key).length}</div>
             <div className="stat-label">{cfg.label}</div>
           </div>
         ))}
@@ -54,7 +54,7 @@ function OrdersTab({ orders, onStatusChange, onDeleteOrder, onExport, ordersErro
                   <div className="order-card-left">
                     <span className="order-total-badge">₪{order.total}</span>
                     <span className="order-delivery-badge">{order.delivery_method === 'pickup' ? <><Store size={16} aria-hidden="true" /> איסוף</> : <><Truck size={16} aria-hidden="true" /> משלוח</>}</span>
-                    <span className="order-status-badge" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
+                    <span className={`order-status-badge order-status-badge--${order.status || 'new'}`}>{cfg.label}</span>
                     <span className="order-expand-btn">{isExpanded ? <ChevronUp size={18} aria-hidden="true" /> : <ChevronDown size={18} aria-hidden="true" />}</span>
                   </div>
                 </div>
@@ -83,10 +83,9 @@ function OrdersTab({ orders, onStatusChange, onDeleteOrder, onExport, ordersErro
                       <div className="order-status-select">
                         <label>שנה סטטוס:</label>
                         <div className="status-buttons">
-                          {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                            <button key={key} className={`status-btn ${order.status === key ? 'active' : ''}`}
-                              style={order.status === key ? { background: cfg.color, color: 'white' } : {}}
-                              onClick={() => onStatusChange(order.id, key)}>{cfg.label}</button>
+                          {statusesForMethod(order.delivery_method).map(key => (
+                            <button key={key} className={`status-btn status-btn--${key} ${order.status === key ? 'active' : ''}`}
+                              onClick={() => onStatusChange(order.id, key)}>{STATUS_CONFIG[key].label}</button>
                           ))}
                         </div>
                       </div>

@@ -210,9 +210,14 @@
 
 /* ---- Variants ------------------------------------------------------------ */
 
-/* The four statuses, in brand colours: purple for a new order, navy while it is
-   being handled, red once it is on the way, green when it is done — the one
-   place green is allowed, because done is exactly what it means. */
+/* The five statuses, in brand colours: purple for a new order, navy while it is
+   being handled, red once it is waiting in the shop, blue once it is on the
+   road, green when it is done — the one place green is allowed, because done is
+   exactly what it means.
+   Red moved from shipped to ready-for-pickup when that status arrived: the
+   order sitting on the counter is the one that needs someone to come, so it
+   gets the loud colour. Shipped took blue, the brand's secondary accent, rather
+   than a second navy that would have read as processing. */
 .order-history-status--new {
   background: rgba(var(--color-purple-rgb), 0.1);
   color: var(--color-purple);
@@ -223,9 +228,14 @@
   color: var(--color-navy);
 }
 
-.order-history-status--shipped {
-  background: rgba(var(--color-red-rgb), 0.1);
+.order-history-status--ready_for_pickup {
+  background: rgba(var(--color-red-rgb), 0.12);
   color: var(--color-red-dark);
+}
+
+.order-history-status--shipped {
+  background: rgba(var(--color-blue-rgb), 0.12);
+  color: var(--color-blue);
 }
 
 .order-history-status--completed {

@@ -97,10 +97,14 @@ async function captureError(fn) {
   }
 }
 
+/* delivery_method הוא חלק מהצילום ולא קישוט: השירות בודק מול הסטטוס
+   מה אופן הקבלה של ההזמנה הקיימת, ובמסד העמודה NOT NULL. */
 const sampleOrder = (over = {}) => ({
   id: 7,
   customer_name: 'ישראל ישראלי',
   customer_phone: '0501234567',
+  delivery_method: 'delivery',
+  delivery_address: 'בר כוכבא 52, פתח תקווה',
   status: 'new',
   total: 250,
   ...over,
@@ -252,6 +256,73 @@ async function testUpdateOrderStatus() {
     missing.Order.update.calls.length === 0, missing.Order.update.calls.length);
 }
 
+/**
+ * הכלל שסטטוס חייב להתאים לאופן הקבלה, בשני מסלולי העדכון.
+ *
+ * מה שאפשר לראות כאן ולא בחבילת ה-smoke: שכשהזיווג פסול בכלל לא
+ * מגיעים ל-Order.update ולא למייל — הבקשה נדחית לפני שנכתב דבר.
+ */
+async function testStatusFitsDeliveryMethod() {
+  console.log('\n── סטטוס מול אופן קבלה');
+
+  const pickup = sampleOrder({ delivery_method: 'pickup', delivery_address: null });
+
+  // נשלחה על הזמנת איסוף עצמי
+  const shippedOnPickup = loadService({ order: { findById: spy(pickup) } });
+  const err1 = await captureError(() => shippedOnPickup.service.updateOrderStatus(7, 'shipped'));
+  check('איסוף עצמי → נשלחה זורק 400', err1 && err1.status === 400, err1 && err1.status);
+  check('הזיווג הפסול לא הגיע לכתיבה',
+    shippedOnPickup.Order.update.calls.length === 0, shippedOnPickup.Order.update.calls.length);
+  check('הזיווג הפסול לא שלח מייל',
+    shippedOnPickup.mailer.sendStatusUpdateToCustomer.calls.length === 0,
+    shippedOnPickup.mailer.sendStatusUpdateToCustomer.calls.length);
+
+  // מוכנה לאיסוף על הזמנת משלוח
+  const readyOnDelivery = loadService({ order: { findById: spy(sampleOrder()) } });
+  const err2 = await captureError(() => readyOnDelivery.service.updateOrderStatus(7, 'ready_for_pickup'));
+  check('משלוח → מוכנה לאיסוף זורק 400', err2 && err2.status === 400, err2 && err2.status);
+  check('גם כאן בלי כתיבה',
+    readyOnDelivery.Order.update.calls.length === 0, readyOnDelivery.Order.update.calls.length);
+
+  // הזיווגים המותרים עוברים
+  const readyOnPickup = loadService({
+    order: { findById: spy(pickup), update: spy({ ...pickup, status: 'ready_for_pickup' }) },
+  });
+  const okReady = await readyOnPickup.service.updateOrderStatus(7, 'ready_for_pickup');
+  check('איסוף עצמי → מוכנה לאיסוף עובר', okReady.status === 'ready_for_pickup', okReady.status);
+
+  const shippedOnDelivery = loadService({
+    order: { findById: spy(sampleOrder()), update: spy(sampleOrder({ status: 'shipped' })) },
+  });
+  const okShipped = await shippedOnDelivery.service.updateOrderStatus(7, 'shipped');
+  check('משלוח → נשלחה עובר', okShipped.status === 'shipped', okShipped.status);
+
+  // completed משותף לשני המסלולים
+  const completedOnPickup = loadService({
+    order: { findById: spy(pickup), update: spy({ ...pickup, status: 'completed' }) },
+  });
+  const okDone = await completedOnPickup.service.updateOrderStatus(7, 'completed');
+  check('הושלמה מותר בשני המסלולים', okDone.status === 'completed', okDone.status);
+
+  // ובמסלול העדכון הכללי הבדיקה היא על המצב שאחרי המיזוג: הבקשה
+  // מחליפה את אופן הקבלה, ולכן הסטטוס נמדד מול החדש ולא מול הקיים
+  const switching = loadService({
+    order: {
+      findById: spy(pickup),
+      update: spy({ ...pickup, delivery_method: 'delivery', status: 'shipped' }),
+    },
+  });
+  const merged = await switching.service.updateOrder(7, {
+    delivery_method: 'delivery', delivery_address: 'בר כוכבא 52, פתח תקווה', status: 'shipped',
+  });
+  check('החלפת אופן קבלה וסטטוס יחד נמדדת על המצב הממוזג',
+    merged.status === 'shipped', merged.status);
+
+  const stillPickup = loadService({ order: { findById: spy(pickup) } });
+  const err3 = await captureError(() => stillPickup.service.updateOrder(7, { status: 'shipped' }));
+  check('עדכון כללי בלי החלפת אופן קבלה → 400', err3 && err3.status === 400, err3 && err3.status);
+}
+
 /** removeOrder — מחיקה מוצלחת מול הזמנה שאינה קיימת. */
 async function testRemoveOrder() {
   console.log('\n── removeOrder');
@@ -290,6 +361,7 @@ async function main() {
   await testCreateOrder();
   await testUpdateOrder();
   await testUpdateOrderStatus();
+  await testStatusFitsDeliveryMethod();
   await testRemoveOrder();
   await testFindOrdersByPhone();
 
