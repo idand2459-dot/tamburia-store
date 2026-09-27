@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   ShowerHead, Lock, Sprout, Wrench, Crown, Check, Circle, ShoppingCart,
-  ClipboardList,
+  ListChecks,
 } from 'lucide-react';
 
 /* ─── Project definitions ──────────────────────────────────────────────── */
@@ -174,7 +174,7 @@ function ProjectCalculator({ addBundleToCart }) {
         {/* ── Header ── */}
         <div className="proj-header">
           <span className="proj-tag"><Crown size={14} aria-hidden="true" /> כלי תכנון</span>
-          <h2 className="proj-title">לא יודעים מה לקנות? <ClipboardList size={24} aria-hidden="true" /></h2>
+          <h2 className="proj-title">לא יודעים מה לקנות? <ListChecks size={24} aria-hidden="true" /></h2>
           <p className="proj-subtitle">בחרו פרויקט — נכין לכם רשימת קניות מלאה</p>
         </div>
 
