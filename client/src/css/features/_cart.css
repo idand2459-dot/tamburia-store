@@ -10,8 +10,12 @@
    .cart-cta is here rather than in components/_buttons.css
    because all three steps render it — the cart's next-step
    button, the form's submit and the thank-you screen's close —
-   and nothing outside this flow does. That is the same reason
-   .checkout-btn, which it replaces, sat here.
+   which is the same reason .checkout-btn, which it replaces, sat
+   here. The one caller outside the flow is the wishlist's empty
+   state, which wears .cart-cta--outline for its own way back to
+   the shop: the same button, in the same drawer, saying the same
+   thing. If a third feature needs it, it has earned a move to
+   components/.
 
    What this replaces: rows that were a grey pill with the name,
    the price in red and an times sign on the end, a big red
