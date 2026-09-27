@@ -24,6 +24,14 @@
 
 /* ---- Elements ------------------------------------------------------------------ */
 
+/* While the counting range is being fetched. The sums wait for it rather than
+   drawing all-time numbers and then correcting themselves. */
+.stats-loading {
+  display: flex;
+  justify-content: center;
+  padding: 80px 0;
+}
+
 /* The counting range and the button that changes it. Nothing is deleted by it:
    it moves the date the sums are counted from, which is why the range is always
    spelled out beside it and why the undo sits in the same row. */

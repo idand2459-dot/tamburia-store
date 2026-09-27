@@ -21,6 +21,7 @@ router.use('/products', require('./product.routes'));
 router.use('/orders', require('./order.routes'));
 router.use('/reviews', require('./review.routes'));
 router.use('/pigment-formulas', require('./pigmentFormula.routes'));
+router.use('/settings', require('./setting.routes'));
 router.use('/', require('./upload.routes'));
 
 module.exports = router;

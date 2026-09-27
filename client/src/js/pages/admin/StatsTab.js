@@ -9,15 +9,20 @@
  * השורה למעלה אומרת תמיד ממתי סופרים — מספר שאין לו טווח אינו אומר
  * דבר. לשונית ההזמנות, חיפוש הלקוח לפי טלפון והייצוא לאקסל אינם
  * מושפעים.
+ *
+ * נקודת ההתחלה נשמרת בשרת, ולכן היא נטענת ולא זמינה מיד. הסיכומים
+ * ממתינים לה: לצייר אותם לפני שידוע ממתי סופרים היה מהבהב את מספרי
+ * כל ההיסטוריה ורק אחר כך את המסוננים.
  */
 import { CalendarDays, Calendar, CalendarRange, Coins, AlertTriangle, CheckCircle, RotateCcw, Undo2 } from 'lucide-react';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
+import { Spinner } from '../../components/LoadingStates';
 import { useStatsBaseline } from '../../hooks/useStatsBaseline';
 import { formatDate } from './adminConstants';
 
 /** מציג את לשונית הסטטיסטיקות. */
-function StatsTab({ products, getStats, onToggleStock, productsError }) {
-  const { since, resetStats, clearBaseline } = useStatsBaseline();
+function StatsTab({ api, products, getStats, onToggleStock, productsError }) {
+  const { since, loading, baselineError, resetStats, clearBaseline } = useStatsBaseline(api);
 
   const stats = getStats(products, since);
   const maxDailyCount = Math.max(...stats.dailyOrders.map(d => d.count), 1);
@@ -28,8 +33,22 @@ function StatsTab({ products, getStats, onToggleStock, productsError }) {
     resetStats();
   }
 
+  if (loading) {
+    return (
+      <div className="stats-loading">
+        <Spinner color="dark" />
+      </div>
+    );
+  }
+
   return (
     <div className="stats-page">
+      {baselineError && (
+        <div className="admin-error">
+          <AlertTriangle size={18} aria-hidden="true" /> {baselineError}
+        </div>
+      )}
+
       <div className="stats-reset">
         {since ? (
           <>

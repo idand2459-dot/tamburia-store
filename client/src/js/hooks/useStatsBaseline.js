@@ -7,50 +7,82 @@
  * חיפוש הלקוח לפי טלפון והייצוא לאקסל אינם מושפעים — ולחיצה על "בטל
  * איפוס" מחזירה את התמונה המלאה.
  *
- * נשמר ב-localStorage ולכן הוא מקומי לדפדפן: איפוס שנעשה בטלפון אינו
- * מופיע במחשב שבחנות. זו ההחלטה שנבחרה — שמירה בשרת הייתה דורשת
- * עמודה או טבלת הגדרות, וזה שינוי גדול יותר ממה שהכפתור הזה שווה.
+ * ההגדרה נשמרת במסד (settings.stats_counting_from) ולא ב-localStorage,
+ * כדי שאיפוס שנעשה בטלפון ייראה גם במחשב שבחנות. הביטול הוא PUT עם
+ * value: null — השרת מוחק את השורה, וקריאה הבאה מחזירה null.
+ *
+ * מקבל את עוטף ה-fetch (api) כארגומנט, כמו שאר הוקי הניהול, כדי
+ * שפקיעת התחברות תחזיר למסך הסיסמה.
+ *
+ * loading מוחזק כדי שהלשונית לא תצייר סיכומים לפני שידוע ממתי סופרים:
+ * בלעדיו היו מהבהבים המספרים של כל ההיסטוריה ורק אחר כך המסוננים.
  */
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { errorMessageFrom, NETWORK_ERROR } from '../utils/apiErrors';
 
-const STORAGE_KEY = 'tamburia_admin_stats_since';
-
-/** קורא את נקודת ההתחלה השמורה, או null כשאין. */
-function readBaseline() {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    // ערך פגום (עריכה ידנית, גרסה ישנה) נחשב כאילו אין איפוס בכלל
-    return Number.isNaN(new Date(raw).getTime()) ? null : raw;
-  } catch {
-    return null;
-  }
-}
+const ENDPOINT = '/api/settings/stats-counting-from';
 
 /** מחזיר את נקודת ההתחלה, ואת שתי הפעולות שמשנות אותה. */
-export function useStatsBaseline() {
-  const [since, setSince] = useState(readBaseline);
+export function useStatsBaseline(api) {
+  const [since, setSince] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [baselineError, setBaselineError] = useState('');
+
+  /** שולף את נקודת ההתחלה מהשרת. */
+  const load = useCallback(async () => {
+    try {
+      const res = await api(ENDPOINT);
+      if (!res.ok) {
+        // 401 כבר טופל בעוטף; כאן נשארת רק תקלה אמיתית
+        setBaselineError(await errorMessageFrom(res, 'טעינת נקודת ההתחלה של הסיכומים נכשלה.'));
+        return;
+      }
+      const body = await res.json();
+      setSince(body.value ?? null);
+      setBaselineError('');
+    } catch {
+      setBaselineError(NETWORK_ERROR);
+    } finally {
+      // ב-finally: גם כשהטעינה נכשלה הלשונית צריכה להיפתח ולהציג את
+      // הסיכומים המלאים, ולא להישאר על מסך המתנה.
+      setLoading(false);
+    }
+  }, [api]);
+
+  useEffect(() => { load(); }, [load]);
+
+  /** כותב ערך חדש, ומעדכן את המצב המקומי רק כשהשרת אישר. */
+  const save = useCallback(async (value, failMessage) => {
+    try {
+      const res = await api(ENDPOINT, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value }),
+      });
+
+      if (!res.ok) {
+        setBaselineError(await errorMessageFrom(res, failMessage));
+        return;
+      }
+
+      // הערך שחזר ולא זה שנשלח: השרת מנרמל אותו ל-ISO
+      const body = await res.json();
+      setSince(body.value ?? null);
+      setBaselineError('');
+    } catch {
+      setBaselineError(NETWORK_ERROR);
+    }
+  }, [api]);
 
   /** קובע את הרגע הזה כנקודת ההתחלה של הסיכומים. */
-  const resetStats = useCallback(() => {
-    const now = new Date().toISOString();
-    try {
-      window.localStorage.setItem(STORAGE_KEY, now);
-    } catch {
-      /* אין אחסון — האיפוס תקף לגלישה הזו בלבד */
-    }
-    setSince(now);
-  }, []);
+  const resetStats = useCallback(() => (
+    save(new Date().toISOString(), 'איפוס הסיכומים נכשל.')
+  ), [save]);
 
   /** מבטל את האיפוס ומחזיר את הסיכומים לכל ההיסטוריה. */
-  const clearBaseline = useCallback(() => {
-    try {
-      window.localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      /* כנ"ל */
-    }
-    setSince(null);
-  }, []);
+  const clearBaseline = useCallback(() => (
+    save(null, 'ביטול האיפוס נכשל.')
+  ), [save]);
 
-  return { since, resetStats, clearBaseline };
+  return { since, loading, baselineError, resetStats, clearBaseline };
 }
