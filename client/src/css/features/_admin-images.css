@@ -1,75 +1,170 @@
 /* ==========================================================
-   Admin images — the multi-image picker in the product form
+   Admin images — the photo picker in the product form
 
    Its own partial rather than part of _admin-form.css: it is a
    self-contained control with its own badges and remove button,
-   and the form was over the 300-line target with it inside.
+   and the form is over the 300-line target without it.
+
+   Two big buttons rather than one file input, because on the
+   phone taking the photo there and then is the common case and
+   the gallery is the exception. Both are a <label> wrapping a
+   hidden <input type="file">: a real button cannot open a file
+   picker, and a bare file input cannot be made to look like
+   anything.
    ========================================================== */
+
+.admin-image-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.admin-image-btn {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 60px;
+  border: 1.5px dashed var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-h3);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+/* The input itself is never seen — the label around it is the button. Not
+   display: none, because a hidden-that-way input cannot be focused, and the
+   keyboard has to be able to reach it. */
+.admin-image-btn input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
 
 .existing-images {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 12px;
+  margin-top: 4px;
 }
-
-/* ---- Elements ------------------------------------------------------------------ */
 
 .existing-image-item {
   position: relative;
-  width: 80px; height: 80px;
-  border-radius: 10px;
-  overflow: visible;
+  width: 86px;
+  height: 86px;
 }
 
 .existing-image-item img {
-  width: 80px; height: 80px;
-  object-fit: cover;
-  border-radius: 10px;
+  width: 100%;
+  height: 100%;
   border: 2px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-image-well);
+  object-fit: cover;
 }
 
-/* ===== ADMIN MULTI-IMAGE ===== */
 .images-count-badge {
-  font-size: 0.78rem;
-  background: var(--color-border-soft);
-  color: #666;
+  margin-inline-start: 8px;
   padding: 2px 8px;
-  border-radius: 10px;
-  margin-right: 8px;
-  font-weight: 400;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--color-navy-rgb), 0.07);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: 600;
 }
 
 .main-image-badge {
   position: absolute;
-  bottom: -8px; right: 0; left: 0;
-  text-align: center;
-  font-size: 0.65rem;
-  background: var(--color-navy);
-  color: white;
+  inset-inline: 0;
+  bottom: -9px;
   padding: 1px 4px;
   border-radius: 4px;
+  background: var(--color-navy);
+  color: white;
+  font-size: var(--font-size-xs);
+  text-align: center;
 }
 
+/* Small on purpose: it sits on the corner of an 86px thumbnail, and a 48px
+   target there would cover the picture it is meant to remove. The gallery and
+   the form's own controls are the 48px ones. */
 .remove-image-btn {
   position: absolute;
-  top: -6px; left: -6px;
-  width: 20px; height: 20px;
-  background: var(--color-red);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  font-size: 0.7rem;
-  cursor: pointer;
+  top: -7px;
+  inset-inline-start: -7px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 26px;
+  height: 26px;
   padding: 0;
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-red);
+  color: white;
   line-height: 1;
+  cursor: pointer;
 }
 
 .admin-images-hint {
-  font-size: 0.78rem;
-  color: var(--color-text-faint);
-  margin-top: 6px;
+  margin: 0;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-small);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.admin-image-btn:hover {
+  border-color: var(--color-navy);
+  background: rgba(var(--color-navy-rgb), 0.04);
+}
+
+/* the input is what takes focus, so the ring is drawn on its label */
+.admin-image-btn:focus-within {
+  outline: 3px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+.remove-image-btn:hover { background: var(--color-red-dark); }
+
+.admin-image-btn:has(input:disabled) {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* xs — two 60px buttons with icon and label stop fitting side by side. */
+@media (max-width: 430px) {
+  .admin-image-buttons { flex-direction: column; }
+}
+
+/* ---- Dark mode ----------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .admin-image-btn {
+    background: var(--color-navy);
+    border-color: var(--color-surface-dark);
+    color: var(--color-text-dark);
+  }
+
+  .existing-image-item img {
+    border-color: var(--color-surface-dark);
+    background: var(--color-bg-dark);
+  }
+
+  .remove-image-btn { border-color: var(--color-navy); }
+
+  .images-count-badge {
+    background: var(--color-surface-dark);
+    color: var(--color-text-faint);
+  }
 }

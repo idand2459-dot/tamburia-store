@@ -1,6 +1,16 @@
 /* ==========================================================
    Admin import — the CSV import tab: instructions, upload area,
    error list, preview table and result
+
+   Brought into the redesigned panel rather than redesigned: the
+   layout is unchanged, and what moved is the scale — 16px body
+   text, 48px on the template button, 52px on the confirm.
+
+   Gone in the same pass, as dead code: .import-columns,
+   .import-column-row (and its two descendant rules),
+   .req-badge, .opt-badge and .import-upload-sub — the markup
+   that wore them has not existed for some time. The last one
+   took the file's only !important with it.
    ========================================================== */
 
 /* ===== CSV IMPORT ===== */
@@ -28,55 +38,6 @@
 .import-instructions > p {
   color: #666;
   margin-bottom: 20px;
-}
-
-.import-columns {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.import-column-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  background: #f8f8f6;
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-
-.import-column-row code {
-  background: var(--color-navy);
-  color: white;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 0.82rem;
-  min-width: 100px;
-  text-align: center;
-}
-
-.import-column-row span:nth-child(2) {
-  flex: 1;
-  color: #444;
-}
-
-.req-badge {
-  font-size: 0.75rem;
-  background: var(--color-error-border);
-  color: var(--color-red-dark);
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-weight: 600;
-}
-
-.opt-badge {
-  font-size: 0.75rem;
-  background: var(--color-border-soft);
-  color: var(--color-text-subtle);
-  padding: 2px 8px;
-  border-radius: 10px;
 }
 
 .import-categories-list {
@@ -113,15 +74,20 @@
 }
 
 .download-template-btn {
-  padding: 10px 22px;
-  background: var(--color-navy);
-  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 22px;
   border: none;
   border-radius: 10px;
-  font-size: 0.95rem;
+  background: var(--color-navy);
+  color: white;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
   cursor: pointer;
-  font-family: 'Segoe UI', sans-serif;
-  transition: background 0.2s;
+  transition: background var(--transition-fast);
 }
 
 /* Upload area */
@@ -145,15 +111,6 @@
   color: #444;
   font-size: 1rem;
   margin: 0;
-}
-
-/* !important on all three: `.import-upload-area p` above carries an element
-   selector and so outranks this class, and this is the second paragraph in that
-   same area with its own smaller, dimmer treatment. */
-.import-upload-sub {
-  color: var(--color-text-faint) !important;
-  font-size: 0.85rem !important;
-  margin-top: 4px !important;
 }
 
 /* Errors */
@@ -206,7 +163,7 @@
 .import-preview-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.88rem;
+  font-size: var(--font-size-body);
   direction: rtl;
 }
 
@@ -229,23 +186,27 @@
 }
 
 .import-preview-more {
-  text-align: center;
-  color: var(--color-text-faint);
-  font-size: 0.85rem;
   margin-top: 8px;
+  color: var(--color-text-faint);
+  font-size: var(--font-size-small);
+  text-align: center;
 }
 
 .import-confirm-btn {
-  padding: 13px 28px;
-  background: var(--color-green);
-  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 28px;
   border: none;
   border-radius: 10px;
-  font-size: 1rem;
+  background: var(--color-green);
+  color: white;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-h3);
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Segoe UI', sans-serif;
-  transition: background 0.2s;
+  transition: background var(--transition-fast);
 }
 
 /* Result */
@@ -305,9 +266,6 @@
 
   .import-instructions p { color: var(--color-text-faint); }
 
-  .import-column-row { background: var(--color-bg-dark); }
-
-  .import-column-row span:nth-child(2) { color: var(--color-text-faint); }
 
   .import-upload-area { background: var(--color-navy); border-color: var(--color-surface-dark); }
 

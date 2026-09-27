@@ -1,0 +1,64 @@
+/* ==========================================================
+   Admin stock switch — the in-stock / out-of-stock control
+
+   Its own partial because two components render it: the row in
+   the products list (_admin-products.css) and the stock field in
+   the product form (_admin-form.css). It used to be two separate
+   controls — .stock-toggle-btn, a pill of text, and
+   .instock-toggle, a switch the form's old `.admin-form button`
+   rule flattened into a rounded rectangle — which meant the same
+   fact was set two different ways on two screens.
+
+   A real switch and not a button of text: role="switch" with
+   aria-checked in the markup, so it announces itself as on or
+   off, and the word beside it (in each component's own partial)
+   says which without having to read the colour.
+   ========================================================== */
+
+.admin-stock-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 52px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 15px;
+  background: var(--color-border);
+  cursor: pointer;
+  transition: background var(--transition-base);
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.admin-stock-knob {
+  position: absolute;
+  top: 3px;
+  inset-inline-start: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  transition: transform var(--transition-base);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.admin-stock-switch[aria-checked='true'] { background: var(--color-navy); }
+
+/* The knob travels the switch's width less its own size and both insets.
+   translateX in the inline direction, so the same rule works in RTL and LTR. */
+.admin-stock-switch[aria-checked='true'] .admin-stock-knob {
+  transform: translateX(calc(-1 * (52px - 24px - 6px)));
+}
+
+.admin-stock-switch:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+/* ---- Dark mode ----------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .admin-stock-switch { background: var(--color-surface-dark); }
+}

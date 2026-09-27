@@ -58,7 +58,15 @@
 @import './features/_admin-nav.css';
 @import './features/_admin-products.css';
 @import './features/_admin-form.css';
+/* the in-stock switch, rendered by both the list above and the form above it.
+   After both, so a component that wants to place it can, while the switch's own
+   look stays in one file. */
+@import './features/_admin-switch.css';
 @import './features/_admin-images.css';
+/* the storefront card rendered from the form's values. After _product-card.css
+   in section 3, which it needs already in the cascade; it styles only the frame
+   around the card and declares nothing that file does. */
+@import './features/_admin-preview.css';
 @import './features/_admin-filters.css';
 @import './features/_admin-import.css';
 @import './features/_admin-orders.css';

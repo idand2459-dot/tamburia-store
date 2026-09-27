@@ -1,135 +1,151 @@
 /* ==========================================================
-   Admin filters — the search field and the category filter row
+   Admin filters — the search field and the category chips over
+   the product list
 
-   The shop's own search field is features/_product-search.css
-   and the navbar's is layout/_nav-search.css; this one is the
-   admin's, over the product list.
+   The shop's own search field is layout/_nav-search.css and the
+   category page's filters are features/_category-filters.css;
+   this one is the admin's.
+
+   Both controls are 48px or taller, because the panel is worked
+   from a phone. Renamed from .admin-search-bar / .admin-cat-btn
+   with the redesign, and .admin-results-info went with them —
+   the product count is in the chips now, and the reviews tab has
+   .admin-tab-summary in _admin-layout.css.
    ========================================================== */
 
-/* ===== ADMIN SEARCH ===== */
-.admin-search-bar {
+.admin-search {
   position: relative;
-  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
 }
 
-/* ---- Elements ------------------------------------------------------------------ */
+/* ---- Elements ------------------------------------------------------------ */
 
-.admin-search-bar input {
+.admin-search-input {
   width: 100%;
-  /* padding-right מפנה מקום לאייקון החיפוש שיושב בתוך השדה */
-  padding: 12px 44px 12px 20px;
+  min-height: 52px;
+  /* the inline padding leaves room for the icon inside the field at the start
+     and the clear button at the end */
+  padding: 0 52px;
   border: 1.5px solid var(--color-border);
-  border-radius: 30px;
-  font-size: 1rem;
-  font-family: 'Segoe UI', sans-serif;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-h3);
   direction: rtl;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color var(--transition-fast);
 }
 
-/* אייקון החיפוש: היה חלק מה-placeholder, ועכשיו הוא רכיב Lucide בתוך
-   ה-.admin-search-bar שהוא position: relative. */
 .admin-search-icon {
   position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
+  inset-inline-start: 18px;
   color: var(--color-text-faint);
   pointer-events: none;
 }
 
 .admin-search-clear {
   position: absolute;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
+  inset-inline-end: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
   border: none;
+  border-radius: 50%;
+  background: none;
   color: var(--color-text-faint);
   cursor: pointer;
-  font-size: 1rem;
-  padding: 4px;
 }
 
-/* ===== CATEGORY FILTER ===== */
-.admin-category-filter {
+.admin-cats {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 20px;
 }
 
-.admin-cat-btn {
-  display: flex;
+.admin-cat {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  min-height: 48px;
+  padding: 0 16px;
   border: 1.5px solid var(--color-border);
-  border-radius: 20px;
-  background: white;
-  font-size: 0.88rem;
-  cursor: pointer;
-  font-family: 'Segoe UI', sans-serif;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
   color: var(--color-text-muted);
-  transition: all 0.2s;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
   white-space: nowrap;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
 }
 
 .admin-cat-count {
-  background: rgba(0,0,0,0.12);
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--color-navy-rgb), 0.07);
   color: inherit;
-  border-radius: 10px;
-  padding: 1px 7px;
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
 }
 
-.admin-results-info {
-  font-size: 0.85rem;
-  color: #999;
-  margin-bottom: 16px;
-  min-height: 20px;
-}
+/* ---- States -------------------------------------------------------------- */
 
-/* ---- States -------------------------------------------------------------------- */
+.admin-search-input:focus { border-color: var(--color-navy); }
 
-.admin-search-bar input:focus {
+.admin-search-clear:hover { color: var(--color-red); }
+
+.admin-cat:hover {
   border-color: var(--color-navy);
+  color: var(--color-navy);
 }
 
-.admin-search-clear:hover {
-  color: var(--color-red);
-}
-
-.admin-cat-btn:hover {
+.admin-cat.is-active {
   border-color: var(--color-navy);
-  color: var(--color-text);
-}
-
-.admin-cat-btn.active {
   background: var(--color-navy);
-  border-color: var(--color-navy);
   color: white;
 }
 
-.admin-cat-btn.active .admin-cat-count {
-  background: rgba(255,255,255,0.25);
+.admin-cat.is-active .admin-cat-count {
+  background: rgba(255, 255, 255, 0.22);
 }
 
-/* ---- Dark mode ----------------------------------------------------------------- */
+.admin-search-input:focus-visible,
+.admin-search-clear:focus-visible,
+.admin-cat:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: -3px;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* lg — the phone: one sideways-scrolling row of categories instead of a block
+   of wrapped chips that would push the list itself off the screen. */
+@media (max-width: 900px) {
+  .admin-cats {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: -16px;
+    padding: 2px 16px;
+  }
+
+  .admin-cats::-webkit-scrollbar { display: none; }
+}
+
+/* ---- Dark mode ----------------------------------------------------------- */
 
 @media (prefers-color-scheme: dark) {
-  .admin-cat-btn {
-      background: var(--color-navy);
-      border-color: var(--color-surface-dark);
-      color: var(--color-text-faint);
-    }
+  .admin-search-input,
+  .admin-cat {
+    background: var(--color-navy);
+    border-color: var(--color-surface-dark);
+    color: var(--color-text-dark);
+  }
 
-  .admin-cat-btn:hover { border-color: var(--color-blue); color: var(--color-text-dark); }
-
-  .admin-search-bar input {
-      background: var(--color-navy);
-      border-color: var(--color-surface-dark);
-      color: var(--color-text-dark);
-    }
+  .admin-cat:hover { border-color: var(--color-blue); }
 }
