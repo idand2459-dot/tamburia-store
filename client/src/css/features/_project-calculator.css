@@ -17,10 +17,14 @@
 /* ---- Block --------------------------------------------------------------- */
 
 /* No margin-top: this section butts straight onto the paint calculator above
-   it. The hairline on ::after is the whole boundary. */
+   it. The hairline on ::after is the whole boundary.
+
+   Top and bottom padding match, so with no project picked the section closes
+   as far below the cards as it opens above the header. The panel's own gap is
+   its margin, not padding here — see .proj-panel. */
 .proj-section {
   background-color: var(--color-navy-900);
-  padding: 100px 40px 110px;
+  padding: 100px 40px;
   position: relative;
   overflow: hidden;
 }
@@ -65,10 +69,7 @@
 
 /* ── Header ─────────────────────────────────────────────────────── */
 
-.proj-header {
-  text-align: center;
-  margin-bottom: 42px;
-}
+.proj-header { text-align: center; margin-bottom: 42px; }
 
 /* purple, matching the pills on the categories, WhyUs and paint calculator
    sections. It was a red pill, which put red on the tag, the title and the
@@ -112,7 +113,6 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
-  margin-bottom: 32px;
 }
 
 /* Dark glass cards, not the pills these used to be: they are the same kind of
@@ -163,7 +163,7 @@
 
 .proj-card-name { line-height: 1.3; }
 
-/* top-left corner: in RTL that is the corner away from the reading edge */
+/* top-left: in RTL, the corner away from the reading edge */
 .proj-card-check {
   position: absolute;
   top: 10px;
@@ -181,7 +181,12 @@
 
 /* ── Panel ──────────────────────────────────────────────────────── */
 
+/* The 32px above the panel used to be margin-bottom on .proj-cards, which
+   meant it was there whether or not a panel followed — a band of nothing under
+   the cards for anyone who had not picked a project yet. It belongs to the
+   panel, which only exists when there is something to separate from. */
 .proj-panel {
+  margin-top: 32px;
   animation: proj-fade-up 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
   background: rgba(var(--color-navy-950-rgb), 0.55);
   border: 1px solid rgba(255, 255, 255, 0.09);
@@ -247,7 +252,7 @@
 
 @media (max-width: 768px) {
   .proj-section {
-      padding: 64px 24px 72px;
+      padding: 64px 24px;
     }
 
   .proj-cards {
@@ -264,7 +269,7 @@
    where the footer stacks — the visual change CONVENTIONS.md rule 4 says to
    avoid. */
 @media (max-width: 640px) {
-  .proj-section  { padding: 50px 20px 60px; }
+  .proj-section  { padding: 50px 20px; }
 
   .proj-title    { font-size: 1.55rem; }
 
