@@ -1,229 +1,195 @@
 /* ==========================================================
-   Reviews carousel — the site-wide testimonials section
+   Reviews section — the dark band, its header, and the review
+   form that opens on it
 
-   The form that writes one is features/_review-form.css, the
-   moderation list is features/_admin-reviews.css, the star row
-   is components/_stars.css, and the per-product block is
+   Fourth stop in the home page's dark rhythm: --color-navy-900,
+   one step lighter than the features strip above it, with a
+   single purple glow at the top centre. It used to be the point
+   where the page went light again — a --color-bg band with white
+   cards — and that band is what this file removes.
+
+   The rotating card itself is features/_reviews-carousel.css,
+   split out when the two together passed the 300-line target. The
+   form's own styles are features/_review-form.css (this file only
+   repaints it for a dark surface), the moderation list is
+   features/_admin-reviews.css, the star row is
+   components/_stars.css, and the per-product block is
    features/_product-reviews.css.
+
+   Always dark, whatever the system theme, so there is no
+   prefers-color-scheme block at the bottom of this file. What
+   went with the old light look: the whole dark-mode block that
+   repainted the white cards, and the margin that used to leave a
+   gap above the section.
    ========================================================== */
 
+/* ---- Block --------------------------------------------------------------- */
+
 .reviews-section {
-  max-width: 900px;
-  margin: 60px auto 0;
-  padding: 0 20px;
+  background-color: var(--color-navy-900);
+  padding: 90px 40px;
+  position: relative;
+  overflow: hidden;
 }
 
-/* ---- Elements -------------------------------------------------------------- */
+/* The backdrop layer, the same one the categories and WhyUs sections carry: a
+   background image may be dropped in here later — add it as the last
+   (bottom-most) layer of the `background` below and the glow keeps sitting
+   over it. */
+.reviews-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(ellipse 55% 55% at 50% 0%,
+    rgba(var(--color-purple-rgb), 0.16), transparent 70%);
+  pointer-events: none;
+}
 
+/* The seam with the features strip above: lit in the middle, faded out at both
+   ends, exactly as on .whyus-section. */
+.reviews-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  z-index: 1;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(var(--color-red-rgb), 0.6),
+    rgba(var(--color-purple-rgb), 0.6),
+    transparent);
+  pointer-events: none;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* z-index 1 is what lifts every child off ::before — and off the image layer
+   that may join it. 680px is the card's width too: the section is one column
+   holding one review, so the wrapper is the measure. */
+.reviews-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* Centred, like every other section header on the page. It used to be a
+   space-between row with the "write a review" button opposite the title, which
+   made this the only left-aligned heading on the home page. */
 .reviews-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 28px;
-  flex-wrap: wrap;
-  gap: 16px;
+  text-align: center;
+  margin-bottom: 32px;
 }
 
-.reviews-header-text h2 {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--color-text);
-  margin-bottom: 8px;
+.reviews-title {
+  font-size: 2.2rem;
+  font-weight: var(--font-weight-extrabold);
+  color: white;
+  line-height: 1.2;
+  margin-bottom: 12px;
 }
+
+/* The empty stars in this section are white-on-dark rather than the light
+   surface's navy tint. One line, because components/_stars.css reads that
+   colour off a custom property. */
+.reviews-section .stars { --star-empty: rgba(255, 255, 255, 0.2); }
 
 .reviews-avg {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
 .reviews-avg-num {
   font-size: 1.4rem;
-  font-weight: 800;
-  color: var(--color-text);
+  font-weight: var(--font-weight-extrabold);
+  color: white;
 }
 
 .reviews-avg-count {
-  font-size: 0.85rem;
-  color: #999;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.62);
 }
 
-/* ===== CAROUSEL ===== */
-.reviews-carousel {
-  position: relative;
-  padding: 0 48px;
-}
-
-.reviews-track {
-  position: relative;
-  height: 180px;
-  overflow: hidden;
-}
-
-.review-card {
-  position: absolute;
-  inset: 0;
-  background: white;
-  border-radius: 20px;
-  padding: 24px 28px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-  transition: all 0.4s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  opacity: 0;
-  transform: translateX(60px);
-  pointer-events: none;
-}
-
-.review-card-top {
-  display: flex;
+/* A ghost button. The filled navy pill it was belongs to _review-form.css,
+   where the product page still wants it, so this is scoped to the section —
+   and it wins on specificity rather than on import order. */
+.reviews-section .add-review-btn {
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
-}
-
-.reviewer-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-navy), var(--color-red));
+  gap: 8px;
+  margin-top: 20px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: white;
-  font-size: 1.1rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.reviewer-name {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--color-text);
-}
-
-.review-date {
-  font-size: 0.78rem;
-  color: var(--color-text-faint);
-  margin-top: 2px;
-}
-
-.review-card-stars { margin-right: auto; }
-
-.review-text {
-  font-size: 0.95rem;
-  color: var(--color-text-muted);
-  line-height: 1.6;
-  font-style: italic;
-  margin: 0;
-}
-
-/* חצים */
-.carousel-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-60%);
-  background: white;
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  font-size: 1.3rem;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s;
-  z-index: 2;
-  color: var(--color-text);
-}
-
-/* Dots */
-.carousel-dots {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 16px;
-}
-
-.carousel-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: #ddd;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  padding: 0;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
 .reviews-empty {
   text-align: center;
   padding: 40px;
-  color: var(--color-text-faint);
-  background: white;
-  border-radius: 20px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(var(--color-navy-950-rgb), 0.55);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
 }
 
-/* ---- States ---------------------------------------------------------------- */
+/* The review form, on this section's dark surface
+   -------------------------------------------------------------------------- */
 
-.carousel-arrow:hover { background: var(--color-navy); color: white; }
-
-/* ---- Variants -------------------------------------------------------------- */
-
-.review-card.active {
-  opacity: 1;
-  transform: translateX(0);
-  pointer-events: all;
+/* _review-form.css paints a white card, because the product page it also serves
+   is a light page. Opening the form here punched a white hole in the middle of
+   the section, so these rules repaint it — scoped, so the product page keeps
+   the white one. Nothing about the form's markup or behaviour changes. */
+.reviews-section .review-form-wrap {
+  background: rgba(var(--color-navy-950-rgb), 0.55);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: none;
 }
 
-.review-card.prev {
-  opacity: 0;
-  transform: translateX(-60px);
+.reviews-section .review-form h3 { color: white; }
+
+.reviews-section .review-field label { color: rgba(255, 255, 255, 0.72); }
+
+.reviews-section .review-field input,
+.reviews-section .review-field textarea {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: white;
 }
 
-.review-card.hidden {
-  opacity: 0;
-  transform: translateX(100px);
+.reviews-section .review-field input::placeholder,
+.reviews-section .review-field textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
 }
 
-.carousel-arrow-right { right: 4px; }
+.reviews-section .review-submitted { color: rgba(255, 255, 255, 0.85); }
 
-.carousel-arrow-left { left: 4px; }
+/* ---- States -------------------------------------------------------------- */
 
-.carousel-dot.active { background: var(--color-navy); transform: scale(1.2); }
-
-/* ---- Responsive ------------------------------------------------------------ */
-
-/* Kept at 600px: the block it comes from also drops the review form's field
-   grid to one column, and the carousel's height and padding are tuned together
-   with that. Split across two partials, one 600px block each. */
-@media (max-width: 600px) {
-  .reviews-carousel { padding: 0 36px; }
-
-  .reviews-track { height: 220px; }
+.reviews-section .add-review-btn:hover {
+  background: transparent;
+  border-color: var(--color-red);
+  box-shadow: 0 0 20px rgba(var(--color-red-rgb), 0.25);
 }
+
+.reviews-section .review-field input:focus,
+.reviews-section .review-field textarea:focus {
+  border-color: rgba(var(--color-red-rgb), 0.6);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
 
 @media (max-width: 768px) {
-  .reviews-section { margin-top: 40px; }
-}
+  .reviews-section { padding: 64px 20px; }
 
-/* ---- Dark mode ------------------------------------------------------------- */
-
-@media (prefers-color-scheme: dark) {
-  .reviews-header-text h2 { color: var(--color-text-dark); }
-
-  .reviews-avg-num { color: var(--color-text-dark); }
-
-  .review-card { background: var(--color-navy); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-
-  .reviewer-name { color: var(--color-text-dark); }
-
-  .review-text { color: var(--color-text-faint); }
-
-  .carousel-arrow { background: var(--color-navy); color: var(--color-text-dark); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
-
-  .carousel-arrow:hover { background: var(--color-red); }
-
-  .reviews-empty { background: var(--color-navy); }
+  .reviews-title { font-size: 1.8rem; }
 }

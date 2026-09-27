@@ -71,24 +71,6 @@
 
 .proj-header { text-align: center; margin-bottom: 42px; }
 
-/* purple, matching the pills on the categories, WhyUs and paint calculator
-   sections. It was a red pill, which put red on the tag, the title and the
-   button all at once. */
-.proj-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(var(--color-purple-rgb), 0.18);
-  border: 1px solid rgba(var(--color-purple-rgb), 0.35);
-  color: var(--color-purple-soft);
-  padding: 6px 18px;
-  border-radius: var(--radius-pill);
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  margin-bottom: 18px;
-}
-
 /* flex, because the title carries a Lucide wrench after the words */
 .proj-title {
   display: flex;

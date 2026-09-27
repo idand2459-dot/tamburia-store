@@ -2,7 +2,7 @@
  * עמוד שאלות נפוצות עם תשובות מתקפלות.
  */
 import { useState } from 'react';
-import { MessageCircle, Phone } from 'lucide-react';
+import { MessageCircle, Phone, Plus } from 'lucide-react';
 
 const FAQS = [
   {
@@ -52,25 +52,44 @@ function FAQ() {
     <section className="faq-section">
       <div className="faq-content">
         <div className="faq-header">
-          <span className="faq-tag">שאלות נפוצות</span>
-          <h2 className="faq-title">יש לכם שאלות? יש לנו תשובות <MessageCircle size={24} aria-hidden="true" /></h2>
+          <span className="section-pill">שאלות נפוצות</span>
+          <h2 className="faq-title">יש לכם שאלות? יש לנו תשובות</h2>
           <p className="faq-subtitle">כל מה שרציתם לדעת על טכניק טמבור</p>
         </div>
 
         <div className="faq-list">
-          {FAQS.map((faq, i) => (
-            <div key={i} className={`faq-item ${openIndex === i ? 'open' : ''}`}>
-              <button className="faq-question" onClick={() => toggle(i)}>
-                <span>{faq.q}</span>
-                <span className="faq-arrow">{openIndex === i ? '−' : '+'}</span>
-              </button>
-              {openIndex === i && (
-                <div className="faq-answer">
-                  <p>{faq.a}</p>
+          {FAQS.map((faq, i) => {
+            const open = openIndex === i;
+            return (
+              <div key={i} className={`faq-item ${open ? 'open' : ''}`}>
+                <button
+                  className="faq-question"
+                  onClick={() => toggle(i)}
+                  aria-expanded={open}
+                  aria-controls={`faq-answer-${i}`}
+                  id={`faq-question-${i}`}
+                >
+                  <span>{faq.q}</span>
+                  {/* אייקון אחד לשני המצבים: ה-CSS מסובב אותו 45° ל-× כשהשורה
+                      פתוחה. החלפת אייקון באייקון הייתה מבטלת את המעבר. */}
+                  <span className="faq-arrow"><Plus size={16} aria-hidden="true" /></span>
+                </button>
+                {/* התשובה נשארת ב-DOM גם כשהשורה סגורה: אנימציית הגובה
+                    ב-CSS צריכה שני מצבים של אותו אלמנט, ואלמנט שנולד עכשיו
+                    קופץ לגובהו בלי מעבר. */}
+                <div
+                  className="faq-answer-wrap"
+                  id={`faq-answer-${i}`}
+                  role="region"
+                  aria-labelledby={`faq-question-${i}`}
+                >
+                  <div className="faq-answer">
+                    <p>{faq.a}</p>
+                  </div>
                 </div>
-              )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
         <div className="faq-contact">

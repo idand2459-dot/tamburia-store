@@ -2,7 +2,7 @@
  * קרוסלת חוות דעת על החנות, עם טופס הוספה.
  */
 import { useState, useEffect, useRef } from 'react';
-import { Star, X, PenLine, CheckCircle, Loader } from 'lucide-react';
+import { Star, X, PenLine, CheckCircle, Loader, Quote, ChevronRight, ChevronLeft } from 'lucide-react';
 
 /** מציג את קרוסלת חוות הדעת ואת טופס ההוספה. */
 function ReviewsCarousel() {
@@ -84,10 +84,13 @@ function ReviewsCarousel() {
     : null;
 
   return (
-    <div className="reviews-section">
-      <div className="reviews-header">
-        <div className="reviews-header-text">
-          <h2>מה לקוחות אומרים עלינו</h2>
+    /* section ולא div: זה מקטע מלא-רוחב בדף הבית, והרקע הכהה שלו נצבע על
+       האלמנט הזה. התוכן יושב ב-.reviews-inner מעליו, כמו בשאר המקטעים. */
+    <section className="reviews-section">
+      <div className="reviews-inner">
+        <div className="reviews-header">
+          <span className="section-pill">ביקורות</span>
+          <h2 className="reviews-title">מה לקוחות אומרים עלינו</h2>
           {avgRating && (
             <div className="reviews-avg">
               <span className="reviews-avg-num">{avgRating}</span>
@@ -95,92 +98,101 @@ function ReviewsCarousel() {
               <span className="reviews-avg-count">({reviews.length} ביקורות)</span>
             </div>
           )}
+          <button className="add-review-btn" onClick={() => setShowForm(!showForm)}>
+            {showForm ? <><X size={18} aria-hidden="true" /> סגור</> : <><PenLine size={18} aria-hidden="true" /> כתוב ביקורת</>}
+          </button>
         </div>
-        <button className="add-review-btn" onClick={() => setShowForm(!showForm)}>
-          {showForm ? <><X size={18} aria-hidden="true" /> סגור</> : <><PenLine size={18} aria-hidden="true" /> כתוב ביקורת</>}
-        </button>
-      </div>
 
-      {/* טופס ביקורת */}
-      {showForm && (
-        <div className="review-form-wrap">
-          {submitted ? (
-            <div className="review-submitted">
-              <span><CheckCircle size={40} aria-hidden="true" /></span>
-              <p>תודה! הביקורת שלך התקבלה ותפורסם לאחר אישור.</p>
+        {/* טופס ביקורת */}
+        {showForm && (
+          <div className="review-form-wrap">
+            {submitted ? (
+              <div className="review-submitted">
+                <span><CheckCircle size={40} aria-hidden="true" /></span>
+                <p>תודה! הביקורת שלך התקבלה ותפורסם לאחר אישור.</p>
+              </div>
+            ) : (
+              <form className="review-form" onSubmit={handleSubmit}>
+                <h3>ביקורת על החנות</h3>
+                <div className="review-form-fields">
+                  <div className="review-field">
+                    <label>שמך *</label>
+                    <input placeholder="ישראל ישראלי" value={formData.reviewer_name}
+                      onChange={e => setFormData({...formData, reviewer_name: e.target.value})} required />
+                  </div>
+                  <div className="review-field">
+                    <label>דירוג *</label>
+                    {renderStars(formData.rating, true, r => setFormData({...formData, rating: r}))}
+                  </div>
+                  <div className="review-field full">
+                    <label>הביקורת שלך *</label>
+                    <textarea placeholder="שתף את החוויה שלך..." rows={3}
+                      value={formData.text}
+                      onChange={e => setFormData({...formData, text: e.target.value})} required />
+                  </div>
+                </div>
+                <button type="submit" className="review-submit-btn" disabled={submitting}>
+                  {submitting ? <><Loader size={18} aria-hidden="true" /> שולח...</> : <><CheckCircle size={18} aria-hidden="true" /> שלח ביקורת</>}
+                </button>
+              </form>
+            )}
+          </div>
+        )}
+
+        {/* Carousel */}
+        {reviews.length === 0 ? (
+          <div className="reviews-empty">
+            <p>אין ביקורות עדיין — היה הראשון! 😊</p>
+          </div>
+        ) : (
+          <div className="reviews-carousel">
+            <button className="carousel-arrow carousel-arrow-right" onClick={prev} aria-label="הביקורת הקודמת">
+              <ChevronRight size={20} aria-hidden="true" />
+            </button>
+
+            <div className="reviews-track">
+              {reviews.map((review, i) => (
+                <div
+                  key={review.id}
+                  className={`review-card ${i === current ? 'active' : i === (current + 1) % reviews.length ? 'next' : i === (current - 1 + reviews.length) % reviews.length ? 'prev' : 'hidden'}`}
+                >
+                  <div className="review-card-top">
+                    <div className="reviewer-avatar">
+                      {review.reviewer_name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="reviewer-name">{review.reviewer_name}</div>
+                      <div className="review-date">{formatDate(review.created_at)}</div>
+                    </div>
+                    <div className="review-card-stars">
+                      {renderStars(review.rating)}
+                    </div>
+                  </div>
+                  {/* הגרשיים שהיו סביב הטקסט הוחלפו בסימן הציטוט הזה: שניהם
+                      אמרו את אותו דבר, והאייקון אומר אותו בלי להיכנס לטקסט. */}
+                  <Quote className="review-quote-mark" size={18} aria-hidden="true" />
+                  <p className="review-text">{review.text}</p>
+                </div>
+              ))}
             </div>
-          ) : (
-            <form className="review-form" onSubmit={handleSubmit}>
-              <h3>ביקורת על החנות</h3>
-              <div className="review-form-fields">
-                <div className="review-field">
-                  <label>שמך *</label>
-                  <input placeholder="ישראל ישראלי" value={formData.reviewer_name}
-                    onChange={e => setFormData({...formData, reviewer_name: e.target.value})} required />
-                </div>
-                <div className="review-field">
-                  <label>דירוג *</label>
-                  {renderStars(formData.rating, true, r => setFormData({...formData, rating: r}))}
-                </div>
-                <div className="review-field full">
-                  <label>הביקורת שלך *</label>
-                  <textarea placeholder="שתף את החוויה שלך..." rows={3}
-                    value={formData.text}
-                    onChange={e => setFormData({...formData, text: e.target.value})} required />
-                </div>
-              </div>
-              <button type="submit" className="review-submit-btn" disabled={submitting}>
-                {submitting ? <><Loader size={18} aria-hidden="true" /> שולח...</> : <><CheckCircle size={18} aria-hidden="true" /> שלח ביקורת</>}
-              </button>
-            </form>
-          )}
-        </div>
-      )}
 
-      {/* Carousel */}
-      {reviews.length === 0 ? (
-        <div className="reviews-empty">
-          <p>אין ביקורות עדיין — היה הראשון! 😊</p>
-        </div>
-      ) : (
-        <div className="reviews-carousel">
-          <button className="carousel-arrow carousel-arrow-right" onClick={prev}>‹</button>
+            <button className="carousel-arrow carousel-arrow-left" onClick={next} aria-label="הביקורת הבאה">
+              <ChevronLeft size={20} aria-hidden="true" />
+            </button>
 
-          <div className="reviews-track">
-            {reviews.map((review, i) => (
-              <div
-                key={review.id}
-                className={`review-card ${i === current ? 'active' : i === (current + 1) % reviews.length ? 'next' : i === (current - 1 + reviews.length) % reviews.length ? 'prev' : 'hidden'}`}
-              >
-                <div className="review-card-top">
-                  <div className="reviewer-avatar">
-                    {review.reviewer_name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="reviewer-name">{review.reviewer_name}</div>
-                    <div className="review-date">{formatDate(review.created_at)}</div>
-                  </div>
-                  <div className="review-card-stars">
-                    {renderStars(review.rating)}
-                  </div>
-                </div>
-                <p className="review-text">"{review.text}"</p>
-              </div>
-            ))}
+            {/* Dots */}
+            <div className="carousel-dots">
+              {reviews.map((_, i) => (
+                <button key={i} className={`carousel-dot ${i === current ? 'active' : ''}`}
+                  aria-label={`ביקורת ${i + 1}`}
+                  aria-current={i === current ? 'true' : undefined}
+                  onClick={() => { clearInterval(intervalRef.current); setCurrent(i); }} />
+              ))}
+            </div>
           </div>
-
-          <button className="carousel-arrow carousel-arrow-left" onClick={next}>›</button>
-
-          {/* Dots */}
-          <div className="carousel-dots">
-            {reviews.map((_, i) => (
-              <button key={i} className={`carousel-dot ${i === current ? 'active' : ''}`}
-                onClick={() => { clearInterval(intervalRef.current); setCurrent(i); }} />
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </section>
   );
 }
 
