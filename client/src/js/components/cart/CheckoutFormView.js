@@ -90,10 +90,10 @@ function CheckoutFormView({ setCartStep }) {
       {/* דחייה מהשרת — העגלה נשארת מלאה כדי שאפשר יהיה לנסות שוב */}
       {orderError && <div className="delivery-area-error"><AlertTriangle size={18} aria-hidden="true" /> {orderError}</div>}
       <button
-        className={`checkout-btn ${(!customerName || !customerPhone || (deliveryMethod === 'delivery' && (!deliveryAddress || deliveryInvalid)) || submittingOrder) ? 'disabled' : ''}`}
+        className={`cart-cta ${(!customerName || !customerPhone || (deliveryMethod === 'delivery' && (!deliveryAddress || deliveryInvalid)) || submittingOrder) ? 'disabled' : ''}`}
         disabled={!customerName || !customerPhone || (deliveryMethod === 'delivery' && (!deliveryAddress || deliveryInvalid)) || submittingOrder}
         onClick={handleSubmit}>
-        {submittingOrder ? <span className="checkout-btn-loading"><Spinner size="small" color="white" /> שולח הזמנה...</span> : <><CheckCircle size={18} aria-hidden="true" /> שלח הזמנה</>}
+        {submittingOrder ? <span className="cart-cta-loading"><Spinner size="small" color="white" /> שולח הזמנה...</span> : <><CheckCircle size={18} aria-hidden="true" /> שלח הזמנה</>}
       </button>
     </div>
   );

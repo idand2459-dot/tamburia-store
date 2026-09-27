@@ -1,5 +1,11 @@
 /* ==========================================================================
    Modals, dialogs and overlay backdrops
+
+   What is left here is the nav drawer's backdrop and the global search popup.
+   The cart, order-history and wishlist panels used to be here as well — three
+   copies of one overlay, one 380-420px white panel, one sticky header and one
+   .cart-close-btn they all shared. They are components/_drawer.css now, and
+   every rule of theirs is gone from this file.
    ========================================================================== */
 
 /* Overlay */
@@ -8,61 +14,6 @@
   inset: 0;
   background: rgba(0,0,0,0.5);
   z-index: 200;
-}
-
-/* ===== CART MODAL ===== */
-.cart-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  z-index: 400;
-}
-
-.cart-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 380px;
-  height: 100vh;
-  background: white;
-  z-index: 500;
-  display: flex;
-  flex-direction: column;
-  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
-  overflow-y: auto;
-}
-
-.cart-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--color-border-soft);
-  position: sticky;
-  top: 0;
-  background: white;
-  z-index: 1;
-}
-
-.cart-modal-header h3 {
-  font-size: 1.2rem;
-  color: var(--color-text);
-  font-weight: 700;
-}
-
-.cart-close-btn {
-  background: none;
-  border: none;
-  font-size: 1.1rem;
-  color: #999;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-}
-
-.cart-close-btn:hover {
-  background: var(--color-border-soft);
-  color: #333;
 }
 
 .search-overlay {
@@ -130,84 +81,17 @@
   color: #333;
 }
 
-
-/* ===== ORDER HISTORY ===== */
-.order-history-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  z-index: 400;
-}
-
-.order-history-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 420px;
-  height: 100vh;
-  background: white;
-  z-index: 500;
-  display: flex;
-  flex-direction: column;
-  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
-  overflow-y: auto;
-}
-
-
-/* ===== WISHLIST ===== */
-.wishlist-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.45);
-  z-index: 400;
-}
-
-.wishlist-modal {
-  position: fixed; top: 0; left: 0;
-  width: 380px; height: 100vh;
-  background: white; z-index: 500;
-  display: flex; flex-direction: column;
-  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
-  overflow-y: auto;
-}
-
-/* ---- Responsive --------------------------------------------------------- */
-
-/* Kept at 480px rather than moved to 430. Every modal here is a drawer with a
-   fixed pixel width, and this is where it goes full-bleed instead; at 430 a
-   440px phone would show a sliver of the page beside a 420px drawer. */
-@media (max-width: 480px) {
-  .cart-modal { width: 100vw; }
-
-  .order-history-modal { width: 100vw; }
-
-  .wishlist-modal { width: 100vw; }
-}
-
 /* ---- Dark mode ---------------------------------------------------------- */
 
-/* One block, gathered from the three the file used to carry. */
 @media (prefers-color-scheme: dark) {
-  /* עגלה */
-  .cart-modal {
-      background: var(--color-navy);
-      color: var(--color-text-dark);
-    }
+  .search-popup { background: var(--color-navy); }
 
-  .cart-modal-header {
+  .search-popup-input-wrap {
       border-bottom-color: var(--color-surface-dark);
       background: var(--color-navy);
     }
 
-  .cart-modal-header h3 { color: var(--color-text-dark); }
-
-  /* חיפוש גלובלי */
-  .search-popup { background: var(--color-navy); }
-
-  .search-popup-input-wrap { border-bottom-color: var(--color-surface-dark); background: var(--color-navy); }
-
   .search-popup-input { color: var(--color-border); background: transparent; }
 
   .search-popup-input::placeholder { color: var(--color-text-muted); }
-  .order-history-modal { background: var(--color-navy); }
-  .wishlist-modal { background: var(--color-navy); }
 }

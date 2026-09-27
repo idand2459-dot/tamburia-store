@@ -1,228 +1,357 @@
 /* ==========================================================
-   Cart — the basket step: the item list, the totals and the
-   button out of it
+   Cart — the basket step: the item rows, the totals and the
+   button out of them
 
    The shipping picker is _delivery-options.css and the details
    form is _checkout-form.css; all three are steps of the same
-   flow, rendered by components/cart/.
+   flow, rendered by components/cart/ inside the shared
+   components/_drawer.css panel.
 
-   .checkout-btn is here because all three steps render it —
-   CartStepView, CheckoutFormView and OrderSuccessView.
+   .cart-cta is here rather than in components/_buttons.css
+   because all three steps render it — the cart's next-step
+   button, the form's submit and the thank-you screen's close —
+   and nothing outside this flow does. That is the same reason
+   .checkout-btn, which it replaces, sat here.
 
-   Four groups of rules are gone, none of them rendered by any
-   JSX: .cart-panel and its three descendants, .cart-total, and
-   .cart-float-btn with .cart-count, which the navbar's own cart
-   pill replaced in step 2.
+   What this replaces: rows that were a grey pill with the name,
+   the price in red and an times sign on the end, a big red
+   empty-the-cart block directly under the real button, and no
+   product image anywhere in the cart at all. The row now shows
+   the thing you bought, in the same image well the product card
+   uses, and the one red element in the panel is the one button
+   that moves the order forward.
    ========================================================== */
 
-/* Items list */
-.cart-items-list {
+/* ---- Block --------------------------------------------------------------- */
+
+.cart-rows {
   list-style: none;
-  padding: 16px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  margin: 0;
+  padding: 0;
 }
 
-/* ---- Elements -------------------------------------------------------------- */
+/* ---- Elements ------------------------------------------------------------ */
 
-.cart-item {
+/* Hairlines between rows, none under the last: the drawer's own head and foot
+   borders are the edges here. */
+.cart-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(var(--color-navy-rgb), 0.07);
+}
+
+.cart-row:last-child {
+  border-bottom: none;
+}
+
+/* The product card's well, at thumbnail size. */
+.cart-row-well {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  background: var(--color-image-well);
+  overflow: hidden;
+}
+
+.cart-row-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 8%;
+}
+
+.cart-row-fallback {
+  display: flex;
+  color: rgba(var(--color-navy-rgb), 0.28);
+}
+
+.cart-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Two lines at most: a paint tin's full name is longer than this panel is
+   wide, and a row that grows to four lines pushes the totals off a phone. */
+.cart-row-name {
+  color: var(--color-navy);
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.cart-row-meta {
+  color: rgba(var(--color-navy-rgb), 0.55);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.cart-row-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
-  background: #f8f8f6;
-  border-radius: 10px;
-  gap: 8px;
+  gap: 10px;
+  margin-top: 5px;
 }
 
-.cart-item-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-}
-
-.cart-item-name {
-  font-size: 0.95rem;
-  color: var(--color-text);
-  font-weight: 500;
-}
-
-.cart-item-price {
-  font-size: 0.9rem;
-  color: var(--color-red);
-  font-weight: 600;
-}
-
-.cart-item-remove {
-  background: none;
-  border: none;
-  color: #ccc;
-  cursor: pointer;
-  font-size: 0.9rem;
-  padding: 4px 6px;
-  border-radius: 4px;
-}
-
-.cart-item-qty {
+/* The product page's stepper, 36px instead of 48. */
+.cart-row-qty {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: white;
-  border-radius: 20px;
-  padding: 4px 8px;
-  border: 1px solid var(--color-border);
+  flex-shrink: 0;
+  height: 36px;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.15);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  overflow: hidden;
 }
 
-.cart-item-qty button {
-  background: none;
-  border: none;
-  font-size: 1.1rem;
-  cursor: pointer;
-  color: var(--color-text);
-  width: 22px;
-  height: 22px;
+.cart-row-qty button {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: background 0.15s;
-  padding: 0;
-  line-height: 1;
+  width: 30px;
+  height: 100%;
+  border: none;
+  background: none;
+  color: var(--color-navy);
+  cursor: pointer;
+  transition: background var(--transition-fast);
 }
 
-.cart-item-qty span {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--color-text);
-  min-width: 18px;
+/* tabular-nums so the price beside it does not shift between 1 and 11 */
+.cart-row-qty-value {
+  min-width: 22px;
   text-align: center;
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-navy);
 }
 
-/* Empty cart */
+.cart-row-total {
+  color: var(--color-navy);
+  font-size: 1rem;
+  font-weight: var(--font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Muted until pointed at: removing a line is not what this panel is for. */
+.cart-row-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  color: rgba(var(--color-navy-rgb), 0.4);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+/* Empty cart
+   -------------------------------------------------------------------------- */
+
 .cart-empty {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
+  padding: 64px 28px;
+}
+
+.cart-empty-icon {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 12px;
-  color: var(--color-text-faint);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(var(--color-navy-rgb), 0.06);
+  color: rgba(var(--color-navy-rgb), 0.45);
+  margin-bottom: 18px;
 }
 
-.cart-empty span {
-  font-size: 3rem;
+.cart-empty-title {
+  color: var(--color-navy);
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-extrabold);
+  margin: 0 0 6px;
 }
 
-.cart-empty p {
-  font-size: 1rem;
+.cart-empty-text {
+  color: rgba(var(--color-navy-rgb), 0.6);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0 0 22px;
+  max-width: 24em;
 }
 
-/* Cart summary */
+/* Summary, in the drawer's sticky foot
+   -------------------------------------------------------------------------- */
+
 .cart-summary {
-  margin: 0 24px 16px;
-  background: #f8f8f6;
-  border-radius: 14px;
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .cart-summary-row {
   display: flex;
   justify-content: space-between;
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  padding: 4px 0;
+  color: rgba(var(--color-navy-rgb), 0.65);
+  font-size: 0.88rem;
+}
+
+/* Navy 600, not green: green on this site means done, and free delivery is a
+   price, not an outcome. */
+.cart-summary-free {
+  color: var(--color-navy);
+  font-weight: 600;
 }
 
 .cart-summary-total {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--color-text);
-  padding-top: 10px;
-  margin-top: 8px;
-  border-top: 1px solid var(--color-border);
-}
-
-/* Cart actions */
-.cart-actions {
-  padding: 0 24px 24px;
-  display: flex;
-  flex-direction: column;
   gap: 10px;
-}
-
-.clear-btn {
-  width: 100%;
-  padding: 8px;
-  background-color: var(--color-red);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.checkout-btn {
-  width: 100%;
-  padding: 14px;
-  background: var(--color-navy);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
+  padding-top: 10px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.1);
+  color: var(--color-navy);
+  font-size: 0.95rem;
   font-weight: 600;
-  cursor: pointer;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  transition: background 0.2s;
 }
 
-/* ---- States ---------------------------------------------------------------- */
+.cart-summary-amount {
+  font-size: 1.3rem;
+  font-weight: var(--font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+}
 
-.cart-item-remove:hover {
-  background: var(--color-error-border);
+.cart-summary-hint {
+  color: rgba(var(--color-navy-rgb), 0.55);
+  font-size: 0.8rem;
+  text-align: center;
+  margin: 6px 0 0;
+}
+
+/* The one red element in the panel. */
+.cart-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 50px;
+  margin-top: 8px;
+  padding: 13px 20px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: var(--color-red);
+  color: white;
+  font-family: var(--font-family-base);
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast),
+              border-color var(--transition-fast);
+}
+
+/* A text button, not a block: emptying the cart is a way out, not a next step. */
+.cart-clear {
+  align-self: center;
+  margin-top: 4px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: rgba(var(--color-navy-rgb), 0.5);
+  font-family: var(--font-family-base);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.cart-row-qty button:hover {
+  background: rgba(var(--color-navy-rgb), 0.05);
+}
+
+.cart-row-remove:hover {
+  background: rgba(var(--color-red-rgb), 0.08);
   color: var(--color-red);
 }
 
-.cart-item-qty button:hover {
-  background: var(--color-border-soft);
+.cart-cta:hover:not(:disabled) {
+  background: var(--color-red-dark);
 }
 
-.checkout-btn:hover:not(.disabled) {
-  background: var(--color-red);
-}
-
-/* ---- Variants -------------------------------------------------------------- */
-
-.cart-summary-row.green span:last-child {
-  color: var(--color-green);
-  font-weight: 600;
-}
-
-.checkout-btn.disabled {
-  background: #ccc;
+.cart-cta:disabled {
+  background: rgba(var(--color-navy-rgb), 0.12);
+  color: rgba(var(--color-navy-rgb), 0.4);
   cursor: not-allowed;
-  font-size: 0.88rem;
 }
 
-/* ---- Dark mode ------------------------------------------------------------- */
+.cart-clear:hover {
+  color: var(--color-red);
+}
 
-@media (prefers-color-scheme: dark) {
-  .cart-item { background: var(--color-bg-dark); }
+.cart-row-qty button:focus-visible,
+.cart-row-remove:focus-visible,
+.cart-cta:focus-visible,
+.cart-clear:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
 
-  .cart-item-name { color: var(--color-text-dark); }
+/* ---- Variants ------------------------------------------------------------ */
 
-  .cart-item-qty { background: var(--color-navy); border-color: var(--color-surface-dark); }
+/* The way back out of the empty cart, and the thank-you screen's close. */
+.cart-cta--outline {
+  width: auto;
+  min-height: 46px;
+  margin-top: 0;
+  padding: 12px 26px;
+  border-color: rgba(var(--color-navy-rgb), 0.35);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-navy);
+}
 
-  .cart-item-qty button { color: var(--color-text-dark); }
+.cart-cta--outline:hover:not(:disabled) {
+  background: var(--color-navy);
+  border-color: var(--color-navy);
+  color: white;
+}
 
-  .cart-item-qty button:hover { background: var(--color-surface-dark); }
+/* ---- Responsive ---------------------------------------------------------- */
 
-  .cart-summary { background: var(--color-bg-dark); }
+@media (max-width: 560px) {
+  .cart-row {
+      gap: 10px;
+      padding: 12px 16px;
+    }
 
-  .cart-summary-row span { color: var(--color-text-faint); }
+  .cart-row-well { width: 56px; height: 56px; }
 
-  .cart-summary-total { color: var(--color-text-dark); }
+  .cart-empty { padding: 48px 20px; }
 }

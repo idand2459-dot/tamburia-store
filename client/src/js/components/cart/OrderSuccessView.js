@@ -42,7 +42,7 @@ function OrderSuccessView({ closeCart }) {
           </a>
         </div>
       </div>
-      <button className="checkout-btn" onClick={closeCart}>סגור</button>
+      <button className="cart-cta" onClick={closeCart}>סגור</button>
     </div>
   );
 }
