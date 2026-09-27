@@ -9,10 +9,11 @@
  * אין כאן יותר פונקציית "חזור": כפתור החזרה הכבד שמעל המוצר הוחלף
  * בשביל ניווט, וחוליית הקטגוריה שבו היא בדיוק מה שאותה פונקציה
  * עשתה בקישור ישיר — /category/:id. מחוות ה"חזור" של הדפדפן עובדת
- * כתמיד, היא לא הייתה שלנו מלכתחילה.
+ * כתמיד, היא לא הייתה שלנו מלכתחילה. גם המעבר למוצר אחר אינו עובר
+ * יותר כאן: הכרטיסים שבתחתית העמוד הם קישורים אמיתיים.
  */
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import ProductPage from '../../pages/ProductPage';
 import NotFoundPage from '../../pages/NotFoundPage';
 import { ProductCardSkeleton } from '../../components/LoadingStates';
@@ -21,7 +22,6 @@ import { useStore } from '../../context/storeContext';
 /** טוען את המוצר לפי המזהה שבכתובת ומציג אותו. */
 function ProductView() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { addToCart } = useStore();
 
   const [product, setProduct] = useState(null);
@@ -63,13 +63,7 @@ function ProductView() {
     );
   }
 
-  return (
-    <ProductPage
-      product={product}
-      onAddToCart={addToCart}
-      onSelectProduct={(next) => navigate(`/product/${next.id}`)}
-    />
-  );
+  return <ProductPage product={product} onAddToCart={addToCart} />;
 }
 
 export default ProductView;

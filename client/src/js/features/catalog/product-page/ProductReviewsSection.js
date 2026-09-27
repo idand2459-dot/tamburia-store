@@ -10,12 +10,27 @@
  *
  * ה-ref שמגיע בפרופס יושב על העוטף, ודרכו סיכום הדירוג שליד שם המוצר
  * גולל לכאן. ב-React 19 ref הוא prop רגיל ואין צורך ב-forwardRef.
+ *
+ * כפתור "כתוב ביקורת" מוצג פעם אחת: בכותרת כשיש ביקורות, ובתוך המצב
+ * הריק כשאין — שם הוא ההזמנה עצמה ("היה הראשון"), ושני כפתורים זהים
+ * באותו מסך לא היו אומרים יותר מאחד.
  */
 import { useState, useEffect } from 'react';
 import { X, PenLine, CheckCircle } from 'lucide-react';
 import Stars from './Stars';
 
 const EMPTY_FORM = { reviewer_name: '', rating: 5, text: '' };
+
+/** כפתור פתיחת וסגירת טופס הביקורת. */
+function ReviewFormToggle({ open, onToggle }) {
+  return (
+    <button type="button" className="product-reviews-btn" onClick={onToggle}>
+      {open
+        ? <><X size={16} aria-hidden="true" /> סגור</>
+        : <><PenLine size={16} aria-hidden="true" /> כתוב ביקורת</>}
+    </button>
+  );
+}
 
 /** מציג את רשימת חוות הדעת ואת טופס הכתיבה. */
 function ProductReviewsSection({ productId, reviews, ref }) {
@@ -41,13 +56,27 @@ function ProductReviewsSection({ productId, reviews, ref }) {
     setReviewForm(EMPTY_FORM);
   }
 
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : null;
+
+  const toggleForm = () => setShowReviewForm(!showReviewForm);
+
   return (
     <div className="product-reviews" ref={ref}>
       <div className="product-reviews-header">
-        <h2>ביקורות על המוצר</h2>
-        <button className="add-review-btn" onClick={() => setShowReviewForm(!showReviewForm)}>
-          {showReviewForm ? <><X size={18} aria-hidden="true" /> סגור</> : <><PenLine size={18} aria-hidden="true" /> כתוב ביקורת</>}
-        </button>
+        <div className="product-reviews-heading">
+          <h2>ביקורות על המוצר</h2>
+          {avgRating && (
+            <span className="product-reviews-summary">
+              <Stars rating={Math.round(avgRating)} />
+              <b>{avgRating}</b>
+              <span>({reviews.length})</span>
+            </span>
+          )}
+        </div>
+
+        {reviews.length > 0 && <ReviewFormToggle open={showReviewForm} onToggle={toggleForm} />}
       </div>
 
       {showReviewForm && (
@@ -79,7 +108,10 @@ function ProductReviewsSection({ productId, reviews, ref }) {
       )}
 
       {reviews.length === 0 ? (
-        <p className="no-product-reviews">אין ביקורות עדיין — היה הראשון!</p>
+        <div className="product-reviews-empty">
+          <p>עדיין אין ביקורות — היה הראשון</p>
+          <ReviewFormToggle open={showReviewForm} onToggle={toggleForm} />
+        </div>
       ) : (
         <div className="product-reviews-list">
           {reviews.map(r => (

@@ -1,19 +1,40 @@
 /* ==========================================================
-   Product reviews — the rating summary and review list on a
-   product page
+   Product reviews — what other people said about this product
+
+   One white card at the bottom of the product page: a header with
+   the average, review rows separated by hairlines, and the form
+   inside it. What it replaces was a section with no surface of its
+   own — a 2px grey rule across the page — where every single
+   review sat on its own little floating white card, so ten
+   reviews read as ten unrelated objects.
 
    The site-wide reviews carousel is features/_reviews.css and
    features/_reviews-carousel.css, and the form both of them open
    is features/_review-form.css; this is only the per-product
-   block.
+   block. The byline's shape — avatar, name, date — is declared
+   once, unscoped, in the carousel's partial, because both
+   surfaces want the same 44px red→purple circle; the colours of
+   the two differ and each states its own.
    ========================================================== */
 
+/* ---- Block --------------------------------------------------------------- */
+
+/* scroll-margin-top clears the sticky navbar when the rating summary beside the
+   product's name scrolls down to here. */
 .product-reviews {
-  max-width: 1000px;
-  margin: 40px auto 0;
-  padding: 0 20px 20px;
-  border-top: 2px solid var(--color-border-soft);
-  padding-top: 40px;
+  margin-top: 32px;
+  scroll-margin-top: 84px;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+  padding: 28px;
+}
+
+/* The card is white in both themes, so the empty stars keep the light default —
+   see the note in components/_stars.css. */
+.product-reviews .stars {
+  --star-empty: rgba(var(--color-navy-rgb), 0.15);
 }
 
 /* ---- Elements ------------------------------------------------------------ */
@@ -22,29 +43,79 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.product-reviews-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .product-reviews-header h2 {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--color-text);
+  font-size: 1.4rem;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-navy);
 }
 
-.product-reviews-list {
+.product-reviews-summary {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-small);
+  color: rgba(var(--color-navy-rgb), 0.55);
 }
 
+.product-reviews-summary .star {
+  font-size: 1rem;
+}
+
+.product-reviews-summary b {
+  color: var(--color-navy);
+}
+
+/* Navy outline, not a filled navy pill: the only filled button on this page is
+   "add to cart", and writing a review is not competing with it. */
+.product-reviews-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.2);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-family: var(--font-family-base);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+/* The shared form is a floating white card of its own, which inside this white
+   card read as a seam; here it is a plain framed area instead. */
+.product-reviews .review-form-wrap {
+  box-shadow: none;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.1);
+  padding: 20px;
+  margin: 16px 0 0;
+}
+
+/* Hairlines between rows rather than a card each. The first row has none — the
+   header above it is separation enough. */
 .product-review-item {
-  background: white;
-  border-radius: 14px;
-  padding: 18px 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 18px 0;
+}
+
+.product-review-item + .product-review-item {
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.08);
 }
 
 .product-review-top {
@@ -53,59 +124,73 @@
   gap: 12px;
 }
 
-/* The byline's text colours, for this block's white card. The shape of the
-   avatar, the name and the date is shared with the site-wide carousel and is
-   declared once, unscoped, in features/_reviews-carousel.css — the carousel's
-   card is dark, so each of the two surfaces states its own colour here and
-   there rather than one of them overriding the other. */
 .product-review-top .reviewer-name {
-  color: var(--color-text);
+  color: var(--color-navy);
 }
 
 .product-review-top .review-date {
-  color: var(--color-text-faint);
+  color: rgba(var(--color-navy-rgb), 0.5);
 }
 
-.product-review-text {
-  font-size: 0.92rem;
-  color: var(--color-text-muted);
-  line-height: 1.6;
-  margin: 0;
-}
-
-/* Moved in from _reviews.css: how this block spaces its star row, and what it
-   says when a product has no reviews yet. The star row itself is
-   components/_stars.css. */
+/* the stars go to the far end of the byline row */
 .product-review-top .stars {
   margin-right: auto;
 }
 
-.no-product-reviews {
-  color: var(--color-text-faint);
-  font-size: 0.9rem;
-  padding: 20px 0;
+/* Not italic: an oblique synthesised from a Hebrew face slants letterforms that
+   were never drawn to slant — the same reason the carousel's text is not. */
+.product-review-text {
+  font-size: 0.93rem;
+  line-height: 1.7;
+  color: rgba(var(--color-navy-rgb), 0.7);
+  white-space: pre-line;
+}
+
+.product-reviews-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 0 8px;
+  text-align: center;
+}
+
+.product-reviews-empty p {
+  font-size: 0.95rem;
+  color: rgba(var(--color-navy-rgb), 0.6);
+}
+
+/* ---- States ------------------------------------------------------------- */
+
+.product-reviews-btn:hover {
+  border-color: var(--color-red);
+  color: var(--color-red);
+}
+
+.product-reviews-btn:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
 }
 
 /* ---- Dark mode ---------------------------------------------------------- */
 
+/* This card is white in both themes, like the rest of the redesigned product
+   page. The form inside it is not — it is shared with the home page's carousel
+   and follows the system theme in features/_review-form.css — so the three
+   rules that would turn it navy inside a white card are undone here.  */
 @media (prefers-color-scheme: dark) {
-  .product-reviews {
-      border-top-color: var(--color-surface-dark);
+  .product-reviews .review-form-wrap {
+      background: var(--color-surface);
     }
 
-  .product-reviews-header h2 {
-      color: var(--color-text-dark);
+  .product-reviews .review-field label {
+      color: rgba(var(--color-navy-rgb), 0.6);
     }
 
-  .product-review-item {
-      background: var(--color-navy);
-    }
-
-  .product-review-text {
-      color: var(--color-text-faint);
-    }
-
-  .product-review-top .reviewer-name {
-      color: var(--color-text-dark);
+  .product-reviews .review-field input,
+  .product-reviews .review-field textarea {
+      background: var(--color-surface);
+      border-color: rgba(var(--color-navy-rgb), 0.15);
+      color: var(--color-navy);
     }
 }

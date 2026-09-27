@@ -27,7 +27,7 @@ import RelatedProducts from '../features/catalog/product-page/RelatedProducts';
 import Stars from '../features/catalog/product-page/Stars';
 
 const MAX_RECENT = 6;
-const MAX_RELATED = 3;
+const MAX_RELATED = 4;
 
 /* כמה זמן הכפתור מראה "נוסף לעגלה". מספיק כדי להיראות, קצר מכדי
    להיראות כמו מצב תקוע — בערך כמו כרטיס המוצר ברשת. */
@@ -72,7 +72,7 @@ function useOutOfView(ref, resetKey) {
 }
 
 /** מציג את עמוד המוצר. */
-function ProductPage({ product, onAddToCart, onSelectProduct }) {
+function ProductPage({ product, onAddToCart }) {
   const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
@@ -109,8 +109,8 @@ function ProductPage({ product, onAddToCart, onSelectProduct }) {
     setInWishlist(isInWishlist(product.id));
 
     // הסינון לפי קטגוריה נעשה בשרת ולא כאן. קודם נשלף כל הקטלוג רק
-    // כדי למצוא שלושה מוצרים — 4 מבוקשים כדי שאפשר יהיה להוציא את
-    // המוצר הנוכחי ועדיין להישאר עם שלושה. limit גורם לשרת להחזיר
+    // כדי למצוא ארבעה מוצרים — חמישה מבוקשים כדי שאפשר יהיה להוציא את
+    // המוצר הנוכחי ועדיין להישאר עם ארבעה. limit גורם לשרת להחזיר
     // { products, pagination } במקום מערך, ולכן שתי הצורות נתמכות.
     fetch(`/api/products?category=${encodeURIComponent(product.category)}&limit=${MAX_RELATED + 1}`)
       .then(r => r.json())
@@ -257,7 +257,7 @@ function ProductPage({ product, onAddToCart, onSelectProduct }) {
       <RelatedProducts
         recentlyViewed={recentlyViewed}
         relatedProducts={relatedProducts}
-        onSelectProduct={onSelectProduct}
+        categoryId={product.category}
       />
 
       {showBuyBar && (

@@ -1,5 +1,11 @@
 /* ==========================================================================
-   Wishlist
+   Wishlist — the saved-items modal
+
+   .product-wishlist-btn used to sit at the bottom of this file: the heart
+   beside "add to cart" on the product page, parked here because it writes to
+   the same list. That button is now features/_product-buy.css's
+   .product-buy-wish, so the four rules are gone and this file is the modal
+   alone.
    ========================================================================== */
 
 .wishlist-header {
@@ -76,20 +82,6 @@
 
 .wishlist-remove-btn:hover { background: var(--color-error-border); color: var(--color-red); }
 
-.product-wishlist-btn {
-  width: 52px; height: 52px;
-  border: 2px solid var(--color-border);
-  border-radius: 14px; background: white;
-  font-size: 1.4rem; cursor: pointer;
-  display: flex; align-items: center;
-  justify-content: center;
-  transition: all 0.2s; flex-shrink: 0;
-}
-
-.product-wishlist-btn:hover { border-color: var(--color-red); transform: scale(1.05); }
-
-.product-wishlist-btn.active { border-color: var(--color-red); background: var(--color-error-bg); }
-
 @media (prefers-color-scheme: dark) {
   .wishlist-header { background: var(--color-navy); border-bottom-color: var(--color-surface-dark); }
 
@@ -98,8 +90,4 @@
   .wishlist-item { background: var(--color-bg-dark); }
 
   .wishlist-item-name { color: var(--color-text-dark); }
-
-  .product-wishlist-btn { background: var(--color-navy); border-color: var(--color-surface-dark); }
-
-  .product-wishlist-btn.active { background: #1f0d0d; border-color: var(--color-red); }
 }

@@ -1,65 +1,73 @@
 /**
- * שתי רשתות המוצרים שבתחתית עמוד המוצר: "צפית לאחרונה" ו"מוצרים
- * נוספים מאותה קטגוריה".
+ * שתי רשתות המוצרים שבתחתית עמוד המוצר: "מוצרים נוספים מהקטגוריה"
+ * ו"צפית לאחרונה".
  *
- * שתיהן מציגות בדיוק את אותו כרטיס, ולכן הוא נמצא כאן פעם אחת
- * כ-RelatedGrid ולא משוכפל בשתי רשימות. מה שמבדיל ביניהן הוא רק
- * הכותרת, ה-className העוטף וכמה פריטים מוצגים.
+ * שתיהן מציגות את כרטיס המוצר המשותף (components/ProductCard) באותה
+ * רשת שעמוד הקטגוריה משתמש בה — 4 / 3 / 2 עמודות — ולא כרטיס קטן
+ * משלהן. הכרטיס הקטן שהיה כאן היה מוצר בתצוגה שנייה: תמונה חתוכה,
+ * מחיר אדום ושורת מלאי משלו, וכל תוספת לכרטיס האמיתי (מועדפים,
+ * תת-קטגוריה, מספר גרסאות) לא הגיעה אליו.
  *
- * רשימת התמונות השבורות מקומית לרכיב הזה ואינה משותפת עם הגלריה:
- * שתי הרשתות מציגות מוצרים *אחרים* (המוצר הנוכחי מסונן משתיהן),
- * ולכן אין חפיפה בין קבוצות התמונות והתוצאה על המסך זהה.
+ * העגלה והמועדפים נשלפים כאן מההקשר ולא מגיעים בפרופס, בדיוק כמו
+ * בעמוד הקטגוריה: זה מה שהכרטיס צריך, ועמוד המוצר אינו מתווך בזה.
+ * הניווט הוא הקישור שבתוך הכרטיס עצמו, ולכן אין כאן onSelectProduct.
  */
-import { useState } from 'react';
-import { ImageOff, Eye } from 'lucide-react';
+import ProductCard from '../../../components/ProductCard';
+import { useStore } from '../../../context/storeContext';
 
-/** מציג רשת כרטיסי מוצר עם כותרת. */
-function RelatedGrid({ title, wrapClass, items, onSelectProduct, brokenImages, markBroken }) {
+/* לכל היותר ארבעה — שורה אחת על מסך רחב. */
+const MAX_ITEMS = 4;
+
+/** מציג רשת אחת של כרטיסי מוצר עם כותרת. */
+function RelatedGrid({ title, items, categoryId, addToCart, wishlistIds, onToggleWishlist }) {
   return (
-    <div className={wrapClass}>
-      <h2 className="related-title">{title}</h2>
-      <div className="related-grid">
-        {items.map(p => (
-          <div key={p.id} className="related-card" onClick={() => onSelectProduct(p)}>
-            {p.image_url && !brokenImages.has(p.image_url) ? <img src={p.image_url} alt={p.name} className="related-img" onError={() => markBroken(p.image_url)} /> : <div className="related-no-img"><ImageOff size={28} aria-hidden="true" /></div>}
-            <div className="related-info">
-              <span className="related-name">{p.name}</span>
-              <span className="related-price">₪{p.price}</span>
-              <span className={`related-stock ${p.in_stock !== false ? 'in' : 'out'}`}>{p.in_stock !== false ? 'יש במלאי' : 'אזל'}</span>
-            </div>
-          </div>
+    <section className="product-related">
+      <h2 className="product-related-title">{title}</h2>
+      <div className="product-grid">
+        {items.slice(0, MAX_ITEMS).map((p) => (
+          <ProductCard
+            key={p.id}
+            product={p}
+            /* הנצפים לאחרונה נשמרים עם הקטגוריה שלהם, ולכן כל כרטיס
+               מקבל את האייקון של עצמו; רשומה שנשמרה לפני זה נופלת
+               לקטגוריה שהרשת הזו כולה שייכת לה, ואם אין — בלי אייקון. */
+            categoryId={p.category || categoryId}
+            onAddToCart={addToCart}
+            inWishlist={wishlistIds.includes(p.id)}
+            onToggleWishlist={onToggleWishlist}
+          />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
-/** מציג את "צפית לאחרונה" ואת המוצרים מאותה קטגוריה. */
-function RelatedProducts({ recentlyViewed, relatedProducts, onSelectProduct }) {
-  const [brokenImages, setBrokenImages] = useState(() => new Set());
-  const markBroken = (src) => setBrokenImages((prev) => new Set(prev).add(src));
+/** מציג את המוצרים מאותה קטגוריה ואת "צפית לאחרונה". */
+function RelatedProducts({ recentlyViewed, relatedProducts, categoryId }) {
+  const { addToCart, wishlistIds, toggleCardWishlist } = useStore();
+
+  const shared = {
+    addToCart,
+    wishlistIds,
+    onToggleWishlist: toggleCardWishlist,
+  };
 
   return (
     <>
-      {recentlyViewed.length > 0 && (
+      {relatedProducts.length > 0 && (
         <RelatedGrid
-          title={<><Eye size={20} aria-hidden="true" /> צפית לאחרונה</>}
-          wrapClass="recently-viewed"
-          items={recentlyViewed.slice(0, 3)}
-          onSelectProduct={onSelectProduct}
-          brokenImages={brokenImages}
-          markBroken={markBroken}
+          title="מוצרים נוספים מהקטגוריה"
+          items={relatedProducts}
+          categoryId={categoryId}
+          {...shared}
         />
       )}
 
-      {relatedProducts.length > 0 && (
+      {recentlyViewed.length > 0 && (
         <RelatedGrid
-          title="מוצרים נוספים מאותה קטגוריה"
-          wrapClass="related-products"
-          items={relatedProducts}
-          onSelectProduct={onSelectProduct}
-          brokenImages={brokenImages}
-          markBroken={markBroken}
+          title="צפית לאחרונה"
+          items={recentlyViewed}
+          {...shared}
         />
       )}
     </>
