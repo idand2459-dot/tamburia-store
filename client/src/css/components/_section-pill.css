@@ -8,6 +8,13 @@
    title accent, the CTAs and the card hovers — so the only
    difference between the five was the selector.
 
+   The base rule is the dark-surface pill: a purple film and a
+   light purple text colour, which only read as a pill over navy.
+   The home page now alternates dark and light sections, so
+   .section-pill--light is the same pill re-mixed for blush —
+   thinner film, thinner border, and the full-strength purple for
+   the text, because purple-soft on blush is barely there.
+
    inline-flex rather than inline-block: two of the five carry a
    Lucide icon ahead of the words (the project calculator's crown,
    and any that follow), and the gap below is what spaces it. With
@@ -27,4 +34,13 @@
   font-weight: 600;
   letter-spacing: 0.5px;
   margin-bottom: 18px;
+}
+
+/* ---- Variants ------------------------------------------------------------- */
+
+/* On a light (blush) section. Same geometry, only the three colours change. */
+.section-pill--light {
+  background: rgba(var(--color-purple-rgb), 0.1);
+  border-color: rgba(var(--color-purple-rgb), 0.2);
+  color: var(--color-purple);
 }

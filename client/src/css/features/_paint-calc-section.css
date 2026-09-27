@@ -8,10 +8,12 @@
    _paint-pigment.css is the colour picker and
    _paint-calc-results.css the output panel.
 
-   Fourth stop in the home page's dark rhythm: back to
-   --color-navy-950 after the WhyUs section's navy-900, and the
-   only section whose light comes from a photograph rather than
-   a gradient. Always dark, so no prefers-color-scheme block.
+   The one dark highlight in the middle of the page: light blush
+   sections above and below it, --color-navy-950 here, and the
+   only section whose light comes from a photograph rather than a
+   gradient. Both of its edges are therefore dark/light seams and
+   both carry the hairline — see ::after. Always dark, so no
+   prefers-color-scheme block.
    ========================================================== */
 
 /* ---- Block --------------------------------------------------------------- */
@@ -33,21 +35,32 @@
   overflow: hidden;
 }
 
-/* The boundary with the WhyUs section above, the same hairline that section
-   carries on its own top edge and the features strip on both of its. */
+/* Both seams — with the WhyUs section above and the project calculator below —
+   in one pseudo-element: the same red-to-purple hairline the features strip
+   carries, as two 1px background layers pinned to the two edges. One element
+   rather than two because ::before is taken (the mobile glow, at the bottom of
+   this file), and two no-repeat layers are cheaper than a third box.
+
+   Both are drawn inside this section, i.e. on the dark side of each edge. The
+   edges themselves are hard: a dark surface fading into a near-white one over a
+   gradient goes grey, so there is no fade at either end of this band. z-index 2
+   keeps them over the photograph. */
 .paint-calc-section::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
+  inset: 0;
   z-index: 2;
-  background: linear-gradient(90deg,
-    transparent,
-    rgba(var(--color-red-rgb), 0.6),
-    rgba(var(--color-purple-rgb), 0.6),
-    transparent);
+  background:
+    linear-gradient(90deg,
+      transparent,
+      rgba(var(--color-red-rgb), 0.6),
+      rgba(var(--color-purple-rgb), 0.6),
+      transparent) top / 100% 1px no-repeat,
+    linear-gradient(90deg,
+      transparent,
+      rgba(var(--color-red-rgb), 0.6),
+      rgba(var(--color-purple-rgb), 0.6),
+      transparent) bottom / 100% 1px no-repeat;
   pointer-events: none;
 }
 

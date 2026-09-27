@@ -1,5 +1,6 @@
 /**
- * עמוד הבית: כרזה, בחירת קטגוריה, שני המחשבונים וחוות הדעת.
+ * עמוד הבית: כרזה ורצועת היתרונות מתחתיה, בחירת קטגוריה, למה אנחנו,
+ * שני המחשבונים, חוות הדעת ושאלות נפוצות.
  */
 import { useState, useEffect, useRef, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -106,13 +107,16 @@ function HomePage() {
         </div>
       </div>
 
+      {/* רצועת היתרונות צמודה לכרזה ועל אותו רקע כהה, ולכן היא נקראת כבסיס
+          שלה: אזור החלוקה, איסוף באותו יום, 30 שנה וייעוץ מקצועי הם מה
+          שמבקר רוצה לדעת בשניות הראשונות. */}
+      <Reveal variant="up"><FeaturesBanner /></Reveal>
       <CategoryPage onSelectCategory={(category) => navigate(`/category/${category.id}`)} />
       <WhyUs />
       <Reveal variant="up"><PaintCalculator addBundleToCart={addBundleToCart} /></Reveal>
       {/* ProjectCalculator מחשיף את עצמו ב-IntersectionObserver משלו — עטיפה
           שנייה כאן הייתה מריצה שתי אנימציות על אותו תוכן. */}
       <ProjectCalculator addBundleToCart={addBundleToCart} />
-      <Reveal variant="up"><FeaturesBanner /></Reveal>
       <Reveal variant="up"><ReviewsCarousel /></Reveal>
       <Reveal variant="up"><FAQ /></Reveal>
     </>
