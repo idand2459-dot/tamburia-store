@@ -51,12 +51,20 @@
    selector at the same specificity, so the order here is the reading order
    rather than a cascade constraint. */
 @import './features/_admin-layout.css';
+/* the phone's bottom bar and its sheet, split out of the frame above at the
+   300-line target. It has to follow _admin-layout.css: that file hides
+   .admin-tabs at the same breakpoint where this one shows .admin-bar, and the
+   two only make sense read in that order. */
+@import './features/_admin-nav.css';
 @import './features/_admin-products.css';
 @import './features/_admin-form.css';
 @import './features/_admin-images.css';
 @import './features/_admin-filters.css';
 @import './features/_admin-import.css';
 @import './features/_admin-orders.css';
+/* one card inside the list that file lays out, split out of it at the 400-line
+   ceiling; no selector appears in both */
+@import './features/_admin-order-card.css';
 @import './features/_admin-stats.css';
 @import './features/_auth.css';
 /* Two unrelated calculators that shared one file. In the order their rules had

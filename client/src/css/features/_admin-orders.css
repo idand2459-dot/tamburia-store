@@ -1,273 +1,151 @@
 /* ==========================================================
-   Admin orders — the orders tab: the stat row, the filter, and
-   each order's expandable card
+   Admin orders — the orders tab's own furniture: the filter row
+   and the list it fills
 
-   The customer-facing screens are different components:
-   features/_order-success.css is the cart's confirmation step
-   and features/_order-history.css is the lookup page.
+   One card is features/_admin-order-card.css; this file owns
+   nothing inside a card. The customer-facing screens are
+   different components again: features/_order-success.css is the
+   cart's confirmation step and features/_order-history.css is
+   the lookup page.
+
+   Replaces the stat row and the pill filter that were here.
+   Gone with them: .orders-stats, .orders-stat-card, .stat-number
+   (the stats tab has its own copy), .orders-new-badge (now
+   .admin-tab-badge in _admin-layout.css) and .export-orders-btn.
    ========================================================== */
 
-/* ===== ADMIN ORDERS ===== */
-.orders-stats {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+.admin-orders {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  margin-bottom: 24px;
 }
 
-/* ---- Elements ------------------------------------------------------------------ */
-
-.orders-stat-card {
-  background: white;
-  border-radius: 14px;
-  padding: 20px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-
-.stat-number { font-size: 2rem; font-weight: 800; }
-
-.stat-label { font-size: 0.85rem; color: var(--color-text-subtle); margin-top: 4px; }
+/* ---- Elements ------------------------------------------------------------ */
 
 .orders-filter {
   display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.orders-chips {
+  display: flex;
+  flex: 1;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 20px;
 }
 
-.orders-new-badge {
-  background: var(--color-red);
-  color: white;
-  border-radius: 10px;
-  padding: 1px 7px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  margin-right: 4px;
-}
-
-.orders-list { display: flex; flex-direction: column; gap: 12px; }
-
-.order-id { font-size: 0.85rem; color: var(--color-text-faint); font-weight: 600; min-width: 36px; }
-
-.order-customer-name { font-size: 1rem; font-weight: 600; color: var(--color-text); }
-
-.order-meta { font-size: 0.82rem; color: #999; margin-top: 2px; }
-
-.order-total-badge {
-  font-weight: 700; color: var(--color-red); font-size: 1rem;
-}
-
-.order-delivery-badge {
-  font-size: 0.78rem; background: var(--color-border-soft); color: var(--color-text-muted);
-  padding: 3px 8px; border-radius: 20px;
-}
-
-.order-expand-btn { color: var(--color-text-faint); font-size: 0.8rem; margin-right: 4px; }
-
-.order-items strong { font-size: 0.9rem; color: var(--color-text); display: block; margin-bottom: 10px; }
-
-.order-items-table {
-  width: 100%; border-collapse: collapse; font-size: 0.88rem; direction: rtl;
-}
-
-.order-items-table th {
-  background: #f8f8f6; padding: 8px 12px; text-align: right;
-  font-weight: 600; color: var(--color-text-muted); border-bottom: 1px solid #eee;
-}
-
-.order-items-table td { padding: 8px 12px; border-bottom: 1px solid var(--color-surface-alt); color: #333; }
-
-.order-totals {
-  display: flex; gap: 20px; justify-content: flex-end;
-  font-size: 0.88rem; color: var(--color-text-muted); margin-top: 10px; padding-top: 8px;
-  border-top: 1px solid var(--color-border-soft);
-}
-
-.order-totals strong { color: var(--color-text); }
-
-.order-actions {
-  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
-}
-
-.status-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
-
-.status-btn {
-  padding: 6px 14px; border: 1.5px solid var(--color-border); border-radius: 20px;
-  background: white; font-size: 0.82rem; cursor: pointer;
-  font-family: 'Segoe UI', sans-serif; color: var(--color-text-muted); transition: all 0.15s;
-}
-
-/* ===== כפתור ייצוא הזמנות ===== */
-.export-orders-btn {
-  margin-right: auto;
-  padding: 8px 16px;
-  background: var(--color-green);
-  color: white;
-  border: none;
-  border-radius: 20px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  transition: background 0.2s;
-  white-space: nowrap;
-}
-
-/* ── The expandable order card ─────────────────────────────────────────────
-   Moved in from _orders.css. OrdersTab renders these alongside the stat row and
-   the status buttons above, so the tab's styles were split across two partials.
-   Nothing else in the stylesheet uses a .order-card* or .order-detail*
-   selector. */
-
-.order-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-  overflow: hidden;
-}
-.order-card-header {
-  display: flex;
+.orders-chip {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
 }
-.order-card-right { display: flex; align-items: center; gap: 14px; }
-.order-card-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-.order-status-badge {
-  font-size: 0.78rem; font-weight: 600;
-  padding: 3px 10px; border-radius: 20px;
+
+/* The count of orders behind each chip. It is what makes the row worth
+   reading — how many are waiting, not just which filters exist. */
+.orders-chip-count {
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--color-navy-rgb), 0.07);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  text-align: center;
 }
-/* Order body */
-.order-card-body {
-  border-top: 1px solid var(--color-border-soft);
-  padding: 20px;
+
+.orders-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.orders-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-}
-.order-details-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.order-detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 0.9rem;
-  color: #333;
-}
-.order-detail-label { font-size: 0.78rem; color: var(--color-text-faint); font-weight: 600; }
-.order-detail-item a { color: var(--color-text); text-decoration: none; font-weight: 600; }
-.order-status-select { display: flex; align-items: center; gap: 12px; }
-.order-status-select label { font-size: 0.88rem; font-weight: 600; color: var(--color-text-muted); }
-
-/* ---- States -------------------------------------------------------------------- */
-
-.status-btn:hover { border-color: var(--color-navy); color: var(--color-navy); }
-
-.status-btn.active { border-color: transparent; color: white; }
-
-.export-orders-btn:hover {
-  background: var(--color-green-dark);
+  gap: 14px;
 }
 
-.order-card-header:hover { background: #fafafa; }
-.order-detail-item a:hover { color: var(--color-red); }
+/* ---- States -------------------------------------------------------------- */
 
-/* ---- Variants -------------------------------------------------------------- */
-
-.order-detail-item.full { grid-column: 1 / -1; }
-
-/* The five statuses, in the same brand colours the customer's own order card
-   uses in features/_order-history-card.css: purple for a new order, navy while
-   it is being handled, red once it is waiting in the shop, blue once it is on
-   the road, green when it is done.
-
-   Shipped is blue and not the navy-deep the brief asked for: beside
-   processing's navy the two tints were the same grey-blue at pill size, and the
-   point of the set is telling them apart at a glance. Blue is the brand's
-   secondary accent, so the family is unchanged. */
-
-.order-status-badge--new {
-  background: rgba(var(--color-purple-rgb), 0.1);
-  color: var(--color-purple);
-}
-
-.order-status-badge--processing {
-  background: rgba(var(--color-navy-rgb), 0.08);
+.orders-chip:hover,
+.orders-export-btn:hover {
+  border-color: var(--color-navy);
   color: var(--color-navy);
 }
 
-.order-status-badge--ready_for_pickup {
-  background: rgba(var(--color-red-rgb), 0.12);
-  color: var(--color-red-dark);
+.orders-chip.is-active {
+  border-color: var(--color-navy);
+  background: var(--color-navy);
+  color: white;
 }
 
-.order-status-badge--shipped {
-  background: rgba(var(--color-blue-rgb), 0.12);
-  color: var(--color-blue);
+.orders-chip.is-active .orders-chip-count {
+  background: rgba(255, 255, 255, 0.18);
 }
 
-.order-status-badge--completed {
-  background: rgba(var(--color-green-rgb), 0.12);
-  color: var(--color-green);
+.orders-chip:focus-visible,
+.orders-export-btn:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: -3px;
 }
 
-/* The stat row above: the same colour as a hairline on top and on the count. */
-.orders-stat-card.is-new { border-top: 3px solid var(--color-purple); }
-.orders-stat-card.is-processing { border-top: 3px solid var(--color-navy); }
-.orders-stat-card.is-ready_for_pickup { border-top: 3px solid var(--color-red); }
-.orders-stat-card.is-shipped { border-top: 3px solid var(--color-blue); }
-.orders-stat-card.is-completed { border-top: 3px solid var(--color-green); }
+/* ---- Responsive ---------------------------------------------------------- */
 
-.orders-stat-card.is-new .stat-number { color: var(--color-purple); }
-.orders-stat-card.is-processing .stat-number { color: var(--color-navy); }
-.orders-stat-card.is-ready_for_pickup .stat-number { color: var(--color-red-dark); }
-.orders-stat-card.is-shipped .stat-number { color: var(--color-blue); }
-.orders-stat-card.is-completed .stat-number { color: var(--color-green); }
+/* lg — the phone: one sideways-scrolling row of chips rather than four wrapped
+   lines, and the export button drops below it. */
+@media (max-width: 900px) {
+  .orders-filter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
 
-/* The chosen status button wears its colour as a fill, which is what replaces
-   the border it drops in the states block above. */
-.status-btn--new.active { background: var(--color-purple); }
-.status-btn--processing.active { background: var(--color-navy); }
-.status-btn--ready_for_pickup.active { background: var(--color-red); }
-.status-btn--shipped.active { background: var(--color-blue); }
-.status-btn--completed.active { background: var(--color-green); }
+  /* bleeds to both edges so the row reads as scrollable, while the first chip
+     still lines up with the cards below it */
+  .orders-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: -16px;
+    padding: 2px 16px;
+  }
 
-/* ---- Responsive ---------------------------------------------------------------- */
+  .orders-chips::-webkit-scrollbar { display: none; }
 
-@media (max-width: 768px) {
-  .orders-stats { grid-template-columns: repeat(2, 1fr); }
-
-  .order-details-grid { grid-template-columns: 1fr; }
-
-  .order-card-header { flex-wrap: wrap; gap: 10px; }
+  .orders-export-btn { align-self: flex-start; }
 }
 
-/* ---- Dark mode ----------------------------------------------------------------- */
+/* ---- Dark mode ----------------------------------------------------------- */
 
 @media (prefers-color-scheme: dark) {
-  .order-customer-name { color: var(--color-text-dark); }
-
-  .order-items-table th { background: var(--color-bg-dark); color: var(--color-text-faint); }
-
-  .order-items-table td { color: #ccc; border-bottom-color: var(--color-surface-dark); }
-
-  .order-totals { border-top-color: var(--color-surface-dark); }
-
-  .order-totals strong { color: var(--color-text-dark); }
-
-  .status-btn { background: var(--color-bg-dark); border-color: var(--color-surface-dark); color: var(--color-text-faint); }
-
-  .status-btn:hover { border-color: var(--color-blue); color: var(--color-text-dark); }
-
-  .order-card { background: var(--color-navy); }
-
-  .order-card-header:hover { background: #1f1f35; }
-
-  .order-card-body { border-top-color: var(--color-surface-dark); }
+  .orders-chip,
+  .orders-export-btn {
+    background: var(--color-navy);
+    border-color: var(--color-surface-dark);
+    color: var(--color-text-dark);
+  }
 }

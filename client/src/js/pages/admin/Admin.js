@@ -1,5 +1,5 @@
 /**
- * מסך הניהול: סרגל הלשוניות, ומעליו הלשונית הפעילה.
+ * מסך הניהול: הכותרת, הניווט, ומתחתיהם הלשונית הפעילה.
  *
  * הלשונית הפעילה נשלטת מבחוץ, לפי הכתובת (/admin/:tab), כדי שלכל
  * לשונית תהיה כתובת אמיתית. setActiveTab למטה מנווט במקום לעדכן
@@ -7,15 +7,22 @@
  *
  * הנתונים עצמם יושבים בשלושה הוקים (מוצרים, הזמנות, חוות דעת), וכולם
  * מקבלים את אותו עוטף fetch שמחזיר למסך ההתחברות כשההתחברות פגה.
- * כאן נשאר רק מה ששייך למסך כולו: הסרגל, הקונפטי, ו-editingProduct —
- * המוצר הנערך, שלשונית המוצרים מסמנת ולשונית הטופס קוראת.
+ * כאן נשאר רק מה ששייך למסך כולו: הכותרת, הניווט, ההתראה על הזמנה
+ * חדשה, ו-editingProduct — המוצר הנערך, שלשונית המוצרים מסמנת ולשונית
+ * הטופס קוראת.
+ *
+ * ההתראה על הזמנה חדשה היא קונפטי וצליל. הקונפטי מגיע מ-useAdminOrders,
+ * שיודע מתי נכנסה הזמנה; הצליל מורכב כאן ונמסר לו כ-onNewOrder, מפני
+ * שהמתג שמכבה אותו יושב בכותרת הזו.
  */
 import { useState, useRef, useCallback } from 'react';
-import { BarChart3, ClipboardList, Package, Pencil, Plus, Download, Star } from 'lucide-react';
+import { Volume2, VolumeX } from 'lucide-react';
 import Confetti from '../../components/Confetti';
 import { useAdminProducts } from '../../hooks/useAdminProducts';
 import { useAdminOrders } from '../../hooks/useAdminOrders';
 import { useAdminReviews } from '../../hooks/useAdminReviews';
+import { useNewOrderChime } from '../../hooks/useNewOrderChime';
+import AdminTabs from './AdminTabs';
 import StatsTab from './StatsTab';
 import OrdersTab from './OrdersTab';
 import ProductsTab from './ProductsTab';
@@ -24,7 +31,7 @@ import ImportTab from './ImportTab';
 import ReviewsTab from './ReviewsTab';
 
 /** מציג את מסך הניהול על כל לשוניותיו. */
-function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
+function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
   const expiredRef = useRef(onExpired);
   expiredRef.current = onExpired;
 
@@ -44,10 +51,12 @@ function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
     downloadTemplate, handleCsvFile, handleImport, resetCsv, clearImportResult,
   } = useAdminProducts(api);
 
+  const { soundOn, toggleSound, playChime } = useNewOrderChime();
+
   const {
     orders, handleStatusChange, handleDeleteOrder, exportOrdersToExcel, getStats, ordersError,
     showConfetti, dismissConfetti,
-  } = useAdminOrders(api);
+  } = useAdminOrders(api, { onNewOrder: playChime });
 
   const { reviews, approveReview, deleteReview, reviewsError } = useAdminReviews(api);
 
@@ -68,29 +77,47 @@ function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
     setActiveTab('products');
   }
 
+  /**
+   * מעבר לשונית. שני האיפוסים נעשים כאן ולא ברכיב הניווט, שאינו מכיר
+   * את הנתונים: חזרה לרשימת המוצרים מסיימת עריכה, וכניסה לייבוא מנקה
+   * קובץ שנשאר מפעם קודמת.
+   */
+  function handleTabChange(next) {
+    if (next === 'products') setEditingProduct(null);
+    if (next === 'import') resetCsv();
+    setActiveTab(next);
+  }
+
   return (
     <div className="admin">
       {showConfetti && <Confetti onDone={dismissConfetti} />}
-      <div className="admin-header">
-        <button className="back-btn" onClick={onBack}>← חזור לחנות</button>
-        <h1>ניהול טכניק טמבור</h1>
-        <span className="admin-count">{products.length} מוצרים</span>
-      </div>
 
-      <div className="admin-tabs">
-        <button className={`admin-tab ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}><BarChart3 size={18} aria-hidden="true" /> סטטיסטיקות</button>
-        <button className={`admin-tab ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')}>
-          <ClipboardList size={18} aria-hidden="true" /> הזמנות {newOrdersCount > 0 && <span className="orders-new-badge">{newOrdersCount}</span>}
+      <header className="admin-header">
+        <h1 className="admin-title">ניהול טכניק טמבור</h1>
+        <span className="admin-count">{products.length} מוצרים</span>
+
+        <button
+          type="button"
+          className={`admin-sound-btn ${soundOn ? 'is-on' : ''}`}
+          onClick={toggleSound}
+          aria-pressed={soundOn}
+          title={soundOn ? 'צליל הזמנה חדשה מופעל — לחץ להשתקה' : 'צליל הזמנה חדשה מושתק — לחץ להפעלה'}>
+          {soundOn
+            ? <Volume2 size={22} aria-hidden="true" />
+            : <VolumeX size={22} aria-hidden="true" />}
+          <span className="admin-sound-label">{soundOn ? 'צליל פועל' : 'מושתק'}</span>
         </button>
-        <button className={`admin-tab ${activeTab === 'products' ? 'active' : ''}`} onClick={() => { setActiveTab('products'); setEditingProduct(null); }}><Package size={18} aria-hidden="true" /> מוצרים</button>
-        <button className={`admin-tab ${activeTab === 'add' ? 'active' : ''}`} onClick={() => setActiveTab('add')}>
-          {editingProduct ? <><Pencil size={18} aria-hidden="true" /> עריכה</> : <><Plus size={18} aria-hidden="true" /> הוסף מוצר</>}
-        </button>
-        <button className={`admin-tab ${activeTab === 'import' ? 'active' : ''}`} onClick={() => { setActiveTab('import'); resetCsv(); }}><Download size={18} aria-hidden="true" /> ייבוא CSV</button>
-        <button className={`admin-tab ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
-          <Star size={18} aria-hidden="true" /> ביקורות {pendingReviewsCount > 0 && <span className="orders-new-badge">{pendingReviewsCount}</span>}
-        </button>
-      </div>
+
+        <button type="button" className="admin-back-link" onClick={onBack}>חזור לחנות</button>
+      </header>
+
+      <AdminTabs
+        activeTab={activeTab}
+        onSelect={handleTabChange}
+        badges={{ orders: newOrdersCount, reviews: pendingReviewsCount }}
+        editing={Boolean(editingProduct)}
+        onBack={onBack}
+      />
 
       {activeTab === 'stats' && (
         <StatsTab
@@ -142,7 +169,7 @@ function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
           onDownloadTemplate={downloadTemplate}
           onCsvFile={handleCsvFile}
           onImport={handleImport}
-          onViewProducts={() => { setActiveTab('products'); clearImportResult(); }}
+          onViewProducts={() => { handleTabChange('products'); clearImportResult(); }}
         />
       )}
 
