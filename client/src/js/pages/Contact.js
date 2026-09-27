@@ -1,4 +1,5 @@
 import { MapPin, Phone, Clock } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 import {
   ADDRESS, PHONES, HOURS, hoursRangePadded,
 } from '../utils/storeInfo';
@@ -7,10 +8,12 @@ import {
 function Contact() {
   return (
     <div className="page-container">
-      <div className="contact-hero">
-        <h1>צור קשר</h1>
-        <p>נשמח לשמוע ממך ולעזור בכל שאלה</p>
-      </div>
+      <PageHeader
+        pill="צור קשר"
+        title="נשמח לשמוע"
+        accent="ממך"
+        subtitle="נשמח לשמוע ממך ולעזור בכל שאלה"
+      />
  
       <div className="contact-cards">
  

@@ -1,17 +1,17 @@
 import { BookOpen, Star, Headset, Handshake, Banknote, CalendarDays, Clock } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
 import { HOURS, hoursRangePadded } from '../utils/storeInfo';
 
 /** מציג את עמוד האודות. */
 function About() {
   return (
     <div className="page-container">
-      {/* Hero */}
-      <div className="about-hero">
-        <div className="about-hero-content">
-          <h1>טכניק טמבור</h1>
-          <p>מאז 1991 — המומחים שלך לצביעה, בנייה וכלי עבודה</p>
-        </div>
-      </div>
+      <PageHeader
+        pill="אודות"
+        title="טכניק טמבור"
+        accent="מאז 1991"
+        subtitle="המומחים שלך לצביעה, בנייה וכלי עבודה"
+      />
  
       <div className="about-sections">
  
