@@ -35,6 +35,8 @@
 /* the dark band that opens about, contact and returns. After _section-pill.css
    because it wears that pill, though it overrides nothing in it. */
 @import './components/_page-header.css';
+/* the opening hours, rendered on the contact page and reused by about */
+@import './components/_hours-table.css';
 
 /* 4. Feature modules */
 /* The admin dashboard, one partial per tab. No two of these carry the same

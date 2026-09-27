@@ -48,35 +48,6 @@
   margin-bottom: 10px;
 }
 
-/* Hours table */
-.hours-table {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #eee;
-}
-
-.hours-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--color-border-soft);
-  font-size: 1rem;
-}
-
-.hours-day {
-  color: #333;
-  font-weight: 500;
-}
-
-.hours-time {
-  color: var(--color-text);
-  font-weight: 600;
-}
-
 /* ── The three-up points grid ──────────────────────────────────────────────
    Moved in from _home.css, where it sat under a "Why us" heading next to the
    home page's own .whyus-* section. About.js is the only thing that renders
@@ -107,18 +78,6 @@
   margin: 0;
 }
 
-/* ---- States ---------------------------------------------------------------- */
-
-.hours-row:last-child {
-  border-bottom: none;
-}
-
-/* ---- Variants -------------------------------------------------------------- */
-
-.hours-row.closed .hours-time {
-  color: var(--color-red);
-}
-
 /* ---- Responsive ------------------------------------------------------------ */
 
 @media (max-width: 768px) {
@@ -138,12 +97,6 @@
   .about-card h2 { color: var(--color-text-dark); }
 
   .about-card p { color: var(--color-text-faint); }
-
-  .hours-row { border-bottom-color: var(--color-surface-dark); }
-
-  .hours-day { color: var(--color-text-faint); }
-
-  .hours-time { color: var(--color-text-dark); }
 
   .why-us-item { background: var(--color-bg-dark); }
 

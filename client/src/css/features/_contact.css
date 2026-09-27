@@ -1,158 +1,223 @@
 /* ==========================================================
-   Contact page — the contact cards, the phone list and the
-   opening hours
+   Contact page — the storefront panel and the three info cards
 
-   The page's dark header is the shared
+   The page's dark band is the shared
    components/_page-header.css, which replaced this file's
-   .contact-hero.
+   .contact-hero. Below it the page is blush, and everything
+   here is the home page's light card language: white, a
+   navy-tint hairline, a soft shadow and a red-tinted icon tile.
+
+   Layout, desktop: the photograph on the start (right) side,
+   the three cards stacked beside it. The photo column is sized
+   to the image rather than to a fraction of the row — the
+   source is a 294px-wide phone snapshot of the shop front, and
+   stretching it to a half-width column would show every pixel.
+   Below 900px the two stack, photograph first, because it is
+   what tells you you have found the right street.
+
+   The opening hours are not here: they are the shared
+   components/_hours-table.css, which about reuses.
    ========================================================== */
 
-/* ---- Elements -------------------------------------------------------------- */
+/* ---- Block --------------------------------------------------------------- */
 
-.contact-cards {
-  max-width: 860px;
-  margin: 40px auto;
-  padding: 0 20px 60px;
+.contact-layout {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 40px;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 56px 24px 80px;
 }
 
-.contact-card {
-  background: white;
-  border-radius: 20px;
-  padding: 32px 24px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
+/* ---- Elements ------------------------------------------------------------ */
 
-.contact-icon {
-  font-size: 2.4rem;
-  margin-bottom: 4px;
-}
+/* Photo panel
+   -------------------------------------------------------------------------- */
 
-.contact-card h2 {
-  font-size: 1.2rem;
-  color: var(--color-text);
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.contact-card p {
-  color: var(--color-text-muted);
-  font-size: 1rem;
-  line-height: 1.6;
+/* max-width, not width: the panel is as wide as the photograph's natural
+   294px and never wider. On a narrow phone it shrinks with the column, which
+   only ever scales the image down. */
+.contact-photo-panel {
+  max-width: 294px;
   margin: 0;
 }
 
-.contact-link-btn {
-  margin-top: 12px;
-  display: inline-block;
-  padding: 10px 22px;
-  background: var(--color-navy);
-  color: white;
-  border-radius: 20px;
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: background 0.2s;
+/* The frame exists so the red bar has the image's box to sit on rather than
+   the figure's, which is taller by the caption. */
+.contact-photo-frame {
+  position: relative;
 }
 
-/* Phone list */
-.phone-list {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.phone-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 10px 0;
-}
-
-.phone-label {
-  font-size: 0.82rem;
-  color: #999;
-  margin-bottom: 4px;
-}
-
-.phone-number {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--color-text);
-  text-decoration: none;
-  letter-spacing: 0.5px;
-}
-
-.phone-divider {
-  height: 1px;
-  background: var(--color-border-soft);
-  width: 100%;
-  margin: 6px 0;
-}
-
-/* Contact hours */
-.contact-hours {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.contact-hours-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  color: #333;
-}
-
-/* ---- States ---------------------------------------------------------------- */
-
-.contact-link-btn:hover {
+/* The same red bar the home page's photo panels wear: a line lying along the
+   bottom edge of the photograph, inset past the corner radius at both ends so
+   it reads as a line under the image, not as a border that gave up. */
+.contact-photo-frame::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20px;
+  right: 20px;
+  height: 4px;
   background: var(--color-red);
+  border-radius: 4px 4px 0 0;
 }
 
-.phone-number:hover {
+.contact-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 20px;
+  box-shadow: 0 18px 40px rgba(var(--color-navy-rgb), 0.18);
+}
+
+.contact-photo-caption {
+  margin-top: 16px;
+  font-size: 0.85rem;
+  color: rgba(var(--color-navy-rgb), 0.62);
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* Info cards
+   -------------------------------------------------------------------------- */
+
+.contact-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.contact-card {
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+}
+
+.contact-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+  margin-bottom: 14px;
+}
+
+.contact-card-title {
+  font-size: 1.15rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  margin: 0 0 10px;
+}
+
+.contact-card-text {
+  font-size: 1rem;
+  color: rgba(var(--color-navy-rgb), 0.72);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* The red CTA. Same shape as the home page's buttons; it is the only red fill
+   on this page apart from the icon tints. */
+.contact-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 11px 22px;
+  background: var(--color-red);
+  color: white;
+  border-radius: var(--radius-pill);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--transition-base), transform var(--transition-base);
+}
+
+/* Phone list
+   -------------------------------------------------------------------------- */
+
+.contact-phones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* min-height 52px, comfortably past the 44px a thumb needs, and the whole row
+   is the link rather than the number alone. */
+.contact-phone {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-height: 52px;
+  padding: 8px 14px;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: border-color var(--transition-base), background var(--transition-base);
+}
+
+.contact-phone-label {
+  font-size: 0.78rem;
+  color: rgba(var(--color-navy-rgb), 0.55);
+}
+
+.contact-phone-number {
+  font-size: 1.2rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  letter-spacing: 0.5px;
+  /* the number reads left-to-right inside a right-to-left page */
+  direction: ltr;
+  text-align: start;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.contact-cta:hover {
+  background: var(--color-red-dark);
+  transform: translateY(-2px);
+}
+
+.contact-phone:hover {
+  background: var(--color-blush);
+  border-color: rgba(var(--color-red-rgb), 0.3);
+}
+
+.contact-phone:hover .contact-phone-number {
   color: var(--color-red);
 }
 
-.contact-hours-row:nth-child(odd) {
-  background: #f8f8f6;
-}
+/* ---- Responsive ---------------------------------------------------------- */
 
-/* ---- Variants -------------------------------------------------------------- */
-
-.contact-hours-row.closed {
-  color: var(--color-red);
-}
-
-/* ---- Responsive ------------------------------------------------------------ */
-
-@media (max-width: 768px) {
-  .contact-cards {
+/* One column, photograph first. The panel centres itself because it is no
+   longer the width of its column. */
+@media (max-width: 900px) {
+  .contact-layout {
       grid-template-columns: 1fr;
+      gap: 32px;
+      padding: 40px 20px 64px;
+    }
+
+  .contact-photo-panel {
+      margin-inline: auto;
     }
 }
 
-/* ---- Dark mode ------------------------------------------------------------- */
+/* ---- Reduced motion ------------------------------------------------------ */
 
-@media (prefers-color-scheme: dark) {
-  .contact-card {
-      background: var(--color-navy);
-      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+@media (prefers-reduced-motion: reduce) {
+  .contact-cta:hover {
+      transform: none;
     }
-
-  .contact-card h2 { color: var(--color-text-dark); }
-
-  .contact-card p { color: var(--color-text-faint); }
-
-  .contact-hours-row:nth-child(odd) { background: var(--color-bg-dark); }
 }
