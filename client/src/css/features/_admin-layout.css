@@ -131,6 +131,15 @@
   transition: color var(--transition-fast), border-color var(--transition-fast);
 }
 
+/* The line of counts some tabs open with ("12 reviews, 3 waiting"). Shared, so
+   it is here rather than in whichever tab happens to render one; it replaces
+   .admin-results-info and the inline margin ReviewsTab carried. */
+.admin-tab-summary {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-body);
+}
+
 .admin-empty {
   padding: 60px 20px;
   text-align: center;

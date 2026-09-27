@@ -3,9 +3,22 @@
 
    Named to sit with the other _admin-* partials, but imported
    with the reviews group, which is where its rules were.
+
+   Brought into the redesigned panel rather than redesigned: the
+   card's layout is unchanged, and what moved is the scale —
+   16px body text, 48px buttons — and .review-delete-btn, which
+   used to borrow the products tab's .delete-btn and now belongs
+   to this list like .review-approve-btn beside it.
    ========================================================== */
 
-/* ===== ביקורות באדמין ===== */
+.admin-reviews {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---- Block ----------------------------------------------------------------- */
+
 .reviews-admin-list {
   display: flex;
   flex-direction: column;
@@ -15,14 +28,14 @@
 /* ---- Elements -------------------------------------------------------------- */
 
 .review-admin-card {
-  background: white;
-  border-radius: 14px;
-  padding: 18px 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border-right: 4px solid var(--color-green);
+  padding: 18px 20px;
+  border-inline-start: 4px solid var(--color-green);
+  border-radius: 14px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .review-admin-top {
@@ -34,30 +47,30 @@
 }
 
 .review-admin-top strong {
-  font-size: 0.95rem;
+  font-size: var(--font-size-h3);
   color: var(--color-text);
 }
 
 .review-admin-type {
-  font-size: 0.78rem;
-  background: var(--color-border-soft);
-  color: #666;
+  margin-inline-start: 8px;
   padding: 2px 8px;
-  border-radius: 10px;
-  margin-right: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-soft);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
 }
 
 .review-admin-date {
-  font-size: 0.78rem;
+  margin-inline-start: 8px;
   color: var(--color-text-faint);
-  margin-right: 8px;
+  font-size: var(--font-size-small);
 }
 
 .review-admin-text {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  line-height: 1.6;
   margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-body);
+  line-height: 1.6;
 }
 
 .review-admin-actions {
@@ -67,21 +80,44 @@
 }
 
 .review-approve-btn {
-  padding: 6px 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--radius-sm);
   background: var(--color-success-bg);
   color: var(--color-green);
-  border: none;
-  border-radius: 8px;
-  font-size: 0.85rem;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
   font-weight: 600;
   cursor: pointer;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  transition: background 0.2s;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+/* Its own class instead of the products tab's .delete-btn: deleting a review is
+   not deleting a product, and the borrowed rule dragged that tab's look here. */
+.review-delete-btn {
+  min-height: 48px;
+  margin-inline-start: auto;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-text-subtle);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .review-approved-badge {
-  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--color-green);
+  font-size: var(--font-size-body);
   font-weight: 600;
 }
 
@@ -89,19 +125,30 @@
 
 .review-approve-btn:hover { background: var(--color-green); color: white; }
 
+.review-delete-btn:hover {
+  background: var(--color-red);
+  color: white;
+}
+
+.review-approve-btn:focus-visible,
+.review-delete-btn:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
 /* ---- Variants -------------------------------------------------------------- */
 
 .review-admin-card.pending {
-  border-right-color: var(--color-red);
-  background: #fffbfb;
+  border-inline-start-color: var(--color-red);
+  background: var(--color-blush);
 }
 
 /* ---- Dark mode ------------------------------------------------------------- */
 
 @media (prefers-color-scheme: dark) {
-  .review-admin-card { background: var(--color-navy); border-right-color: var(--color-green); }
+  .review-admin-card { background: var(--color-navy); }
 
-  .review-admin-card.pending { background: #1f0d0d; border-right-color: var(--color-red); }
+  .review-admin-card.pending { background: var(--color-bg-dark-deep); }
 
   .review-admin-top strong { color: var(--color-text-dark); }
 

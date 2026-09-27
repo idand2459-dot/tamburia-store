@@ -46,7 +46,8 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
   const setActiveTab = onTabChange;
 
   const {
-    products, createProduct, updateProduct, deleteProduct, toggleStock, uploadingImages, productsError,
+    products, createProduct, updateProduct, deleteProduct, toggleStock, updatePrice,
+    uploadingImages, productsError,
     csvPreview, csvErrors, importing, importResult,
     downloadTemplate, handleCsvFile, handleImport, resetCsv, clearImportResult,
   } = useAdminProducts(api);
@@ -121,7 +122,6 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
 
       {activeTab === 'stats' && (
         <StatsTab
-          orders={orders}
           products={products}
           getStats={getStats}
           onToggleStock={toggleStock}
@@ -145,6 +145,7 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
           onEdit={startEdit}
           onDelete={deleteProduct}
           onToggleStock={toggleStock}
+          onUpdatePrice={updatePrice}
           productsError={productsError}
         />
       )}

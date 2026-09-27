@@ -16,13 +16,14 @@ const CSV_IDS = CATEGORIES.map(c => c.id);
 
 /** בונה את גוף הבקשה של מוצר מתוך שדות הטופס וכתובות התמונות. */
 function productBody(fields, imageUrls) {
-  const { name, price, inStock, colors, category, sku, description, variants } = fields;
+  const { name, price, inStock, colors, category, sku, description, variants, imageIllustrative } = fields;
   const validVariants = variants.filter(v => v.label.trim() && v.price !== '');
   return {
     name, price: parseInt(price) || 0, in_stock: inStock,
     image_url: imageUrls[0] || '', images: imageUrls.slice(1),
     colors: colors.split(',').map(c => c.trim()).filter(Boolean),
     category, sku, description,
+    image_illustrative: Boolean(imageIllustrative),
     variants: validVariants.map(v => ({ label: v.label.trim(), price: parseFloat(v.price) }))
   };
 }
@@ -181,23 +182,49 @@ export function useAdminProducts(api) {
     }
   }, [api, fetchProducts]);
 
-  /** מחליף את סימון המלאי של המוצר. */
-  const toggleStock = useCallback(async (product) => {
+  /**
+   * שולח עדכון של שדה בודד, ומחזיר true רק כשהשמירה הצליחה.
+   *
+   * השרת כותב רק את מה שנשלח (parseUpdate עובר על השדות שקיימים בגוף
+   * הבקשה בלבד), ולכן וריאנטים, תמונות, צבעים ומידות שלא נכללו כאן
+   * נשארים כפי שהם. זו הסיבה שאפשר לשנות מחיר בלי לשלוח את כל המוצר,
+   * וזה מכוסה בבדיקה — test/smoke-products.js, "עדכון חלקי".
+   */
+  const patchProduct = useCallback(async (id, patch, failMessage) => {
     try {
-      const res = await api('/api/products/' + product.id, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: product.name, price: product.price, in_stock: !product.in_stock, image_url: product.image_url || '', images: product.images || [], colors: product.colors || [], category: product.category, sku: product.sku || '', description: product.description || '' })
+      const res = await api('/api/products/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
       });
 
       if (!res.ok) {
-        setProductsError(await errorMessageFrom(res, 'עדכון המלאי נכשל.'));
-        return;
+        setProductsError(await errorMessageFrom(res, failMessage));
+        return false;
       }
       setProductsError(''); fetchProducts();
+      return true;
     } catch {
       setProductsError(NETWORK_ERROR);
+      return false;
     }
   }, [api, fetchProducts]);
+
+  /** מחליף את סימון המלאי של המוצר. */
+  const toggleStock = useCallback((product) => (
+    patchProduct(product.id, { in_stock: !product.in_stock }, 'עדכון המלאי נכשל.')
+  ), [patchProduct]);
+
+  /**
+   * משנה את מחיר המוצר בלבד — עריכת המחיר המהירה בלשונית המוצרים.
+   *
+   * מוצר עם וריאנטים אינו מגיע לכאן: המחיר שלו נגזר מהזול שבהם, ושליחת
+   * price לבדו הייתה קובעת לו מחיר שאינו תואם את הגרסאות. לשונית
+   * המוצרים פותחת לו את הטופס המלא במקום.
+   */
+  const updatePrice = useCallback((product, price) => (
+    patchProduct(product.id, { price: Math.round(Number(price)) }, 'עדכון המחיר נכשל.')
+  ), [patchProduct]);
 
   /** מנקה את תצוגת ה-CSV, לפתיחה נקייה של לשונית הייבוא. */
   const resetCsv = useCallback(() => {
@@ -231,7 +258,7 @@ export function useAdminProducts(api) {
 
   return {
     products, fetchProducts, productsError,
-    createProduct, updateProduct, deleteProduct, toggleStock, uploadingImages,
+    createProduct, updateProduct, deleteProduct, toggleStock, updatePrice, uploadingImages,
     csvPreview, csvErrors, importing, importResult,
     downloadTemplate, handleCsvFile, handleImport, resetCsv, clearImportResult,
   };

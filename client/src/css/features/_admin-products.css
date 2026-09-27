@@ -1,215 +1,341 @@
 /* ==========================================================
-   Admin products — the product cards on the products tab, and
-   the row of actions on each one
+   Admin products — one product in the products tab, and the
+   list or grid it sits in
 
-   .edit-btn, .delete-btn and .stock-toggle-btn are here rather
-   than in components/_buttons.css: only ProductsTab renders
-   them. .edit-btn and .stock-toggle-btn arrived from
-   _catalog.css in the previous step.
+   Same markup in both layouts: a grid of cards on a wide screen,
+   a list of rows on a phone. The switch is grid-template-areas
+   and nothing else, so AdminProductCard has one tree to maintain
+   rather than two.
 
-   .admin-product-row and its four descendant rules are gone —
-   the pre-redesign list markup they styled no longer exists.
+   Replaces the card that was here; gone with it:
+   .admin-products-grid, .admin-product-card,
+   .admin-product-no-img, .admin-product-title,
+   .admin-product-actions' .edit-btn / .delete-btn pair (now
+   .admin-edit-btn / .admin-delete-btn, with no element selector
+   above them), .admin-price, .admin-stock-badge (rendered
+   nowhere) and .stock-toggle-btn, whose job the real switch in
+   _admin-switch.css now does — that control is shared with the
+   product form, so it is not in this file.
    ========================================================== */
 
-/* Products grid */
-.admin-products-grid {
+.admin-products {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.admin-product-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 16px;
 }
 
-/* ---- Elements ------------------------------------------------------------------ */
-
-.admin-product-card {
-  background: white;
+/* A card: image on top, then the text, then stock and the actions. */
+.admin-product {
+  position: relative;
+  display: grid;
+  grid-template-areas:
+    'well'
+    'body'
+    'stock'
+    'actions';
   border-radius: 16px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
-  transition: box-shadow 0.2s;
+  transition: box-shadow var(--transition-base);
 }
 
-.admin-product-card img {
-  width: 100%;
-  height: 160px;
-  object-fit: cover;
-}
-
-.admin-product-no-img {
-  width: 100%;
-  height: 160px;
-  background: var(--color-surface-alt);
+.admin-product-well {
+  grid-area: well;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #bbb;
-  font-size: 0.9rem;
+  height: 150px;
+  background: var(--color-image-well);
+}
+
+.admin-product-well img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* The category's icon, not the first letter of the name: a huge letter read as
+   content rather than as "no photo yet" — the same call as the product card. */
+.admin-product-fallback {
+  display: flex;
+  color: var(--color-text-faint);
 }
 
 .admin-product-body {
-  padding: 14px 16px;
+  grid-area: body;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px 16px 10px;
 }
 
-.admin-product-title {
-  font-size: 1rem;
+.admin-product-name {
+  margin: 0;
+  font-size: var(--font-size-h3);
   font-weight: 600;
   color: var(--color-text);
-  margin-bottom: 4px;
-}
-
-.admin-product-sku {
-  font-size: 0.78rem;
-  color: var(--color-text-faint);
-  margin-bottom: 8px;
+  line-height: 1.35;
 }
 
 .admin-product-meta {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.admin-price {
-  font-weight: 700;
-  color: var(--color-red);
-  font-size: 1rem;
-}
-
-.admin-stock-badge {
-  font-size: 0.78rem;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-weight: 600;
-}
-
-.admin-category-tag {
-  font-size: 0.78rem;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: var(--font-size-small);
   color: var(--color-text-subtle);
-  background: var(--color-surface-alt);
-  padding: 2px 8px;
-  border-radius: 20px;
-  display: inline-block;
+}
+
+/* The price, as a button: touching it is what opens the editor. It looks like a
+   price and not like a button, with the pencil as the only hint — the price is
+   the thing being read here far more often than it is changed. */
+.admin-price-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 48px;
+  padding: 0 10px;
+  margin-inline-start: -10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-navy);
+  font-family: var(--font-family-base);
+  font-size: 1.3rem;
+  font-weight: var(--font-weight-extrabold);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.admin-price-btn svg { color: var(--color-text-faint); }
+
+.admin-price-variants {
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  color: var(--color-text-subtle);
+}
+
+.admin-price-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-price-currency {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+}
+
+.admin-price-input {
+  width: 92px;
+  min-height: 48px;
+  padding: 0 10px;
+  border: 2px solid var(--color-purple);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+  outline: none;
+}
+
+.admin-price-save,
+.admin-price-cancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.admin-price-save {
+  background: var(--color-green);
+  color: white;
+}
+
+.admin-price-cancel {
+  background: var(--color-border-soft);
+  color: var(--color-text-muted);
+}
+
+/* The "saved" flash after an inline price change. */
+.admin-product-saved {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-green);
+}
+
+.admin-product-stock {
+  grid-area: stock;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px 14px;
+}
+
+.admin-stock-label {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--color-text-muted);
 }
 
 .admin-product-actions {
+  grid-area: actions;
   display: flex;
-  gap: 0;
   border-top: 1px solid var(--color-border-soft);
 }
 
-.delete-btn {
-  padding: 8px 16px;
-  background-color: var(--color-red);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.edit-btn {
-  padding: 8px 16px;
-  background-color: var(--color-navy);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  margin-left: 8px;
-}
-
-/* ===== STOCK TOGGLE באדמין ===== */
-.stock-toggle-btn {
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 20px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: 'Segoe UI', sans-serif;
-}
-
-/* ---- States -------------------------------------------------------------------- */
-
-.admin-product-card:hover {
-  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-}
-
-.edit-btn:hover {
-  background-color: var(--color-blue);
-}
-
-.admin-product-actions .edit-btn,
-.admin-product-actions .delete-btn {
+.admin-edit-btn,
+.admin-delete-btn {
   flex: 1;
-  padding: 10px;
+  min-height: 48px;
   border: none;
+  background: none;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
   cursor: pointer;
-  font-size: 0.88rem;
-  font-family: 'Segoe UI', sans-serif;
-  transition: background 0.2s;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-.admin-product-actions .edit-btn {
-  background: #f8f8f6;
-  color: var(--color-text);
-  border-left: 1px solid var(--color-border-soft);
-  border-radius: 0 0 0 16px;
+.admin-edit-btn {
+  border-inline-end: 1px solid var(--color-border-soft);
+  color: var(--color-navy);
 }
 
-.admin-product-actions .edit-btn:hover {
+.admin-delete-btn { color: var(--color-text-subtle); }
+
+/* ---- States -------------------------------------------------------------- */
+
+.admin-product:hover { box-shadow: var(--shadow-md); }
+
+.admin-price-btn:hover { background: rgba(var(--color-navy-rgb), 0.05); }
+
+.admin-price-save:hover { background: var(--color-green-dark); }
+
+.admin-price-cancel:hover { background: var(--color-border); }
+
+.admin-price-save:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.admin-edit-btn:hover {
   background: var(--color-navy);
   color: white;
 }
 
-.admin-product-actions .delete-btn {
-  background: #f8f8f6;
-  color: var(--color-red);
-  border-radius: 0 0 16px 0;
-}
-
-.admin-product-actions .delete-btn:hover {
+.admin-delete-btn:hover {
   background: var(--color-red);
   color: white;
 }
 
-.stock-toggle-btn.in:hover {
-  background: var(--color-error-border);
-  color: var(--color-red-dark);
+.admin-price-btn:focus-visible,
+.admin-price-save:focus-visible,
+.admin-price-cancel:focus-visible,
+.admin-edit-btn:focus-visible,
+.admin-delete-btn:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: -3px;
 }
 
-.stock-toggle-btn.out:hover {
-  background: var(--color-success-bg);
-  color: var(--color-green);
+/* A row that has just been saved, marked for as long as the word shows. */
+.admin-product.is-saved {
+  box-shadow: 0 0 0 2px var(--color-green), var(--shadow-sm);
 }
 
-/* ---- Variants ------------------------------------------------------------------ */
+/* ---- Responsive ---------------------------------------------------------- */
 
-.admin-stock-badge.in {
-  background: var(--color-success-bg);
-  color: var(--color-green);
+/* lg — the phone: one row per product. The thumbnail, the text and the stock
+   switch share the first line and the two actions sit under them, so the whole
+   product fits on a line and a bit without anything shrinking below 48px. */
+@media (max-width: 900px) {
+  .admin-product-list {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .admin-product {
+    grid-template-columns: 76px 1fr auto;
+    grid-template-areas:
+      'well body stock'
+      'well actions actions';
+    align-items: center;
+  }
+
+  .admin-product-well {
+    height: 100%;
+    min-height: 76px;
+  }
+
+  .admin-product-body { padding: 12px 12px 8px; }
+
+  .admin-product-name { font-size: var(--font-size-body); }
+
+  .admin-product-stock {
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px 0;
+  }
+
+  .admin-product-stock .admin-stock-label { font-size: var(--font-size-small); }
+
+  .admin-product-actions {
+    border-top: none;
+    padding: 0 12px 10px;
+    gap: 8px;
+  }
+
+  .admin-edit-btn,
+  .admin-delete-btn {
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
 }
 
-.admin-stock-badge.out {
-  background: var(--color-error-border);
-  color: var(--color-red-dark);
+/* xs — the price editor's buttons would push the input out of the row. */
+@media (max-width: 430px) {
+  .admin-price-edit { flex-wrap: wrap; }
 }
 
-.stock-toggle-btn.in {
-  background: var(--color-success-bg);
-  color: var(--color-green);
-}
-
-.stock-toggle-btn.out {
-  background: var(--color-error-border);
-  color: var(--color-red-dark);
-}
-
-/* ---- Dark mode ----------------------------------------------------------------- */
+/* ---- Dark mode ----------------------------------------------------------- */
 
 @media (prefers-color-scheme: dark) {
-  .admin-product-card { background: var(--color-navy); }
+  .admin-product,
+  .admin-price-input {
+    background: var(--color-navy);
+    color: var(--color-text-dark);
+  }
 
-  .admin-product-title { color: var(--color-text-dark); }
+  .admin-product-name,
+  .admin-price-btn,
+  .admin-price-currency { color: var(--color-text-dark); }
+
+  .admin-product-well { background: var(--color-bg-dark); }
+
+  .admin-product-actions,
+  .admin-edit-btn { border-color: var(--color-surface-dark); }
+
+  .admin-edit-btn { color: var(--color-text-dark); }
+
+  .admin-price-cancel {
+    background: var(--color-surface-dark);
+    color: var(--color-text-faint);
+  }
 }

@@ -1,0 +1,62 @@
+/* ==========================================================
+   Admin form preview — the "how it will look in the shop" panel
+   beside the product form
+
+   What it holds is the shop's real components/_product-card.css,
+   rendered from the form's current values, so this file styles
+   only the frame around it and never the card itself.
+   ========================================================== */
+
+.admin-preview {
+  position: sticky;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 16px;
+  border-radius: 18px;
+  /* the shop's own page colour, so the card is seen against the surface it will
+     actually sit on rather than against the admin's slate */
+  background: var(--color-blush);
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.admin-preview-title {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+}
+
+/* pointer-events is what makes this a picture: the card's cart and wishlist
+   buttons do nothing here, and the link on the product's name must not navigate
+   to a product that does not exist yet. */
+.admin-preview-stage {
+  pointer-events: none;
+}
+
+.admin-preview-hint {
+  margin: 0;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-xs);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* lg — under the form, so it stops sticking and caps its width instead of
+   stretching a 260px card across the screen. */
+@media (max-width: 900px) {
+  .admin-preview {
+    position: static;
+    max-width: 320px;
+  }
+}
+
+/* ---- Dark mode ----------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .admin-preview { background: var(--color-bg-dark-deep); }
+
+  .admin-preview-title { color: var(--color-text-dark); }
+}

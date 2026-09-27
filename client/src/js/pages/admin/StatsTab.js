@@ -3,17 +3,51 @@
  *
  * מקבל את getStats ואת המוצרים, ומחשב את הנתונים כאן ולא ב-Admin,
  * כדי שהחישוב יקרה רק כשהלשונית באמת מוצגת.
+ *
+ * האיפוס אינו מוחק דבר: הוא קובע מאיזה תאריך סופרים (useStatsBaseline),
+ * וההזמנות שקדמו לו פשוט יוצאות מהחישוב. לכן יש גם "בטל איפוס", ולכן
+ * השורה למעלה אומרת תמיד ממתי סופרים — מספר שאין לו טווח אינו אומר
+ * דבר. לשונית ההזמנות, חיפוש הלקוח לפי טלפון והייצוא לאקסל אינם
+ * מושפעים.
  */
-import { CalendarDays, Calendar, CalendarRange, Coins, AlertTriangle, CheckCircle } from 'lucide-react';
+import { CalendarDays, Calendar, CalendarRange, Coins, AlertTriangle, CheckCircle, RotateCcw, Undo2 } from 'lucide-react';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
+import { useStatsBaseline } from '../../hooks/useStatsBaseline';
+import { formatDate } from './adminConstants';
 
 /** מציג את לשונית הסטטיסטיקות. */
-function StatsTab({ orders, products, getStats, onToggleStock, productsError }) {
-  const stats = getStats(products);
+function StatsTab({ products, getStats, onToggleStock, productsError }) {
+  const { since, resetStats, clearBaseline } = useStatsBaseline();
+
+  const stats = getStats(products, since);
   const maxDailyCount = Math.max(...stats.dailyOrders.map(d => d.count), 1);
+
+  /** מאשר ואז קובע נקודת התחלה חדשה. */
+  function handleReset() {
+    if (!window.confirm('לאפס את הסיכומים ולהתחיל לספור מעכשיו?\n\nההזמנות עצמן לא נמחקות, ואפשר לבטל את האיפוס.')) return;
+    resetStats();
+  }
 
   return (
     <div className="stats-page">
+      <div className="stats-reset">
+        {since ? (
+          <>
+            <span className="stats-reset-since">סופרים מ-{formatDate(since)}</span>
+            <button type="button" className="stats-reset-undo" onClick={clearBaseline}>
+              <Undo2 size={18} aria-hidden="true" /> בטל איפוס
+            </button>
+          </>
+        ) : (
+          <>
+            <span className="stats-reset-since">סופרים מההזמנה הראשונה</span>
+            <button type="button" className="stats-reset-btn" onClick={handleReset}>
+              <RotateCcw size={18} aria-hidden="true" /> אפס סיכומים
+            </button>
+          </>
+        )}
+      </div>
+
       {/* כרטיסי מכירות */}
       <div className="stats-grid">
         <div className="stats-card">
@@ -38,7 +72,7 @@ function StatsTab({ orders, products, getStats, onToggleStock, productsError }) 
           <div className="stats-card-icon"><Coins size={28} aria-hidden="true" /></div>
           <div className="stats-card-value">₪{stats.revenueTotal}</div>
           <div className="stats-card-label">סה"כ הכנסות</div>
-          <div className="stats-card-sub">{orders.length} הזמנות סה"כ</div>
+          <div className="stats-card-sub">{stats.totalOrders} הזמנות סה"כ</div>
         </div>
       </div>
 

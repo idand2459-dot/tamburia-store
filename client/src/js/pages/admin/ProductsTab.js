@@ -1,74 +1,104 @@
 /**
- * לשונית המוצרים: חיפוש, סינון לפי קטגוריה וגריד הכרטיסים.
+ * לשונית המוצרים: חיפוש, סינון לפי קטגוריה ורשימת המוצרים.
  *
  * החיפוש והסינון הם state מקומי של הלשונית. "ערוך" אינו טוען את
  * הטופס בעצמו אלא רק מסמן את המוצר הנערך ב-Admin ועובר ללשונית
  * הטופס, וזה מה שממלא את השדות.
+ *
+ * מוצר אחד הוא AdminProductCard, שמחזיק גם את עריכת המחיר במקום.
  */
 import { useState } from 'react';
-import { Search, X, Store, AlertTriangle, Check } from 'lucide-react';
+import { Search, X, Store, AlertTriangle } from 'lucide-react';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
 import { CATEGORIES } from './adminConstants';
+import AdminProductCard from './AdminProductCard';
 
 /** מציג את לשונית המוצרים. */
-function ProductsTab({ products, onEdit, onDelete, onToggleStock, productsError }) {
+function ProductsTab({ products, onEdit, onDelete, onToggleStock, onUpdatePrice, productsError }) {
   const [filterCategory, setFilterCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const query = searchQuery.trim().toLowerCase();
+
   const filteredProducts = products.filter(p => {
     const matchCat = filterCategory === 'all' || p.category === filterCategory;
-    const matchSearch = !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()) || (p.sku && p.sku.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchSearch = !query
+      || p.name.toLowerCase().includes(query)
+      || (p.sku && p.sku.toLowerCase().includes(query));
     return matchCat && matchSearch;
   });
 
+  /* רק הקטגוריות שיש בהן מוצרים. שבב עם 0 הוא שבב שאין בו מה ללחוץ,
+     ובטלפון הוא מאריך את הרצועה שצריך לגלול. */
+  const usedCategories = CATEGORIES
+    .map(cat => ({ ...cat, count: products.filter(p => p.category === cat.id).length }))
+    .filter(cat => cat.count > 0);
+
   return (
-    <div>
-      <div className="admin-search-bar">
-        <Search className="admin-search-icon" size={18} aria-hidden="true" />
-        <input placeholder="חפש לפי שם או מק״ט..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-        {searchQuery && <button className="admin-search-clear" onClick={() => setSearchQuery('')} aria-label="נקה חיפוש"><X size={18} aria-hidden="true" /></button>}
+    <div className="admin-products">
+      <div className="admin-search">
+        <Search className="admin-search-icon" size={20} aria-hidden="true" />
+        <input
+          className="admin-search-input"
+          placeholder="חפש לפי שם או מק״ט"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          aria-label="חיפוש מוצר"
+        />
+        {searchQuery && (
+          <button type="button" className="admin-search-clear" onClick={() => setSearchQuery('')} aria-label="נקה חיפוש">
+            <X size={20} aria-hidden="true" />
+          </button>
+        )}
       </div>
-      <div className="admin-category-filter">
-        <button className={`admin-cat-btn ${filterCategory === 'all' ? 'active' : ''}`} onClick={() => setFilterCategory('all')}><Store size={18} aria-hidden="true" /> הכל <span className="admin-cat-count">{products.length}</span></button>
-        {CATEGORIES.map(cat => {
+
+      <div className="admin-cats" role="group" aria-label="סינון לפי קטגוריה">
+        <button
+          type="button"
+          className={`admin-cat ${filterCategory === 'all' ? 'is-active' : ''}`}
+          aria-pressed={filterCategory === 'all'}
+          onClick={() => setFilterCategory('all')}>
+          <Store size={18} aria-hidden="true" /> הכל
+          <span className="admin-cat-count">{products.length}</span>
+        </button>
+
+        {usedCategories.map(cat => {
           const Icon = CATEGORY_ICONS[cat.id];
           return (
-            <button key={cat.id} className={`admin-cat-btn ${filterCategory === cat.id ? 'active' : ''}`} onClick={() => setFilterCategory(cat.id)}>
-              {Icon && <Icon size={18} aria-hidden="true" />} {cat.label} <span className="admin-cat-count">{products.filter(p => p.category === cat.id).length}</span>
+            <button
+              key={cat.id}
+              type="button"
+              className={`admin-cat ${filterCategory === cat.id ? 'is-active' : ''}`}
+              aria-pressed={filterCategory === cat.id}
+              onClick={() => setFilterCategory(cat.id)}>
+              {Icon && <Icon size={18} aria-hidden="true" />} {cat.label}
+              <span className="admin-cat-count">{cat.count}</span>
             </button>
           );
         })}
       </div>
-      <div className="admin-results-info">{(searchQuery || filterCategory !== 'all') ? `מציג ${filteredProducts.length} מוצרים` : ''}</div>
-      {productsError && <div className="admin-error"><AlertTriangle size={18} aria-hidden="true" /> {productsError}</div>}
-      {filteredProducts.length === 0 ? <div className="admin-empty">אין מוצרים</div> : (
-        <div className="admin-products-grid">
+
+      {productsError && (
+        <div className="admin-error">
+          <AlertTriangle size={18} aria-hidden="true" /> {productsError}
+        </div>
+      )}
+
+      {filteredProducts.length === 0 ? (
+        <div className="admin-empty">
+          {query ? `לא נמצא מוצר בשם "${searchQuery.trim()}"` : 'אין מוצרים בקטגוריה הזו'}
+        </div>
+      ) : (
+        <div className="admin-product-list">
           {filteredProducts.map(product => (
-            <div key={product.id} className="admin-product-card">
-              {product.image_url ? <img src={product.image_url} alt={product.name} /> : <div className="admin-product-no-img">אין תמונה</div>}
-              <div className="admin-product-body">
-                <div className="admin-product-title">{product.name}</div>
-                {product.sku && <div className="admin-product-sku">מק"ט: {product.sku}</div>}
-                <div className="admin-product-meta">
-                  <span className="admin-price">₪{product.price}</span>
-                  <button className={`stock-toggle-btn ${product.in_stock !== false ? 'in' : 'out'}`} onClick={() => onToggleStock(product)} title="לחץ לשינוי מלאי">
-                    {product.in_stock !== false ? <><Check size={16} aria-hidden="true" /> במלאי</> : <><X size={16} aria-hidden="true" /> אזל</>}
-                  </button>
-                </div>
-                {product.category && (() => {
-                  const Icon = CATEGORY_ICONS[product.category];
-                  return (
-                    <div className="admin-category-tag">
-                      {Icon && <Icon size={16} aria-hidden="true" />} {CATEGORIES.find(c => c.id === product.category)?.label}
-                    </div>
-                  );
-                })()}
-              </div>
-              <div className="admin-product-actions">
-                <button className="edit-btn" onClick={() => onEdit(product)}>ערוך</button>
-                <button className="delete-btn" onClick={() => onDelete(product.id)}>מחק</button>
-              </div>
-            </div>
+            <AdminProductCard
+              key={product.id}
+              product={product}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onToggleStock={onToggleStock}
+              onUpdatePrice={onUpdatePrice}
+            />
           ))}
         </div>
       )}
