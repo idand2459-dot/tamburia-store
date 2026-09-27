@@ -33,7 +33,7 @@ const CATEGORY_DESCRIPTIONS = {
 };
 
 /**
- * מפת התמונות הקיימות: { painting: { 960: url, 1920: url }, … }.
+ * מפת התמונות הקיימות: { painting: [{ width, url }, …], … }, מהצר לרחב.
  *
  * require.context הוא מה שהופך את הוספת התמונה לחסרת-קוד: הוא נפתר
  * בזמן הבנייה על תוכן התיקייה, ולכן קובץ חדש שם מופיע בבנייה הבאה בלי
@@ -42,7 +42,9 @@ const CATEGORY_DESCRIPTIONS = {
  * תצא ריקה.
  *
  * שם הקובץ שנספר הוא cat-<id>-<width>.webp, מה ש-npm run images:categories
- * מייצר. קובץ שלא עונה לתבנית נדלג עליו ולא מפיל כלום.
+ * מייצר, וה-width שבשם הוא הרוחב האמיתי של הקובץ — הסקריפט מבטיח את זה.
+ * לכן ה-srcSet למטה נגזר מהשם ואין כאן רשימת רוחבים קשיחה: רוחב שיתווסף
+ * לסקריפט יופיע כאן לבד. קובץ שלא עונה לתבנית נדלג עליו ולא מפיל כלום.
  */
 const BANNERS = (() => {
   const map = {};
@@ -52,9 +54,11 @@ const BANNERS = (() => {
     const match = key.match(/cat-(.+)-(\d+)\.webp$/);
     if (!match) return;
     const [, id, width] = match;
-    if (!map[id]) map[id] = {};
-    map[id][width] = ctx(key);
+    if (!map[id]) map[id] = [];
+    map[id].push({ width: Number(width), url: ctx(key) });
   });
+
+  Object.values(map).forEach((sources) => sources.sort((a, b) => a.width - b.width));
 
   return map;
 })();
@@ -85,10 +89,8 @@ function CategoryBanner({ category, productCount }) {
           ref={imgRef}
           className={`category-banner-photo ${loaded ? 'is-loaded' : ''}`}
           onLoad={() => setLoaded(true)}
-          src={photo[1920] || photo[960]}
-          srcSet={[photo[960] && `${photo[960]} 960w`, photo[1920] && `${photo[1920]} 1920w`]
-            .filter(Boolean)
-            .join(', ')}
+          src={photo[photo.length - 1].url}
+          srcSet={photo.map((source) => `${source.url} ${source.width}w`).join(', ')}
           sizes="100vw"
           alt=""
           fetchPriority="high"
