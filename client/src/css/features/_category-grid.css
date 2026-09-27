@@ -1,135 +1,245 @@
 /* ==========================================================
-   Category grid — the category cards on the catalog page
+   Category grid — the dark categories section on the home page
 
-   The per-category colours are not here: every .cat-bg-* fill
-   lives in features/_category-themes.css, which is imported
-   last so it can repaint these cards.
+   Not the category *page* (that is CategoryView, and its
+   per-category colours live in features/_category-themes.css).
+   This is the band directly under the Hero, and it is always
+   dark whatever the system theme — same surface family as the
+   Hero, so the two read as one continuous dark area. Hence no
+   prefers-color-scheme block at the bottom of this file.
+
+   The categories.js `color` field is deliberately unused here:
+   twelve different pastel fills fought the dark backdrop. The
+   field is still read by the category page.
    ========================================================== */
 
-/* The two .category-page rules the old _catalog.css had, folded into one: the
-   second only set margin-top: 48px and margin-bottom: 0 over the first's
-   `margin: 0 auto`, which is what the shorthand below already says. */
-.category-page {
-  max-width: 1200px;
-  margin: 48px auto 0;
-  padding: 56px 20px 48px;
+/* ---- Block --------------------------------------------------------------- */
+
+.category-section {
+  background-color: var(--color-navy-950);
+  padding: 96px 20px 110px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* The whole backdrop lives on this one layer, so the AI photograph planned for
+   this section can be dropped in later without restructuring the section: add
+   it as the last (bottom-most) layer of the `background` shorthand below, and
+   the two glows keep sitting over it.
+
+   Static on purpose — no animation. */
+.category-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 45% 60% at 8% 85%,
+      rgba(var(--color-red-rgb), 0.22), transparent 70%),
+    radial-gradient(ellipse 40% 55% at 95% 80%,
+      rgba(var(--color-purple-rgb), 0.2), transparent 70%);
+  pointer-events: none;
 }
 
 /* ---- Elements ------------------------------------------------------------ */
 
-.category-page h2 {
-  font-size: 1.85rem;
-  font-weight: 800;
-  margin-bottom: 36px;
-  color: var(--color-text);
-  text-align: center;
+/* z-index 1 is what lifts the content off ::before — and off the image layer
+   that will join it. */
+.category-section-inner {
   position: relative;
+  z-index: 1;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
 }
 
-.category-page h2::after {
-  content: '';
-  display: block;
-  width: 44px;
-  height: 3px;
-  background: var(--color-red);
-  margin: 10px auto 0;
-  border-radius: 2px;
+.category-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+/* purple, matching .hero-badge: red stays reserved for the title accent and
+   the card hover */
+.category-tag {
+  display: inline-block;
+  background: rgba(var(--color-purple-rgb), 0.18);
+  border: 1px solid rgba(var(--color-purple-rgb), 0.35);
+  color: var(--color-purple-soft);
+  padding: 6px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 18px;
+}
+
+/* No underline rule under this h2 any more: the tag above it already marks the
+   section, and a red bar plus a red accent word was one accent too many. */
+.category-title {
+  font-size: 2.2rem;
+  font-weight: var(--font-weight-extrabold);
+  color: white;
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+
+/* the same device as .hero-accent — one word of the title in red */
+.category-title span {
+  color: var(--color-red);
+}
+
+.category-subtitle {
+  font-size: var(--font-size-body);
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.6;
 }
 
 .categories-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
+  gap: 20px;
 }
 
+/* Dark glass, not white: a white card on a dark section — and later on a dark
+   photograph — reads as pasted on. Cards stretch to the row's height because
+   grid items default to stretch, and the arrow's margin-top: auto is what
+   holds it on the bottom edge of the taller ones. */
 .category-card {
-  border-radius: 22px;
-  padding: 36px 16px 22px;
-  cursor: pointer;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.3s ease;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.13);
-  position: relative;
-  overflow: hidden;
-}
-
-/* Shine overlay */
-.category-card::before {
-  content: '';
-  position: absolute;
-  top: -60%;
-  right: -60%;
-  width: 180%;
-  height: 180%;
-  background: radial-gradient(ellipse at top right, rgba(255, 255, 255, 0.22) 0%, transparent 60%);
-  pointer-events: none;
-}
-
-/* Bottom gradient */
-.category-card::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 45%;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.22), transparent);
-  pointer-events: none;
+  background: rgba(var(--color-navy-900-rgb), 0.62);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  padding: var(--spacing-lg);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .category-icon {
-  font-size: 3rem;
-  position: relative;
-  z-index: 1;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  background: rgba(var(--color-red-rgb), 0.14);
+  border: 1px solid rgba(var(--color-red-rgb), 0.25);
+  color: var(--color-red-soft);
+  transition:
+    background 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    color 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .category-name {
   color: white;
-  font-size: 1rem;
-  font-weight: 700;
-  text-align: center;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
-  position: relative;
-  z-index: 1;
+  font-size: 1.05rem;
+  font-weight: var(--font-weight-bold);
+  margin-top: var(--spacing-md);
 }
 
+/* 0.62 white at 0.82rem is the floor for body text on this section — anything
+   greyer or smaller stops being readable once a photograph is behind it. */
 .category-sub-hint {
-  color: rgba(255, 255, 255, 0.65);
-  font-size: 0.7rem;
-  text-align: center;
-  line-height: 1.4;
-  position: relative;
-  z-index: 1;
-  max-width: 120px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin-top: 6px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
-/* ---- States ------------------------------------------------------------- */
-
-.category-card:hover {
-  transform: translateY(-9px) scale(1.03);
-  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.22);
+/* margin-top: auto pins it to the bottom; flex-end on the cross axis of an RTL
+   column is the *left* edge, which is where an ArrowLeft belongs. */
+.category-arrow {
+  align-self: flex-end;
+  margin-top: var(--spacing-md);
+  color: rgba(255, 255, 255, 0.4);
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    color 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-/* ---- Responsive --------------------------------------------------------- */
+/* ---- States -------------------------------------------------------------- */
 
-/* The old file's 480px block also set .categories-grid to repeat(2, 1fr) — the
-   same value this block already gives it, so that declaration was dead and is
-   gone. The grid stays two columns all the way down. */
-@media (max-width: 768px) {
+/* Hover and keyboard focus get the same treatment. The lift is a transform,
+   and it survives the reveal because .reveal.is-visible fills `backwards`,
+   not `forwards` — see components/_reveal.css. */
+.category-card:hover,
+.category-card:focus-visible {
+  transform: translateY(-4px);
+  border-color: rgba(var(--color-red-rgb), 0.6);
+  /* the same red glow as .navbar-cart-btn's focus state */
+  box-shadow: 0 0 26px rgba(var(--color-red-rgb), 0.28);
+}
+
+/* the navbar's ring, so the whole site focuses the same way */
+.category-card:focus-visible {
+  outline: 2px solid var(--color-purple-soft);
+  outline-offset: 2px;
+}
+
+.category-card:hover .category-icon,
+.category-card:focus-visible .category-icon {
+  background: var(--color-red);
+  border-color: var(--color-red);
+  color: white;
+}
+
+.category-card:hover .category-arrow,
+.category-card:focus-visible .category-arrow {
+  color: var(--color-red-soft);
+  transform: translateX(-4px);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 1200px) {
   .categories-grid {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
     }
 }
 
-/* ---- Dark mode ---------------------------------------------------------- */
+@media (max-width: 768px) {
+  .category-section {
+      padding: 64px 16px 72px;
+    }
 
-@media (prefers-color-scheme: dark) {
-  /* the cards keep their own category colours; only the shadow deepens */
+  .category-title {
+      font-size: 1.8rem;
+    }
+
+  .categories-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
   .category-card {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      padding: var(--spacing-md);
+    }
+}
+
+/* ---- Reduced motion ------------------------------------------------------ */
+
+/* Colour and glow still change — they carry the "this is the one under the
+   cursor" signal — but nothing moves. */
+@media (prefers-reduced-motion: reduce) {
+  .category-card:hover,
+  .category-card:focus-visible {
+      transform: none;
+    }
+
+  .category-card:hover .category-arrow,
+  .category-card:focus-visible .category-arrow {
+      transform: none;
     }
 }

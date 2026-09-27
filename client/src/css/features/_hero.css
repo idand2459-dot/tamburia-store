@@ -9,9 +9,9 @@
 /* Hero
    ---------------------------------------------------------------------------
    Always dark, whatever the system theme: every colour here is hardcoded and
-   there is no dark-mode override for the Hero — except .hero::after, which
-   fades into the *page* background and therefore has to follow the theme. See
-   the note on that rule.
+   there is no dark-mode override for the Hero at all — including .hero::after,
+   which now fades into the categories section below rather than into the
+   theme-dependent page background. See the note on that rule.
 
    The layer order, bottom to top:
      1. background-color, the fallback while the image is still loading
@@ -81,14 +81,15 @@
 }
 
 /* Bottom fade
-   NOTE: this one rule does need a dark-mode twin, down in the dark block of
-   this file. It blends the Hero into whatever sits below it, and that is the
-   page background — which *is* theme-dependent. --color-bg is a single light
-   value (#eceef5), so without the override the Hero would end in a pale band
-   floating above a dark page.
+   NOTE: this used to fade into --color-bg, the page background, and therefore
+   needed a dark-mode twin. It no longer does either: what sits below the Hero
+   is the categories section, which is --color-navy-950 in both themes, so the
+   fade now names that colour directly and the Hero flows into it as one
+   surface. The dark-mode block that overrode this rule is gone with it.
 
-   Straight from transparent to the page colour — the 40% stop this used to have
-   was rgba(248,248,246,0.02), a leftover of the old cream page background. */
+   Straight from transparent to the colour below — the 40% stop this used to
+   have was rgba(248,248,246,0.02), a leftover of the old cream page
+   background. */
 .hero::after {
   content: '';
   position: absolute;
@@ -97,7 +98,7 @@
   right: 0;
   height: 140px;
   z-index: 2;
-  background: linear-gradient(to bottom, transparent, var(--color-bg));
+  background: linear-gradient(to bottom, transparent, var(--color-navy-950));
   pointer-events: none;
 }
 
@@ -305,16 +306,5 @@
      good — this is what keeps "no motion" from meaning "no image" */
   .hero-media img {
       opacity: 1;
-    }
-}
-
-@media (prefers-color-scheme: dark) {
-  /* The Hero itself is hardcoded dark and needs no override. Its bottom fade
-     does: it blends into the page background, and --color-bg is light-only. */
-  .hero::after {
-      background: linear-gradient(to bottom,
-        transparent,
-        rgba(var(--color-bg-dark-rgb), 0.02) 40%,
-        var(--color-bg-dark));
     }
 }
