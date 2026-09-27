@@ -2,8 +2,8 @@
    Banners, alerts and inline errors
    ========================================================================== */
 
-/* The marquee ticker moved to layout/_header.css — it is designed as one unit
-   with the navbar now, and this partial loads after that one. */
+/* The marquee ticker moved to layout/_ticker.css — it is designed as one unit
+   with the navbar now, and both load before this partial. */
 
 /* ===== בדיקת אזור משלוח ===== */
 .input-error {

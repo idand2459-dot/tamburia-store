@@ -1,0 +1,60 @@
+/* ==========================================================
+   Product search — the in-page search field in CategoryView
+
+   Not the navbar's search: that one's results dropdown is
+   layout/_nav-search.css, and the admin's own field is in
+   features/_admin-filters.css. This is the plain input above
+   a category's product grid, which is why it lives in
+   features/ rather than layout/.
+   ========================================================== */
+
+.search-bar {
+  margin-bottom: 24px;
+  position: relative;
+}
+
+/* אייקון החיפוש: היה חלק מה-placeholder ועכשיו הוא רכיב Lucide,
+   ולכן הוא ממוקם בתוך השדה וה-padding-right מפנה לו מקום. */
+.search-bar-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-faint);
+  pointer-events: none;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 12px 44px 12px 20px;
+  border: 1px solid #ddd;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-family: 'Segoe UI', sans-serif;
+  direction: rtl;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* States */
+.search-bar input:focus {
+  border-color: var(--color-navy);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .search-bar input {
+      background: var(--color-navy);
+      border-color: var(--color-surface-dark);
+      color: var(--color-text-dark);
+    }
+
+  .search-bar input::placeholder {
+      color: #666;
+    }
+
+  .search-bar input:focus {
+      border-color: var(--color-blue);
+    }
+}

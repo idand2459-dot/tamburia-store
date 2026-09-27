@@ -1,0 +1,123 @@
+/* ==========================================================
+   Nav drawer — the slide-in menu behind the navbar's hamburger
+
+   Two related things deliberately live elsewhere: the backdrop
+   is .nav-overlay in components/_modals.css, with the other
+   overlay backdrops, and the focus ring is the one shared rule
+   in layout/_navbar.css. This file must be imported after
+   _navbar.css so that ring keeps winning nothing it did not
+   already win.
+   ========================================================== */
+
+.nav-drawer {
+  position: fixed;
+  top: 0;
+  right: -280px;
+  width: 280px;
+  height: 100vh;
+  background:
+    radial-gradient(circle 320px at 100% 0%,
+      rgba(var(--color-purple-rgb), 0.16), transparent 70%),
+    var(--color-navy-950);
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 300;
+  transition: right 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.nav-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nav-drawer-logo {
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-drawer-logo .lucide {
+  color: var(--color-red);
+}
+
+.nav-close-btn {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.nav-drawer-links {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 0;
+  gap: 2px;
+}
+
+.nav-drawer-item {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 1rem;
+  padding: 8px 20px;
+  text-align: right;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: color 0.2s;
+}
+
+/* the icon sits in its own tile, and the tile is what reacts — a full-width
+   background sweep on hover was the loudest thing in the drawer */
+.nav-item-icon {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+  flex-shrink: 0;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* ---- States ------------------------------------------------------------- */
+
+.nav-drawer.open {
+  right: 0;
+}
+
+.nav-close-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.nav-drawer-item:hover,
+.nav-drawer-item.active {
+  color: white;
+}
+
+.nav-drawer-item:hover .nav-item-icon,
+.nav-drawer-item.active .nav-item-icon {
+  background: rgba(var(--color-red-rgb), 0.15);
+  color: var(--color-red);
+}
