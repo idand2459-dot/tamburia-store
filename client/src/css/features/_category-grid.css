@@ -100,10 +100,17 @@
 }
 
 /* Dark glass, not white: a white card on a dark section — and later on a dark
-   photograph — reads as pasted on. Cards stretch to the row's height because
-   grid items default to stretch, and the arrow's margin-top: auto is what
-   holds it on the bottom edge of the taller ones. */
+   photograph — reads as pasted on.
+
+   Cards stretch to the row's height (grid items default to stretch) and the
+   arrow is positioned against that stretched box, so every arrow in a row sits
+   on the same line however many lines the hint above it took. position:
+   relative is what makes that box the arrow's container.
+
+   padding-bottom is the arrow's corner, reserved: 20px below it, its own 18px,
+   and 16px of clearance so the hint never touches it. */
 .category-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: rgba(var(--color-navy-900-rgb), 0.62);
@@ -111,7 +118,7 @@
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 18px;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-lg) var(--spacing-lg) 54px;
   text-align: start;
   cursor: pointer;
   transition:
@@ -158,11 +165,15 @@
   overflow: hidden;
 }
 
-/* margin-top: auto pins it to the bottom; flex-end on the cross axis of an RTL
-   column is the *left* edge, which is where an ArrowLeft belongs. */
+/* Out of flow, in the bottom-left corner. In flow it followed the hint, so a
+   card whose hint wrapped to a second line carried its arrow a line lower than
+   its neighbours; against the card box it lands in the same place every time.
+   left, not inset-inline-end: the corner is the same one in any direction, and
+   the icon pointing into it is an ArrowLeft. */
 .category-arrow {
-  align-self: flex-end;
-  margin-top: var(--spacing-md);
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
   color: rgba(255, 255, 255, 0.4);
   transition:
     transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
@@ -224,7 +235,7 @@
     }
 
   .category-card {
-      padding: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-md) 54px;
     }
 }
 

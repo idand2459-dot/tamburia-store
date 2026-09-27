@@ -6,19 +6,19 @@
  * רכיב, ולא קורא את שדה ה-icon.
  */
 import {
-  Paintbrush, Wrench, ShowerHead, CookingPot, SprayCan,
-  Flower2, Pipette, Paperclip, Lock, Droplet, Zap, House,
+  PaintRoller, Hammer, ShowerHead, CookingPot, SprayCan,
+  Sprout, Wrench, Pipette, Lock, Droplet, Zap, House,
 } from 'lucide-react';
 
 const CATEGORY_ICONS = {
-  painting: Paintbrush,
-  tools: Wrench,
+  painting: PaintRoller,
+  tools: Hammer,
   bathroom: ShowerHead,
   kitchen: CookingPot,
   cleaning: SprayCan,
-  garden: Flower2,
-  plumbing: Pipette,
-  adhesives: Paperclip,
+  garden: Sprout,
+  plumbing: Wrench,
+  adhesives: Pipette,
   locks: Lock,
   faucets: Droplet,
   electrical: Zap,
