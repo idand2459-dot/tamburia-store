@@ -3,7 +3,7 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import {
-  ShowerHead, DoorOpen, Sprout, Wrench, Crown, Check, Circle, ShoppingCart,
+  ShowerHead, Lock, Sprout, Wrench, Crown, Check, Circle, ShoppingCart,
 } from 'lucide-react';
 
 /* ─── Project definitions ──────────────────────────────────────────────── */
@@ -24,7 +24,7 @@ const PROJECTS = [
   },
   {
     id: 'cylinder',
-    Icon: DoorOpen,
+    Icon: Lock,
     name: 'החלפת צילינדר',
     inputs: [
       {
