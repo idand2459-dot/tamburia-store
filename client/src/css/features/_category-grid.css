@@ -1,0 +1,135 @@
+/* ==========================================================
+   Category grid — the category cards on the catalog page
+
+   The per-category colours are not here: every .cat-bg-* fill
+   lives in features/_category-themes.css, which is imported
+   last so it can repaint these cards.
+   ========================================================== */
+
+/* The two .category-page rules the old _catalog.css had, folded into one: the
+   second only set margin-top: 48px and margin-bottom: 0 over the first's
+   `margin: 0 auto`, which is what the shorthand below already says. */
+.category-page {
+  max-width: 1200px;
+  margin: 48px auto 0;
+  padding: 56px 20px 48px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.category-page h2 {
+  font-size: 1.85rem;
+  font-weight: 800;
+  margin-bottom: 36px;
+  color: var(--color-text);
+  text-align: center;
+  position: relative;
+}
+
+.category-page h2::after {
+  content: '';
+  display: block;
+  width: 44px;
+  height: 3px;
+  background: var(--color-red);
+  margin: 10px auto 0;
+  border-radius: 2px;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.category-card {
+  border-radius: 22px;
+  padding: 36px 16px 22px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.3s ease;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.13);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shine overlay */
+.category-card::before {
+  content: '';
+  position: absolute;
+  top: -60%;
+  right: -60%;
+  width: 180%;
+  height: 180%;
+  background: radial-gradient(ellipse at top right, rgba(255, 255, 255, 0.22) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Bottom gradient */
+.category-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 45%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.22), transparent);
+  pointer-events: none;
+}
+
+.category-icon {
+  font-size: 3rem;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
+}
+
+.category-name {
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  position: relative;
+  z-index: 1;
+}
+
+.category-sub-hint {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.7rem;
+  text-align: center;
+  line-height: 1.4;
+  position: relative;
+  z-index: 1;
+  max-width: 120px;
+}
+
+/* ---- States ------------------------------------------------------------- */
+
+.category-card:hover {
+  transform: translateY(-9px) scale(1.03);
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.22);
+}
+
+/* ---- Responsive --------------------------------------------------------- */
+
+/* The old file's 480px block also set .categories-grid to repeat(2, 1fr) — the
+   same value this block already gives it, so that declaration was dead and is
+   gone. The grid stays two columns all the way down. */
+@media (max-width: 768px) {
+  .categories-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ---- Dark mode ---------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  /* the cards keep their own category colours; only the shadow deepens */
+  .category-card {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+}

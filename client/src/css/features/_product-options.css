@@ -1,0 +1,145 @@
+/* ==========================================================
+   Product options — size, colour and variant pickers
+
+   Everything ProductVariantSelector.js renders on the product
+   page. The variant *editor* in the admin form is a different
+   component and lives with the admin form styles.
+   ========================================================== */
+
+.product-page-sizes {
+  margin-bottom: 20px;
+}
+
+.product-page-variants {
+  margin-bottom: 20px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.product-page-colors h3 {
+  font-size: 1rem;
+  color: var(--color-text);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.selected-color-name {
+  font-weight: 400;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.color-circles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.color-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+
+.product-page-sizes h3 {
+  font-size: 1rem;
+  color: var(--color-text);
+  margin-bottom: 12px;
+}
+
+.size-select {
+  width: 100%;
+  max-width: 280px;
+  padding: 10px 14px;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--color-text);
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  direction: rtl;
+}
+
+.product-page-variants h3 {
+  font-size: 1rem;
+  color: var(--color-text);
+  margin-bottom: 12px;
+}
+
+.variant-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.variant-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 18px;
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, transform 0.18s;
+  min-width: 80px;
+}
+
+.variant-chip-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 3px;
+}
+
+.variant-chip-price {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--color-red);
+}
+
+/* ---- States ------------------------------------------------------------- */
+
+.color-circle:hover {
+  transform: scale(1.15);
+}
+
+/* The double ring is drawn with box-shadow because the circle's fill is an
+   inline style from the product data, so a border would fight it. !important
+   because the inline style also carries a box-shadow on some products. */
+.color-circle.selected {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 3px white, 0 0 0 5px #1a1a2e !important;
+}
+
+.size-select:focus {
+  outline: none;
+  border-color: var(--color-red);
+}
+
+.variant-chip:hover {
+  border-color: var(--color-navy);
+  transform: translateY(-2px);
+}
+
+.variant-chip.selected {
+  border-color: var(--color-red);
+  background: var(--color-error-bg);
+}
+
+.variant-chip.selected .variant-chip-label {
+  color: var(--color-red);
+}
+
+/* ---- Dark mode ---------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .product-page-colors h3 {
+      color: var(--color-text-dark);
+    }
+}

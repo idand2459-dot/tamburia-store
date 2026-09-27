@@ -1,0 +1,218 @@
+/* ==========================================================
+   Product card — one product in a grid (CategoryView)
+
+   The image placeholder is always rendered and the real <img>
+   overlays it, so a product with no photo still has a filled,
+   category-coloured tile instead of a hole. .cat-bg-* in
+   features/_category-themes.css repaints the card per category
+   and is imported after this file.
+   ========================================================== */
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.product-card {
+  background: white;
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border: 1.5px solid transparent;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* Product image wrapper — placeholder always rendered, real img overlays it */
+.product-img-wrap {
+  position: relative;
+  width: 100%;
+  height: 175px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.product-card img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+  z-index: 2;
+}
+
+/* No-image placeholder — always rendered, sits behind real img (z-index 2) */
+.product-img-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* base = category color via CSS var; fallback = brand navy */
+  background-color: var(--cat-color, #1a1a2e);
+  background-image:
+    radial-gradient(ellipse at 28% 28%, rgba(255, 255, 255, 0.28) 0%, transparent 55%),
+    linear-gradient(145deg, transparent 30%, rgba(0, 0, 0, 0.32) 100%);
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* subtle dot-grid texture */
+.product-img-placeholder::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+/* רמז אייקון הקטגוריה — קטן, בפינה. היה ::after עם content: attr(data-icon)
+   כשהאייקון היה אימוג'י; רכיב Lucide אינו יכול לשבת ב-generated content,
+   ולכן CategoryView מרנדר עכשיו אלמנט אמיתי עם ה-class הזה. */
+.product-img-icon {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  opacity: 0.22;
+  color: #fff;
+}
+
+.product-img-initial {
+  position: relative;
+  z-index: 1;
+  font-size: 5.5rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.18);
+  font-family: 'Segoe UI', sans-serif;
+  line-height: 1;
+  user-select: none;
+  letter-spacing: -2px;
+}
+
+.product-card h3 {
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.product-sku {
+  font-size: 0.78rem;
+  color: var(--color-text-faint);
+  margin-bottom: 4px;
+}
+
+.price {
+  color: var(--color-red);
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+.price-variants-hint {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: rgba(var(--color-red-rgb), 0.7);
+}
+
+.stock {
+  color: var(--color-text-subtle);
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+
+.card-bottom-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.card-add-btn {
+  flex: 1;
+  padding: 10px;
+  background: var(--color-navy);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: background 0.2s;
+}
+
+/* ---- States ------------------------------------------------------------- */
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.13);
+  border-color: #eef0f5;
+}
+
+.card-add-btn:hover:not(:disabled) {
+  background: var(--color-red);
+}
+
+.card-add-btn:disabled {
+  background: #ccc;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* Out-of-stock styling that CategoryView applies alongside the classes above.
+   The !important is load-bearing and not laziness: .out-of-stock-label and
+   .btn-disabled have the same specificity as the .price / .card-add-btn rules
+   they have to beat, and in the old single file they came *earlier*, so order
+   alone would have lost. */
+.out-of-stock-label {
+  color: #c1121f !important;
+}
+
+.btn-disabled {
+  background: #ccc !important;
+  cursor: not-allowed !important;
+  color: #999 !important;
+}
+
+.btn-disabled:hover {
+  background: #ccc !important;
+}
+
+/* ---- Responsive --------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .products-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 480px rather than one of the five breakpoints: this is where the grid drops to
+   a single column, so remapping it to 430 or 560 would move the layout on real
+   phone widths. CONVENTIONS.md rule 4 says to keep the value and note it. */
+@media (max-width: 480px) {
+  .products-grid {
+      grid-template-columns: 1fr;
+    }
+}
+
+/* ---- Dark mode ---------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .product-card {
+      background: var(--color-navy);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      color: var(--color-text-dark);
+    }
+
+  .product-card h3 {
+      color: var(--color-text-dark);
+    }
+
+  .product-card:hover {
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    }
+}
