@@ -1,5 +1,5 @@
 import {
-  AlertTriangle, CalendarDays, CheckCircle, XCircle, Hammer, Paintbrush, Wrench,
+  AlertTriangle, CalendarDays, CheckCircle, XCircle, Hammer, PaintRoller, Wrench,
   Scissors, FlaskConical, Receipt, Package, Store, Shield, Coins, CreditCard,
   Gift, ScrollText, Phone, Truck, ClipboardList,
 } from 'lucide-react';
@@ -79,7 +79,7 @@ function Returns() {
               </div>
             </div>
             <div className="returns-list-item red">
-              <span className="returns-item-icon"><Paintbrush size={24} aria-hidden="true" /></span>
+              <span className="returns-item-icon"><PaintRoller size={24} aria-hidden="true" /></span>
               <div>
                 <strong>צבעים ותמהילים שנפתחו</strong>
                 <p>צבע שנפתח, הורכב או נעשה בו שימוש — לא ניתן להחזרה.</p>

@@ -1,4 +1,4 @@
-import { BookOpen, Star, Wrench, Handshake, Banknote, CalendarDays, Clock } from 'lucide-react';
+import { BookOpen, Star, Headset, Handshake, Banknote, CalendarDays, Clock } from 'lucide-react';
 
 /** מציג את עמוד האודות. */
 function About() {
@@ -34,7 +34,7 @@ function About() {
           <h2>למה לבחור בנו?</h2>
           <div className="why-us-grid">
             <div className="why-us-item">
-              <span className="why-icon"><Wrench size={28} aria-hidden="true" /></span>
+              <span className="why-icon"><Headset size={28} aria-hidden="true" /></span>
               <h3>עזרה טכנית מקצועית</h3>
               <p>יש שאלה? אנחנו כאן לעזור. אנרי ישמח לייעץ על כל בעיה טכנית</p>
             </div>

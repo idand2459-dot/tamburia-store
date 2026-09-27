@@ -3,7 +3,7 @@
  */
 import { useState, useEffect } from 'react';
 import {
-  Paintbrush, Brush, Ruler, AppWindow, DoorOpen, PaintBucket, X,
+  PaintRoller, Brush, Ruler, AppWindow, DoorOpen, PaintBucket, X,
   CheckCircle, Lightbulb, Store, Phone, ShoppingCart, Sun, CloudSun, Moon,
 } from 'lucide-react';
 import paintCalcBg from '../../../assets/images/sections/paint-calc-bg-1672.webp';
@@ -212,7 +212,7 @@ function PaintCalculator({ addBundleToCart }) {
       <div className="paint-calc-content">
         <div className="paint-calc-header">
           <span className="calc-tag">כלי עזר</span>
-          <h2 className="paint-calc-title"><Paintbrush size={28} aria-hidden="true" /> מחשבון צבע</h2>
+          <h2 className="paint-calc-title"><PaintRoller size={28} aria-hidden="true" /> מחשבון צבע</h2>
           <p className="paint-calc-subtitle">חשבו כמה צבע תצטרכו לפני שאתם מגיעים לחנות</p>
         </div>
 
@@ -221,7 +221,7 @@ function PaintCalculator({ addBundleToCart }) {
           {/* ── Color & Shade Selector ── */}
           {formulas.length > 0 && (
             <div className="paint-calc-card">
-              <h3 className="paint-calc-card-title"><Paintbrush size={20} aria-hidden="true" /> קולור MIX יעקבי — בחרו גוון</h3>
+              <h3 className="paint-calc-card-title"><PaintRoller size={20} aria-hidden="true" /> קולור MIX יעקבי — בחרו גוון</h3>
 
               <div className="paint-pigment-row">
                 {/* Color swatches */}
@@ -390,7 +390,7 @@ function PaintCalculator({ addBundleToCart }) {
                 </div>
 
                 <div className="paint-result-item" style={{ borderRight: `4px solid ${currentFormula?.hex || '#e63946'}` }}>
-                  <span className="paint-result-icon"><Paintbrush size={24} aria-hidden="true" /></span>
+                  <span className="paint-result-icon"><PaintRoller size={24} aria-hidden="true" /></span>
                   <div>
                     <div className="paint-result-value">{result.colorMixBottles} בקבוק</div>
                     <div className="paint-result-label">קולור MIX יעקבי 250מ"ל</div>
@@ -406,7 +406,7 @@ function PaintCalculator({ addBundleToCart }) {
                 <div className="paint-result-preview-bar"
                   style={{ background: `linear-gradient(135deg, ${previewBg} 0%, ${blendWithWhite(currentFormula.hex, SHADE_CONFIG[selectedShade].factor * 0.7)} 100%)` }}>
                   <span style={{ color: previewTextDark ? '#333' : '#fff', fontWeight: 600 }}>
-                    <Paintbrush size={18} aria-hidden="true" /> הצבע המשוחזר שלך: {currentFormula.color_name_he} {SHADE_CONFIG[selectedShade].label}
+                    <PaintRoller size={18} aria-hidden="true" /> הצבע המשוחזר שלך: {currentFormula.color_name_he} {SHADE_CONFIG[selectedShade].label}
                   </span>
                 </div>
               )}

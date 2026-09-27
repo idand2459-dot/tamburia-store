@@ -1,5 +1,5 @@
 import {
-  Wrench, MapPin, Phone, Smartphone, Clock, Star, Handshake, Banknote,
+  Wrench, MapPin, Phone, Smartphone, Clock, Star, Handshake, Banknote, Headset,
 } from 'lucide-react';
 
 const ITEMS = [
@@ -12,7 +12,7 @@ const ITEMS = [
   { Icon: Star,       text: 'נוסדה 1991' },
   { Icon: Handshake,  text: 'יחס אישי ואדיב' },
   { Icon: Banknote,   text: 'מחירים טובים' },
-  { Icon: Wrench,     text: 'עזרה טכנית מקצועית' },
+  { Icon: Headset,    text: 'עזרה טכנית מקצועית' },
 ];
 
 /** מציג את רצועת ההודעות הנגללת. */
