@@ -97,7 +97,7 @@ function ReviewsCarousel() {
             className="reviews-photo"
             src={reviewsPhoto1000}
             srcSet={`${reviewsPhoto600} 600w, ${reviewsPhoto1000} 1000w`}
-            sizes="(max-width: 900px) calc(100vw - 40px), 500px"
+            sizes="(max-width: 900px) calc(100vw - 40px), 400px"
             alt="לחיצת יד בין מוכר ללקוח ליד הדלפק"
             loading="lazy"
             decoding="async"
@@ -111,16 +111,20 @@ function ReviewsCarousel() {
           <div className="reviews-header">
             <span className="section-pill section-pill--light">ביקורות</span>
             <h2 className="reviews-title">מה לקוחות אומרים עלינו</h2>
-            {avgRating && (
-              <div className="reviews-avg">
-                <span className="reviews-avg-num">{avgRating}</span>
-                {renderStars(Math.round(avgRating))}
-                <span className="reviews-avg-count">({reviews.length} ביקורות)</span>
-              </div>
-            )}
-            <button className="add-review-btn" onClick={() => setShowForm(!showForm)}>
-              {showForm ? <><X size={18} aria-hidden="true" /> סגור</> : <><PenLine size={18} aria-hidden="true" /> כתוב ביקורת</>}
-            </button>
+            {/* הדירוג והכפתור באותה שורה — שניהם רהיטי המקטע, ולא שתי
+                שורות נפרדות */}
+            <div className="reviews-header-actions">
+              {avgRating && (
+                <div className="reviews-avg">
+                  <span className="reviews-avg-num">{avgRating}</span>
+                  {renderStars(Math.round(avgRating))}
+                  <span className="reviews-avg-count">({reviews.length} ביקורות)</span>
+                </div>
+              )}
+              <button className="add-review-btn" onClick={() => setShowForm(!showForm)}>
+                {showForm ? <><X size={18} aria-hidden="true" /> סגור</> : <><PenLine size={18} aria-hidden="true" /> כתוב ביקורת</>}
+              </button>
+            </div>
           </div>
 
           {/* טופס ביקורת */}

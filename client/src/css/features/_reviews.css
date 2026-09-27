@@ -11,13 +11,17 @@
    with the purple glow on ::before and the stacking context the
    two needed.
 
-   Layout, desktop: the header and the carousel share the start
-   column (the right one, in RTL) and the photograph is a framed
-   panel in the end column — beside the reviews, never behind
-   them, and mirroring the WhyUs panel with its red bar along
-   the top instead of the bottom. Below 900px the photograph
-   moves above the header as a 16:9 band, because a 4:5 portrait
-   at phone width is a screenful before a single review shows.
+   Layout, desktop: two cells on one row. The header and the
+   carousel share the start column (the right one, in RTL), the
+   photograph is a framed panel in the end column — beside the
+   reviews, never behind them, mirroring the WhyUs panel with
+   its red bar along the top instead of the bottom — and the two
+   are centred against each other. The words get the wider
+   column, because a column of running text wants the room and
+   the panel is capped at 400px anyway. Below 900px the
+   photograph moves above the header as a 16:9 band, because a
+   4:5 portrait at phone width is a screenful before a single
+   review shows.
 
    The rotating card itself is features/_reviews-carousel.css,
    split out when the two together passed the 300-line target.
@@ -41,30 +45,38 @@
 
 /* ---- Elements ------------------------------------------------------------ */
 
-/* Two cells: the words on the start side, the photograph on the end side.
-   .reviews-col is a wrapper rather than three grid items because the middle
-   one — the form — only exists while it is open, and three items that come
-   and go cannot be placed in fixed rows. The column was 680px wide when it
-   was the only thing here; the 1.05fr/0.95fr split lands close to that. */
+/* Two cells on one row: the words on the start side, the photograph on the
+   end side. .reviews-col is a wrapper rather than three grid items because
+   the middle one — the form — only exists while it is open, and three items
+   that come and go cannot be placed in fixed rows.
+
+   Both cells name their row. Without that, the photograph — which comes
+   first in the DOM and names only its column — took row 1 of column 2, which
+   left the placement cursor past the end of row 1, so the text column was
+   auto-placed into row 2 of column 1. The result was a diagonal with two
+   empty cells. An explicit row on a grid item is only half a position; the
+   other half is what the next auto-placed item does with it. */
 .reviews-inner {
   max-width: 1100px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
+  grid-template-columns: 1.3fr 1fr;
   gap: 56px;
   align-items: center;
 }
 
 .reviews-col {
   grid-column: 1;
+  grid-row: 1;
   min-width: 0;
 }
 
-/* Centred, like every other section header on the page. It used to be a
-   space-between row with the "write a review" button opposite the title, which
-   made this the only left-aligned heading on the home page. */
+/* Start-aligned, like the WhyUs text column: this is one of the two sections
+   whose header shares a row with a photograph, and a centred heading in a
+   half-width column reads as floating rather than as the column's opening.
+   The centred section headers on the page are the full-width ones. */
 .reviews-header {
-  text-align: center;
+  text-align: start;
   margin-bottom: 32px;
 }
 
@@ -82,6 +94,18 @@
    prefers-color-scheme: dark, for the pages that really do follow the system
    theme, and this section does not — its cards are white in both. */
 .reviews-section .stars { --star-empty: rgba(var(--color-navy-rgb), 0.15); }
+
+/* The average and the "write a review" button on one line. They were stacked
+   only because they were two siblings in a centred column; side by side they
+   read as the one row of section furniture they are. It wraps, because at
+   narrow widths the two together are wider than the column. */
+.reviews-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 20px;
+}
 
 .reviews-avg {
   display: inline-flex;
@@ -107,7 +131,6 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 20px;
   background: transparent;
   border: 1px solid rgba(var(--color-navy-rgb), 0.25);
   color: var(--color-navy);
@@ -128,9 +151,16 @@
 /* Photo panel
    -------------------------------------------------------------------------- */
 
+/* Capped at 400px and centred in its column: at the full width of a 1fr
+   column the 4:5 portrait grew taller than the reviews beside it and set the
+   height of the whole section. */
 .reviews-media {
   position: relative;
   grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  max-width: 400px;
+  justify-self: center;
 }
 
 /* The WhyUs panel's red bar, mirrored to the top edge: the two panels face
@@ -215,9 +245,11 @@
   .reviews-media {
       grid-column: 1;
       grid-row: 1;
+      max-width: none;
     }
 
   .reviews-col {
+      grid-column: 1;
       grid-row: 2;
     }
 
