@@ -12,7 +12,6 @@ import { Search, Check, X, Heart } from 'lucide-react';
 import categories from './categories';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
 import CategoryBanner from './CategoryBanner';
-import CategoryAmbience from './CategoryAmbience';
 import NotFoundPage from '../../pages/NotFoundPage';
 import { ProductCardSkeleton } from '../../components/LoadingStates';
 import { useStore } from '../../context/storeContext';
@@ -92,8 +91,7 @@ function CategoryView() {
 
   return (
     <>
-      <CategoryAmbience categoryId={category.id} />
-      <CategoryBanner category={category} onBack={() => navigate('/')} />
+      <CategoryBanner category={category} productCount={loading ? null : products.length} />
 
       {category.subcategories?.length > 0 && (
         <div className="subcategory-chips">
@@ -113,7 +111,7 @@ function CategoryView() {
         </div>
       )}
 
-      <main style={{ '--cat-color': category.color }}>
+      <main>
         <div className="products-toolbar">
           <div className="search-bar">
             <Search className="search-bar-icon" size={18} aria-hidden="true" />

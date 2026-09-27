@@ -3,9 +3,9 @@
 
    The image placeholder is always rendered and the real <img>
    overlays it, so a product with no photo still has a filled,
-   category-coloured tile instead of a hole. .cat-bg-* in
-   features/_category-themes.css repaints the card per category
-   and is imported after this file.
+   category-coloured tile instead of a hole. --cat-color, which
+   used to feed that tile, is no longer set by anything: the
+   fallback in the rule below is what paints it now.
    ========================================================== */
 
 .products-grid {

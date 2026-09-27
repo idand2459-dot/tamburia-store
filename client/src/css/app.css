@@ -93,6 +93,10 @@
 @import './features/_review-form.css';
 @import './features/_admin-reviews.css';
 @import './features/_hero.css';
+/* the photo band at the top of a category page. Where features/_category-themes.css
+   used to be: that file painted every category page in one saturated colour and
+   is gone — a category's atmosphere is now this banner alone. */
+@import './features/_category-banner.css';
 @import './features/_features-banner.css';
 @import './features/_whyus.css';
 /* One partial per static page, in the order their rules had inside the old
@@ -106,7 +110,3 @@
 @import './features/_returns-steps.css';
 @import './features/_not-found.css';
 @import './features/_faq.css';
-
-/* 5. Theme overrides — must stay last: these repaint components
-      per category and rely on winning over the rules above. */
-@import './features/_category-themes.css';

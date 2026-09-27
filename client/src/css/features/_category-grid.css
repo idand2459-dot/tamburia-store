@@ -1,8 +1,8 @@
 /* ==========================================================
    Category grid — the light categories section on the home page
 
-   Not the category *page* (that is CategoryView, and its
-   per-category colours live in features/_category-themes.css).
+   Not the category *page* — that is CategoryView, whose own
+   atmosphere is now one photograph in features/_category-banner.css.
    This is the first light section on the home page: the Hero and
    the features strip above it are one dark block, and this is
    where the page opens up. --color-blush, a very light tint of
@@ -20,7 +20,8 @@
 
    The categories.js `color` field is deliberately unused here:
    twelve different pastel fills fought the section either way.
-   The field is still read by the category page.
+   Nothing reads it any more — the category page used to paint
+   itself with it, and no longer does.
    ========================================================== */
 
 /* ---- Block --------------------------------------------------------------- */
