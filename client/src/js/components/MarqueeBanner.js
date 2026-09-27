@@ -17,19 +17,29 @@ const ITEMS = [
 
 /** מציג את רצועת ההודעות הנגללת. */
 function MarqueeBanner() {
-  // הרצועה מוכפלת כדי שהגלילה ל--50% תיראה רציפה.
-  const doubled = [...ITEMS, ...ITEMS];
-
   return (
     <div className="marquee-banner">
+      {/* שני עותקים של הרשימה, כל אחד ב-group משלו: הגלילה ל--50% מזיזה
+          בדיוק group אחד, ולכן הפריים בסוף זהה לפריים בהתחלה. ה-min-width
+          שב-CSS הוא מה שמבטיח שגם במסך רחב group אחד ממלא את הרוחב. */}
       <div className="marquee-track">
-        {doubled.map(({ Icon, text }, i) => (
-          <span key={i} className="marquee-item">
-            <Icon size={14} aria-hidden="true" />
-            {text}
-            {/* המפריד הוא עיגול שה-CSS מצייר, לא תו bullet */}
-            <span className="marquee-sep" aria-hidden="true" />
-          </span>
+        {[0, 1].map((copy) => (
+          <div
+            key={copy}
+            className="marquee-group"
+            /* העותק השני הוא שכפול חזותי בלבד, ואין טעם שקורא מסך יקרא
+               את אותן עשר הודעות פעמיים. */
+            aria-hidden={copy === 1 ? 'true' : undefined}
+          >
+            {ITEMS.map(({ Icon, text }, i) => (
+              <span key={i} className="marquee-item">
+                <Icon size={14} aria-hidden="true" />
+                {text}
+                {/* המפריד הוא עיגול שה-CSS מצייר, לא תו bullet */}
+                <span className="marquee-sep" aria-hidden="true" />
+              </span>
+            ))}
+          </div>
         ))}
       </div>
     </div>

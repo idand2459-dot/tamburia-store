@@ -31,6 +31,7 @@ function PaintCalcBtn({ menuOpen }) {
       className={`paint-calc-float-btn ${menuOpen ? 'menu-open' : ''}`}
       onClick={scrollToCalc}
       title="מחשבון צבע"
+      aria-label="מחשבון צבע"
     >
       <Paintbrush size={22} aria-hidden="true" />
       <span className="paint-calc-float-label">מחשבון צבע</span>

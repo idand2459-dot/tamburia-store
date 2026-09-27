@@ -52,9 +52,19 @@
 }
 
 /* The tools sit in the lower-middle band of the desktop crop, so the frame is
-   pulled down to keep them and their floor reflections in view. */
+   pulled down to keep them and their floor reflections in view.
+
+   opacity: 0 until HomePage.js puts .is-loaded on the <picture>. The animation
+   used to start when the element was created, which on a slow connection meant
+   the 1.4s could be spent before the bytes arrived and the image then appeared
+   in one jump. Now it is the load event that starts it, and until then what
+   shows is .hero's flat dark fill. */
 .hero-media img {
   object-position: center 70%;
+  opacity: 0;
+}
+
+.hero-media.is-loaded img {
   animation: hero-image-in 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
@@ -284,6 +294,12 @@
   .hero-sub,
   .hero-stats {
       animation: none;
+    }
+
+  /* with the animation off, the base opacity: 0 above would hide the image for
+     good — this is what keeps "no motion" from meaning "no image" */
+  .hero-media img {
+      opacity: 1;
     }
 }
 

@@ -559,9 +559,12 @@
 }
 
 /* ===== כפתור צף מחשבון צבע ===== */
+/* top: 118px clears the frame above it. The navbar is 68px and the ticker about
+   34px, so anything above 102px overlapped the ticker — at the old 80px this
+   button sat across it. */
 .paint-calc-float-btn {
   position: fixed;
-  top: 80px;
+  top: 118px;
   right: 28px;
   background: #e63946;
   color: white;
@@ -591,20 +594,41 @@
   white-space: nowrap;
 }
 
-@media (max-width: 480px) {
-  .paint-calc-float-btn {
-      top: 72px;
-      right: 16px;
-      padding: 8px 12px;
-    }
-
-  .paint-calc-float-label { display: none; }
-}
-
 /* כשהתפריט פתוח — ירד למטה */
 .paint-calc-float-btn.menu-open {
   top: auto;
   bottom: 155px;
+}
+
+/* On phones it moves out of the top of the screen entirely — up there it sat on
+   the ticker and right next to the Hero badge. It becomes an icon-only circle in
+   the bottom-left corner, opposite the WhatsApp button and level with it
+   (both bottom: 28px); the right-hand column is taken by WhatsApp at 28px and
+   scroll-to-top at 100px. PaintCalcBtn.js carries the aria-label, since the
+   text label is hidden here. */
+@media (max-width: 767px) {
+  .paint-calc-float-btn {
+      top: auto;
+      right: auto;
+      bottom: 28px;
+      left: 28px;
+      width: 58px;
+      height: 58px;
+      padding: 0;
+      border-radius: 50%;
+      justify-content: center;
+      gap: 0;
+    }
+
+  .paint-calc-float-label {
+      display: none;
+    }
+
+  /* the drawer opens on the right, so down here there is nothing to dodge */
+  .paint-calc-float-btn.menu-open {
+      top: auto;
+      bottom: 28px;
+    }
 }
 
 .paint-calc-section  { margin-top: 60px; }
