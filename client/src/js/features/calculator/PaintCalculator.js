@@ -7,6 +7,7 @@ import {
   CheckCircle, Lightbulb, Store, Phone, ShoppingCart, Sun, CloudSun, Moon,
 } from 'lucide-react';
 import paintCalcBg from '../../../assets/images/sections/paint-calc-bg-1672.webp';
+import { PHONES } from '../../utils/storeInfo';
 
 const SHADE_CONFIG = {
   light:  { label: 'בהיר',   Icon: Sun,      factor: 0.15 },
@@ -438,8 +439,8 @@ function PaintCalculator({ addBundleToCart }) {
                 </p>
               </div>
 
-              <a href="tel:039315750" className="paint-results-cta">
-                <Phone size={18} aria-hidden="true" /> התקשרו להזמין — 03-9315750
+              <a href={`tel:${PHONES.store.tel}`} className="paint-results-cta">
+                <Phone size={18} aria-hidden="true" /> התקשרו להזמין — {PHONES.store.display}
               </a>
             </div>
           )}

@@ -1,4 +1,5 @@
 import { SearchX, Home, Phone, MapPin } from 'lucide-react';
+import { ADDRESS, PHONES } from '../utils/storeInfo';
 
 /** מציג את עמוד השגיאה 404. */
 function NotFound({ onNavigate }) {
@@ -21,8 +22,8 @@ function NotFound({ onNavigate }) {
           </button>
         </div>
         <div className="not-found-info">
-          <span><MapPin size={16} aria-hidden="true" /> בר כוכבא 52, פתח תקווה</span>
-          <span><Phone size={16} aria-hidden="true" /> 03-9315750</span>
+          <span><MapPin size={16} aria-hidden="true" /> {ADDRESS.full}</span>
+          <span><Phone size={16} aria-hidden="true" /> {PHONES.store.display}</span>
         </div>
       </div>
     </div>

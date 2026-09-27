@@ -6,6 +6,7 @@
  */
 import { ShoppingCart, X, Store, Truck } from 'lucide-react';
 import { useStore } from '../../context/storeContext';
+import { ADDRESS } from '../../utils/storeInfo';
 
 /** מציג את תוכן העגלה ואת בחירת אופן הקבלה. */
 function CartStepView({ setCartStep }) {
@@ -42,7 +43,7 @@ function CartStepView({ setCartStep }) {
         <div className="delivery-options">
           <div className={`delivery-option ${deliveryMethod === 'pickup' ? 'selected' : ''}`} onClick={() => setDeliveryMethod('pickup')}>
             <div className="delivery-option-top"><span className="delivery-icon"><Store size={24} aria-hidden="true" /></span><div><strong>איסוף עצמי</strong><span className="delivery-free">חינם</span></div></div>
-            <p className="delivery-desc">בר כוכבא 52, פתח תקווה</p>
+            <p className="delivery-desc">{ADDRESS.full}</p>
             <p className="delivery-desc">באותו יום בשעות הפעילות</p>
           </div>
           <div className={`delivery-option ${deliveryMethod === 'delivery' ? 'selected' : ''}`} onClick={() => setDeliveryMethod('delivery')}>

@@ -1,4 +1,5 @@
 import { Truck, Star, Store, MessageCircle } from 'lucide-react';
+import { ADDRESS, hoursSummary } from '../utils/storeInfo';
 
 /*
  * האייקונים היו ארבעה SVG-ים מוטבעים והוחלפו ברכיבי Lucide המקבילים.
@@ -19,7 +20,7 @@ const FEATURES = [
   {
     Icon: Store,
     title: 'איסוף עצמי',
-    text: 'בר כוכבא 52, פתח תקווה • א׳-ה׳ 7:00-20:00 • ו׳ 7:00-15:00'
+    text: `${ADDRESS.full} • ${hoursSummary()}`
   },
   {
     Icon: MessageCircle,
