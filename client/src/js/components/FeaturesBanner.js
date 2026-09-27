@@ -2,8 +2,8 @@ import { Truck, Star, Store, MessageCircle } from 'lucide-react';
 
 /*
  * האייקונים היו ארבעה SVG-ים מוטבעים והוחלפו ברכיבי Lucide המקבילים.
- * .feature-icon קובע את המידה (48px) דרך svg { width/height: 100% },
- * ולכן אין כאן size — ה-24 שברירת המחדל נמתח על ידי ה-CSS.
+ * .feature-icon הוא עכשיו אריח 44px והאייקון שבתוכו הוא 22px, שנקבע כאן
+ * ולא ב-CSS דרך מתיחת ה-svg.
  */
 const FEATURES = [
   {
@@ -31,17 +31,23 @@ const FEATURES = [
 /** מציג את רצועת היתרונות. */
 function FeaturesBanner() {
   return (
-    <div className="features-banner">
-      {FEATURES.map(({ Icon, title, text }, i) => (
-        <div key={i} className="feature-item">
-          <div className="feature-icon"><Icon aria-hidden="true" /></div>
-          <div className="feature-text">
-            <h3>{title}</h3>
-            <p>{text}</p>
+    /* .features-strip נמתחת לכל הרוחב ונושאת את שני קווי השיער;
+       .features-banner היא הרשת שבפנים, מוגבלת לרוחב התוכן. */
+    <section className="features-strip">
+      <div className="features-banner">
+        {FEATURES.map(({ Icon, title, text }, i) => (
+          <div key={i} className="feature-item">
+            <div className="feature-icon">
+              <Icon size={22} strokeWidth={1.75} aria-hidden="true" />
+            </div>
+            <div className="feature-text">
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
