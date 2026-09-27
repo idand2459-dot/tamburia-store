@@ -51,7 +51,9 @@ function ProductView() {
   if (status === 'loading') {
     return (
       <main>
-        <div className="products-grid">
+        {/* אותה רשת שהקטגוריה משתמשת בה, כי אותו שלד יושב בה. עמוד
+            המוצר עצמו עובר לכרטיס המשותף בשלב הבא. */}
+        <div className="product-grid">
           {Array(3).fill(0).map((_, i) => <ProductCardSkeleton key={i} />)}
         </div>
       </main>

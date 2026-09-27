@@ -28,6 +28,10 @@
 @import './components/_loading.css';
 @import './components/_reveal.css';
 @import './components/_product-card.css';
+/* the rows the card above is laid out in, and the empty state that takes their
+   place. After the card because it sizes what the card fills, not the other
+   way round; neither declares anything the other does. */
+@import './components/_product-grid.css';
 @import './components/_stars.css';
 /* the purple label above every section title on the home page; the five
    sections that wear it all import nothing, they just use the class */

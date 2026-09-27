@@ -75,6 +75,10 @@
   --color-bg-admin: #eceef5;      /* admin only: neutral cool slate */
   --color-surface: #ffffff;
   --color-surface-alt: #f5f5f5;
+  /* the well a product photograph sits in on a white card. Neutral on purpose:
+     it is a frame around someone else's colours, and a blush tint of it put a
+     second warm surface inside a card that is already warm. */
+  --color-image-well: #f4f4f5;
   --color-border: #e0e0e0;
   --color-border-soft: #f0f0f0;
 
