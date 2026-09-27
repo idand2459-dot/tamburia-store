@@ -1,183 +1,219 @@
 /* ==========================================================
-   Order history — looking up past orders by phone number
+   Order history — the lookup form, the empty result and the
+   contact block
 
    Rendered by OrderHistory.js inside the shared drawer, so the
    overlay, the panel and the header are components/_drawer.css
-   now and .order-history-header is gone from here. Its cards look
-   like the admin's but share no selectors with them: everything
-   here is prefixed .order-history-.
+   and nothing about the chrome is in this file.
+
+   One result card is features/_order-history-card.css: the two
+   together passed the 400-line ceiling, and the card is the half
+   with a state of its own (open / closed) while this half is the
+   frame around it.
+
+   Gone with the redesign: .order-history-form and
+   .order-history-input-wrap (the search is one flex row now),
+   .order-history-empty's span / p / small, and the whole
+   prefers-color-scheme block — this panel is white in both
+   themes, like the rest of the redesign.
    ========================================================== */
 
-.order-history-body {
-  padding: 20px 24px;
+/* ---- Block --------------------------------------------------------------- */
+
+.order-history {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
+  padding: 18px 20px 20px;
 }
+
+/* ---- Elements ------------------------------------------------------------ */
+
 .order-history-desc {
-  font-size: 0.9rem;
-  color: #666;
+  color: rgba(var(--color-navy-rgb), 0.65);
+  font-size: 0.88rem;
+  line-height: 1.5;
   margin: 0;
 }
-.order-history-form { display: flex; flex-direction: column; gap: 10px; }
-.order-history-input-wrap {
+
+/* Search
+   -------------------------------------------------------------------------- */
+
+.order-history-search {
   display: flex;
   gap: 8px;
 }
+
 .order-history-input {
   flex: 1;
-  padding: 12px 16px;
-  border: 1.5px solid var(--color-border);
-  border-radius: 10px;
+  min-width: 0;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.15);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-family: var(--font-family-base);
   font-size: 1rem;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
   outline: none;
-  transition: border-color 0.2s;
-  text-align: left;
+  transition: border-color var(--transition-fast);
 }
+
+.order-history-input::placeholder {
+  color: rgba(var(--color-navy-rgb), 0.35);
+}
+
 .order-history-search-btn {
-  padding: 12px 18px;
-  background: var(--color-navy);
-  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  height: 48px;
+  padding: 0 18px;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
+  background: var(--color-red);
+  color: white;
+  font-family: var(--font-family-base);
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
   cursor: pointer;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  transition: background 0.2s;
+  transition: background var(--transition-fast);
+}
+
+/* Empty result
+   -------------------------------------------------------------------------- */
+
+.order-history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 12px;
+}
+
+.order-history-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(var(--color-navy-rgb), 0.06);
+  color: rgba(var(--color-navy-rgb), 0.45);
+  margin-bottom: 14px;
+}
+
+.order-history-empty-title {
+  color: var(--color-navy);
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 6px;
+}
+
+.order-history-empty-text {
+  color: rgba(var(--color-navy-rgb), 0.6);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.order-history-empty-text a {
+  color: var(--color-red);
+  font-weight: 600;
   white-space: nowrap;
 }
-.order-history-empty {
-  text-align: center;
-  padding: 32px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-text-faint);
-}
-.order-history-empty span { font-size: 2rem; }
-.order-history-empty p { font-size: 0.95rem; color: var(--color-text-muted); margin: 0; }
-.order-history-empty small { font-size: 0.82rem; }
-.order-history-count {
-  font-size: 0.82rem;
-  color: var(--color-text-faint);
-  margin-bottom: 4px;
-}
-.order-history-list { display: flex; flex-direction: column; gap: 10px; }
-.order-history-card {
-  background: #f8f8f6;
-  border-radius: 14px;
-  overflow: hidden;
-  border: 1.5px solid #e8e8e8;
-  transition: border-color 0.2s;
-}
-.order-history-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-  cursor: pointer;
-  gap: 8px;
-}
-.order-history-card-right { display: flex; align-items: center; gap: 10px; }
-.order-history-id { font-size: 0.82rem; color: var(--color-text-faint); font-weight: 700; min-width: 32px; }
-.order-history-date { font-size: 0.88rem; font-weight: 600; color: var(--color-text); }
-.order-history-items-count { font-size: 0.75rem; color: #999; }
-.order-history-card-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-.order-history-total { font-size: 0.95rem; font-weight: 700; color: var(--color-red); }
-.order-history-status { font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
-.order-history-card-body {
-  border-top: 1px solid #e8e8e8;
-  padding: 14px 16px;
-  background: white;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.order-history-delivery { font-size: 0.85rem; color: var(--color-text-muted); }
-.order-history-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.82rem;
-  direction: rtl;
-}
-.order-history-table th {
-  background: #f8f8f6;
-  padding: 6px 10px;
-  text-align: right;
-  color: #666;
-  font-weight: 600;
-  border-bottom: 1px solid #eee;
-}
-.order-history-table td {
-  padding: 7px 10px;
-  border-bottom: 1px solid var(--color-surface-alt);
-  color: #333;
-}
-.order-history-totals {
-  display: flex;
-  gap: 14px;
-  font-size: 0.82rem;
-  color: #666;
-  padding-top: 6px;
-  border-top: 1px solid var(--color-border-soft);
-  flex-wrap: wrap;
-}
-.order-history-totals strong { color: var(--color-text); }
+
+/* Contact
+   -------------------------------------------------------------------------- */
+
 .order-history-contact {
-  border-top: 1px solid var(--color-border-soft);
-  padding-top: 16px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.1);
   text-align: center;
 }
-.order-history-contact p { font-size: 0.85rem; color: var(--color-text-subtle); margin-bottom: 10px; }
-.order-history-contact-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-.order-history-btn {
-  padding: 8px 16px;
-  background: var(--color-navy);
-  color: white;
-  border-radius: 20px;
-  text-decoration: none;
-  font-size: 0.82rem;
-  font-weight: 600;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  transition: background 0.2s;
+
+.order-history-contact p {
+  color: rgba(var(--color-navy-rgb), 0.6);
+  font-size: 0.85rem;
+  margin: 0 0 12px;
 }
 
-/* ---- States ---------------------------------------------------------------- */
+.order-history-contact-btns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
 
-.order-history-input:focus { border-color: var(--color-navy); }
-.order-history-search-btn:hover { background: var(--color-red); }
-.order-history-search-btn:disabled { background: #ccc; cursor: not-allowed; }
-.order-history-card:hover { border-color: var(--color-navy); }
-.order-history-btn:hover { background: var(--color-red); }
-.order-history-btn.whatsapp:hover { background: #1ebe59; }
+.order-history-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  color: white;
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 600;
+  transition: background var(--transition-fast);
+}
 
-/* ---- Variants -------------------------------------------------------------- */
+/* ---- States -------------------------------------------------------------- */
 
-.order-history-btn.whatsapp { background: var(--color-whatsapp); }
+.order-history-input:focus {
+  border-color: rgba(var(--color-purple-rgb), 0.5);
+}
 
-/* ---- Dark mode ------------------------------------------------------------- */
+.order-history-search-btn:hover:not(:disabled) {
+  background: var(--color-red-dark);
+}
 
-@media (prefers-color-scheme: dark) {
-  .order-history-desc { color: var(--color-text-faint); }
+.order-history-search-btn:disabled {
+  background: rgba(var(--color-navy-rgb), 0.12);
+  color: rgba(var(--color-navy-rgb), 0.4);
+  cursor: not-allowed;
+}
 
-  .order-history-input { background: var(--color-bg-dark); border-color: var(--color-surface-dark); color: var(--color-text-dark); }
+.order-history-btn--primary:hover {
+  background: var(--color-red-dark);
+}
 
-  .order-history-card { background: var(--color-bg-dark); border-color: var(--color-surface-dark); }
+.order-history-btn--whatsapp:hover {
+  background: var(--color-whatsapp-dark);
+}
 
-  .order-history-date { color: var(--color-text-dark); }
+.order-history-input:focus-visible,
+.order-history-search-btn:focus-visible,
+.order-history-btn:focus-visible,
+.order-history-empty-text a:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
 
-  .order-history-card-body { background: var(--color-navy); border-top-color: var(--color-surface-dark); }
+/* ---- Variants ------------------------------------------------------------ */
 
-  .order-history-table th { background: var(--color-bg-dark); color: var(--color-text-faint); }
+.order-history-btn--primary {
+  background: var(--color-red);
+}
 
-  .order-history-table td { color: #ccc; border-bottom-color: var(--color-surface-dark); }
+/* WhatsApp green, on purpose: it is the one colour on the site that is not
+   ours to restyle — people look for it. */
+.order-history-btn--whatsapp {
+  background: var(--color-whatsapp);
+}
 
-  .order-history-totals { border-top-color: var(--color-surface-dark); }
+/* ---- Responsive ---------------------------------------------------------- */
 
-  .order-history-totals strong { color: var(--color-text-dark); }
+@media (max-width: 560px) {
+  .order-history { padding: 16px; }
 
-  .order-history-contact { border-top-color: var(--color-surface-dark); }
+  /* The icon and the label do not fit beside a 48px input at 390px. */
+  .order-history-search-btn { padding: 0 14px; }
+
+  .order-history-contact-btns { flex-direction: column; }
+
+  .order-history-btn { justify-content: center; }
 }
