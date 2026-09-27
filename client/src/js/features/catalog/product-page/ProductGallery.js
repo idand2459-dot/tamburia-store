@@ -14,7 +14,7 @@
  * הרצועה ימינה (dx חיובי) מביא אותה, וזה גם הכפתור שבצד שמאל.
  */
 import { useState, useEffect, useRef } from 'react';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Info } from 'lucide-react';
 import CATEGORY_ICONS from '../../../utils/categoryIcons';
 
 /* מתחת לזה זו נגיעה ולא החלקה. */
@@ -111,6 +111,16 @@ function ProductGallery({ product }) {
           </>
         )}
       </div>
+
+      {/* מוצרים שמגיעים מספק אחר בכל פעם — ראש מקלחת, למשל — מצולמים
+          בפריט מייצג. הערה כאן, מתחת לתמונות עצמן, במקום שבו מסתכלים
+          עליהן, ולא בתוך התיאור שרבים אינם קוראים. */}
+      {product.image_illustrative && (
+        <p className="product-gallery-note">
+          <Info size={16} aria-hidden="true" />
+          התמונה להמחשה. המותג והעיצוב עשויים להשתנות לפי המלאי — המידות והתכונות כמתואר.
+        </p>
+      )}
 
       {hasMultipleImages && (
         <div className="product-gallery-thumbs">

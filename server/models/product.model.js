@@ -6,7 +6,8 @@ const { query } = require('../config/db');
 
 const COLUMNS = `
   id, name, price, stock, image_url, images, colors, sizes,
-  category, subcategory, sku, description, in_stock, variants
+  category, subcategory, sku, description, in_stock, variants,
+  image_illustrative
 `;
 
 const JSON_COLUMNS = new Set(['images', 'variants']);

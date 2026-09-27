@@ -1,0 +1,193 @@
+/**
+ * בודק את דומיין המוצרים מקצה לקצה: יצירה, קריאה, עדכון חלקי
+ * ומחיקה. מנקה בסוף כל רשומה שיצר.
+ *
+ * הדגש כאן הוא על עדכון חלקי, כי מסך הניהול שולח כאלה: שינוי מחיר
+ * בודד או היפוך המלאי נשלחים לבדם, ואסור שיאפסו וריאנטים או תמונות
+ * שלא נכללו בבקשה. זה מה שמאפשר לעריכת המחיר המהירה בלשונית המוצרים
+ * לשלוח רק את השדה שהשתנה.
+ */
+const { login } = require('./helpers');
+const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
+
+let passed = 0;
+let failed = 0;
+const created = [];
+
+/** רושם תוצאה של בדיקה בודדת. */
+function check(name, condition, actual) {
+  if (condition) {
+    passed++;
+    console.log(`  ✓ ${name}`);
+  } else {
+    failed++;
+    console.log(`  ✗ ${name} — קיבלנו: ${JSON.stringify(actual)}`);
+  }
+}
+
+let authCookie = null;
+
+/** שולח בקשה ל-API עם עוגיית האדמין שהתקבלה בהתחברות. */
+async function call(method, path, body) {
+  const headers = {};
+  if (body) headers['Content-Type'] = 'application/json';
+  if (authCookie) headers.Cookie = authCookie;
+
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return { status: res.status, body: await res.json() };
+}
+
+const validProduct = () => ({
+  name: 'ראש מקלחת בדיקה',
+  price: 120,
+  category: 'bathroom',
+  sku: 'TEST-SHOWER-1',
+  description: 'מוצר בדיקה',
+  images: ['/uploads/a.jpg', '/uploads/b.jpg'],
+  colors: ['כרום', 'שחור'],
+  sizes: ['קטן', 'גדול'],
+});
+
+/** בודק יצירה, ברירות מחדל ומה שנשמר כפי שנשלח. */
+async function testCreate() {
+  console.log('\n── יצירה');
+
+  const plain = await call('POST', '/products', validProduct());
+  created.push(plain.body.id);
+  check('201 על יצירה', plain.status === 201, plain.status);
+  check('עברית נשמרת', plain.body.name === 'ראש מקלחת בדיקה', plain.body.name);
+  check('image_illustrative ברירת מחדל false', plain.body.image_illustrative === false, plain.body.image_illustrative);
+  check('in_stock ברירת מחדל true', plain.body.in_stock === true, plain.body.in_stock);
+
+  const illustrative = await call('POST', '/products', { ...validProduct(), sku: 'TEST-SHOWER-2', image_illustrative: true });
+  created.push(illustrative.body.id);
+  check('image_illustrative: true נשמר', illustrative.body.image_illustrative === true, illustrative.body.image_illustrative);
+
+  // רק true מדליק את הדגל — מחרוזת או מספר אינם נחשבים
+  const truthy = await call('POST', '/products', { ...validProduct(), sku: 'TEST-SHOWER-3', image_illustrative: 'yes' });
+  created.push(truthy.body.id);
+  check('ערך שאינו true → false', truthy.body.image_illustrative === false, truthy.body.image_illustrative);
+
+  const noName = await call('POST', '/products', { ...validProduct(), name: '' });
+  if (noName.status === 201) created.push(noName.body.id);
+  check('בלי שם מוצר → 400', noName.status === 400, noName.status);
+
+  return illustrative.body.id;
+}
+
+/** בודק שהשדה מוחזר גם בשליפה בודדת וגם ברשימה. */
+async function testRead(id) {
+  console.log('\n── קריאה');
+
+  const one = await call('GET', `/products/${id}`);
+  check('מוצר בודד', one.status === 200 && one.body.id === id, one.status);
+  check('image_illustrative מוחזר בשליפה בודדת', one.body.image_illustrative === true, one.body.image_illustrative);
+
+  const list = await call('GET', '/products?limit=500');
+  const mine = list.body.products.find((p) => p.id === id);
+  check('image_illustrative מוחזר ברשימה', mine && mine.image_illustrative === true, mine && mine.image_illustrative);
+
+  const search = await call('GET', '/products?search=' + encodeURIComponent('ראש מקלחת בדיקה'));
+  const rows = Array.isArray(search.body) ? search.body : search.body.products;
+  check('חיפוש חופשי בעברית מוצא', rows.some((p) => p.id === id), rows.length);
+
+  const missing = await call('GET', '/products/999999');
+  check('מוצר שאינו קיים → 404', missing.status === 404, missing.status);
+}
+
+/**
+ * בודק עדכון חלקי — מה שעריכת המחיר המהירה במסך הניהול שולחת.
+ * בקשה עם שדה אחד בלבד לא אמורה לגעת בשאר.
+ */
+async function testPartialUpdate() {
+  console.log('\n── עדכון חלקי');
+
+  const withVariants = await call('POST', '/products', {
+    ...validProduct(),
+    sku: 'TEST-SHOWER-4',
+    variants: [{ label: '1 ליטר', price: 60 }, { label: '5 ליטר', price: 250 }],
+  });
+  created.push(withVariants.body.id);
+  const id = withVariants.body.id;
+  check('מחיר המוצר הוא הזול שבוריאנטים', withVariants.body.price === 60, withVariants.body.price);
+
+  // בדיוק מה שהעריכה המהירה שולחת: המחיר לבדו
+  const priceOnly = await call('PUT', `/products/${id}`, { price: 199 });
+  check('עדכון מחיר לבדו → 200', priceOnly.status === 200, priceOnly.status);
+  check('המחיר התעדכן', priceOnly.body.price === 199, priceOnly.body.price);
+  check('הוריאנטים שרדו עדכון מחיר',
+    priceOnly.body.variants.length === 2 && priceOnly.body.variants[0].label === '1 ליטר',
+    priceOnly.body.variants);
+  check('התמונות שרדו עדכון מחיר',
+    priceOnly.body.images.length === 2 && priceOnly.body.images[0] === '/uploads/a.jpg',
+    priceOnly.body.images);
+  check('הצבעים והמידות שרדו עדכון מחיר',
+    priceOnly.body.colors.length === 2 && priceOnly.body.sizes.length === 2,
+    { colors: priceOnly.body.colors, sizes: priceOnly.body.sizes });
+  check('השם והקטגוריה לא נגעו',
+    priceOnly.body.name === 'ראש מקלחת בדיקה' && priceOnly.body.category === 'bathroom',
+    priceOnly.body.name);
+
+  // אותו דבר להיפוך המלאי, שהוא מסלול העדכון החלקי הקיים
+  const stockOnly = await call('PUT', `/products/${id}`, { in_stock: false });
+  check('היפוך מלאי לבדו', stockOnly.body.in_stock === false, stockOnly.body.in_stock);
+  check('המחיר שרד היפוך מלאי', stockOnly.body.price === 199, stockOnly.body.price);
+  check('הוריאנטים שרדו היפוך מלאי', stockOnly.body.variants.length === 2, stockOnly.body.variants);
+
+  // והדגל החדש, גם הוא לבדו
+  const flagOnly = await call('PUT', `/products/${id}`, { image_illustrative: true });
+  check('image_illustrative לבדו', flagOnly.body.image_illustrative === true, flagOnly.body.image_illustrative);
+  check('המחיר שרד את הדגל', flagOnly.body.price === 199, flagOnly.body.price);
+  check('הוריאנטים שרדו את הדגל', flagOnly.body.variants.length === 2, flagOnly.body.variants);
+
+  const off = await call('PUT', `/products/${id}`, { image_illustrative: false });
+  check('אפשר לכבות את הדגל', off.body.image_illustrative === false, off.body.image_illustrative);
+
+  const empty = await call('PUT', `/products/${id}`, {});
+  check('בקשה ריקה → 400', empty.status === 400, empty.status);
+
+  const blankName = await call('PUT', `/products/${id}`, { name: '   ' });
+  check('שם ריק בעדכון → 400', blankName.status === 400, blankName.status);
+
+  const missing = await call('PUT', '/products/999999', { price: 10 });
+  check('עדכון מוצר שאינו קיים → 404', missing.status === 404, missing.status);
+}
+
+/** מוחק את כל מה שהבדיקה יצרה ומאמת שלא נשארו שאריות. */
+async function cleanup() {
+  console.log('\n── ניקוי');
+  for (const id of created) {
+    if (!id) continue;
+    const { status } = await call('DELETE', `/products/${id}`);
+    check(`נמחק מוצר ${id}`, status === 200, status);
+  }
+
+  const left = await call('GET', '/products?limit=500');
+  check('לא נשארו מוצרי בדיקה',
+    left.body.products.every((p) => !created.includes(p.id)), left.body.products.length);
+
+  const twice = await call('DELETE', `/products/${created[0]}`);
+  check('מחיקה חוזרת → 404', twice.status === 404, twice.status);
+}
+
+/** מריץ את כל הבדיקות לפי הסדר. */
+async function main() {
+  authCookie = await login(BASE.slice(0, -4));
+  const illustrativeId = await testCreate();
+  await testRead(illustrativeId);
+  await testPartialUpdate();
+  await cleanup();
+
+  console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);
+  process.exitCode = failed === 0 ? 0 : 1;
+}
+
+main().catch(async (err) => {
+  console.error('הבדיקה קרסה:', err);
+  for (const id of created) if (id) await call('DELETE', `/products/${id}`).catch(() => {});
+  process.exit(1);
+});

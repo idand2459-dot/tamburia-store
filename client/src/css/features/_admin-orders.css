@@ -10,7 +10,7 @@
 /* ===== ADMIN ORDERS ===== */
 .orders-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -169,7 +169,7 @@
 
 .status-btn:hover { border-color: var(--color-navy); color: var(--color-navy); }
 
-.status-btn.active { border-color: transparent; }
+.status-btn.active { border-color: transparent; color: white; }
 
 .export-orders-btn:hover {
   background: var(--color-green-dark);
@@ -181,6 +181,62 @@
 /* ---- Variants -------------------------------------------------------------- */
 
 .order-detail-item.full { grid-column: 1 / -1; }
+
+/* The five statuses, in the same brand colours the customer's own order card
+   uses in features/_order-history-card.css: purple for a new order, navy while
+   it is being handled, red once it is waiting in the shop, blue once it is on
+   the road, green when it is done.
+
+   Shipped is blue and not the navy-deep the brief asked for: beside
+   processing's navy the two tints were the same grey-blue at pill size, and the
+   point of the set is telling them apart at a glance. Blue is the brand's
+   secondary accent, so the family is unchanged. */
+
+.order-status-badge--new {
+  background: rgba(var(--color-purple-rgb), 0.1);
+  color: var(--color-purple);
+}
+
+.order-status-badge--processing {
+  background: rgba(var(--color-navy-rgb), 0.08);
+  color: var(--color-navy);
+}
+
+.order-status-badge--ready_for_pickup {
+  background: rgba(var(--color-red-rgb), 0.12);
+  color: var(--color-red-dark);
+}
+
+.order-status-badge--shipped {
+  background: rgba(var(--color-blue-rgb), 0.12);
+  color: var(--color-blue);
+}
+
+.order-status-badge--completed {
+  background: rgba(var(--color-green-rgb), 0.12);
+  color: var(--color-green);
+}
+
+/* The stat row above: the same colour as a hairline on top and on the count. */
+.orders-stat-card.is-new { border-top: 3px solid var(--color-purple); }
+.orders-stat-card.is-processing { border-top: 3px solid var(--color-navy); }
+.orders-stat-card.is-ready_for_pickup { border-top: 3px solid var(--color-red); }
+.orders-stat-card.is-shipped { border-top: 3px solid var(--color-blue); }
+.orders-stat-card.is-completed { border-top: 3px solid var(--color-green); }
+
+.orders-stat-card.is-new .stat-number { color: var(--color-purple); }
+.orders-stat-card.is-processing .stat-number { color: var(--color-navy); }
+.orders-stat-card.is-ready_for_pickup .stat-number { color: var(--color-red-dark); }
+.orders-stat-card.is-shipped .stat-number { color: var(--color-blue); }
+.orders-stat-card.is-completed .stat-number { color: var(--color-green); }
+
+/* The chosen status button wears its colour as a fill, which is what replaces
+   the border it drops in the states block above. */
+.status-btn--new.active { background: var(--color-purple); }
+.status-btn--processing.active { background: var(--color-navy); }
+.status-btn--ready_for_pickup.active { background: var(--color-red); }
+.status-btn--shipped.active { background: var(--color-blue); }
+.status-btn--completed.active { background: var(--color-green); }
 
 /* ---- Responsive ---------------------------------------------------------------- */
 

@@ -6,9 +6,26 @@
 const config = require('../config/env');
 const { badRequest } = require('../utils/AppError');
 
-const STATUSES = ['new', 'processing', 'shipped', 'completed'];
+const STATUSES = ['new', 'processing', 'ready_for_pickup', 'shipped', 'completed'];
 
 const DELIVERY_METHODS = ['pickup', 'delivery'];
+
+/**
+ * הסטטוסים שאינם מתאימים לכל אופן קבלה.
+ *
+ * 'ready_for_pickup' ו-'shipped' מתארים כל אחד מסלול אחר: הזמנת משלוח
+ * לא מחכה לאיסוף בחנות, והזמנת איסוף עצמי לא יוצאת לדרך. השאר —
+ * new, processing, completed — משותפים לשניהם ואינם מופיעים כאן.
+ */
+const STATUS_ONLY_FOR_METHOD = {
+  ready_for_pickup: 'pickup',
+  shipped: 'delivery',
+};
+
+const STATUS_METHOD_ERRORS = {
+  ready_for_pickup: 'הסטטוס "מוכנה לאיסוף" מתאים להזמנת איסוף עצמי בלבד',
+  shipped: 'הסטטוס "נשלחה" מתאים להזמנת משלוח בלבד',
+};
 
 /**
  * הערים שאליהן מבצעים משלוח.
@@ -58,6 +75,32 @@ function assertDeliveryCityAllowed(delivery_method, delivery_address) {
   if (!delivery_address) return;
   if (checkAllowedCity(delivery_address)) return;
   throw badRequest(DELIVERY_AREA_ERROR);
+}
+
+/**
+ * זורק 400 כשהסטטוס אינו מתאים לאופן הקבלה של ההזמנה.
+ *
+ * אותו עיקרון של כלל אזור החלוקה: הקליינט כבר מציע רק את הסטטוסים
+ * המתאימים, אבל בקשה ישירה ל-API עוקפת אותו, ואז הזמנת איסוף עצמי
+ * הייתה מסומנת "נשלחה" והלקוח היה מקבל מייל על חבילה שבדרך.
+ *
+ * הבדיקה כאן היא על המצב שאחרי המיזוג, ולכן היא נקראת מהשירות ולא
+ * מ-parseUpdate: עדכון שמשנה רק את הסטטוס אינו יודע לבדו מה אופן
+ * הקבלה של ההזמנה הקיימת.
+ */
+function assertStatusFitsDeliveryMethod(status, delivery_method) {
+  const required = STATUS_ONLY_FOR_METHOD[status];
+  if (!required) return;
+  if (delivery_method === required) return;
+  throw badRequest(STATUS_METHOD_ERRORS[status]);
+}
+
+/** מחזיר את הסטטוסים החוקיים לאופן קבלה נתון, בסדר ההתקדמות. */
+function statusesForMethod(delivery_method) {
+  return STATUSES.filter((status) => {
+    const required = STATUS_ONLY_FOR_METHOD[status];
+    return !required || required === delivery_method;
+  });
 }
 
 const EDITABLE = [
@@ -298,5 +341,6 @@ function parseListQuery(query = {}) {
 module.exports = {
   parseCreate, parseUpdate, parseStatus, parseListQuery,
   assertDeliveryCityAllowed, assertDeliveryAddressPresent,
+  assertStatusFitsDeliveryMethod, statusesForMethod,
   STATUSES, DELIVERY_METHODS, EDITABLE, SORTABLE, ALLOWED_CITIES,
 };

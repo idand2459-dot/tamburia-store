@@ -7,6 +7,7 @@ const { badRequest } = require('../utils/AppError');
 const WRITABLE = [
   'name', 'price', 'image_url', 'images', 'colors', 'sizes',
   'category', 'subcategory', 'sku', 'description', 'in_stock', 'variants',
+  'image_illustrative',
 ];
 
 const MAX = { name: 255, image_url: 500, category: 100, subcategory: 100, sku: 100 };
@@ -90,6 +91,11 @@ function parseField(field, value) {
 
     case 'in_stock':
       return value !== false;
+
+    /* ברירת המחדל הפוכה מזו של in_stock: מוצר נחשב במלאי אלא אם נאמר
+       אחרת, ותמונה נחשבת אמיתית אלא אם סומן שהיא להמחשה. */
+    case 'image_illustrative':
+      return value === true;
 
     case 'variants':
       return value == null ? [] : asVariants(value);

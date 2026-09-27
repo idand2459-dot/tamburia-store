@@ -103,6 +103,24 @@
   inset-inline-start: 22px;
 }
 
+/* The illustrative-photo note, between the main image and the thumbs: a quiet
+   line, because it qualifies the picture rather than competing with it. */
+.product-gallery-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--font-size-small);
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.product-gallery-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-purple);
+}
+
 .product-gallery-thumbs {
   display: flex;
   flex-wrap: wrap;

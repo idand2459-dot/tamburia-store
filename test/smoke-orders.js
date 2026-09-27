@@ -76,7 +76,7 @@ async function testCreate() {
   check('בלי מייל לקוח → null', pickup.body.customer_email === null, pickup.body.customer_email);
   check('פריט בלי id → null', pickup.body.items[0].id === null, pickup.body.items[0].id);
 
-  return body.id;
+  return { deliveryId: body.id, pickupId: pickup.body.id };
 }
 
 /** בודק שכל קלט פסול נדחה בקוד 400. */
@@ -144,6 +144,49 @@ async function testRead(id) {
   check('stats מחזיר סיכום', stats.status === 200 && stats.body.totals.orders >= 2, stats.body);
 }
 
+/**
+ * בודק שהסטטוס חייב להתאים לאופן הקבלה.
+ *
+ * "מוכנה לאיסוף" קיים רק להזמנת איסוף עצמי ו"נשלחה" רק להזמנת משלוח.
+ * הקליינט כבר מציע רק את המתאימים, ולכן הבדיקה כאן היא שהשרת דוחה גם
+ * בקשה שעקפה אותו — בשני מסלולי העדכון, גם /status וגם העדכון הכללי.
+ */
+async function testStatusRules(pickupId, deliveryId) {
+  console.log('\n── סטטוס מול אופן קבלה');
+
+  const pickupWalk = ['processing', 'ready_for_pickup', 'completed'];
+  for (const status of pickupWalk) {
+    const res = await call('PUT', `/orders/${pickupId}/status`, { status });
+    check(`איסוף עצמי → ${status}`, res.status === 200 && res.body.status === status, `${res.status} ${res.body.status}`);
+  }
+
+  const deliveryWalk = ['processing', 'shipped', 'completed'];
+  for (const status of deliveryWalk) {
+    const res = await call('PUT', `/orders/${deliveryId}/status`, { status });
+    check(`משלוח → ${status}`, res.status === 200 && res.body.status === status, `${res.status} ${res.body.status}`);
+  }
+
+  const pickupShipped = await call('PUT', `/orders/${pickupId}/status`, { status: 'shipped' });
+  check('איסוף עצמי → נשלחה → 400', pickupShipped.status === 400, `${pickupShipped.status} ${pickupShipped.body.error}`);
+
+  const deliveryReady = await call('PUT', `/orders/${deliveryId}/status`, { status: 'ready_for_pickup' });
+  check('משלוח → מוכנה לאיסוף → 400', deliveryReady.status === 400, `${deliveryReady.status} ${deliveryReady.body.error}`);
+
+  // אותו כלל דרך העדכון הכללי, שאינו עובר ב-parseStatus
+  const viaUpdate = await call('PUT', `/orders/${pickupId}`, { status: 'shipped' });
+  check('נשלחה דרך עדכון כללי על איסוף → 400', viaUpdate.status === 400, `${viaUpdate.status} ${viaUpdate.body.error}`);
+
+  const stillCompleted = await call('GET', `/orders/${pickupId}`);
+  check('הבקשה שנדחתה לא שינתה את הסטטוס', stillCompleted.body.status === 'completed', stillCompleted.body.status);
+
+  // החלפת אופן הקבלה ביחד עם הסטטוס נבדקת על המצב שאחרי המיזוג
+  const bothAtOnce = await call('PUT', `/orders/${pickupId}`, {
+    delivery_method: 'delivery', delivery_address: 'בר כוכבא 52, פתח תקווה', status: 'shipped',
+  });
+  check('החלפת אופן קבלה וסטטוס יחד — מותר', bothAtOnce.status === 200 && bothAtOnce.body.status === 'shipped',
+    `${bothAtOnce.status} ${bothAtOnce.body.error || bothAtOnce.body.status}`);
+}
+
 /** בודק עדכון חלקי ואת הכללים שאסור לעקוף. */
 async function testUpdate(id) {
   console.log('\n── עדכון');
@@ -190,10 +233,11 @@ async function cleanup() {
 /** מריץ את כל הבדיקות לפי הסדר. */
 async function main() {
   authCookie = await login(BASE.slice(0, -4));
-  const id = await testCreate();
+  const { deliveryId, pickupId } = await testCreate();
   await testValidation();
-  await testRead(id);
-  await testUpdate(id);
+  await testRead(deliveryId);
+  await testStatusRules(pickupId, deliveryId);
+  await testUpdate(deliveryId);
   await cleanup();
 
   console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);
