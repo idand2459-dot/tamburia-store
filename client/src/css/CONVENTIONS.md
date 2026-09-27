@@ -63,6 +63,9 @@ would, keep the original value and note it.
 - Colors that need transparency: each such brand color also gets an
   RGB-triple token, e.g. `--color-navy-950-rgb: 7, 11, 20;`, used as
   `rgba(var(--color-navy-950-rgb), 0.94)`. No literal `rgba(7, 11, 20, …)`.
+- Plain white and black are exempt from that rule: they are not brand
+  colors, they never change, and `rgba(255, 255, 255, 0.1)` reads more
+  clearly than the token form.
 - Spacing, radii, shadows, transitions: tokens where one exists.
 
 ## 6. No dead code
