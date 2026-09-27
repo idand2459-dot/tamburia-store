@@ -1,0 +1,96 @@
+/* ==========================================================
+   Order success — the confirmation step after an order is placed
+
+   The last of the three cart steps, rendered by
+   OrderSuccessView.js. The old file labelled the second half of
+   these rules "מסך הצלחה משופר", but they are not a newer
+   generation of the first half — they are the rest of the same
+   screen, and both halves are live.
+   ========================================================== */
+
+/* ===== ORDER SUCCESS ===== */
+.order-success {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  text-align: center;
+  gap: 10px;
+}
+
+/* ---- Elements -------------------------------------------------------------- */
+
+.success-icon { font-size: 3rem; }
+.order-success h3 { font-size: 1.4rem; color: var(--color-text); font-weight: 700; }
+.order-success p { color: var(--color-text-muted); font-size: 0.95rem; }
+.success-details {
+  background: #f8f8f6;
+  border-radius: 12px;
+  padding: 16px 20px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0;
+}
+.success-details div { display: flex; justify-content: space-between; font-size: 0.9rem; color: #444; }
+.success-details span { color: #999; }
+/* ===== מסך הצלחה משופר ===== */
+.success-order-num {
+  font-size: 0.95rem;
+  color: #666;
+  margin: 4px 0 16px;
+}
+.success-message {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  text-align: right;
+}
+.success-message p {
+  margin: 4px 0;
+  font-size: 0.9rem;
+  color: #166534;
+}
+.success-contact {
+  background: #f8f8f8;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  text-align: center;
+}
+.success-contact p {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 10px;
+}
+.success-contact-btns {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.success-contact-btn {
+  padding: 8px 14px;
+  background: var(--color-navy);
+  color: white;
+  border-radius: 20px;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: background 0.2s;
+}
+
+/* ---- States ---------------------------------------------------------------- */
+
+.success-contact-btn:hover { background: var(--color-red); }
+.success-contact-btn.whatsapp:hover { background: #1ebe59; }
+
+/* ---- Variants -------------------------------------------------------------- */
+
+.success-contact-btn.whatsapp { background: var(--color-whatsapp); }

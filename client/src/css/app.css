@@ -69,7 +69,8 @@
 @import './features/_cart.css';
 @import './features/_delivery-options.css';
 @import './features/_checkout-form.css';
-@import './features/_orders.css';
+@import './features/_order-success.css';
+@import './features/_order-history.css';
 @import './features/_wishlist.css';
 @import './features/_reviews.css';
 @import './features/_review-form.css';
