@@ -16,6 +16,12 @@ const CSP = [
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
   "connect-src 'self'",
+  /* עמוד "צור קשר" מטמיע מפת גוגל. בלי ההנחיה הזו frame-src נופל על
+     default-src 'self' והמסגרת נחסמת — אבל רק כש-CSP דלוק, ולכן זה
+     נראה כאילו הכול עובד עד שמדליקים אותו. שני הדומיינים של גוגל
+     מפות בלבד: www.google.com הוא מה ש-output=embed מגיש, ו-
+     maps.google.com הוא מה שהוא לפעמים מפנה אליו. לא *.google.com. */
+  "frame-src https://www.google.com https://maps.google.com",
   "form-action 'self'",
   "frame-ancestors 'none'",
   "base-uri 'self'",
