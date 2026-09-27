@@ -1,0 +1,89 @@
+/* ==========================================================
+   Paint calculator button — the floating shortcut to the
+   calculator, rendered by PaintCalcBtn.js
+
+   Its own partial because it is site-wide furniture rather than
+   part of the calculator section: it sits over whatever page you
+   are on, next to the WhatsApp button.
+   ========================================================== */
+
+/* top: 118px clears the frame above it. The navbar is 68px and the ticker about
+   34px, so anything above 102px overlapped the ticker — at the old 80px this
+   button sat across it. */
+.paint-calc-float-btn {
+  position: fixed;
+  top: 118px;
+  right: 28px;
+  background: var(--color-red);
+  color: white;
+  border: none;
+  border-radius: 24px;
+  padding: 10px 14px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(var(--color-red-rgb), 0.4);
+  z-index: 997;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s, transform 0.2s;
+  animation: fade-in 0.3s ease;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+}
+
+/* ---- Elements -------------------------------------------------------------- */
+
+.paint-calc-float-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ---- States ---------------------------------------------------------------- */
+
+.paint-calc-float-btn:hover {
+  background: var(--color-red-dark);
+  transform: translateY(-3px);
+}
+
+/* כשהתפריט פתוח — ירד למטה */
+.paint-calc-float-btn.menu-open {
+  top: auto;
+  bottom: 155px;
+}
+
+/* ---- Responsive ------------------------------------------------------------ */
+
+/* On phones it moves out of the top of the screen entirely — up there it sat on
+   the ticker and right next to the Hero badge. It becomes an icon-only circle in
+   the bottom-left corner, opposite the WhatsApp button and level with it
+   (both bottom: 28px); the right-hand column is taken by WhatsApp at 28px and
+   scroll-to-top at 100px. PaintCalcBtn.js carries the aria-label, since the
+   text label is hidden here. */
+/* 767 -> 768 to match the md breakpoint. The only width that behaves
+   differently is 768px exactly, where the button is now the circle rather than
+   the labelled pill. */
+@media (max-width: 768px) {
+  .paint-calc-float-btn {
+      top: auto;
+      right: auto;
+      bottom: 28px;
+      left: 28px;
+      width: 58px;
+      height: 58px;
+      padding: 0;
+      border-radius: 50%;
+      justify-content: center;
+      gap: 0;
+    }
+
+  .paint-calc-float-label {
+      display: none;
+    }
+
+  /* the drawer opens on the right, so down here there is nothing to dodge */
+  .paint-calc-float-btn.menu-open {
+      top: auto;
+      bottom: 28px;
+    }
+}

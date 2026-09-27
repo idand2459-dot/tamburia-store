@@ -30,6 +30,11 @@
   --color-green: #2d6a4f;         /* success, in-stock */
   --color-green-dark: #1b4332;
   --color-whatsapp: #25d366;
+  /* two accent colours used on single buttons in the calculators. They are here
+     because both are used with an alpha and rule 5 wants a triple for that; the
+     darker stops they sit beside in those gradients are still literals. */
+  --color-teal: #2a9d8f;
+  --color-green-bright: #16a34a;
 
   /* Brand colours as RGB triples, for the cases that need an alpha:
      rgba(var(--color-red-rgb), 0.15). A hex token cannot take an alpha without
@@ -44,6 +49,8 @@
   --color-green-rgb: 45, 106, 79;         /* --color-green     #2d6a4f */
   --color-whatsapp-rgb: 37, 211, 102;     /* --color-whatsapp  #25d366 */
   --color-bg-dark-rgb: 15, 15, 26;        /* --color-bg-dark   #0f0f1a */
+  --color-teal-rgb: 42, 157, 143;         /* --color-teal      #2a9d8f */
+  --color-green-bright-rgb: 22, 163, 74;  /* --color-green-bright #16a34a */
 
   /* Light theme surfaces.
      --color-bg is the backdrop *behind* content and must stay in the brand

@@ -1,0 +1,183 @@
+/* ==========================================================
+   Project calculator items — the matched parts list and the
+   estimate footer under it
+
+   .found and .missing are the two states of a row: a part the
+   shop stocks, and one it does not.
+   ========================================================== */
+
+/* ── Items list ─────────────────────────────────────────────────── */
+.proj-items { margin-bottom: 24px; }
+
+/* ---- Elements -------------------------------------------------------------- */
+
+.proj-items-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.proj-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  animation: proj-fade-up 0.32s ease both;
+}
+
+.proj-item-dot {
+  font-size: 0.85rem;
+  font-weight: 700;
+  width: 22px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.proj-item-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.proj-item-name {
+  font-size: 0.92rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.proj-item-sku {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.3);
+}
+
+.proj-item-price {
+  font-size: 0.92rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────── */
+.proj-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.proj-estimate {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.proj-estimate-label {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.proj-estimate-right {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.proj-estimate-total {
+  font-size: 2rem;
+  font-weight: 900;
+  color: white;
+  line-height: 1;
+}
+
+.proj-estimate-plus {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: rgba(255,255,255,0.5);
+}
+
+.proj-estimate-note {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  font-style: italic;
+}
+
+.proj-add-btn {
+  padding: 14px 28px;
+  background: var(--color-red);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.25s, transform 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+  box-shadow: 0 4px 18px rgba(var(--color-red-rgb), 0.4);
+}
+
+/* ---- States ---------------------------------------------------------------- */
+
+.proj-item:last-child { border-bottom: none; }
+
+.proj-add-btn:hover:not(.disabled):not(.added) {
+  background: #c62d39;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(var(--color-red-rgb), 0.5);
+}
+
+.proj-add-btn.added {
+  background: var(--color-green-bright);
+  box-shadow: 0 4px 18px rgba(var(--color-green-bright-rgb), 0.4);
+  transform: translateY(-1px);
+}
+
+.proj-add-btn.disabled {
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.35);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ---- Variants -------------------------------------------------------------- */
+
+.proj-item.found  .proj-item-dot { color: #4ade80; }
+
+.proj-item.missing .proj-item-dot { color: rgba(255,255,255,0.25); }
+
+.proj-item.found  .proj-item-name { color: white; }
+
+.proj-item.missing .proj-item-name { color: rgba(255,255,255,0.38); }
+
+.proj-item.found  .proj-item-price { color: #4ade80; }
+
+.proj-item.missing .proj-item-price {
+  color: rgba(255,255,255,0.3);
+  font-weight: 400;
+  font-style: italic;
+}
+
+/* ---- Responsive ------------------------------------------------------------ */
+
+/* 640px, matching the rest of the section — see the note in
+   _project-calculator.css. */
+@media (max-width: 640px) {
+  .proj-footer   { flex-direction: column; align-items: stretch; }
+
+  .proj-add-btn  { text-align: center; }
+
+  .proj-estimate-total { font-size: 1.6rem; }
+}
