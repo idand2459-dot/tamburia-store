@@ -1,218 +1,298 @@
 /* ==========================================================
-   Product card — one product in a grid (CategoryView)
+   Product card — one product, wherever products are listed
 
-   The image placeholder is always rendered and the real <img>
-   overlays it, so a product with no photo still has a filled,
-   category-coloured tile instead of a hole. --cat-color, which
-   used to feed that tile, is no longer set by anything: the
-   fallback in the rule below is what paints it now.
+   White on the blush page background, the same surface the home
+   page's category cards use: a 1px navy tint, a 1px shadow, and
+   the depth kept for the hover lift.
+
+   What this replaces was built for a page that no longer exists:
+   a saturated tile per category behind every photograph, a
+   5.5rem Hebrew letter where a photograph was missing, a
+   full-width dark "הוסף לעגלה" button in every card, and a
+   dark-mode block — all of it either fighting the products or
+   repainted per category by the deleted _category-themes.css.
+   The card is quiet now: a neutral well for the photograph, and
+   one red square for the only action that matters.
+
+   The whole card is a link, but the only element that is one is
+   the name: .product-card-link::after is stretched over the card.
+   That gives it one tab stop instead of a div wearing
+   role="link", and makes middle-click and "open in new tab"
+   work. The two buttons sit above that layer (z-index 2) so it
+   does not swallow them.
    ========================================================== */
 
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
+/* ---- Block --------------------------------------------------------------- */
 
+/* flex column so .product-card-foot can be pushed to the bottom: without it,
+   a card whose product has no SKU carried its price row a line higher than
+   its neighbour's. position: relative is the stretched link's container. */
 .product-card {
-  background: white;
-  border-radius: 18px;
-  padding: 14px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  border: 1.5px solid transparent;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+  padding: var(--spacing-sm);
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 /* ---- Elements ------------------------------------------------------------ */
 
-/* Product image wrapper — placeholder always rendered, real img overlays it */
-.product-img-wrap {
+/* The image well. Square whatever the photograph's own ratio is, so every
+   card in a row is the same height before its text is counted. */
+.product-card-window {
   position: relative;
-  width: 100%;
-  height: 175px;
-  border-radius: 12px;
-  margin-bottom: 12px;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-md);
+  background: var(--color-image-well);
   overflow: hidden;
 }
 
-.product-card img {
-  position: absolute;
-  inset: 0;
+/* contain, not cover: these are product photographs on white backgrounds and
+   cropping them cuts the product. The 10% inset is what keeps a square
+   photograph off the well's edges. */
+.product-card-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: 12px;
-  z-index: 2;
+  object-fit: contain;
+  padding: 10%;
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.2s, filter 0.2s;
 }
 
-/* No-image placeholder — always rendered, sits behind real img (z-index 2) */
-.product-img-placeholder {
+/* No photograph, or one that failed to load: the category's own icon, at the
+   weight of a watermark. */
+.product-card-fallback {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* base = category color via CSS var; fallback = brand navy */
-  background-color: var(--cat-color, var(--color-navy));
-  background-image:
-    radial-gradient(ellipse at 28% 28%, rgba(255, 255, 255, 0.28) 0%, transparent 55%),
-    linear-gradient(145deg, transparent 30%, rgba(0, 0, 0, 0.32) 100%);
-  z-index: 1;
+  color: rgba(var(--color-navy-rgb), 0.25);
+}
+
+/* Both marks float in the well's top corners, above the image and the stretched
+   link. left/right rather than the logical properties: these are corners of a
+   picture, not ends of a line. */
+.product-card-wish {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: 0 1px 4px rgba(var(--color-navy-rgb), 0.15);
+  color: var(--color-navy);
+  cursor: pointer;
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.product-card-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--color-navy-950-rgb), 0.78);
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.product-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 10px 6px 6px;
+}
+
+/* Purple, the secondary accent: red is spoken for by the price and the cart
+   button. Rendered even when empty — see ProductCard.js — so it holds its line. */
+.product-card-sub {
+  color: var(--color-purple);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  min-height: 1.1em;
+}
+
+/* Exactly two lines, always: the clamp hides the overflow, and the fixed height
+   keeps a one-line name from pulling its price row above its neighbours'. */
+.product-card-name {
+  color: var(--color-navy);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  height: 2.7em;
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
 }
 
-/* subtle dot-grid texture */
-.product-img-placeholder::before {
+.product-card-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The stretched link. Everything on the card that is not one of the two
+   buttons opens the product through this. */
+.product-card-link::after {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.09) 1px, transparent 1px);
-  background-size: 18px 18px;
-}
-
-/* רמז אייקון הקטגוריה — קטן, בפינה. היה ::after עם content: attr(data-icon)
-   כשהאייקון היה אימוג'י; רכיב Lucide אינו יכול לשבת ב-generated content,
-   ולכן CategoryView מרנדר עכשיו אלמנט אמיתי עם ה-class הזה. */
-.product-img-icon {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  opacity: 0.22;
-  color: #fff;
-}
-
-.product-img-initial {
-  position: relative;
   z-index: 1;
-  font-size: 5.5rem;
-  font-weight: 900;
-  color: rgba(255, 255, 255, 0.18);
-  font-family: 'Segoe UI', sans-serif;
-  line-height: 1;
-  user-select: none;
-  letter-spacing: -2px;
+  border-radius: var(--radius-lg);
 }
 
-.product-card h3 {
-  font-size: 0.95rem;
-  margin-bottom: 6px;
-  line-height: 1.4;
-  color: var(--color-text);
-}
-
-.product-sku {
-  font-size: 0.78rem;
+.product-card-sku {
   color: var(--color-text-faint);
-  margin-bottom: 4px;
+  font-size: 0.7rem;
+  margin-top: 4px;
 }
 
-.price {
-  color: var(--color-red);
-  font-weight: bold;
-  font-size: 1.1rem;
-  margin-bottom: 4px;
-}
-
-.price-variants-hint {
-  font-size: 0.72rem;
-  font-weight: 400;
-  color: rgba(var(--color-red-rgb), 0.7);
-}
-
-.stock {
-  color: var(--color-text-subtle);
-  font-size: 0.85rem;
-  margin-bottom: 12px;
-}
-
-.card-bottom-actions {
+/* margin-top: auto is the whole reason the card is a flex column. */
+.product-card-foot {
   display: flex;
-  flex-direction: row;
-  gap: 8px;
-  margin-top: 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-top: auto;
+  padding-top: 10px;
 }
 
-.card-add-btn {
-  flex: 1;
-  padding: 10px;
-  background: var(--color-navy);
-  color: white;
+/* Navy, not red. Red here was the loudest thing in a grid of forty cards, and
+   it left nothing to make the one button stand out with. */
+.product-card-price {
+  color: var(--color-navy);
+  font-size: 1.15rem;
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.2;
+}
+
+.product-card-variants {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--color-text-subtle);
+}
+
+.product-card-cart {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
   border: none;
-  border-radius: 8px;
-  font-size: 0.92rem;
-  cursor: pointer;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  transition: background 0.2s;
-}
-
-/* ---- States ------------------------------------------------------------- */
-
-.product-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.13);
-  border-color: #eef0f5;
-}
-
-.card-add-btn:hover:not(:disabled) {
+  border-radius: var(--radius-md);
   background: var(--color-red);
+  color: white;
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
-.card-add-btn:disabled {
-  background: #ccc;
-  color: #999;
+/* ---- States -------------------------------------------------------------- */
+
+.product-card-wish:hover,
+.product-card-wish.is-active {
+  color: var(--color-red);
+}
+
+.product-card-cart:hover:not(:disabled) {
+  background: var(--color-red-dark);
+}
+
+/* The confirmation after adding: green for a moment, then back. No alert and no
+   navigation — the navbar's cart badge is where the count lives. */
+.product-card-cart.is-added {
+  background: var(--color-green);
+}
+
+.product-card-cart:disabled {
+  background: rgba(var(--color-navy-rgb), 0.12);
+  color: rgba(var(--color-navy-rgb), 0.35);
   cursor: not-allowed;
 }
 
-/* Out-of-stock styling that CategoryView applies alongside the classes above.
-   The !important is load-bearing and not laziness: .out-of-stock-label and
-   .btn-disabled have the same specificity as the .price / .card-add-btn rules
-   they have to beat, and in the old single file they came *earlier*, so order
-   alone would have lost. */
-.out-of-stock-label {
-  color: var(--color-red-dark) !important;
+/* The ring goes on the stretched layer, so it draws around the whole card
+   rather than around two lines of text — no :has() needed. */
+.product-card-link:focus-visible {
+  outline: none;
 }
 
-.btn-disabled {
-  background: #ccc !important;
-  cursor: not-allowed !important;
-  color: #999 !important;
+.product-card-link:focus-visible::after,
+.product-card-wish:focus-visible,
+.product-card-cart:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
 }
 
-.btn-disabled:hover {
-  background: #ccc !important;
+/* ---- Variants ------------------------------------------------------------ */
+
+/* Out of stock. The photograph stays visible — the product is still worth
+   recognising — but plainly not on today's shelf. */
+.product-card--out .product-card-image {
+  opacity: 0.55;
+  filter: grayscale(0.4);
 }
 
-/* ---- Responsive --------------------------------------------------------- */
+/* ---- Responsive ---------------------------------------------------------- */
 
-@media (max-width: 768px) {
-  .products-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
+/* Two cards to a phone row is tight, so the type steps down with it. */
+@media (max-width: 560px) {
+  .product-card { padding: 6px; }
+
+  .product-card-body { padding: 8px 4px 4px; }
+
+  .product-card-sub { font-size: 0.7rem; }
+
+  .product-card-name { font-size: 0.85rem; }
+
+  .product-card-price { font-size: 1rem; }
+
+  .product-card-cart { width: 36px; height: 36px; }
 }
 
-/* 480px rather than one of the five breakpoints: this is where the grid drops to
-   a single column, so remapping it to 430 or 560 would move the layout on real
-   phone widths. CONVENTIONS.md rule 4 says to keep the value and note it. */
-@media (max-width: 480px) {
-  .products-grid {
-      grid-template-columns: 1fr;
-    }
-}
+/* ---- Hover (fine pointers only) ------------------------------------------ */
 
-/* ---- Dark mode ---------------------------------------------------------- */
-
-@media (prefers-color-scheme: dark) {
-  .product-card {
-      background: var(--color-navy);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      color: var(--color-text-dark);
-    }
-
-  .product-card h3 {
-      color: var(--color-text-dark);
-    }
-
+/* On a touch screen :hover sticks after a tap, so lift and zoom are mouse-only. */
+@media (hover: hover) and (pointer: fine) {
   .product-card:hover {
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+      transform: translateY(-3px);
+      box-shadow: 0 14px 28px rgba(var(--color-navy-rgb), 0.12);
+    }
+
+  .product-card:hover .product-card-image {
+      transform: scale(1.04);
+    }
+
+  .product-card-wish:hover {
+      transform: scale(1.08);
+    }
+}
+
+/* ---- Reduced motion ------------------------------------------------------ */
+
+/* The shadow still deepens — the "this is the one under the cursor" signal —
+   but nothing moves and nothing scales. */
+@media (prefers-reduced-motion: reduce) {
+  .product-card:hover,
+  .product-card:hover .product-card-image,
+  .product-card-wish:hover {
+      transform: none;
     }
 }

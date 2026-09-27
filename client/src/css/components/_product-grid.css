@@ -1,0 +1,141 @@
+/* ==========================================================
+   Product grid — the rows of product cards, and what shows
+   when there are none
+
+   Four across beside the category page's 240px sidebar, and
+   what used to be here was three across with no sidebar at all
+   and one card per row below 480px. Two on a phone, not one:
+   a single column of square image wells turned a category of
+   forty products into a very long scroll.
+
+   The empty state lives here rather than in a partial of its own
+   because it is this grid's other half — it is what the same
+   space shows when the grid has nothing to draw.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+/* ---- Empty state --------------------------------------------------------- */
+
+.product-grid-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+  padding: 56px var(--spacing-lg);
+}
+
+.product-grid-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-lg);
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+  margin-bottom: var(--spacing-md);
+}
+
+.product-grid-empty h2 {
+  font-size: 1.2rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  margin-bottom: 6px;
+}
+
+.product-grid-empty p {
+  font-size: var(--font-size-small);
+  color: rgba(var(--color-navy-rgb), 0.6);
+  line-height: 1.6;
+  max-width: 380px;
+}
+
+.product-grid-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: var(--spacing-lg);
+}
+
+/* The two actions read as one pair, so they share a shape and differ only in
+   weight: clearing the filters is the likely one, calling the shop is the way
+   out when clearing them will not help either. */
+.product-grid-empty-actions button,
+.product-grid-empty-actions a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-family: var(--font-family-base);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.product-grid-empty-actions button {
+  border: none;
+  background: var(--color-red);
+  color: white;
+}
+
+.product-grid-empty-actions a {
+  border: 1px solid rgba(var(--color-navy-rgb), 0.15);
+  background: var(--color-surface);
+  color: var(--color-navy);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.product-grid-empty-actions button:hover {
+  background: var(--color-red-dark);
+}
+
+.product-grid-empty-actions a:hover {
+  border-color: rgba(var(--color-navy-rgb), 0.35);
+  background: rgba(var(--color-navy-rgb), 0.03);
+}
+
+.product-grid-empty-actions button:focus-visible,
+.product-grid-empty-actions a:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* 1280px, not the xl breakpoint at 1200. CONVENTIONS.md rule 4 allows the
+   nearest allowed value only when the visual result does not change, and here
+   it does: between 1201 and 1280 the sidebar leaves roughly 960px for the
+   grid, which is four cards of 220px — narrower than the card's type wants.
+   So this keeps 1280 and says why. */
+@media (max-width: 1280px) {
+  .product-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+  .product-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+  .product-grid-empty {
+      padding: 40px var(--spacing-md);
+    }
+}

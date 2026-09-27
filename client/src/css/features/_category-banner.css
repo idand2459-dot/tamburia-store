@@ -2,15 +2,13 @@
    Category banner — the photo band at the top of /category/:slug
 
    What used to be here was a flat gradient per category, and
-   below it the whole page was painted in that colour by
-   features/_category-themes.css. Both are gone. The atmosphere
-   of a category now lives in one photograph at the top, and the
-   shopping area below it is the same light blush on every
-   category — the products are what should carry colour.
+   features/_category-themes.css painted the whole page in that
+   colour below it. Both are gone: a category's atmosphere is one
+   photograph, and the shopping area under it is the same light
+   blush every time — the products carry the colour.
 
-   Always dark, whatever the system theme, exactly like the
-   Hero: every colour here is fixed and there is no dark-mode
-   block at all.
+   Always dark whatever the system theme, exactly like the Hero:
+   every colour here is fixed, and there is no dark-mode block.
 
    Two looks, same height, so a category that gets a photograph
    later does not move the page:
@@ -61,9 +59,9 @@
   animation: category-banner-in 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-/* The fallback's watermark: the category icon, very large and very faint, on
-   the side the photograph's subject would have been. Deliberately clipped by
-   the banner's overflow — a mark, not an illustration. */
+/* The fallback's watermark: the category icon, large and faint, on the side the
+   photograph's subject would have been. Clipped by the banner's overflow on
+   purpose — a mark, not an illustration. */
 .category-banner-watermark {
   position: absolute;
   top: 50%;
@@ -99,12 +97,10 @@
     transparent 70%);
 }
 
-/* The melt. The banner's last 90px fade into the page background, so the
+/* The melt: the banner's last 90px fade into the page background, so the
    category's atmosphere runs into the top of the shopping area instead of
-   ending on a line.
-
-   Photo only: the plain version ends on its hairline instead, and the two
-   cannot both own the bottom edge. */
+   ending on a line. Photo only — the plain version ends on its hairline
+   instead, and the two cannot both own the bottom edge. */
 .category-banner--photo::after {
   content: '';
   position: absolute;
