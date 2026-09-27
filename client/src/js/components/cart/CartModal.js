@@ -13,7 +13,7 @@ import { ShoppingCart, ClipboardList, CheckCircle } from 'lucide-react';
 import { useStore } from '../../context/storeContext';
 import Drawer from '../Drawer';
 import CartStepView, { CartStepFooter } from './CartStepView';
-import CheckoutFormView from './CheckoutFormView';
+import CheckoutFormView, { CheckoutFormFooter } from './CheckoutFormView';
 import OrderSuccessView from './OrderSuccessView';
 
 const HEADS = {
@@ -28,10 +28,13 @@ function CartModal({ cartStep, setCartStep, closeCart }) {
 
   const head = HEADS[cartStep] || HEADS.cart;
 
-  // עגלה ריקה אינה מחזיקה שורה תחתונה — אין מה לסכם.
-  const footer = cartStep === 'cart' && cart.length > 0
-    ? <CartStepFooter setCartStep={setCartStep} />
-    : null;
+  // מסך התודה אינו מחזיק שורה תחתונה: הסגירה ודרכי הקשר הם התוכן שלו.
+  // עגלה ריקה גם לא — אין מה לסכם.
+  const footer = cartStep === 'details'
+    ? <CheckoutFormFooter />
+    : cartStep === 'cart' && cart.length > 0
+      ? <CartStepFooter setCartStep={setCartStep} />
+      : null;
 
   return (
     <Drawer title={head.title} icon={head.icon} onClose={closeCart} footer={footer}>

@@ -1,122 +1,206 @@
 /* ==========================================================
    Checkout form — the name, phone and address step
 
-   .input-error came from components/_notifications.css, which
-   held nothing else and is gone. Its two !important declarations
-   are what let it beat the field styling above it, so they stay.
+   The middle step of the flow, rendered by CheckoutFormView
+   inside the shared drawer. The button it submits with is
+   .cart-cta from _cart.css, in the drawer's sticky foot, so
+   there is no button of its own here.
+
+   Everything in this file is new prefixing: .order-form and its
+   .order-field / .order-back-btn / .order-summary-mini children
+   are gone, and so is .input-error — the one selector on the
+   site that needed two !important declarations to beat the field
+   styling above it. The invalid address field is
+   .checkout-field input.is-invalid now — a second class on the
+   same element, which wins on specificity alone.
    ========================================================== */
 
-/* ===== ORDER FORM IN CART ===== */
-.order-form {
-  padding: 16px 24px 24px;
+/* ---- Block --------------------------------------------------------------- */
+
+.checkout-form {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 16px 20px 20px;
 }
 
-/* ---- Elements -------------------------------------------------------------- */
+/* ---- Elements ------------------------------------------------------------ */
 
-.order-back-btn {
-  background: none;
+.checkout-back {
+  align-self: flex-start;
+  padding: 4px 0;
   border: none;
-  color: #666;
-  font-size: 0.9rem;
+  background: none;
+  color: rgba(var(--color-navy-rgb), 0.6);
+  font-family: var(--font-family-base);
+  font-size: 0.88rem;
   cursor: pointer;
-  padding: 0;
-  font-family: 'Segoe UI', sans-serif;
-  text-align: right;
+  transition: color var(--transition-fast);
 }
 
-.order-summary-mini {
-  display: flex;
-  justify-content: space-between;
-  background: #f8f8f6;
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-}
-
-.order-total-mini { font-weight: 700; color: var(--color-text); }
-
-.order-fields { display: flex; flex-direction: column; gap: 12px; }
-
-.order-field { display: flex; flex-direction: column; gap: 5px; }
-
-.order-field label { font-size: 0.85rem; font-weight: 600; color: #444; }
-
-.order-field input, .order-field textarea {
-  padding: 10px 14px;
-  border: 1.5px solid var(--color-border);
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-family: 'Segoe UI', sans-serif;
-  direction: rtl;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.order-field textarea { resize: none; }
-
-/* כפתור עם spinner */
-.cart-cta-loading {
+/* What is in the cart, in one line, so the form is not the only thing on
+   screen at the moment money is being committed to. */
+.checkout-recap {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 10px;
-}
-
-.delivery-area-error {
-  background: var(--color-error-bg);
-  border: 1px solid var(--color-red);
-  border-radius: 8px;
-  padding: 10px 14px;
+  padding: 11px 14px;
+  border-radius: var(--radius-md);
+  background: rgba(var(--color-navy-rgb), 0.04);
+  color: rgba(var(--color-navy-rgb), 0.65);
   font-size: 0.85rem;
-  color: var(--color-red-dark);
-  line-height: 1.5;
-  margin-top: 6px;
 }
 
-.delivery-area-ok {
-  font-size: 0.82rem;
-  color: var(--color-green);
+.checkout-recap-total {
+  color: var(--color-navy);
+  font-weight: var(--font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+}
+
+.checkout-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.checkout-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checkout-field label {
+  color: var(--color-navy);
+  font-size: 0.85rem;
   font-weight: 600;
-  margin-top: 4px;
-  padding-right: 4px;
 }
 
-/* ---- States ---------------------------------------------------------------- */
-
-.order-back-btn:hover { color: var(--color-text); }
-
-.order-field input:focus, .order-field textarea:focus { border-color: var(--color-navy); }
-
-
-/* ===== בדיקת אזור משלוח ===== */
-.input-error {
-  border-color: var(--color-red) !important;
-  background: var(--color-error-bg) !important;
+.checkout-req {
+  color: var(--color-red);
 }
 
-/* ---- Dark mode ------------------------------------------------------------- */
+/* 48px, the height of every other input the redesign has drawn. The textarea
+   opts out of the fixed height and keeps its rows. */
+.checkout-field input,
+.checkout-field textarea {
+  padding: 0 14px;
+  height: 48px;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.15);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-family: var(--font-family-base);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
 
-@media (prefers-color-scheme: dark) {
-  .order-field label { color: var(--color-text-faint); }
+.checkout-field textarea {
+  height: auto;
+  padding: 12px 14px;
+  line-height: 1.6;
+  resize: none;
+}
 
-  .order-field input,
-    .order-field textarea {
-      background: var(--color-bg-dark);
-      border-color: var(--color-surface-dark);
-      color: var(--color-text-dark);
-    }
+.checkout-field input::placeholder,
+.checkout-field textarea::placeholder {
+  color: rgba(var(--color-navy-rgb), 0.35);
+}
 
-  .order-field input:focus,
-    .order-field textarea:focus { border-color: var(--color-blue); }
+/* Out of the delivery area. Red text and a Ban beside it, under the field it
+   is about — not a filled panel: the field's own red border already says
+   which line is wrong. */
+.checkout-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 2px 0 0;
+  color: var(--color-red-dark);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
 
-  .order-summary-mini {
-      background: var(--color-bg-dark);
-      color: var(--color-text-faint);
-    }
+/* The quiet other half of the same check. Navy, not green: nothing has
+   happened yet, the address is simply one we serve. */
+.checkout-ok {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
 
-  .order-total-mini { color: var(--color-text-dark); }
+.checkout-error .lucide {
+  flex-shrink: 0;
+  margin-top: 0.15em;
+}
+
+.checkout-ok .lucide {
+  flex-shrink: 0;
+}
+
+/* The drawer's foot for this step: the alert, then the button. .cart-cta's own
+   top margin is for the cart's summary above it and is dropped here — this
+   file is imported after _cart.css, which is what lets it. */
+.checkout-submit > .cart-cta {
+  margin-top: 0;
+}
+
+/* The server said no. This one is a filled box, because it is about the whole
+   order rather than about one field, and it sits above the button that just
+   failed. */
+.checkout-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 11px 13px;
+  border: 1px solid rgba(var(--color-red-rgb), 0.35);
+  border-radius: var(--radius-md);
+  background: rgba(var(--color-red-rgb), 0.07);
+  color: var(--color-red-dark);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.checkout-alert .lucide {
+  flex-shrink: 0;
+  margin-top: 0.1em;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.checkout-back:hover {
+  color: var(--color-red);
+}
+
+.checkout-back:focus-visible,
+.checkout-field input:focus-visible,
+.checkout-field textarea:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+.checkout-field input:focus,
+.checkout-field textarea:focus {
+  border-color: rgba(var(--color-purple-rgb), 0.5);
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+/* A second class on the same input, so it beats the border above without
+   !important. The focus rule is repeated because :focus would otherwise win
+   the border back while the invalid address is still in the field. */
+.checkout-field input.is-invalid,
+.checkout-field input.is-invalid:focus {
+  border-color: var(--color-red);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 560px) {
+  .checkout-form { padding: 14px 16px 18px; }
 }

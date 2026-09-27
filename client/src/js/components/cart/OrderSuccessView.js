@@ -3,46 +3,91 @@
  *
  * מושך את תוצאת ההזמנה מ-StoreContext ומקבל בפרופס רק את הסגירה,
  * שהיא עניין של הניתוב ולא של המצב המשותף.
+ *
+ * "מה קורה עכשיו" מתאר רק מה שהמערכת באמת עושה: החנות מקבלת מייל על
+ * כל הזמנה, והלקוח מקבל אישור רק אם השאיר כתובת מייל — שתי השורות
+ * האלה נגזרות מ-server/services/order.service.js ולא מהבטחה.
  */
 import {
-  PartyPopper, Store, Truck, CheckCircle, Mail, Phone, Smartphone, MessageCircle,
+  Check, ClipboardList, Store, Truck, Mail, Phone, Smartphone, MessageCircle,
 } from 'lucide-react';
 import { useStore } from '../../context/storeContext';
-import { PHONES, whatsappUrl } from '../../utils/storeInfo';
+import { ADDRESS, PHONES, whatsappUrl } from '../../utils/storeInfo';
 
 /** מציג את אישור ההזמנה. */
 function OrderSuccessView({ closeCart }) {
   const { orderSuccess } = useStore();
 
+  const isPickup = orderSuccess.delivery_method === 'pickup';
+
   return (
     <div className="order-success">
-      <span className="success-icon"><PartyPopper size={48} aria-hidden="true" /></span>
-      <h3>ההזמנה התקבלה בהצלחה!</h3>
-      <p className="success-order-num">מספר הזמנה: <strong>#{orderSuccess.id}</strong></p>
-      <div className="success-details">
-        <div><span>שם:</span> {orderSuccess.customer_name}</div>
-        <div><span>טלפון:</span> {orderSuccess.customer_phone}</div>
-        <div><span>אופן קבלה:</span> {orderSuccess.delivery_method === 'pickup' ? <><Store size={16} aria-hidden="true" /> איסוף עצמי</> : <><Truck size={16} aria-hidden="true" /> משלוח</>}</div>
-        <div><span>סה"כ:</span> ₪{orderSuccess.total}</div>
-      </div>
-      <div className="success-message">
-        <p><CheckCircle size={18} aria-hidden="true" /> ההזמנה שלך נשלחה ואנחנו מתחילים לטפל בה!</p>
+      {/* רגע ההצלחה היחיד באתר שצבוע ירוק, כמו הווי בכרטיס המוצר */}
+      <span className="order-success-mark" aria-hidden="true">
+        <Check size={40} strokeWidth={2.5} />
+      </span>
+
+      <h3 className="order-success-title">ההזמנה התקבלה!</h3>
+      <p className="order-success-id">#{orderSuccess.id}</p>
+
+      <dl className="order-success-details">
+        <div>
+          <dt>שם</dt>
+          <dd>{orderSuccess.customer_name}</dd>
+        </div>
+        <div>
+          <dt>טלפון</dt>
+          <dd>{orderSuccess.customer_phone}</dd>
+        </div>
+        <div>
+          <dt>אופן קבלה</dt>
+          <dd>{isPickup ? 'איסוף עצמי' : 'משלוח'}</dd>
+        </div>
+        <div>
+          <dt>סה"כ</dt>
+          <dd className="order-success-total">₪{orderSuccess.total}</dd>
+        </div>
+      </dl>
+
+      <ul className="order-success-next">
+        <li>
+          <ClipboardList size={17} aria-hidden="true" />
+          <span>ההזמנה הועברה לחנות ואנחנו מתחילים לטפל בה</span>
+        </li>
+        <li>
+          {isPickup
+            ? <><Store size={17} aria-hidden="true" /><span>איסוף מ{ADDRESS.full}, בשעות הפעילות</span></>
+            : <><Truck size={17} aria-hidden="true" /><span>משלוח ל{orderSuccess.delivery_address}</span></>}
+        </li>
         {orderSuccess.customer_email && (
-          <p><Mail size={18} aria-hidden="true" /> אישור נשלח למייל: <strong>{orderSuccess.customer_email}</strong></p>
+          <li>
+            <Mail size={17} aria-hidden="true" />
+            <span>אישור נשלח ל{orderSuccess.customer_email}</span>
+          </li>
         )}
-      </div>
-      <div className="success-contact">
+      </ul>
+
+      <div className="order-success-contact">
         <p>לכל שאלה ניתן לפנות אלינו:</p>
-        <div className="success-contact-btns">
-          <a href={`tel:${PHONES.store.tel}`} className="success-contact-btn"><Phone size={18} aria-hidden="true" /> {PHONES.store.display}</a>
-          <a href={`tel:${PHONES.mobile.tel}`} className="success-contact-btn"><Smartphone size={18} aria-hidden="true" /> {PHONES.mobile.display}</a>
-          <a href={whatsappUrl(`שלום, שאלה לגבי הזמנה מספר ${orderSuccess.id}`)}
-            target="_blank" rel="noopener noreferrer" className="success-contact-btn whatsapp">
-            <MessageCircle size={18} aria-hidden="true" /> וואטסאפ
+        <div className="order-success-btns">
+          {/* טלפון החנות הוא הפנייה הראשית ולכן האדום; הפלאפון שלידו
+              והוואטסאפ הם אותו כפתור בשני צבעים אחרים. */}
+          <a href={`tel:${PHONES.store.tel}`} className="order-success-btn order-success-btn--primary">
+            <Phone size={17} aria-hidden="true" /> {PHONES.store.display}
+          </a>
+          <a href={`tel:${PHONES.mobile.tel}`} className="order-success-btn">
+            <Smartphone size={17} aria-hidden="true" /> {PHONES.mobile.display}
+          </a>
+          <a
+            href={whatsappUrl(`שלום, שאלה לגבי הזמנה מספר ${orderSuccess.id}`)}
+            target="_blank" rel="noopener noreferrer"
+            className="order-success-btn order-success-btn--whatsapp">
+            <MessageCircle size={17} aria-hidden="true" /> וואטסאפ
           </a>
         </div>
       </div>
-      <button className="cart-cta" onClick={closeCart}>סגור</button>
+
+      <button type="button" className="cart-cta cart-cta--outline" onClick={closeCart}>סגור</button>
     </div>
   );
 }
