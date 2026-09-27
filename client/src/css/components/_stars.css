@@ -12,19 +12,21 @@
    from no token.
 
    An empty star has to read as empty against whatever is behind
-   it, and the row appears on both surfaces — white cards on the
-   product page and in the admin, dark glass in the carousel. So
-   the empty colour is a custom property with the light value as
-   its default, and a dark section overrides it on .stars rather
-   than restating the rules:
+   it, so the empty colour is a custom property with the light
+   value as its default and any section that needs a different
+   one sets it on .stars rather than restating the rules:
 
-     .reviews-section .stars { --star-empty: rgba(255, 255, 255, 0.2); }
+     .reviews-section .stars { --star-empty: rgba(var(--color-navy-rgb), 0.15); }
 
-   That one line lives in features/_reviews-carousel.css, because
-   which surface a section paints is the section's business. The
-   dark-mode block at the bottom does the same for the pages that
-   are light by default and go dark with the system: the product
-   page, the review form and the admin's moderation list.
+   That one line lives in features/_reviews.css, because which
+   surface a section paints is the section's business. It looks
+   like the default because it is one — the home page is
+   art-directed and does not follow the system theme, so that
+   line is what stops the dark-mode block below from repainting
+   stars that sit on a white card inside a blush band. The block
+   itself is still right for the pages that really do follow the
+   system: the product page, the review form and the admin's
+   moderation list.
 
    How the product review block spaces its own stars is that
    block's business too, so `.product-review-top .stars` lives in

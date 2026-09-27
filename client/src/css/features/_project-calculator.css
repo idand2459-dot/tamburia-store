@@ -7,55 +7,30 @@
    are _project-calc-items.css. Nothing here is shared with the
    paint calculator; they only used to live in one file.
 
-   Fifth stop in the home page dark rhythm: --color-navy-900,
-   the same surface as the WhyUs section, after the paint
-   calculator photograph. One red glow in the top-right corner
-   is the only light. Always dark, so no
-   prefers-color-scheme block at the bottom of this file.
+   Light, on --color-blush, directly under the paint
+   calculator's dark band. That edge is a dark/light seam and
+   the red-to-purple hairline that marks it is drawn on the dark
+   side of it, in _paint-calc-section.css — so the ::after this
+   section used to carry on its own top edge is gone, and with
+   it the red glow on ::before and the stacking context the two
+   needed. Same card language as the categories section: white,
+   a navy-tint hairline, a red-tinted icon tile.
+
+   Art-directed in both themes, like the rest of the home page,
+   so no prefers-color-scheme block at the bottom of this file.
    ========================================================== */
 
 /* ---- Block --------------------------------------------------------------- */
 
 /* No margin-top: this section butts straight onto the paint calculator above
-   it. The hairline on ::after is the whole boundary.
+   it, and that hard edge is the whole boundary.
 
    Top and bottom padding match, so with no project picked the section closes
    as far below the cards as it opens above the header. The panel's own gap is
    its margin, not padding here — see .proj-panel. */
 .proj-section {
-  background-color: var(--color-navy-900);
+  background-color: var(--color-blush);
   padding: 100px 40px;
-  position: relative;
-  overflow: hidden;
-}
-
-/* The backdrop layer, where a background image could later go — add it as the
-   bottom-most layer of this background and the glow keeps sitting over it.
-   The dot grid that used to be on this pseudo-element is gone. */
-.proj-section::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: radial-gradient(ellipse 45% 55% at 90% 0%,
-    rgba(var(--color-red-rgb), 0.14), transparent 70%);
-  pointer-events: none;
-}
-
-.proj-section::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  z-index: 1;
-  background: linear-gradient(90deg,
-    transparent,
-    rgba(var(--color-red-rgb), 0.6),
-    rgba(var(--color-purple-rgb), 0.6),
-    transparent);
-  pointer-events: none;
 }
 
 /* ---- Elements ------------------------------------------------------------ */
@@ -63,8 +38,6 @@
 .proj-content {
   max-width: 860px;
   margin: 0 auto;
-  position: relative;
-  z-index: 1;
 }
 
 /* ── Header ─────────────────────────────────────────────────────── */
@@ -79,14 +52,14 @@
   gap: 10px;
   font-size: 2.2rem;
   font-weight: var(--font-weight-extrabold);
-  color: white;
+  color: var(--color-navy);
   margin-bottom: 10px;
   line-height: 1.25;
 }
 
 .proj-subtitle {
   font-size: var(--font-size-body);
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(var(--color-navy-rgb), 0.65);
 }
 
 /* ── Project cards ──────────────────────────────────────────────── */
@@ -97,9 +70,9 @@
   gap: 14px;
 }
 
-/* Dark glass cards, not the pills these used to be: they are the same kind of
-   control as a category card — a clickable tile with an icon above a name —
-   and they now look like one.
+/* The categories section's white card, exactly: same hairline, same 1px
+   shadow, same 18px radius. They are the same kind of control — a clickable
+   tile with an icon above a name — so they look the same.
 
    opacity: 0 is the entry animation start; .proj-visible on the section (set
    by the IntersectionObserver in ProjectCalculator.js) hands over to the
@@ -112,11 +85,10 @@
   gap: 12px;
   padding: 22px 14px;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(var(--color-navy-950-rgb), 0.55);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  color: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  background: var(--color-surface);
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+  color: rgba(var(--color-navy-rgb), 0.8);
   font-size: 0.95rem;
   font-weight: 600;
   font-family: inherit;
@@ -127,7 +99,8 @@
     box-shadow 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-/* the category card icon tile */
+/* the category card icon tile: a red film and the full-strength red, not the
+   lightened --color-red-soft, which only exists to survive a dark surface */
 .proj-card-icon {
   display: flex;
   align-items: center;
@@ -135,11 +108,9 @@
   width: 52px;
   height: 52px;
   border-radius: 14px;
-  background: rgba(var(--color-red-rgb), 0.14);
-  border: 1px solid rgba(var(--color-red-rgb), 0.25);
-  color: var(--color-red-soft);
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
   transition: background 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
-    border-color 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
     color 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
@@ -170,12 +141,11 @@
 .proj-panel {
   margin-top: 32px;
   animation: proj-fade-up 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
-  background: rgba(var(--color-navy-950-rgb), 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
   border-radius: 18px;
   padding: 28px 32px;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
 }
 
 /* ---- States -------------------------------------------------------------- */
@@ -190,18 +160,29 @@
   animation: proj-card-in 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
 }
 
-/* Hover and selected are one rule: both mean "this is the project", and it is
-   the category card treatment — lift, red border, red glow. */
+/* The category card's hover, which on a light surface is a lift and an
+   ordinary drop shadow: the red glow these had needs something dark to glow
+   against, and on blush it only muddied the space under the card. */
 .proj-card:hover,
-.proj-card:focus-visible,
-.proj-card.selected {
+.proj-card:focus-visible {
   transform: translateY(-4px);
-  border-color: rgba(var(--color-red-rgb), 0.6);
-  box-shadow: 0 0 26px rgba(var(--color-red-rgb), 0.28);
+  border-color: rgba(var(--color-red-rgb), 0.35);
+  box-shadow: 0 14px 30px rgba(var(--color-navy-rgb), 0.12);
 }
 
+/* Selected is louder than hover, which it was not on the dark surface: there
+   the two shared one rule, and once the pointer moved away nothing said which
+   project was picked. A full red border and a soft red shadow say it stays. */
+.proj-card.selected {
+  transform: translateY(-4px);
+  border-color: var(--color-red);
+  box-shadow: 0 10px 26px rgba(var(--color-red-rgb), 0.22);
+}
+
+/* the navbar's ring at full strength: --color-purple-soft is the dark-surface
+   version of it and disappears on white */
 .proj-card:focus-visible {
-  outline: 2px solid var(--color-purple-soft);
+  outline: 2px solid var(--color-purple);
   outline-offset: 2px;
 }
 
@@ -209,11 +190,10 @@
 .proj-card:focus-visible .proj-card-icon,
 .proj-card.selected .proj-card-icon {
   background: var(--color-red);
-  border-color: var(--color-red);
   color: white;
 }
 
-.proj-card.selected { color: white; }
+.proj-card.selected { color: var(--color-navy); }
 
 /* ---- Animations ---------------------------------------------------------- */
 

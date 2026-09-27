@@ -1,12 +1,11 @@
 /* ==========================================================
    Footer — the four columns and the bottom bar
 
-   The floor under the home page's dark sequence, and the one
-   surface painted --color-ink: a step deeper than the navy-950 of
-   the FAQ above it, so the page reads as settling rather than as
-   starting another section. It was a navy gradient, which put it
-   at roughly the same value as the sections above and made the
-   boundary vanish.
+   The floor under the page, painted --color-ink and carrying a
+   photograph of a pegboard wall under a heavy overlay — see
+   ::before. The FAQ above it is light now, so this is the page's
+   last dark/light edge and the red-to-purple hairline that marks
+   it is on this side of it, as everywhere else.
 
    Dark in both themes, so the prefers-color-scheme block that
    used to darken the gradient is gone — there is nothing left for
@@ -24,20 +23,35 @@
   direction: rtl;
 }
 
-/* The backdrop layer, empty for now — the pegboard background image goes here.
-   Add it as the last (bottom-most) layer of a `background` on this rule and
-   every column keeps sitting over it, because the two content blocks below
-   carry z-index: 1. */
+/* The backdrop layer: the pegboard photograph, with a flat --color-ink film
+   over it. Two layers of one `background`, the overlay first because the
+   first layer in the list is the top one. Every column keeps sitting over
+   both, because the two content blocks below carry z-index: 1.
+
+   0.7, not the 0.78 this was specified at: the source is already almost
+   black — its mean channel values are 9/3/12 — and at 0.78 the wall stopped
+   reading as anything at all. What the overlay is really holding down is the
+   handful of specular red highlights, which peak at 253. At 0.7 the hottest
+   of them composites to about 76, and the weakest text in the footer (the
+   bottom bar, 0.8rem at 50% white) still clears 4.5:1 against it, while the
+   rim light along the tools stays visible as texture.
+
+   Declared in the min-width block at the bottom of this file, not here: a
+   background image cannot be un-fetched by a max-width query, and the footer
+   on a phone is a plain ink surface. */
 .site-footer::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: 0;
+  background-size: cover;
+  background-position: center;
   pointer-events: none;
 }
 
-/* The seam with the FAQ section above: the same hairline every boundary in the
-   dark sequence uses — lit in the middle, faded out at both ends. */
+/* The seam with the FAQ section above: the same hairline every dark/light
+   boundary on the page uses — lit in the middle, faded out at both ends, and
+   drawn on the dark side of the edge. */
 .site-footer::after {
   content: '';
   position: absolute;
@@ -255,6 +269,20 @@
 .footer-bottom-link:hover { color: white; }
 
 /* ---- Responsive ---------------------------------------------------------- */
+
+/* The one min-width query in the project, and it earns it: this is how the
+   pegboard photograph is kept off phones. A background image declared on the
+   base rule and switched off in a max-width block is a fetch the phone may
+   still pay for; one declared only here is never asked for below 769px, and
+   the footer there is the plain ink surface. 769 is the complement of the md
+   breakpoint (max-width: 768px), so the two meet with no gap. */
+@media (min-width: 769px) {
+  .site-footer::before {
+      background-image:
+        linear-gradient(rgba(var(--color-ink-rgb), 0.7), rgba(var(--color-ink-rgb), 0.7)),
+        url('../../assets/images/sections/footer-bg-1916.webp');
+    }
+}
 
 @media (max-width: 900px) {
   .footer-main {

@@ -1,69 +1,32 @@
 /* ==========================================================
    FAQ — the accordion and the contact card under it
 
-   Last stop in the home page's dark rhythm before the footer:
-   --color-navy-950, back to the deepest of the three surfaces,
-   with one soft red glow in the bottom-left corner. The two
-   sections above carry a purple glow at the top, so a red one low
-   down keeps three touching sections from lighting the same seams
-   the same way.
+   The last light section before the footer: --color-blush, with
+   the reviews section's --color-blush-deep above it and the
+   footer's near-black below. The half-step above is the whole
+   seam on that side, so the ::after this section used to carry
+   on its top edge is gone, along with the red glow on ::before
+   and the stacking context the two needed. The edge below is a
+   light/dark one and is marked from the footer's side.
 
    The red pill this page used to own is gone: every section label
    on the page is the shared components/_section-pill.css now.
 
-   Always dark, whatever the system theme, so there is no
-   prefers-color-scheme block at the bottom of this file. What
-   went: the --color-bg band, the white rows and contact card, the
-   navy open-state border, and the dark-mode block that repainted
-   all of it.
+   Art-directed in both themes, like the rest of the home page,
+   so there is no prefers-color-scheme block at the bottom of
+   this file.
    ========================================================== */
 
 /* ---- Block --------------------------------------------------------------- */
 
 .faq-section {
-  background-color: var(--color-navy-950);
+  background-color: var(--color-blush);
   padding: 90px 40px;
-  position: relative;
-  overflow: hidden;
-}
-
-/* The backdrop layer. A background image may be dropped in here later — add it
-   as the last (bottom-most) layer of the `background` below and the glow keeps
-   sitting over it. */
-.faq-section::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: radial-gradient(ellipse 60% 55% at 15% 100%,
-    rgba(var(--color-red-rgb), 0.13), transparent 70%);
-  pointer-events: none;
-}
-
-/* The seam with the reviews section above. */
-.faq-section::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  z-index: 1;
-  background: linear-gradient(90deg,
-    transparent,
-    rgba(var(--color-red-rgb), 0.6),
-    rgba(var(--color-purple-rgb), 0.6),
-    transparent);
-  pointer-events: none;
 }
 
 /* ---- Elements ------------------------------------------------------------ */
 
-/* z-index 1 is what lifts every child off ::before — and off the image layer
-   that may join it. */
 .faq-content {
-  position: relative;
-  z-index: 1;
   max-width: 760px;
   margin: 0 auto;
 }
@@ -79,14 +42,14 @@
 .faq-title {
   font-size: 2.2rem;
   font-weight: var(--font-weight-extrabold);
-  color: white;
+  color: var(--color-navy);
   margin-bottom: 10px;
   line-height: 1.3;
 }
 
 .faq-subtitle {
   font-size: var(--font-size-body);
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(var(--color-navy-rgb), 0.65);
 }
 
 /* Accordion
@@ -99,16 +62,15 @@
   margin-bottom: 40px;
 }
 
-/* Dark glass, a shade lighter than the section, and position: relative for the
-   open row's bar below. overflow: hidden is what the collapsed answer's height
-   is clipped against as well as what keeps the bar inside the corners. */
+/* White, and position: relative for the open row's bar below. overflow:
+   hidden is what the collapsed answer's height is clipped against as well as
+   what keeps the bar inside the corners. */
 .faq-item {
   position: relative;
   overflow: hidden;
-  background: rgba(var(--color-navy-900-rgb), 0.6);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
   border-radius: 14px;
   transition: border-color var(--transition-base);
 }
@@ -143,7 +105,7 @@
   cursor: pointer;
   font-size: var(--font-size-body);
   font-weight: 600;
-  color: white;
+  color: var(--color-navy);
   font-family: var(--font-family-base);
   text-align: right;
 }
@@ -159,8 +121,8 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgba(var(--color-red-rgb), 0.14);
-  color: var(--color-red-soft);
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
   transition: transform var(--transition-base);
 }
 
@@ -180,7 +142,7 @@
 .faq-answer p {
   padding: 0 22px 18px;
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(var(--color-navy-rgb), 0.75);
   line-height: 1.8;
   margin: 0;
 }
@@ -190,17 +152,16 @@
 
 .faq-contact {
   text-align: center;
-  background: rgba(var(--color-navy-900-rgb), 0.6);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
   border-radius: var(--radius-lg);
   padding: 28px;
 }
 
 .faq-contact p {
   font-size: var(--font-size-body);
-  color: white;
+  color: var(--color-navy);
   margin-bottom: 16px;
 }
 
@@ -231,25 +192,29 @@
 /* ---- States -------------------------------------------------------------- */
 
 .faq-item:hover {
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(var(--color-navy-rgb), 0.18);
 }
 
+/* the navbar's ring at full strength: --color-purple-soft is the dark-surface
+   version of it and disappears on white */
 .faq-question:focus-visible {
-  outline: 2px solid var(--color-purple-soft);
+  outline: 2px solid var(--color-purple);
   outline-offset: -4px;
   border-radius: 14px;
 }
 
+/* A drop shadow rather than the glow these had: a glow needs something dark
+   behind it, and the card under both buttons is white. */
 .faq-btn:hover {
   background: var(--color-red-dark);
-  box-shadow: 0 0 24px rgba(var(--color-red-rgb), 0.35);
+  box-shadow: 0 10px 24px rgba(var(--color-red-rgb), 0.3);
 }
 
 /* WhatsApp green, on purpose: it is the one colour on the page that is not ours
    to restyle — people look for it. */
 .faq-btn.whatsapp:hover {
   background: var(--color-whatsapp-dark);
-  box-shadow: 0 0 24px rgba(var(--color-whatsapp-rgb), 0.35);
+  box-shadow: 0 10px 24px rgba(var(--color-whatsapp-rgb), 0.3);
 }
 
 /* ---- Variants ------------------------------------------------------------ */

@@ -4,10 +4,14 @@
 
    .found and .missing are the two states of a row: a part the
    shop stocks, and one it does not. Found rows carry a red
-   check and a white price; missing rows are dimmed and their
+   check and a navy price; missing rows are dimmed and their
    price is the purple "ask in the shop". The green that used to
    mark found rows is gone — green was not in this palette, and
    a found part is not a success message.
+
+   These sit inside the panel, which is a white card on the
+   blush section, so every colour here is a navy tint rather
+   than the white tint it was while the section was dark.
    ========================================================== */
 
 /* ---- Block --------------------------------------------------------------- */
@@ -19,7 +23,7 @@
 .proj-items-title {
   font-size: 0.8rem;
   font-weight: var(--font-weight-bold);
-  color: rgba(255, 255, 255, 0.62);
+  color: rgba(var(--color-navy-rgb), 0.6);
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 12px;
@@ -30,7 +34,7 @@
   align-items: center;
   gap: 12px;
   padding: 11px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid rgba(var(--color-navy-rgb), 0.08);
   animation: proj-fade-up 0.32s ease both;
 }
 
@@ -60,7 +64,7 @@
 
 .proj-item-sku {
   font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.62);
+  color: rgba(var(--color-navy-rgb), 0.55);
 }
 
 .proj-item-price {
@@ -79,7 +83,7 @@
   gap: 20px;
   flex-wrap: wrap;
   padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.1);
 }
 
 .proj-estimate {
@@ -90,7 +94,7 @@
 
 .proj-estimate-label {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.62);
+  color: rgba(var(--color-navy-rgb), 0.6);
   font-weight: 600;
   letter-spacing: 0.5px;
 }
@@ -104,21 +108,21 @@
 .proj-estimate-total {
   font-size: 2.2rem;
   font-weight: 900;
-  color: white;
+  color: var(--color-navy);
   line-height: 1;
 }
 
 .proj-estimate-plus {
   font-size: 1.4rem;
   font-weight: var(--font-weight-extrabold);
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--color-navy-rgb), 0.45);
 }
 
 /* not italic: a synthesised Hebrew oblique slants letterforms that were never
    drawn to slant — the same call made on the WhyUs quote */
 .proj-estimate-note {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.62);
+  color: rgba(var(--color-navy-rgb), 0.6);
 }
 
 .proj-add-btn {
@@ -140,41 +144,43 @@
 
 .proj-item:last-child { border-bottom: none; }
 
-/* the navbar cart glow, the same one the paint calculator buttons use */
+/* A drop shadow rather than the glow the dark version had: a glow needs
+   something dark behind it, and the panel under this button is white. */
 .proj-add-btn:hover:not(.disabled):not(.added) {
   background: var(--color-red-dark);
   transform: translateY(-2px);
-  box-shadow: 0 0 22px rgba(var(--color-red-rgb), 0.45);
+  box-shadow: 0 10px 24px rgba(var(--color-red-rgb), 0.35);
 }
 
 .proj-add-btn.added {
   background: var(--color-green-bright);
-  box-shadow: 0 0 22px rgba(var(--color-green-bright-rgb), 0.35);
+  box-shadow: 0 10px 24px rgba(var(--color-green-bright-rgb), 0.3);
   transform: translateY(-1px);
 }
 
 .proj-add-btn.disabled {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.4);
+  background: rgba(var(--color-navy-rgb), 0.12);
+  color: rgba(var(--color-navy-rgb), 0.45);
   cursor: not-allowed;
   box-shadow: none;
 }
 
 /* ---- Variants ------------------------------------------------------------ */
 
-.proj-item.found .proj-item-dot { color: var(--color-red-soft); }
+.proj-item.found .proj-item-dot { color: var(--color-red); }
 
-.proj-item.missing .proj-item-dot { color: rgba(255, 255, 255, 0.28); }
+.proj-item.missing .proj-item-dot { color: rgba(var(--color-navy-rgb), 0.3); }
 
-.proj-item.found .proj-item-name { color: white; }
+.proj-item.found .proj-item-name { color: var(--color-navy); }
 
-.proj-item.missing .proj-item-name { color: rgba(255, 255, 255, 0.5); }
+.proj-item.missing .proj-item-name { color: rgba(var(--color-navy-rgb), 0.5); }
 
-.proj-item.found .proj-item-price { color: white; }
+.proj-item.found .proj-item-price { color: var(--color-navy); }
 
-/* purple, the colour this palette gives to "not a price, a next step" */
+/* purple, the colour this palette gives to "not a price, a next step" — at
+   full strength, since --color-purple-soft is the dark-surface version */
 .proj-item.missing .proj-item-price {
-  color: var(--color-purple-soft);
+  color: var(--color-purple);
   font-weight: 500;
 }
 
