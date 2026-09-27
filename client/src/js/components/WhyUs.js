@@ -11,7 +11,7 @@ function WhyUs() {
 
           {/* טקסט ראשי */}
           <Reveal as="div" variant="up" className="whyus-text">
-            <span className="whyus-tag">למה טכניק טמבור?</span>
+            <span className="section-pill">למה טכניק טמבור?</span>
             <h2 className="whyus-title">
               לא סתם חנות —<br />
               <span className="whyus-title-accent">שותף לכל פרויקט</span>

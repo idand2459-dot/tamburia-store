@@ -2,8 +2,10 @@
    Product reviews — the rating summary and review list on a
    product page
 
-   The site-wide reviews carousel and the review form are
-   features/_reviews.css; this is only the per-product block.
+   The site-wide reviews carousel is features/_reviews.css and
+   features/_reviews-carousel.css, and the form both of them open
+   is features/_review-form.css; this is only the per-product
+   block.
    ========================================================== */
 
 .product-reviews {
@@ -70,6 +72,19 @@
   gap: 12px;
 }
 
+/* The byline's text colours, for this block's white card. The shape of the
+   avatar, the name and the date is shared with the site-wide carousel and is
+   declared once, unscoped, in features/_reviews-carousel.css — the carousel's
+   card is dark, so each of the two surfaces states its own colour here and
+   there rather than one of them overriding the other. */
+.product-review-top .reviewer-name {
+  color: var(--color-text);
+}
+
+.product-review-top .review-date {
+  color: var(--color-text-faint);
+}
+
 .product-review-text {
   font-size: 0.92rem;
   color: var(--color-text-muted);
@@ -111,5 +126,9 @@
 
   .product-review-text {
       color: var(--color-text-faint);
+    }
+
+  .product-review-top .reviewer-name {
+      color: var(--color-text-dark);
     }
 }

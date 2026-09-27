@@ -85,22 +85,6 @@
   margin-bottom: 36px;
 }
 
-/* This section used to borrow .faq-tag from the FAQ page, which is a red pill
-   on a light background. It has its own now, matching the purple pill the
-   categories and WhyUs sections wear. */
-.calc-tag {
-  display: inline-block;
-  background: rgba(var(--color-purple-rgb), 0.18);
-  border: 1px solid rgba(var(--color-purple-rgb), 0.35);
-  color: var(--color-purple-soft);
-  padding: 6px 18px;
-  border-radius: var(--radius-pill);
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  margin-bottom: 18px;
-}
-
 /* flex, because the title carries a Lucide brush ahead of the words */
 .paint-calc-title {
   display: flex;

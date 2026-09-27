@@ -211,7 +211,7 @@ function PaintCalculator({ addBundleToCart }) {
         loading="lazy" decoding="async" />
       <div className="paint-calc-content">
         <div className="paint-calc-header">
-          <span className="calc-tag">כלי עזר</span>
+          <span className="section-pill">כלי עזר</span>
           <h2 className="paint-calc-title"><PaintRoller size={28} aria-hidden="true" /> מחשבון צבע</h2>
           <p className="paint-calc-subtitle">חשבו כמה צבע תצטרכו לפני שאתם מגיעים לחנות</p>
         </div>

@@ -80,21 +80,6 @@
 /* Text column
    -------------------------------------------------------------------------- */
 
-/* the categories section's pill, to the declaration: purple tint, soft purple
-   border, soft purple text — red stays on the title accent */
-.whyus-tag {
-  display: inline-block;
-  background: rgba(var(--color-purple-rgb), 0.18);
-  border: 1px solid rgba(var(--color-purple-rgb), 0.35);
-  color: var(--color-purple-soft);
-  padding: 6px 18px;
-  border-radius: var(--radius-pill);
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  margin-bottom: 18px;
-}
-
 .whyus-title {
   font-size: 2.4rem;
   font-weight: var(--font-weight-extrabold);

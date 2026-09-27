@@ -173,7 +173,7 @@ function ProjectCalculator({ addBundleToCart }) {
 
         {/* ── Header ── */}
         <div className="proj-header">
-          <span className="proj-tag"><Crown size={14} aria-hidden="true" /> כלי תכנון</span>
+          <span className="section-pill"><Crown size={14} aria-hidden="true" /> כלי תכנון</span>
           <h2 className="proj-title">לא יודעים מה לקנות? <ListChecks size={24} aria-hidden="true" /></h2>
           <p className="proj-subtitle">בחרו פרויקט — נכין לכם רשימת קניות מלאה</p>
         </div>

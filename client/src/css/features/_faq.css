@@ -1,21 +1,69 @@
 /* ==========================================================
-   FAQ page — the accordion and the contact strip under it
+   FAQ — the accordion and the contact card under it
 
-   .faq-tag belongs to this page alone. PaintCalculator.js used to
-   borrow it for its own section heading and has its own .calc-tag
-   now — this page is light, that section is dark, and one pill
-   could not be both.
+   Last stop in the home page's dark rhythm before the footer:
+   --color-navy-950, back to the deepest of the three surfaces,
+   with one soft red glow in the bottom-left corner. The two
+   sections above carry a purple glow at the top, so a red one low
+   down keeps three touching sections from lighting the same seams
+   the same way.
+
+   The red pill this page used to own is gone: every section label
+   on the page is the shared components/_section-pill.css now.
+
+   Always dark, whatever the system theme, so there is no
+   prefers-color-scheme block at the bottom of this file. What
+   went: the --color-bg band, the white rows and contact card, the
+   navy open-state border, and the dark-mode block that repainted
+   all of it.
    ========================================================== */
 
+/* ---- Block --------------------------------------------------------------- */
+
 .faq-section {
-  background: var(--color-bg);
-  padding: 70px 40px;
-  margin-top: 60px;
+  background-color: var(--color-navy-950);
+  padding: 90px 40px;
+  position: relative;
+  overflow: hidden;
 }
 
-/* ---- Elements -------------------------------------------------------------- */
+/* The backdrop layer. A background image may be dropped in here later — add it
+   as the last (bottom-most) layer of the `background` below and the glow keeps
+   sitting over it. */
+.faq-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(ellipse 60% 55% at 15% 100%,
+    rgba(var(--color-red-rgb), 0.13), transparent 70%);
+  pointer-events: none;
+}
 
+/* The seam with the reviews section above. */
+.faq-section::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  z-index: 1;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(var(--color-red-rgb), 0.6),
+    rgba(var(--color-purple-rgb), 0.6),
+    transparent);
+  pointer-events: none;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* z-index 1 is what lifts every child off ::before — and off the image layer
+   that may join it. */
 .faq-content {
+  position: relative;
+  z-index: 1;
   max-width: 760px;
   margin: 0 auto;
 }
@@ -25,32 +73,25 @@
   margin-bottom: 40px;
 }
 
-.faq-tag {
-  display: inline-block;
-  background: rgba(var(--color-red-rgb), 0.1);
-  color: var(--color-red);
-  border: 1px solid rgba(var(--color-red-rgb), 0.3);
-  padding: 4px 14px;
-  border-radius: 20px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  margin-bottom: 14px;
-}
-
+/* No trailing icon after the words any more: no other section title on the page
+   carries one, and this one had a speech bubble that repeated what the pill
+   above it already said. */
 .faq-title {
-  font-size: 1.9rem;
-  font-weight: 800;
-  color: var(--color-text);
+  font-size: 2.2rem;
+  font-weight: var(--font-weight-extrabold);
+  color: white;
   margin-bottom: 10px;
   line-height: 1.3;
 }
 
 .faq-subtitle {
-  font-size: 1rem;
-  color: var(--color-text-subtle);
+  font-size: var(--font-size-body);
+  color: rgba(255, 255, 255, 0.72);
 }
 
-/* רשימת שאלות */
+/* Accordion
+   -------------------------------------------------------------------------- */
+
 .faq-list {
   display: flex;
   flex-direction: column;
@@ -58,67 +99,108 @@
   margin-bottom: 40px;
 }
 
+/* Dark glass, a shade lighter than the section, and position: relative for the
+   open row's bar below. overflow: hidden is what the collapsed answer's height
+   is clipped against as well as what keeps the bar inside the corners. */
 .faq-item {
-  background: white;
-  border-radius: 14px;
+  position: relative;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  transition: box-shadow 0.2s;
-  border: 1.5px solid transparent;
+  background: rgba(var(--color-navy-900-rgb), 0.6);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  transition: border-color var(--transition-base);
+}
+
+/* The open row's marker: a bar along the inline-start edge, which in RTL is the
+   right one. Inset 8px top and bottom so it stays clear of the 14px corners,
+   and its own pill radius so the ends are not cut squares. */
+.faq-item::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  right: 0;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--color-red);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  pointer-events: none;
 }
 
 .faq-question {
+  position: relative;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 18px 22px;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: var(--font-size-body);
   font-weight: 600;
-  color: var(--color-text);
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  color: white;
+  font-family: var(--font-family-base);
   text-align: right;
-  gap: 12px;
-  transition: background 0.15s;
 }
 
+/* A 28px circle round one Plus, which the open state rotates into an ×. It was
+   a bare + / − character swapped in the JSX, and a character swap cannot be
+   animated. */
 .faq-arrow {
-  font-size: 1.4rem;
-  font-weight: 300;
-  color: var(--color-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  width: 24px;
-  text-align: center;
-  line-height: 1;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(var(--color-red-rgb), 0.14);
+  color: var(--color-red-soft);
+  transition: transform var(--transition-base);
 }
 
-.faq-answer {
-  padding: 0 22px 18px;
-  animation: faq-open 0.2s ease;
+/* The height animation. A grid whose single row goes 0fr → 1fr animates to the
+   content's own height, which is the one thing a height transition cannot do
+   without a hard-coded pixel value. overflow: hidden on the child below is what
+   lets the row reach 0 at all: without it the item's min-content height is the
+   row's floor. */
+.faq-answer-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--transition-base);
 }
+
+.faq-answer { overflow: hidden; }
 
 .faq-answer p {
-  font-size: 0.93rem;
-  color: var(--color-text-muted);
+  padding: 0 22px 18px;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.78);
   line-height: 1.8;
   margin: 0;
 }
 
-/* כפתורי קשר */
+/* Contact card
+   -------------------------------------------------------------------------- */
+
 .faq-contact {
   text-align: center;
-  background: white;
-  border-radius: 16px;
+  background: rgba(var(--color-navy-900-rgb), 0.6);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
   padding: 28px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .faq-contact p {
-  font-size: 1rem;
-  color: var(--color-text-muted);
+  font-size: var(--font-size-body);
+  color: white;
   margin-bottom: 16px;
 }
 
@@ -129,83 +211,89 @@
   flex-wrap: wrap;
 }
 
+/* The phone button is the red CTA; .whatsapp below overrides the colour and
+   nothing else, so both buttons share this height and radius. */
 .faq-btn {
-  padding: 10px 22px;
-  background: var(--color-navy);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  background: var(--color-red);
   color: white;
-  border-radius: 20px;
+  border-radius: var(--radius-pill);
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 600;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  transition: background 0.2s;
+  font-family: var(--font-family-base);
+  transition: background var(--transition-base), box-shadow var(--transition-base);
 }
 
-/* ---- States ---------------------------------------------------------------- */
+/* ---- States -------------------------------------------------------------- */
 
-.faq-question:hover {
-  background: #fafafa;
+.faq-item:hover {
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
-.faq-item.open .faq-question {
-  background: #f8f8f6;
+.faq-question:focus-visible {
+  outline: 2px solid var(--color-purple-soft);
+  outline-offset: -4px;
+  border-radius: 14px;
 }
 
-.faq-btn:hover { background: var(--color-red); }
+.faq-btn:hover {
+  background: var(--color-red-dark);
+  box-shadow: 0 0 24px rgba(var(--color-red-rgb), 0.35);
+}
 
-.faq-btn.whatsapp:hover { background: #1ebe59; }
+/* WhatsApp green, on purpose: it is the one colour on the page that is not ours
+   to restyle — people look for it. */
+.faq-btn.whatsapp:hover {
+  background: var(--color-whatsapp-dark);
+  box-shadow: 0 0 24px rgba(var(--color-whatsapp-rgb), 0.35);
+}
 
-/* ---- Variants -------------------------------------------------------------- */
+/* ---- Variants ------------------------------------------------------------ */
 
 .faq-item.open {
-  border-color: var(--color-navy);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  border-color: rgba(var(--color-red-rgb), 0.45);
 }
 
-.faq-btn.whatsapp { background: var(--color-whatsapp); }
+.faq-item.open::before { opacity: 1; }
 
-/* ---- Animations ------------------------------------------------------------ */
-
-@keyframes faq-open {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
+.faq-item.open .faq-arrow {
+  transform: rotate(45deg);
 }
 
-/* ---- Responsive ------------------------------------------------------------ */
+.faq-item.open .faq-answer-wrap {
+  grid-template-rows: 1fr;
+}
 
-/* Was 600px. Only the padding and the title's font-size change here, so moving
-   it to the nearest allowed breakpoint shifts nothing structural — the heading
-   simply stays one step larger between 561px and 600px. */
+.faq-btn.whatsapp {
+  background: var(--color-whatsapp);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
 @media (max-width: 560px) {
-  .faq-section { padding: 50px 20px; }
+  .faq-section { padding: 64px 20px; }
 
-  .faq-title { font-size: 1.5rem; }
+  .faq-title { font-size: 1.7rem; }
+
+  .faq-question { padding: 16px 18px; }
+
+  .faq-answer p { padding: 0 18px 16px; }
+
+  /* One under the other: side by side at this width each button is narrower
+     than its own label. */
+  .faq-contact-btns { flex-direction: column; }
 }
 
-@media (max-width: 768px) {
-  .faq-section { margin-top: 40px; }
-}
+/* ---- Reduced motion ------------------------------------------------------ */
 
-/* ---- Dark mode ------------------------------------------------------------- */
-
-@media (prefers-color-scheme: dark) {
-  .faq-section { background: var(--color-bg-dark); }
-
-  .faq-title { color: var(--color-text-dark); }
-
-  .faq-item { background: var(--color-navy); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
-
-  .faq-item.open { border-color: var(--color-blue); }
-
-  .faq-question { color: var(--color-text-dark); }
-
-  .faq-question:hover { background: var(--color-bg-dark); }
-
-  .faq-item.open .faq-question { background: var(--color-bg-dark); }
-
-  .faq-answer p { color: var(--color-text-faint); }
-
-  .faq-contact { background: var(--color-navy); }
-
-  .faq-contact p { color: var(--color-text-faint); }
+@media (prefers-reduced-motion: reduce) {
+  .faq-item::before,
+  .faq-arrow,
+  .faq-answer-wrap {
+    transition: none;
+  }
 }

@@ -1,0 +1,30 @@
+/* ==========================================================
+   Section pill — the small label above a section's title
+
+   One class for what used to be five near-identical copies of
+   the same twelve declarations: .category-tag, .whyus-tag,
+   .calc-tag, .proj-tag and .faq-tag. Every one of them on the
+   home page is the same purple pill — red is reserved for the
+   title accent, the CTAs and the card hovers — so the only
+   difference between the five was the selector.
+
+   inline-flex rather than inline-block: two of the five carry a
+   Lucide icon ahead of the words (the project calculator's crown,
+   and any that follow), and the gap below is what spaces it. With
+   text alone it behaves exactly as inline-block did.
+   ========================================================== */
+
+.section-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(var(--color-purple-rgb), 0.18);
+  border: 1px solid rgba(var(--color-purple-rgb), 0.35);
+  color: var(--color-purple-soft);
+  padding: 6px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 18px;
+}
