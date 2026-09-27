@@ -13,7 +13,13 @@
 
 /* 2. Layout */
 @import './layout/_grid.css';
-@import './layout/_header.css';
+/* The navbar system, in the order the rules had inside the old _header.css:
+   the shared focus ring lives in _navbar.css and has to stay ahead of the
+   drawer's own :hover rules. */
+@import './layout/_navbar.css';
+@import './layout/_nav-search.css';
+@import './layout/_nav-drawer.css';
+@import './layout/_ticker.css';
 @import './layout/_footer.css';
 
 /* 3. Reusable components */
@@ -27,6 +33,8 @@
 @import './features/_admin.css';
 @import './features/_auth.css';
 @import './features/_calculator.css';
+/* the in-page search field sits above a category's product grid */
+@import './features/_product-search.css';
 @import './features/_catalog.css';
 @import './features/_cart.css';
 @import './features/_orders.css';
