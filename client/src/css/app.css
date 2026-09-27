@@ -28,6 +28,7 @@
 @import './components/_notifications.css';
 @import './components/_loading.css';
 @import './components/_reveal.css';
+@import './components/_product-card.css';
 
 /* 4. Feature modules */
 @import './features/_admin.css';
@@ -35,7 +36,18 @@
 @import './features/_calculator.css';
 /* the in-page search field sits above a category's product grid */
 @import './features/_product-search.css';
-@import './features/_catalog.css';
+/* What used to be features/_catalog.css, in the order its rules had inside it,
+   because that order is the cascade. _product-gallery.css after
+   _product-page.css is the one place it matters: the gallery owns the two
+   .product-page-image* rules the old file declared in both sections. */
+@import './features/_category-grid.css';
+@import './features/_product-page.css';
+@import './features/_product-options.css';
+@import './features/_product-gallery.css';
+@import './features/_breadcrumb.css';
+@import './features/_related-products.css';
+@import './features/_products-toolbar.css';
+@import './features/_product-reviews.css';
 @import './features/_cart.css';
 @import './features/_orders.css';
 @import './features/_wishlist.css';

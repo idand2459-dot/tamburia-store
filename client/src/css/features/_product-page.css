@@ -1,0 +1,242 @@
+/* ==========================================================
+   Product page — the single-product detail view
+
+   The image area is features/_product-gallery.css, the size /
+   colour / variant pickers are features/_product-options.css,
+   and the trail above the title is features/_breadcrumb.css.
+   The WhatsApp share button sits here because it is one of this
+   page's two actions, next to "add to cart".
+   ========================================================== */
+
+.product-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.product-page-back {
+  margin-bottom: 24px;
+}
+
+.product-page-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+.product-page-no-image {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-faint);
+  font-size: 1rem;
+}
+
+.product-page-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* the two .product-page-name rules of the old file, folded into one */
+.product-page-name {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.3;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+}
+
+.product-page-sku {
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.product-page-sku span {
+  font-weight: 600;
+  color: #666;
+}
+
+.product-page-price {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-red);
+}
+
+/* the "from" prefix when a product's price depends on the chosen variant */
+.price-from {
+  font-size: 0.75rem;
+  color: #999;
+  font-weight: 400;
+  margin-right: 4px;
+}
+
+.product-page-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 20px;
+  width: fit-content;
+}
+
+.stock-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.product-page-description h3 {
+  font-size: 1rem;
+  color: var(--color-text);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.product-page-description p {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  line-height: 1.7;
+}
+
+.product-page-actions {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  margin-top: 8px;
+}
+
+/* The two .product-page-add-btn rules of the old file, folded into one. The
+   second only restated the transition with !important so it would beat the
+   first; merged, nothing competes — no other rule in the stylesheet sets a
+   transition on this button — so the !important is gone with it. */
+.product-page-add-btn {
+  padding: 16px;
+  background: var(--color-navy);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Segoe UI', sans-serif;
+  transition: background 0.2s, transform 0.15s;
+  margin-top: 8px;
+}
+
+.product-page-actions .product-page-add-btn {
+  flex: 1;
+  margin-top: 0;
+}
+
+.product-share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  background: #f0fff4;
+  color: var(--color-whatsapp);
+  border: 2px solid var(--color-whatsapp);
+  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+
+/* ---- States ------------------------------------------------------------- */
+
+.product-page-add-btn:hover:not(.disabled) {
+  background: var(--color-red);
+}
+
+.product-page-add-btn.disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* the confirmation flash after adding. !important because :hover:not(.disabled)
+   above is one specificity step higher and the pointer is still over the button
+   at the moment this class goes on. */
+.product-page-add-btn.added {
+  background: var(--color-green) !important;
+  transform: scale(1.02);
+}
+
+.product-share-btn:hover {
+  background: var(--color-whatsapp);
+  color: white;
+}
+
+/* ---- Variants ----------------------------------------------------------- */
+
+.product-page-stock.in-stock {
+  background: var(--color-success-bg);
+  color: var(--color-green);
+}
+
+.product-page-stock.out-of-stock {
+  background: var(--color-error-border);
+  color: var(--color-red-dark);
+}
+
+.in-stock .stock-dot {
+  background: var(--color-green);
+}
+
+.out-of-stock .stock-dot {
+  background: var(--color-red-dark);
+}
+
+/* ---- Responsive --------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .product-page-content {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+}
+
+/* ---- Dark mode ---------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .product-page {
+      background: var(--color-bg-dark);
+    }
+
+  .product-page-name {
+      color: var(--color-text-dark);
+    }
+
+  .product-page-description h3 {
+      color: var(--color-text-dark);
+    }
+
+  .product-page-description p {
+      color: var(--color-text-faint);
+    }
+
+  .product-share-btn {
+      background: #0d1f15;
+      border-color: var(--color-whatsapp);
+      color: var(--color-whatsapp);
+    }
+
+  .product-share-btn:hover {
+      background: var(--color-whatsapp);
+      color: white;
+    }
+}

@@ -1,0 +1,61 @@
+/* ==========================================================
+   Breadcrumb — the navigation trail above a product's title
+   ========================================================== */
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.breadcrumb button {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+/* the separator between two crumbs */
+.breadcrumb span {
+  color: #ccc;
+  font-size: 0.78rem;
+}
+
+/* The last crumb, which is text rather than a button. !important because
+   `.breadcrumb span` above matches it too and wins on specificity — it carries
+   an element selector this one does not. */
+.breadcrumb-current {
+  color: var(--color-text-muted) !important;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* ---- States ------------------------------------------------------------- */
+
+.breadcrumb button:hover {
+  color: var(--color-text);
+}
+
+/* ---- Dark mode ---------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .breadcrumb button {
+      color: #666;
+    }
+
+  .breadcrumb button:hover {
+      color: var(--color-text-dark);
+    }
+
+  .breadcrumb-current {
+      color: var(--color-text-faint) !important;
+    }
+}

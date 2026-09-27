@@ -1,0 +1,102 @@
+/* ==========================================================
+   Product reviews — the rating summary and review list on a
+   product page
+
+   The site-wide reviews carousel and the review form are
+   features/_reviews.css; this is only the per-product block.
+   ========================================================== */
+
+.product-reviews {
+  max-width: 1000px;
+  margin: 40px auto 0;
+  padding: 0 20px 20px;
+  border-top: 2px solid var(--color-border-soft);
+  padding-top: 40px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* the inline average beside the title, up in the product details */
+.product-rating-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.product-rating-avg {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.product-rating-count {
+  font-size: 0.82rem;
+  color: #999;
+}
+
+.product-reviews-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.product-reviews-header h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.product-reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.product-review-item {
+  background: white;
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.product-review-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.product-review-text {
+  font-size: 0.92rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ---- Dark mode ---------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .product-reviews {
+      border-top-color: var(--color-surface-dark);
+    }
+
+  .product-reviews-header h2 {
+      color: var(--color-text-dark);
+    }
+
+  .product-rating-avg {
+      color: var(--color-text-dark);
+    }
+
+  .product-review-item {
+      background: var(--color-navy);
+    }
+
+  .product-review-text {
+      color: var(--color-text-faint);
+    }
+}
