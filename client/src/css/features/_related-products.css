@@ -14,6 +14,12 @@
    product meant two things to keep in step, and they had already
    drifted: the real card gained a wishlist button, a subcategory
    line and a variants count that this one never had.
+
+   The one thing the grid does differently here is where it drops
+   a column, and the responsive block at the bottom owns that
+   difference on its own terms — see the note there. Nothing in
+   this file touches .product-grid itself: the category page is
+   the reason that file steps down where it does.
    ========================================================== */
 
 /* ---- Block --------------------------------------------------------------- */
@@ -29,4 +35,32 @@
   font-size: 1.4rem;
   font-weight: var(--font-weight-extrabold);
   color: var(--color-navy);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* Four cards to a row down to 1200px, where the shared grid gives up at 1280.
+   That 1280 is a category page's number: 240px of its width is the subcategory
+   sidebar, so four cards there are narrower than the card's type wants. This
+   page has no sidebar — four cards have the whole 1200px container — so the
+   step down comes later, and all three steps are restated here because these
+   two-class selectors outrank .product-grid's own in every query, including
+   the one at 768 that would otherwise leave three cards on a phone. */
+
+@media (max-width: 1280px) {
+  .product-related .product-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 1200px) {
+  .product-related .product-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+  .product-related .product-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
 }
