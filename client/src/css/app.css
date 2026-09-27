@@ -100,6 +100,10 @@
 @import './features/_about.css';
 @import './features/_contact.css';
 @import './features/_returns.css';
+/* the refund options, the numbered steps and the contact block, split
+   out of _returns.css at the 300-line target; it declares nothing that
+   file does, so it simply follows it */
+@import './features/_returns-steps.css';
 @import './features/_not-found.css';
 @import './features/_faq.css';
 
