@@ -27,7 +27,7 @@ import RelatedProducts from '../features/catalog/product-page/RelatedProducts';
 import Stars from '../features/catalog/product-page/Stars';
 import { averageRating } from '../utils/rating';
 import { selectedPrice, NO_PRICE_LABEL } from '../utils/pricing';
-import { getProducts } from '../services/productService';
+import { getProducts, isAbortError } from '../services/productService';
 import { getReviews } from '../services/reviewService';
 
 const MAX_RECENT = 6;
@@ -105,10 +105,22 @@ function ProductPage({ product, onAddToCart }) {
 
   useEffect(() => () => clearTimeout(addedTimer.current), []);
 
+  /*
+   * המעבר בין שני מוצרים הוא מרוץ בין שתי שליפות, וכאן הוא נסגר משני
+   * צדדיו. AbortController מבטל את הבקשות של המוצר הקודם, כדי שתשובה
+   * איטית שלו לא תדרוס את הנוכחי — הקישורים בתחתית העמוד מחליפים מוצר
+   * בלי לפרק את הרכיב, ולכן זה אינו מקרה קצה אלא הניווט הרגיל כאן.
+   * הריקון שלמטה סוגר את הצד השני של אותו חור: בלעדיו העמוד היה מציג
+   * את הביקורות ואת המוצרים הקשורים של המוצר הקודם, מה-state, כל עוד
+   * הבקשות החדשות בדרך.
+   */
   useEffect(() => {
+    const controller = new AbortController();
+
     setSelectedColor(null); setSelectedSize(null); setAddedToCart(false);
     setQuantity(1); setMissing(null);
     setSelectedVariant(hasVariants ? product.variants[0] : null);
+    setRelatedProducts([]); setReviews([]);
 
     addToRecentlyViewed(product);
     setRecentlyViewed(getRecentlyViewed().filter(p => p.id !== product.id));
@@ -118,17 +130,18 @@ function ProductPage({ product, onAddToCart }) {
     // כדי למצוא ארבעה מוצרים — חמישה מבוקשים כדי שאפשר יהיה להוציא את
     // המוצר הנוכחי ועדיין להישאר עם ארבעה. שתי צורות התשובה של השרת
     // כבר אינן עניינו של העמוד הזה — productService מנרמל אותן.
-    getProducts({ category: product.category, limit: MAX_RELATED + 1 })
+    getProducts({ category: product.category, limit: MAX_RELATED + 1, signal: controller.signal })
       .then(({ products: list }) => {
         setRelatedProducts(list.filter(p => p.id !== product.id).slice(0, MAX_RELATED));
       })
-      // שליפה שנכשלה מסתירה את המקטע. הרשימה אינה מתאפסת בתחילת
-      // ה-effect, ובלי הריקון הזה היו נשארים כאן המוצרים הקשורים של
-      // המוצר הקודם — מקטגוריה אחרת לגמרי.
-      .catch(() => setRelatedProducts([]));
+      // שליפה שנכשלה מסתירה את המקטע. ביטול אינו כישלון, והרשימה
+      // ממילא כבר רוקנה — שם הבעלות עברה לבקשה של המוצר החדש.
+      .catch((err) => { if (!isAbortError(err)) setRelatedProducts([]); });
 
-    getReviews({ type: 'product', productId: product.id })
+    getReviews({ type: 'product', productId: product.id, signal: controller.signal })
       .then(setReviews).catch(() => {});
+
+    return () => controller.abort();
   }, [product.id]);
 
   /** מחזיר את שם הבורר הראשון שחסרה בו בחירה, או null. */
