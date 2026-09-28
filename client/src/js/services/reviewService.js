@@ -6,12 +6,12 @@
  * דפוס קטן של productService: בניית query, JSON, ברירת מחדל שפויה
  * כשאין מה להציג. לכן הן כאן.
  *
- * שליחת חוות דעת (POST /api/reviews) נשארה בכוונה ברכיבים. שני
- * הקוראים שלה מתעלמים היום מהתשובה לחלוטין — גם 400 מהשרת מציג
- * "תודה" — וכל פונקציה שתכבד כאן שגיאות תשנה את מה שהמשתמש רואה.
- * זה מסלול הכתיבה, והוא אינו חלק מהאיחוד הזה.
+ * גם השליחה כאן, ועכשיו היא מכבדת שגיאות: קודם שני הקוראים התעלמו
+ * מהתשובה לחלוטין, ולכן 400 מהשרת ("חסר שם הכותב") הציג "תודה"
+ * והביקורת נעלמה בלי שאיש ידע. createReview זורקת, ושני הטפסים
+ * מציגים את ההודעה ונשארים פתוחים עם מה שהלקוח כתב.
  */
-import { buildUrl } from './http';
+import { buildUrl, postJson } from './http';
 
 /**
  * GET /api/reviews — חוות דעת, על החנות או על מוצר.
@@ -29,4 +29,15 @@ export async function getReviews({ type, productId, signal } = {}) {
 export async function getReviewStats({ signal } = {}) {
   const res = await fetch('/api/reviews/stats', { signal });
   return res.json();
+}
+
+/**
+ * POST /api/reviews — שולח חוות דעת חדשה.
+ *
+ * השרת מחזיר 201 והביקורת ממתינה לאישור מנהל. 400 מגיע עם ההסבר
+ * שלו — שם ריק, דירוג מחוץ לטווח, מוצר חסר — וההסבר הזה הוא בדיוק
+ * מה שהטופס צריך להציג.
+ */
+export async function createReview(review, { signal } = {}) {
+  return postJson('/api/reviews', review, { signal });
 }

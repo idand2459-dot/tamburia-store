@@ -21,9 +21,10 @@
  * באותו מסך לא היו אומרים יותר מאחד.
  */
 import { useState, useEffect } from 'react';
-import { X, PenLine, CheckCircle } from 'lucide-react';
+import { X, PenLine, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import Stars from './Stars';
 import { averageRating } from '../../../utils/rating';
+import { useReviewSubmit } from '../../../hooks/useReviewSubmit';
 
 const EMPTY_FORM = { reviewer_name: '', rating: 5, text: '' };
 
@@ -44,6 +45,13 @@ function ProductReviewsSection({ productId, reviews, ref }) {
   const [reviewForm, setReviewForm] = useState(EMPTY_FORM);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
+  /* הניקוי הוא של ההצלחה בלבד: בכישלון הטופס נשאר כמו שהוא, כי מה
+     שהלקוח כתב הוא הדבר היחיד כאן שאי אפשר לשחזר. */
+  const { submitting, error, submit, clearError } = useReviewSubmit(() => {
+    setReviewSubmitted(true);
+    setReviewForm(EMPTY_FORM);
+  });
+
   useEffect(() => {
     setReviewSubmitted(false);
     setShowReviewForm(false);
@@ -53,12 +61,7 @@ function ProductReviewsSection({ productId, reviews, ref }) {
   async function handleReviewSubmit(e) {
     e.preventDefault();
     if (!reviewForm.reviewer_name || !reviewForm.text) return;
-    await fetch('/api/reviews', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...reviewForm, type: 'product', product_id: productId })
-    });
-    setReviewSubmitted(true);
-    setReviewForm(EMPTY_FORM);
+    await submit({ ...reviewForm, type: 'product', product_id: productId });
   }
 
   const avgRating = averageRating(reviews);
@@ -70,6 +73,7 @@ function ProductReviewsSection({ productId, reviews, ref }) {
       return;
     }
     setReviewSubmitted(false);
+    clearError();
     setShowReviewForm(true);
   }
 
@@ -112,7 +116,16 @@ function ProductReviewsSection({ productId, reviews, ref }) {
                     onChange={e => setReviewForm({...reviewForm, text: e.target.value})} required />
                 </div>
               </div>
-              <button type="submit" className="review-submit-btn"><CheckCircle size={18} aria-hidden="true" /> שלח ביקורת</button>
+              {error && (
+                <p className="review-error" role="alert">
+                  <AlertCircle size={15} aria-hidden="true" /> {error}
+                </p>
+              )}
+              <button type="submit" className="review-submit-btn" disabled={submitting}>
+                {submitting
+                  ? <><Loader size={18} aria-hidden="true" /> שולח...</>
+                  : <><CheckCircle size={18} aria-hidden="true" /> שלח ביקורת</>}
+              </button>
             </form>
           )}
         </div>

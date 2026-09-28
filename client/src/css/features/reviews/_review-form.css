@@ -71,6 +71,26 @@
   resize: none;
 }
 
+/* Why the send failed, under the fields and above the button — the last
+   thing read before pressing it again. Red text and an icon, not a filled
+   panel, like .product-picker-error on the product page: the form is still
+   there and still filled in, and nothing about it needs re-framing.
+
+   --color-red-dark and not --color-red: at 0.85rem this is small text, so
+   it owes 4.5:1, and plain red on the wrap's white is 4.17. The dark block
+   at the bottom owes the same debt on navy and pays it with --color-red-soft. */
+.review-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 14px;
+  color: var(--color-red-dark);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+.review-error .lucide { flex-shrink: 0; }
+
 .review-submit-btn {
   padding: 12px 28px;
   background: var(--color-navy);
@@ -133,4 +153,6 @@
   .review-field input, .review-field textarea {
       background: var(--color-bg-dark); border-color: var(--color-surface-dark); color: var(--color-text-dark);
     }
+
+  .review-error { color: var(--color-red-soft); }
 }
