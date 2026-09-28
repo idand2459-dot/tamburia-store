@@ -84,6 +84,15 @@
   transition: border-color var(--transition-fast), color var(--transition-fast);
 }
 
+/* The one chip in the row that is not a category: the products whose price in the
+   database is 0, which the shop cannot sell. Red, like every other "you cannot buy
+   this" mark on the site, and outlined rather than filled while it is idle so it
+   reads as a chip first and a warning second. */
+.admin-cat--alert {
+  border-color: rgba(var(--color-red-rgb), 0.5);
+  color: var(--color-red);
+}
+
 .admin-cat-count {
   padding: 1px 8px;
   border-radius: var(--radius-pill);
@@ -107,6 +116,12 @@
 .admin-cat.is-active {
   border-color: var(--color-navy);
   background: var(--color-navy);
+  color: white;
+}
+
+.admin-cat--alert.is-active {
+  border-color: var(--color-red);
+  background: var(--color-red);
   color: white;
 }
 

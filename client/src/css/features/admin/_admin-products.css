@@ -96,6 +96,22 @@
   color: var(--color-text-subtle);
 }
 
+/* The badge on a product with no price. Loud on purpose: in a list of hundreds
+   this is the thing to find, and the only other way to find it is to read every
+   price. Red and filled, the same red as the chip that filters for it in
+   features/admin/_admin-filters.css. */
+.admin-product-flag {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-red);
+  color: white;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-extrabold);
+}
+
 /* The price, as a button: touching it is what opens the editor. It looks like a
    price and not like a button, with the pencil as the only hint — the price is
    the thing being read here far more often than it is changed. */
@@ -258,6 +274,20 @@
 /* A row that has just been saved, marked for as long as the word shows. */
 .admin-product.is-saved {
   box-shadow: 0 0 0 2px var(--color-green), var(--shadow-sm);
+}
+
+/* A red edge down the start side, so the row is findable while scrolling past
+   without stopping to read the badge. A pseudo-element and not a border: a border
+   would move the grid, and this card is laid out to the pixel on a phone. */
+.admin-product.is-unpriced::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  border-start-start-radius: 16px;
+  border-end-start-radius: 16px;
+  background: var(--color-red);
 }
 
 /* ---- Responsive ---------------------------------------------------------- */

@@ -17,6 +17,7 @@ import { Heart, Trash2, Check, X } from 'lucide-react';
 import Drawer from '../components/Drawer';
 import CATEGORY_ICONS from '../utils/categoryIcons';
 import { getWishlist, toggleWishlist } from '../utils/wishlistUtils';
+import { orderablePrice, NO_PRICE_LABEL } from '../utils/pricing';
 
 /** מציג את חלון המועדפים. */
 function Wishlist({ onClose }) {
@@ -52,6 +53,7 @@ function Wishlist({ onClose }) {
           {items.map(product => {
             const Icon = CATEGORY_ICONS[product.category];
             const inStock = product.in_stock !== false;
+            const price = orderablePrice(product);
             return (
               <li key={product.id} className="wishlist-row">
                 <div className="wishlist-row-well">
@@ -68,7 +70,9 @@ function Wishlist({ onClose }) {
                   <span className="wishlist-row-name">
                     <Link className="wishlist-row-link" to={`/product/${product.id}`}>{product.name}</Link>
                   </span>
-                  <span className="wishlist-row-price">₪{product.price}</span>
+                  <span className={`wishlist-row-price ${price === null ? 'is-no-price' : ''}`}>
+                    {price === null ? NO_PRICE_LABEL : `₪${price}`}
+                  </span>
                   <span className={`wishlist-row-stock ${inStock ? 'is-in' : 'is-out'}`}>
                     {inStock
                       ? <><Check size={13} aria-hidden="true" /> במלאי</>

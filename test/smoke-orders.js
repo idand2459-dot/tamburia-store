@@ -8,6 +8,7 @@ const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
 let passed = 0;
 let failed = 0;
 const created = [];
+const createdProducts = [];
 
 /** רושם תוצאה של בדיקה בודדת. */
 function check(name, condition, actual) {
@@ -215,6 +216,68 @@ async function testUpdate(id) {
   check('עדכון הזמנה שאינה קיימת → 404', missing.status === 404, missing.status);
 }
 
+/**
+ * בודק שהזמנה על מוצר בלי מחיר נדחית.
+ *
+ * במסד יש מוצרים שהמחיר שלהם 0 — מוצר שהמחיר שלו עוד לא הוקלד — ועד
+ * שהבדיקה הזו נוספה אפשר היה להזמין אותם, וגם נוצרו הזמנות כאלה. שתי
+ * הבדיקות כאן הן שני הצדדים של אותו כלל: המחיר שבמסד הוא הקובע לגבי
+ * המוצר, גם כשהבקשה נוקבת בסכום אחר, והמחיר שנשלח הוא מה שיש לגבי
+ * פריט בלי מזהה.
+ *
+ * המוצר נוצר כאן ולא נשען על אחד מ-124 המוצרים שבמסד: בדיקה שתלויה
+ * בנתונים אמיתיים מפסיקה לבדוק ברגע שמישהו יקליד את המחיר.
+ */
+async function testZeroPrice() {
+  console.log('\n── מוצר בלי מחיר');
+
+  const product = await call('POST', '/products', {
+    name: 'מוצר בדיקה בלי מחיר',
+    price: 0,
+    category: 'tools',
+    sku: 'TEST-NO-PRICE',
+  });
+  createdProducts.push(product.body.id);
+  check('נוצר מוצר במחיר 0', product.status === 201 && product.body.price === 0, product.body.price);
+
+  const order = (items) => ({ ...validOrder(), items });
+
+  // הבקשה נוקבת ב-99, המסד אומר 0 — המסד מנצח
+  const lying = await call('POST', '/orders', order([
+    { id: product.body.id, name: 'מוצר בדיקה בלי מחיר', price: 99, quantity: 1 },
+  ]));
+  check('מוצר שהמחיר שלו במסד 0 → 400', lying.status === 400, lying.status);
+  check('ההודעה בעברית ונוקבת בשם המוצר',
+    typeof lying.body.error === 'string' && lying.body.error.includes('מוצר בדיקה בלי מחיר'),
+    lying.body.error);
+  check('לא נוצרה הזמנה', lying.body.id === undefined, lying.body.id);
+
+  const zero = await call('POST', '/orders', order([
+    { id: product.body.id, name: 'מוצר בדיקה בלי מחיר', price: 0, quantity: 1 },
+  ]));
+  check('אותו מוצר במחיר 0 → 400', zero.status === 400, zero.status);
+
+  // פריט בלי מזהה — חבילה של מחשבון — נשפט לפי מה שנשלח
+  const noId = await call('POST', '/orders', order([{ name: 'חבילה', price: 0, quantity: 1 }]));
+  check('פריט בלי מזהה במחיר 0 → 400', noId.status === 400, noId.status);
+
+  // פריט תקין אחד לא מציל הזמנה שיש בה פריט בלי מחיר
+  const mixed = await call('POST', '/orders', order([
+    { id: null, name: 'צבע לבן', price: 100, quantity: 1 },
+    { id: product.body.id, name: 'מוצר בדיקה בלי מחיר', price: 50, quantity: 1 },
+  ]));
+  check('פריט אחד בלי מחיר פוסל את כל ההזמנה', mixed.status === 400, mixed.status);
+
+  // ומצד שני: אחרי שהוקלד מחיר, אותה הזמנה בדיוק עוברת
+  await call('PUT', `/products/${product.body.id}`, { price: 50 });
+  const fixed = await call('POST', '/orders', order([
+    { id: product.body.id, name: 'מוצר בדיקה בלי מחיר', price: 50, quantity: 1 },
+  ]));
+  created.push(fixed.body.id);
+  check('אחרי הקלדת מחיר — 201', fixed.status === 201, fixed.status);
+  check('הסכום מחושב מהפריט (50 + 20 משלוח)', fixed.body.total === 70, fixed.body.total);
+}
+
 /** מוחק את כל מה שהבדיקה יצרה ומאמת שלא נשארו שאריות. */
 async function cleanup() {
   console.log('\n── ניקוי');
@@ -228,6 +291,12 @@ async function cleanup() {
 
   const twice = await call('DELETE', `/orders/${created[0]}`);
   check('מחיקה חוזרת → 404', twice.status === 404, twice.status);
+
+  for (const id of createdProducts) {
+    if (!id) continue;
+    const { status } = await call('DELETE', `/products/${id}`);
+    check(`נמחק מוצר בדיקה ${id}`, status === 200, status);
+  }
 }
 
 /** מריץ את כל הבדיקות לפי הסדר. */
@@ -237,6 +306,7 @@ async function main() {
   await testValidation();
   await testRead(deliveryId);
   await testStatusRules(pickupId, deliveryId);
+  await testZeroPrice();
   await testUpdate(deliveryId);
   await cleanup();
 
@@ -247,5 +317,6 @@ async function main() {
 main().catch(async (err) => {
   console.error('הבדיקה קרסה:', err);
   for (const id of created) if (id) await call('DELETE', `/orders/${id}`).catch(() => {});
+  for (const id of createdProducts) if (id) await call('DELETE', `/products/${id}`).catch(() => {});
   process.exit(1);
 });

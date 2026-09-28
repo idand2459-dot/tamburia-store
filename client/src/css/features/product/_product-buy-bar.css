@@ -62,6 +62,14 @@
   color: var(--color-navy);
 }
 
+/* "מחיר בחנות", the same state the details card shows. Smaller, because it
+   is words where the bar expects a figure. */
+.product-buy-bar-price.is-no-price {
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-bold);
+  color: rgba(var(--color-navy-rgb), 0.65);
+}
+
 /* "× 3", when more than one is being added. Small on purpose: the price is what
    the eye is looking for here. */
 .product-buy-bar-qty {
@@ -89,6 +97,26 @@
 }
 
 /* ---- States ------------------------------------------------------------- */
+
+/* The call link, in place of the add button. Deliberately a second copy of
+   .product-buy-call from features/product/_product-buy.css rather than a shared
+   class: the strip is its own component and already keeps its own copy of the
+   add button, at its own 46px. */
+.product-buy-bar-call {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--color-navy);
+  color: white;
+  font-family: var(--font-family-base);
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+}
 
 .product-buy-bar-add:hover:not(:disabled):not(.is-added) {
   background: var(--color-red-dark);

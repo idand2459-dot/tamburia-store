@@ -113,6 +113,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* "מחיר בחנות" — the price in the database is 0. Quieter and smaller than a
+   figure, as on the product card. There is no add-to-cart button in this list, so
+   the label is the whole change here. */
+.wishlist-row-price.is-no-price {
+  font-size: 0.8rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-subtle);
+}
+
 .wishlist-row-stock {
   display: inline-flex;
   align-items: center;
