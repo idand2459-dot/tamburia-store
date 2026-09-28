@@ -17,18 +17,10 @@ import CategoryBanner from './CategoryBanner';
 import CategoryFilters from './CategoryFilters';
 import CategoryToolbar from './CategoryToolbar';
 import NotFoundPage from '../../pages/NotFoundPage';
-import ProductCard from '../../components/ProductCard';
-import Reveal, { stagger } from '../../components/Reveal';
-import { ProductCardSkeleton } from '../../components/LoadingStates';
+import ProductList from '../../components/ProductList';
 import { PHONES } from '../../utils/storeInfo';
 import { useStore } from '../../context/storeContext';
 import { getProducts, isAbortError } from '../../services/productService';
-
-/* החשיפה של הכרטיסים מהירה מזו של מקטעי עמוד הבית: כאן יש עשרות
-   פריטים ולא ארבעה, וההשהיה נעצרת אחרי שמונה כרטיסים כדי שהשורה
-   האחרונה לא תחכה שנייה שלמה. */
-const CARD_STEP_MS = 40;
-const CARD_MAX_DELAY_MS = 320;
 
 const SORT_OPTIONS = [
   { value: 'default', label: 'ברירת מחדל' },
@@ -145,57 +137,40 @@ function CategoryView() {
               sortOptions={SORT_OPTIONS}
             />
 
-            {loading && (
-              <div className="product-grid">
-                {Array(8).fill(0).map((_, i) => <ProductCardSkeleton key={i} />)}
-              </div>
-            )}
-
-            {!loading && sorted.length === 0 && (
-              <div className="product-grid-empty">
-                <span className="product-grid-empty-icon">
-                  <PackageSearch size={30} strokeWidth={1.5} aria-hidden="true" />
-                </span>
-                <h2>לא נמצאו מוצרים</h2>
-                <p>
-                  {hasFilters
-                    ? 'אף מוצר בקטגוריה הזו לא מתאים לחיפוש ולסינון הנוכחיים.'
-                    : 'הקטגוריה הזו עדיין מתמלאת. בחנות יש הרבה יותר ממה שהאתר מספיק להציג.'}
-                </p>
-                <div className="product-grid-empty-actions">
-                  {/* מוצג רק כשיש מה לנקות: בקטגוריה ריקה באמת הכפתור הזה
-                      לא היה משנה כלום */}
-                  {hasFilters && (
-                    <button type="button" onClick={clearFilters}>
-                      <X size={15} aria-hidden="true" /> נקה חיפוש וסינון
-                    </button>
-                  )}
-                  <a href={`tel:${PHONES.store.tel}`}>
-                    <Phone size={15} aria-hidden="true" /> להתייעצות: {PHONES.store.display}
-                  </a>
+            <ProductList
+              products={sorted}
+              loading={loading}
+              categoryIdFor={() => category.id}
+              onAddToCart={addToCart}
+              wishlistIds={wishlistIds}
+              onToggleWishlist={toggleCardWishlist}
+              reveal
+              emptyState={(
+                <div className="product-grid-empty">
+                  <span className="product-grid-empty-icon">
+                    <PackageSearch size={30} strokeWidth={1.5} aria-hidden="true" />
+                  </span>
+                  <h2>לא נמצאו מוצרים</h2>
+                  <p>
+                    {hasFilters
+                      ? 'אף מוצר בקטגוריה הזו לא מתאים לחיפוש ולסינון הנוכחיים.'
+                      : 'הקטגוריה הזו עדיין מתמלאת. בחנות יש הרבה יותר ממה שהאתר מספיק להציג.'}
+                  </p>
+                  <div className="product-grid-empty-actions">
+                    {/* מוצג רק כשיש מה לנקות: בקטגוריה ריקה באמת הכפתור הזה
+                        לא היה משנה כלום */}
+                    {hasFilters && (
+                      <button type="button" onClick={clearFilters}>
+                        <X size={15} aria-hidden="true" /> נקה חיפוש וסינון
+                      </button>
+                    )}
+                    <a href={`tel:${PHONES.store.tel}`}>
+                      <Phone size={15} aria-hidden="true" /> להתייעצות: {PHONES.store.display}
+                    </a>
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {!loading && sorted.length > 0 && (
-              <div className="product-grid">
-                {sorted.map((product, i) => (
-                  /* הכרטיס עצמו הוא אלמנט החשיפה ולא div סביבו — wrapper
-                     היה הופך לפריט הרשת ושובר את מידות הכרטיס. */
-                  <Reveal
-                    as={ProductCard}
-                    variant="up"
-                    delay={stagger(i, CARD_STEP_MS, CARD_MAX_DELAY_MS)}
-                    key={product.id}
-                    product={product}
-                    categoryId={category.id}
-                    onAddToCart={addToCart}
-                    inWishlist={wishlistIds.includes(product.id)}
-                    onToggleWishlist={toggleCardWishlist}
-                  />
-                ))}
-              </div>
-            )}
+              )}
+            />
           </div>
         </div>
       </main>
