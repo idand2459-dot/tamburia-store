@@ -1,9 +1,19 @@
 /**
  * מאמת ומנרמל את גוף הבקשה ואת פרמטרי החיפוש של דומיין ההזמנות.
- * הסכומים מחושבים כאן מתוך הפריטים ולא נלקחים מגוף הבקשה, כדי
- * שבקשה לא תוכל לקבוע לעצמה מחיר.
+ *
+ * מה שנעשה כאן הוא צורה בלבד: שדה שנשלח הוא מהסוג הנכון, באורך
+ * הנכון, מתוך הרשימה הנכונה. המחירים והסכומים אינם נקבעים כאן.
+ *
+ * הם היו. parseCreate חיבר subtotal ו-total מתוך המחירים שהגיעו בגוף
+ * הבקשה, וההערה הזו הבטיחה ש"בקשה לא תוכל לקבוע לעצמה מחיר" — אבל
+ * המחיר של כל פריט *כן* הגיע מהבקשה, וכל מה שנבדק בו הוא שהוא מספר
+ * אי-שלילי. חיבור נאמן של מספרים שהלקוח בחר אינו הגנה.
+ *
+ * עכשיו המחירים נשלפים מהמסד ב-services/pricing.service.js, והמחיר
+ * שמגיע בבקשה נשמר כאן רק כדי שיהיה מה להשוות אליו שם. אותה סיבה
+ * בדיוק היא שבגללה asItems שומרת את תווית הגרסה: בלעדיה אין לשרת
+ * דרך לדעת איזו גרסה נבחרה, ולכן אין לו ממה לגזור את מחירה.
  */
-const config = require('../config/env');
 const { badRequest } = require('../utils/AppError');
 
 const STATUSES = ['new', 'processing', 'ready_for_pickup', 'shipped', 'completed'];
@@ -180,6 +190,8 @@ function asItems(value) {
     const name = String(item.name ?? '').trim();
     if (!name) throw badRequest(`items[${i}].name חסר`);
 
+    // המחיר שהלקוח ראה על המסך. הוא אינו נכנס להזמנה כמו שהוא —
+    // pricing.service משווה אותו למחיר שבמסד ודוחה הזמנה שהם נפרדו בה.
     const price = Number(item.price);
     if (!Number.isFinite(price) || price < 0) {
       throw badRequest(`items[${i}].price חייב להיות מספר אי-שלילי`);
@@ -197,13 +209,22 @@ function asItems(value) {
       name,
       price: Math.round(price),
       quantity,
+      // תווית הגרסה נשמרת מכאן ואילך. עד עכשיו היא נזרקה, כך שהזמנה
+      // של מוצר עם גרסאות לא תיעדה איזו גרסה נמכרה — ולשרת גם לא
+      // הייתה דרך לתמחר אותה.
+      selectedVariant: item.selectedVariant ? String(item.selectedVariant).trim() : null,
       selectedColor: item.selectedColor ? String(item.selectedColor).trim() : null,
       selectedSize: item.selectedSize ? String(item.selectedSize).trim() : null,
     };
   });
 }
 
-/** מאמת גוף בקשה ליצירת הזמנה ומחשב את הסכומים בשרת. */
+/**
+ * מאמת גוף בקשה ליצירת הזמנה.
+ *
+ * בלי סכומים: subtotal, delivery_fee ו-total נקבעים ב-pricing.service
+ * אחרי שהמחירים נשלפו מהמסד, כי אין דרך לחשב אותם נכון לפני כן.
+ */
 function parseCreate(body = {}) {
   const delivery_method = asDeliveryMethod(body.delivery_method);
   const items = asItems(body.items);
@@ -218,9 +239,6 @@ function parseCreate(body = {}) {
   const customer_name = asTrimmedString(body.customer_name ?? '', 'customer_name', { maxLength: MAX.customer_name });
   if (!customer_name) throw badRequest('חסר שם לקוח');
 
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const delivery_fee = delivery_method === 'delivery' ? config.orders.deliveryFee : 0;
-
   return {
     customer_name,
     customer_phone: asPhone(body.customer_phone),
@@ -229,9 +247,6 @@ function parseCreate(body = {}) {
     delivery_address,
     notes: body.notes == null ? null : (asTrimmedString(body.notes, 'notes') || null),
     items,
-    subtotal,
-    delivery_fee,
-    total: subtotal + delivery_fee,
     status: 'new',
   };
 }

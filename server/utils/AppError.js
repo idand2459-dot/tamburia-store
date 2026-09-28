@@ -21,6 +21,6 @@ const badRequest = (msg, details) => new AppError(400, msg, details);
 const notFound = (msg = 'לא נמצא') => new AppError(404, msg);
 
 /** שגיאת 409 — הפעולה מתנגשת עם המצב הקיים. */
-const conflict = (msg) => new AppError(409, msg);
+const conflict = (msg, details) => new AppError(409, msg, details);
 
 module.exports = { AppError, badRequest, notFound, conflict };

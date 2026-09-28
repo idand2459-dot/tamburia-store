@@ -17,6 +17,7 @@ const Module = require('module');
 const SERVICE_PATH = path.resolve(__dirname, '../server/services/order.service.js');
 const MODEL_PATH = path.resolve(__dirname, '../server/models/order.model.js');
 const MAILER_PATH = path.resolve(__dirname, '../server/services/email/index.js');
+const PRICING_PATH = path.resolve(__dirname, '../server/services/pricing.service.js');
 
 let passed = 0;
 let failed = 0;
@@ -59,7 +60,7 @@ function injectFake(resolvedPath, fakeExports) {
  * digitsOnly מקבל את ההתנהגות האמיתית (השמטת כל מה שאינו ספרה),
  * כי הבדיקה כאן היא שהשירות מעביר הלאה את התוצאה המנורמלת.
  */
-function loadService({ order = {}, mail = {} } = {}) {
+function loadService({ order = {}, mail = {}, pricing = {} } = {}) {
   const Order = {
     findById: spy(null),
     findByPhone: spy([]),
@@ -80,11 +81,17 @@ function loadService({ order = {}, mail = {} } = {}) {
     ...mail,
   };
 
+  /* תמחור שמעביר הלאה את מה שקיבל. תמחור אמיתי שולף מהמסד,
+     והחבילה הזו בודקת את ההחלטות של שירות ההזמנות בלבד. התמחור
+     עצמו נבדק מקצה לקצה ב-smoke-orders, מול מוצרים אמיתיים. */
+  const pricingService = { priceOrder: spy((data) => data), ...pricing };
+
   injectFake(MODEL_PATH, Order);
   injectFake(MAILER_PATH, mailer);
+  injectFake(PRICING_PATH, pricingService);
   delete require.cache[SERVICE_PATH];
 
-  return { service: require(SERVICE_PATH), Order, mailer };
+  return { service: require(SERVICE_PATH), Order, mailer, pricing: pricingService };
 }
 
 /** מריץ פונקציה ומחזיר את השגיאה שנזרקה, או null אם לא נזרקה. */
@@ -115,14 +122,17 @@ async function testCreateOrder() {
   console.log('\n── createOrder');
 
   const created = sampleOrder();
-  const { service, Order, mailer } = loadService({ order: { create: spy(created) } });
+  const { service, Order, mailer, pricing } = loadService({ order: { create: spy(created) } });
 
   const data = { customer_name: 'ישראל ישראלי', items: [{ name: 'צבע', price: 100, quantity: 1 }] };
   const result = await service.createOrder(data);
 
   check('Order.create נקרא פעם אחת', Order.create.calls.length === 1, Order.create.calls.length);
-  check('Order.create קיבל את הנתונים כמו שהם',
+  check('Order.create קיבל את מה שהתמחור החזיר',
     Order.create.calls[0][0] === data, Order.create.calls[0][0]);
+  check('התמחור רץ לפני הכתיבה, על אותם נתונים',
+    pricing.priceOrder.calls.length === 1 && pricing.priceOrder.calls[0][0] === data,
+    pricing.priceOrder.calls.length);
 
   check('מייל לחנות נשלח פעם אחת',
     mailer.sendNewOrderToStore.calls.length === 1, mailer.sendNewOrderToStore.calls.length);
