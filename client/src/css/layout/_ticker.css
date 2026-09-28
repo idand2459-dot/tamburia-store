@@ -112,6 +112,18 @@
   100% { transform: translateX(-50%); }
 }
 
+/* ---- Responsive --------------------------------------------------------- */
+
+/* A phone held sideways has 390–430px of height for the entire page, and this
+   strip is a nice-to-have costing ~34px of it under a navbar that is already
+   fixed. It is the one thing up there that can go without taking a function
+   with it: everything the strip says is also on the page. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .marquee-banner {
+      display: none;
+    }
+}
+
 /* ---- Reduced motion ----------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {

@@ -36,9 +36,26 @@
   padding-left: max(24px, env(safe-area-inset-left, 0px));
   padding-right: max(24px, env(safe-area-inset-right, 0px));
   height: 68px;
-  display: flex;
+  /* Three columns, and the brand sits in the middle one as a real grid item.
+
+     It used to be position: absolute with left: 50%, which takes no space — so
+     it could paint straight over the icon row beside it, and did: at iPhone
+     landscape width (844px) the text links are shown, the left group reaches
+     past the centre, and the heart and "ההזמנות שלי" disappeared behind
+     "טכניק טמבור". Two extra breakpoints existed only to manage that collision.
+
+     1fr auto 1fr keeps the brand optically centred whenever the two side groups
+     are a similar width, and — unlike absolute centring — guarantees that
+     nothing can ever sit on top of it.
+
+     No min-width: 0 on the middle column: the brand is nowrap, so leaving the
+     grid item at its default min-width: auto means the column can never be
+     squeezed below it. If a side group ever outgrew its share, the brand would
+     move off centre rather than be clipped or covered — and the width
+     breakpoints below are set so that it does not come to that. */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -47,21 +64,25 @@
 
 /* ---- Elements ------------------------------------------------------------ */
 
-.navbar-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.navbar-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
+/* flex-end / center / flex-start rather than physical sides: the file is read in
+   an RTL document, where the inline start of .navbar-right is the right edge and
+   the inline end of .navbar-left is the left one. */
 .navbar-right {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+}
+
+.navbar-center {
+  display: flex;
+  justify-content: center;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 /* One rule, no !important: the two extra .navbar-brand blocks that used to sit
@@ -287,6 +308,16 @@
 
 /* ---- Responsive --------------------------------------------------------- */
 
+/* xl — the three page links are the first thing to go, and they go early.
+   Keeping them to 768px meant they were still on screen in iPhone landscape
+   (844px), where they pushed the left group across the centre. They are in the
+   drawer at every width, so nothing becomes unreachable. */
+@media (max-width: 1200px) {
+  .navbar-link--page {
+      display: none;
+    }
+}
+
 @media (max-width: 768px) {
   .navbar {
       height: 60px;
@@ -303,7 +334,10 @@
       gap: 2px;
     }
 
-  .navbar-left .navbar-link {
+  /* The three page links are already gone by here (the xl block above). This is
+     the one that keeps "ההזמנות שלי" as far down as it fits; below this width
+     the drawer is where it lives. */
+  .navbar-link--orders {
       display: none;
     }
 
@@ -313,25 +347,13 @@
     }
 }
 
-/* The brand is absolutely centred, so it can overlap the icon rows once the
-   viewport gets narrow enough. Absolute centring only has room while
-   (width - 24px) / 2 - half the brand >= the wider side group; with the brand
-   at 1.15rem and the left group around 160px that holds from roughly 484px up,
-   so it is dropped below 560px for margin. Static means space-between places
-   the brand instead — very slightly off centre, but it cannot collide. */
-@media (max-width: 560px) {
-  .navbar-center {
-      position: static;
-      left: auto;
-      transform: none;
-      min-width: 0;
-    }
-}
-
-/* Under ~430px even the static row runs out: both side groups plus the brand
-   exceed the width. The home button goes first — the brand already navigates
-   home — and the brand shrinks a step. At 360px that leaves the brand about
-   128px inside 136px of free space. */
+/* Under ~430px the three columns genuinely run out of room: both side groups
+   plus the brand come to more than the width, and grid would let them overflow.
+   This is a fitting problem, not the overlap one — the 560px block that used to
+   sit here was purely about the collision and went with the absolute centring.
+   The home button goes first, because the brand already navigates home, and the
+   brand drops a step. At 360px that leaves roughly 127px of brand inside 256px
+   of free space. */
 @media (max-width: 430px) {
   .navbar-brand,
   .navbar-brand span {
@@ -340,5 +362,16 @@
 
   .navbar-home-btn {
       display: none;
+    }
+}
+
+/* A phone held sideways: 390–430px of height for the whole page. Not a width
+   breakpoint, because the same 844px width on a tablet has plenty of height and
+   wants the full bar. Every fixed row up here is costing content, so the navbar
+   gives back 4px and the ticker below it goes away entirely
+   (layout/_ticker.css). The floating buttons shrink in their own partials. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .navbar {
+      height: 56px;
     }
 }

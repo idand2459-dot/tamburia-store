@@ -207,16 +207,19 @@ function Navbar() {
         </div>
         <div className="navbar-left">
           <button className="navbar-icon-btn" onClick={() => setSearchOpen(true)} title="חיפוש" aria-label="חיפוש"><Search size={20} aria-hidden="true" /></button>
-          <button className="navbar-link" onClick={openOrderHistory} title="ההזמנות שלי"><ClipboardList size={18} aria-hidden="true" /> ההזמנות שלי</button>
+          {/* --orders ו---page נבדלים במחלקה כי הם נעלמים ברוחב אחר:
+              שלושת קישורי העמודים יורדים מתחת ל-1200px, וההזמנות שלי
+              מחזיק עד 768px. שניהם נמצאים גם במגירה. */}
+          <button className="navbar-link navbar-link--orders" onClick={openOrderHistory} title="ההזמנות שלי"><ClipboardList size={18} aria-hidden="true" /> ההזמנות שלי</button>
           <button className="navbar-icon-btn" onClick={openWishlist} title="רשימת משאלות" aria-label={`רשימת משאלות${wishlistCount > 0 ? ` — ${wishlistCount} מוצרים` : ''}`}>
             <Heart size={20} aria-hidden="true" />
             {wishlistCount > 0 && (
               <span className="navbar-wishlist-count">{wishlistCount}</span>
             )}
           </button>
-          <button className={`navbar-link ${currentPage === 'about' ? 'active' : ''}`} onClick={() => handleNav('/about')}>אודות</button>
-          <button className={`navbar-link ${currentPage === 'contact' ? 'active' : ''}`} onClick={() => handleNav('/contact')}>צור קשר</button>
-          <button className={`navbar-link ${currentPage === 'returns' ? 'active' : ''}`} onClick={() => handleNav('/returns')}>החזרים</button>
+          <button className={`navbar-link navbar-link--page ${currentPage === 'about' ? 'active' : ''}`} onClick={() => handleNav('/about')}>אודות</button>
+          <button className={`navbar-link navbar-link--page ${currentPage === 'contact' ? 'active' : ''}`} onClick={() => handleNav('/contact')}>צור קשר</button>
+          <button className={`navbar-link navbar-link--page ${currentPage === 'returns' ? 'active' : ''}`} onClick={() => handleNav('/returns')}>החזרים</button>
 
           {/* כפתור עגלה — תמיד מוצג */}
           <button className="navbar-cart-btn" onClick={() => navigate('/cart')} aria-label="עגלת קניות">

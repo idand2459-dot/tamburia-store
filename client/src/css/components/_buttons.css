@@ -129,3 +129,31 @@
       right: 20px;
     }
 }
+
+/* A phone held sideways: the whole page is 390–430px tall, and a 58px circle
+   plus a 44px one stacked above it take a quarter of that column. Smaller, and
+   closer together, so they stay reachable without owning the corner. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .whatsapp-float {
+      bottom: 16px;
+      right: 16px;
+      width: 46px;
+      height: 46px;
+    }
+
+  .whatsapp-float svg {
+      width: 24px;
+      height: 24px;
+    }
+
+  .whatsapp-tooltip {
+      display: none;
+    }
+
+  .scroll-to-top {
+      bottom: 70px;
+      right: 16px;
+      width: 38px;
+      height: 38px;
+    }
+}

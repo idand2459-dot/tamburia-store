@@ -87,3 +87,25 @@
       bottom: 28px;
     }
 }
+
+/* A phone held sideways: 390–430px of page height, but 844px of width, so this
+   is still the labelled pill from the top of the file and not the circle above —
+   the md block does not apply at that width.
+
+   min-width paired with the height query on purpose. Shrinking by width/height
+   would squash the pill, and shrinking by padding would break the circle that
+   the md block makes below 769px; each form needs its own smaller. Below 769px
+   and short, the circle is already the compact form and is left alone.
+
+   top comes down as well: 118px was navbar (68) + ticker (34) + margin, and up
+   here the navbar is 56px and the ticker is hidden. */
+@media (max-height: 500px) and (orientation: landscape) and (min-width: 769px) {
+  .paint-calc-float-btn {
+      top: 66px;
+      padding: 8px 12px;
+    }
+
+  .paint-calc-float-label {
+      font-size: 0.78rem;
+    }
+}
