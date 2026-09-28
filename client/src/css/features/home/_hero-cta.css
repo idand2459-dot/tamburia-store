@@ -1,0 +1,162 @@
+/* ==========================================================================
+   Hero actions — the buttons between the subtitle and the stats bar
+
+   Split out of features/home/_hero.css, which was at the 400-line ceiling. The
+   row is a component in its own right: a pair of buttons that lead to two
+   sections further down the same page.
+
+   Two rules about these buttons stay behind in _hero.css, and both are lists
+   that cover the whole Hero rather than this component:
+
+     .hero-badge, .hero-title, .hero-sub, .hero-cta, .hero-stats
+         the one shared `animation: hero-fade-up`, so the travel, the duration
+         and the fill mode are written once for the whole stagger. Only the two
+         delays are here.
+
+     the same five under prefers-reduced-motion
+         `animation: none`, for the same reason.
+
+   Import after _hero.css. Nothing here depends on that order today, but the
+   stagger's keyframes and the shared animation shorthand are defined there.
+   ========================================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+/* The row, and the reason it exists at all.
+
+   .hero-cta is inline-flex and so is .hero-stats, so with nothing between them
+   the two were consecutive inline-level boxes and the browser did what it should
+   with those: it put them on one line. Both fit inside .hero-inner's 820px on a
+   desk, so the button ended up wedged against the end of the glass bar instead
+   of standing on its own. A phone never showed it, because at that width there
+   was never room for both.
+
+   A block-level flex row is the fix, and it is also where the second button
+   goes. The margin below the buttons moved here with them: the gap before the
+   stats belongs to the row, not to one of its children. */
+.hero-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 40px;
+}
+
+/* The primary action. Red, because red means "do this" everywhere on the site
+   and nothing else in this band claims it — the badge is purple and the stats
+   are glass.
+
+   The arrow points down rather than sideways: it goes to a section further down
+   this same page, not to another one, and it is the only thing that says so
+   before the tap. */
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 0 30px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-red);
+  color: white;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(var(--color-red-rgb), 0.35);
+  transition: background var(--transition-fast), transform var(--transition-fast),
+    box-shadow var(--transition-fast), border-color var(--transition-fast);
+  animation-delay: 0.54s;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* a small nudge on the icon, so the button says "down" without moving itself */
+.hero-cta svg {
+  transition: transform var(--transition-fast);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+/* Hover only where there is a real pointer: on a phone :hover sticks after the
+   tap, and the button would stay lifted while the page scrolls away under it. */
+@media (hover: hover) and (pointer: fine) {
+  .hero-cta:hover {
+      background: var(--color-red-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(var(--color-red-rgb), 0.45);
+    }
+
+  .hero-cta:hover svg {
+      transform: translateY(3px);
+    }
+
+  /* After the rule above on purpose. Both are (0,2,0), so source order is the
+     only thing keeping the outlined button from filling red on hover. Its base
+     is in Variants below — States come first in a partial whether or not the
+     variant would read more naturally next to it. */
+  .hero-cta--ghost:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.75);
+      box-shadow: none;
+    }
+}
+
+.hero-cta:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 3px;
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+/* The second action, and only on a desk — the md block hides it. On a phone the
+   floating paint-calculator button is already on screen, and a second button up
+   here would push the stats bar further down over the tools in the photograph,
+   which is the opposite of what the phone layout is for.
+
+   Outlined and not filled, because there is one primary action in this band and
+   it is red. The border alone carries it over the vignette: no glass fill and no
+   blur, so it stays out of the way of the photograph behind it.
+
+   It keeps .hero-cta's size, radius and type, so the two read as a pair.
+
+   The half-step delay is deliberate. Every other gap in the stagger is 0.18s;
+   these two are 0.54s and 0.63s, so the pair arrives as one beat of the sequence
+   instead of stretching it and pushing the stats bar past a second. */
+.hero-cta--ghost {
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  box-shadow: none;
+  animation-delay: 0.63s;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* md, the same 768px the rest of the Hero turns at. */
+@media (max-width: 768px) {
+  .hero-actions {
+      margin-bottom: 28px;
+    }
+
+  .hero-cta {
+      min-height: 50px;
+      padding: 0 24px;
+    }
+
+  /* one button on a phone, as before: the floating one covers the calculator */
+  .hero-cta--ghost {
+      display: none;
+    }
+}
+
+/* ---- Reduced motion ------------------------------------------------------ */
+
+/* The entry animation is switched off in _hero.css, with the other four Hero
+   elements. What is left for this file is the hover: the lift and the nudge. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-cta,
+  .hero-cta svg {
+      transition: none;
+    }
+}

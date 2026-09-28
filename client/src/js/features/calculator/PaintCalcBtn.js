@@ -3,6 +3,8 @@
  */
 import { useState, useEffect } from 'react';
 import { PaintRoller } from 'lucide-react';
+import scrollToSection from '../../utils/scrollToSection';
+import { PAINT_CALC_SELECTOR } from '../../utils/sections';
 
 /** מציג את הכפתור הצף של מחשבון הצבע. */
 function PaintCalcBtn() {
@@ -18,18 +20,12 @@ function PaintCalcBtn() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  /** גולל אל מחשבון הצבע. */
-  function scrollToCalc() {
-    const el = document.querySelector('.paint-calc-section');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-
   if (!visible) return null;
 
   return (
     <button
       className="paint-calc-float-btn"
-      onClick={scrollToCalc}
+      onClick={() => scrollToSection(PAINT_CALC_SELECTOR)}
       title="מחשבון צבע"
       aria-label="מחשבון צבע"
     >

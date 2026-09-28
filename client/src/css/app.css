@@ -125,6 +125,10 @@
 @import './features/reviews/_review-form.css';
 @import './features/admin/_admin-reviews.css';
 @import './features/home/_hero.css';
+/* the Hero's button row, split out of _hero.css at the line ceiling. After it:
+   .hero-cta--ghost and .hero-cta set the same properties at the same
+   specificity, and the shared entry animation is declared in _hero.css */
+@import './features/home/_hero-cta.css';
 /* the photo band at the top of a category page. Where features/_category-themes.css
    used to be: that file painted every category page in one saturated colour and
    is gone — a category's atmosphere is now this banner alone. */

@@ -4,7 +4,7 @@
  */
 import { useState, useEffect, useRef, Fragment } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Crown, Star, ArrowDown } from 'lucide-react';
+import { Crown, Star, ArrowDown, PaintRoller } from 'lucide-react';
 import CategoryPage from './CategoryPage';
 import WhyUs from '../components/WhyUs';
 import PaintCalculator from '../features/calculator/PaintCalculator';
@@ -15,6 +15,8 @@ import FAQ from './FAQ';
 import Reveal from '../components/Reveal';
 import { useStore } from '../context/storeContext';
 import { formatRating } from '../utils/rating';
+import scrollToSection from '../utils/scrollToSection';
+import { CATEGORIES_SELECTOR, PAINT_CALC_SELECTOR } from '../utils/sections';
 import heroWide from '../../assets/images/sections/hero-tools-1916.webp';
 import heroMid from '../../assets/images/sections/hero-tools-1600.webp';
 import heroMobile from '../../assets/images/sections/hero-tools-mobile-900.webp';
@@ -34,18 +36,10 @@ function useScrollToSection(state) {
     const selector = state?.scrollTo;
     if (!selector) return undefined;
 
-    const frame = requestAnimationFrame(() => {
-      const el = document.querySelector(selector);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+    const frame = requestAnimationFrame(() => scrollToSection(selector));
     return () => cancelAnimationFrame(frame);
   }, [state]);
 }
-
-/* הרשת אינה עמוד נפרד אלא מקטע כאן, ולכן הכפתור גולל ולא מנווט. אותו
-   סלקטור ואותו scrollIntoView שבהם PaintCalcBtn גולל אל מחשבון הצבע
-   ו-NotFoundPage מבקש את הקטגוריות. */
-const CATEGORIES_SELECTOR = '.category-section';
 
 /** מציג את עמוד הבית. */
 function HomePage() {
@@ -69,12 +63,6 @@ function HomePage() {
     // לא יירה לעולם. complete מכסה גם את המקרה הזה.
     if (heroImgRef.current?.complete) setHeroLoaded(true);
   }, []);
-
-  /** גולל אל רשת הקטגוריות. */
-  function scrollToCategories() {
-    const el = document.querySelector(CATEGORIES_SELECTOR);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
 
   useEffect(() => {
     let cancelled = false;
@@ -132,10 +120,30 @@ function HomePage() {
           <div className="hero-badge"><Crown size={14} aria-hidden="true" /> מאז 1991 · פתח תקווה</div>
           <h1 className="hero-title">כל מה שצריך לבית<br/><span className="hero-accent">במקום אחד</span></h1>
           <p className="hero-sub">מוצרי צביעה · אינסטלציה · כלי עבודה · ממנעולים ועד גינה</p>
-          <button type="button" className="hero-cta" onClick={scrollToCategories}>
-            לכל הקטגוריות
-            <ArrowDown size={20} aria-hidden="true" />
-          </button>
+          {/* שני הכפתורים בשורה משל עצמם. קודם הם היו אלמנטים inline-flex
+              ישר מתחת לתת-הכותרת, ולכן חלקו שורה עם סרגל הסטטיסטיקות
+              שגם הוא inline — במסך רחב שניהם נכנסו ל-820px של .hero-inner
+              והכפתור נראה תקוע לצד הסרגל. עוטף block פותר את זה בלי
+              לגעת בסרגל.
+              המשני מוצג רק במסך רחב (features/home/_hero.css): בטלפון
+              יש כבר כפתור צף למחשבון הצבע, ושני כפתורים שם רק דוחקים
+              את הסטטיסטיקות על הכלים שבתמונה. */}
+          <div className="hero-actions">
+            <button
+              type="button"
+              className="hero-cta"
+              onClick={() => scrollToSection(CATEGORIES_SELECTOR)}>
+              לכל הקטגוריות
+              <ArrowDown size={20} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="hero-cta hero-cta--ghost"
+              onClick={() => scrollToSection(PAINT_CALC_SELECTOR)}>
+              מחשבון צבע
+              <PaintRoller size={20} aria-hidden="true" />
+            </button>
+          </div>
           {/* המפרידים נבנים מתוך המערך, כדי שלא יישאר קו תלוי
               כשפריט הדירוג מוסתר */}
           <div className="hero-stats">
