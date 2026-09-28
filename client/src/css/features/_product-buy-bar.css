@@ -36,8 +36,13 @@
   z-index: 995;
   align-items: center;
   gap: 12px;
+  /* the bar spans the screen, so it takes the side insets as well as the bottom
+     one; the fallbacks matter because env() with no fallback invalidates the
+     whole calc() where the variable is unknown */
   padding: 10px 16px;
-  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
   background: var(--color-surface);
   border-top: 1px solid rgba(var(--color-navy-rgb), 0.1);
   box-shadow: 0 -4px 20px rgba(var(--color-navy-rgb), 0.1);
@@ -121,15 +126,15 @@
      that read it sit on other elements. */
   body.has-buy-bar {
       --buy-bar-height: 66px;
-      padding-bottom: calc(var(--buy-bar-height) + env(safe-area-inset-bottom));
+      padding-bottom: calc(var(--buy-bar-height) + env(safe-area-inset-bottom, 0px));
     }
 
   body.has-buy-bar .whatsapp-float {
-      bottom: calc(var(--buy-bar-height) + env(safe-area-inset-bottom) + 16px);
+      bottom: calc(var(--buy-bar-height) + env(safe-area-inset-bottom, 0px) + 16px);
     }
 
   body.has-buy-bar .scroll-to-top {
-      bottom: calc(var(--buy-bar-height) + env(safe-area-inset-bottom) + 86px);
+      bottom: calc(var(--buy-bar-height) + env(safe-area-inset-bottom, 0px) + 86px);
     }
 }
 

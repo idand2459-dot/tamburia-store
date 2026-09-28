@@ -224,11 +224,18 @@
 /* Bottom bar
    -------------------------------------------------------------------------- */
 
+/* The last strip on the page, so with viewport-fit=cover it is what the home
+   indicator would cover. The bottom inset is added to its own padding rather
+   than max()'d against it: this is the floor of the document and the line has
+   to clear the indicator, not merely avoid it. */
 .footer-bottom {
   position: relative;
   z-index: 1;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   padding: 18px 40px;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(40px, env(safe-area-inset-left, 0px));
+  padding-right: max(40px, env(safe-area-inset-right, 0px));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -303,6 +310,9 @@
       flex-direction: column;
       gap: 6px;
       padding: 16px 20px;
+      padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      padding-left: max(20px, env(safe-area-inset-left, 0px));
+      padding-right: max(20px, env(safe-area-inset-right, 0px));
     }
 
   .footer-bottom-sep { display: none; }

@@ -336,7 +336,7 @@
      to the end to save is exactly the friction this redesign is removing. */
   .admin-form-buttons {
     position: sticky;
-    bottom: calc(76px + env(safe-area-inset-bottom, 0));
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
     z-index: 5;
     flex-direction: column;
     gap: 8px;
