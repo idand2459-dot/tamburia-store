@@ -166,39 +166,11 @@
   animation-delay: 0.36s;
 }
 
-/* The one action in the Hero. Red, because red means "do this" everywhere on
-   the site and nothing else in this band claims it — the badge is purple and
-   the stats are glass.
-
-   The arrow points down rather than sideways: it goes to a section further down
-   this same page, not to another one, and it is the only thing that says so
-   before the tap. */
-.hero-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 54px;
-  padding: 0 30px;
-  margin-bottom: 40px;
-  border: none;
-  border-radius: var(--radius-pill);
-  background: var(--color-red);
-  color: white;
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-h3);
-  font-weight: var(--font-weight-bold);
-  cursor: pointer;
-  box-shadow: 0 8px 24px rgba(var(--color-red-rgb), 0.35);
-  transition: background var(--transition-fast), transform var(--transition-fast),
-    box-shadow var(--transition-fast);
-  animation-delay: 0.54s;
-}
-
-/* a small nudge on the arrow, so the button says "down" without moving itself */
-.hero-cta svg {
-  transition: transform var(--transition-fast);
-}
-
+/* The buttons that sit between the subtitle and this bar are their own partial,
+   features/home/_hero-cta.css: .hero-actions, .hero-cta and .hero-cta--ghost.
+   Two rules about them stay in this file, and both are lists that cover the
+   whole Hero rather than the button row: the shared `animation: hero-fade-up`
+   above, and its `animation: none` twin under prefers-reduced-motion below. */
 .hero-stats {
   display: inline-flex;
   align-items: center;
@@ -255,27 +227,6 @@
   flex-shrink: 0;
 }
 
-/* ---- States -------------------------------------------------------------- */
-
-/* Hover only where there is a real pointer: on a phone :hover sticks after the
-   tap, and the button would stay lifted while the page scrolls away under it. */
-@media (hover: hover) and (pointer: fine) {
-  .hero-cta:hover {
-      background: var(--color-red-dark);
-      transform: translateY(-2px);
-      box-shadow: 0 12px 30px rgba(var(--color-red-rgb), 0.45);
-    }
-
-  .hero-cta:hover svg {
-      transform: translateY(3px);
-    }
-}
-
-.hero-cta:focus-visible {
-  outline: 3px solid white;
-  outline-offset: 3px;
-}
-
 /* ---- Animations ---------------------------------------------------------- */
 
 /* One settle on load, never again. */
@@ -329,12 +280,6 @@
       font-size: 2.2rem;
     }
 
-  .hero-cta {
-      min-height: 50px;
-      padding: 0 24px;
-      margin-bottom: 28px;
-    }
-
   /* An even 2×2 rather than a wrapped flex row. With the dividers hidden, four
      stats of unequal width wrapped three-and-one, which read as a mistake.
      inline-grid and not grid, so the bar still hugs its content and is centred
@@ -380,12 +325,6 @@
   .hero-cta,
   .hero-stats {
       animation: none;
-    }
-
-  /* the arrow's nudge goes with them */
-  .hero-cta,
-  .hero-cta svg {
-      transition: none;
     }
 
   /* with the animation off, the base opacity: 0 above would hide the image for
