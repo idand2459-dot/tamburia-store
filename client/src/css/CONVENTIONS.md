@@ -13,6 +13,26 @@ with these rules, follow these rules and say so in the report.
   `components/` (reusable UI used in many places: buttons, modals,
   reveal, product card), `features/` (page- or feature-specific
   sections).
+- **`features/` is grouped by domain, one subfolder per domain.** A
+  feature partial lives in the folder for the thing it belongs to, and
+  nothing sits loose in `features/` itself:
+
+  | folder | what it holds |
+  |---|---|
+  | `admin/` | the admin panel, one partial per tab or control, plus the admin login |
+  | `home/` | the home page's bands, top to bottom |
+  | `calculators/` | the paint and project calculators |
+  | `category/` | a category page: banner, layout, filters, toolbar |
+  | `product/` | a product page, outermost first |
+  | `cart/` | the cart flow, the order lookup and the wishlist |
+  | `reviews/` | the review form, opened from both the home page and a product page |
+  | `pages/` | the static pages: about, contact, returns, 404 |
+
+  A partial that belongs to a new domain gets a **new folder**, not a
+  loose file at the top of `features/`. A partial shared by two domains
+  goes in the folder of the domain that owns the component, or in its own
+  folder when neither does (that is why `reviews/` exists) — and if it is
+  reusable UI rather than a feature, it belongs in `components/`.
 - When a component is redesigned, it gets its own partial. New rules are
   never appended to a large shared file.
 
@@ -76,6 +96,11 @@ would, keep the original value and note it.
 
 ## 7. Imports
 - `app.css` only imports; no rules in it.
-- Import order = cascade order. New partials go in the right ITCSS block.
-  A partial that must override another is imported after it, with a
-  one-line comment saying why.
+- Import order = cascade order. New partials go in the right ITCSS block,
+  at the path their domain folder gives them (§1). A partial that must
+  override another is imported after it, with a one-line comment saying
+  why.
+- Grouping `features/` into folders did **not** reorder the imports, and
+  neither should a later move: cascade order is behaviour. Files from one
+  folder are deliberately non-adjacent in `app.css` where the cascade
+  needs them apart, and the comments there say why.

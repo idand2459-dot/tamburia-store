@@ -2,7 +2,7 @@
    Admin phone navigation — the fixed bottom bar and the sheet
    its "more" button opens
 
-   Split out of features/_admin-layout.css, which keeps the
+   Split out of features/admin/_admin-layout.css, which keeps the
    header and the wide-screen tab row. Both navigations are in
    the markup at once and CSS picks between them, so turning the
    phone does not remount anything: this file's .admin-bar is

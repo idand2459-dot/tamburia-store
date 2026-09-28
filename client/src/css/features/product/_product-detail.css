@@ -2,13 +2,13 @@
    Product detail — what the white card beside the gallery says
 
    The card itself (and the page's two columns) is
-   features/_product-page.css. This file is its contents, top to
+   features/product/_product-page.css. This file is its contents, top to
    bottom: the category, the name with the share button beside it,
    the SKU, the rating, the price with its stock pill and the
    description. The pickers under them are
-   features/_product-options.css, the buy row is
-   features/_product-buy.css and the three promises below it are
-   features/_product-trust.css.
+   features/product/_product-options.css, the buy row is
+   features/product/_product-buy.css and the three promises below it are
+   features/product/_product-trust.css.
 
    Colours: the price is navy, not red, for the same reason the
    product card's is — red belongs to the one button that matters.

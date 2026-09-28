@@ -3,7 +3,7 @@
    the product list
 
    The shop's own search field is layout/_nav-search.css and the
-   category page's filters are features/_category-filters.css;
+   category page's filters are features/category/_category-filters.css;
    this one is the admin's.
 
    Both controls are 48px or taller, because the panel is worked

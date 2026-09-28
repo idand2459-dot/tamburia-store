@@ -1,7 +1,7 @@
 /* ==========================================================
    Order history card — one past order, collapsed or expanded
 
-   Split out of features/_order-history.css, which is the search
+   Split out of features/cart/_order-history.css, which is the search
    form and the empty result around it; the two together were over
    the 400-line ceiling. No selector appears in both files, so the
    import order between them is the reading order rather than a

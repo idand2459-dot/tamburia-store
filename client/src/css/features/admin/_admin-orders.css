@@ -2,10 +2,10 @@
    Admin orders — the orders tab's own furniture: the filter row
    and the list it fills
 
-   One card is features/_admin-order-card.css; this file owns
+   One card is features/admin/_admin-order-card.css; this file owns
    nothing inside a card. The customer-facing screens are
-   different components again: features/_order-success.css is the
-   cart's confirmation step and features/_order-history.css is
+   different components again: features/cart/_order-success.css is the
+   cart's confirmation step and features/cart/_order-history.css is
    the lookup page.
 
    Replaces the stat row and the pill filter that were here.

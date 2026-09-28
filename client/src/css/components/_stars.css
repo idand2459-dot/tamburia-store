@@ -18,7 +18,7 @@
 
      .reviews-section .stars { --star-empty: rgba(var(--color-navy-rgb), 0.15); }
 
-   That one line lives in features/_reviews.css, because which
+   That one line lives in features/home/_reviews.css, because which
    surface a section paints is the section's business. It looks
    like the default because it is one — the home page is
    art-directed and does not follow the system theme, so that
@@ -30,7 +30,7 @@
 
    How the product review block spaces its own stars is that
    block's business too, so `.product-review-top .stars` lives in
-   features/_product-reviews.css.
+   features/product/_product-reviews.css.
    ========================================================== */
 
 .stars {

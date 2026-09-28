@@ -23,13 +23,13 @@
    4:5 portrait at phone width is a screenful before a single
    review shows.
 
-   The rotating card itself is features/_reviews-carousel.css,
+   The rotating card itself is features/home/_reviews-carousel.css,
    split out when the two together passed the 300-line target.
-   The form's own styles are features/_review-form.css (this
+   The form's own styles are features/reviews/_review-form.css (this
    file only rescopes it to this section), the moderation list
-   is features/_admin-reviews.css, the star row is
+   is features/admin/_admin-reviews.css, the star row is
    components/_stars.css, and the per-product block is
-   features/_product-reviews.css.
+   features/product/_product-reviews.css.
 
    Art-directed in both themes, like the rest of the home page,
    so there is no prefers-color-scheme block at the bottom of

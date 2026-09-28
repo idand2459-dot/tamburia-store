@@ -7,8 +7,8 @@
    .order-history-modal / .order-history-header, and
    .wishlist-overlay / .wishlist-modal / .wishlist-header, plus
    the one .cart-close-btn all three borrowed. Those rules are
-   gone from components/_modals.css, features/_order-history.css
-   and features/_wishlist.css.
+   gone from components/_modals.css, features/cart/_order-history.css
+   and features/cart/_wishlist.css.
 
    The panel sits on the inline-start edge, which in this RTL
    document is the right one — the same side the nav drawer comes

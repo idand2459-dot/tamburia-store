@@ -2,7 +2,7 @@
    Reviews carousel — the rotating card, its byline, the arrows
    and the dots
 
-   Split out of features/_reviews.css when the two together passed
+   Split out of features/home/_reviews.css when the two together passed
    the 300-line target. That file owns the light band this sits on
    and the header above it; nothing is declared in both.
 
@@ -62,7 +62,7 @@
    below still carry the shape only and each surface declares its own text
    colour: the two .reviews-section rules underneath, and
    `.product-review-top .reviewer-name` / `.review-date` in
-   features/_product-reviews.css. The avatar's gradient is not split that way —
+   features/product/_product-reviews.css. The avatar's gradient is not split that way —
    red→purple is legible on both, so there is one of it. */
 .reviewer-avatar {
   width: 44px;

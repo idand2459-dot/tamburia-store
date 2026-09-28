@@ -8,9 +8,9 @@
    review sat on its own little floating white card, so ten
    reviews read as ten unrelated objects.
 
-   The site-wide reviews carousel is features/_reviews.css and
-   features/_reviews-carousel.css, and the form both of them open
-   is features/_review-form.css; this is only the per-product
+   The site-wide reviews carousel is features/home/_reviews.css and
+   features/home/_reviews-carousel.css, and the form both of them open
+   is features/reviews/_review-form.css; this is only the per-product
    block. The byline's shape — avatar, name, date — is declared
    once, unscoped, in the carousel's partial, because both
    surfaces want the same 44px red→purple circle; the colours of
@@ -176,7 +176,7 @@
 
 /* This card is white in both themes, like the rest of the redesigned product
    page. The form inside it is not — it is shared with the home page's carousel
-   and follows the system theme in features/_review-form.css — so the three
+   and follows the system theme in features/reviews/_review-form.css — so the three
    rules that would turn it navy inside a white card are undone here.  */
 @media (prefers-color-scheme: dark) {
   .product-reviews .review-form-wrap {

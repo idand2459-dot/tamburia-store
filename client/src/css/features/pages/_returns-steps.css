@@ -2,7 +2,7 @@
    Returns page — the "how" half: refund options, the numbered
    steps and the contact block at the bottom
 
-   Split out of features/_returns.css when that file passed the
+   Split out of features/pages/_returns.css when that file passed the
    300-line target. That file owns the page's frame — the
    container, the white cards, the policy lists and the two
    legal notes — and this one owns the three blocks that sit

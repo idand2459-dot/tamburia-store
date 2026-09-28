@@ -6,7 +6,7 @@
    components/_page-header.css, which replaced this file's
    .returns-hero. The three blocks that sit inside these cards
    and say what to do — the refund options, the numbered steps
-   and the contact block — are features/_returns-steps.css,
+   and the contact block — are features/pages/_returns-steps.css,
    split out when this file passed the 300-line target.
 
    This is the longest text on the site, so everything here

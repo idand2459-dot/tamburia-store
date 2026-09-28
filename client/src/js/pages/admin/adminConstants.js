@@ -28,7 +28,7 @@ export const CATEGORIES = [
   { id: 'home', label: 'בית' },
 ];
 
-/* תווית ואייקון בלבד — הצבע הוא מחלקה ב-features/_admin-orders.css,
+/* תווית ואייקון בלבד — הצבע הוא מחלקה ב-features/admin/_admin-orders.css,
    כמו בכרטיס ההזמנה של הלקוח. הכחול והכתום שהיו כאן כהקסים לא קיימים
    בשום מקום אחר באתר, וסטטוס זהה נראה עכשיו אותו דבר בשני הצדדים. */
 export const STATUS_CONFIG = {

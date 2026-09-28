@@ -4,7 +4,7 @@
    Two columns on a desk: the subcategory sidebar on the start
    side (the right, in RTL) and the products next to it. Below
    the lg breakpoint the sidebar becomes a row of chips above the
-   products — see features/_category-filters.css, which owns both
+   products — see features/category/_category-filters.css, which owns both
    forms — and this file drops to one column.
 
    The page background is --color-bg, the same blush as the home

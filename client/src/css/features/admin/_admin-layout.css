@@ -3,7 +3,7 @@
    tab row, and the shared empty / error states
 
    The phone's bottom bar and the sheet it opens are
-   features/_admin-nav.css. Each tab's own styles are in
+   features/admin/_admin-nav.css. Each tab's own styles are in
    _admin-products.css, _admin-form.css, _admin-filters.css,
    _admin-import.css, _admin-orders.css, _admin-order-card.css
    and _admin-stats.css.

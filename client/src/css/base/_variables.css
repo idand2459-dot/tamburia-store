@@ -68,7 +68,7 @@
 
      --color-bg-admin is the one page that opts out: the admin panel is a work
      tool, not the shop, so it keeps the neutral cool slate --color-bg used to
-     be. It is applied in features/_admin-layout.css and features/_auth.css,
+     be. It is applied in features/admin/_admin-layout.css and features/admin/_auth.css,
      because body still paints --color-bg under everything. */
   --color-blush: #fbf1f2;         /* main light surface */
   --color-blush-deep: #f6e7ea;    /* a half-step deeper, for the neighbour */
