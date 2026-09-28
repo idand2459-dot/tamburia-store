@@ -52,6 +52,10 @@
   object-fit: cover;
   object-position: left center;
   opacity: 0;
+  /* the photographs come out of the pipeline a touch flat, and behind the
+     layers below they went further that way. A small lift here is worth more
+     than a weaker overlay: it works on the subject, not on the text area. */
+  filter: saturate(1.08) contrast(1.05);
   pointer-events: none;
 }
 
@@ -84,11 +88,16 @@
   pointer-events: none;
 }
 
+/* Only as deep as the text. This used to reach 70% across at 0.35 in the
+   middle, and a cold navy that thin over a warm photograph does not read as
+   shade — it reads as haze over the whole frame. Now it is strong where the
+   title sits and gone by the halfway mark, and the text-shadow further down
+   pays for the strength that came off. */
 .category-banner--photo::before {
   background: linear-gradient(to left,
-    rgba(var(--color-navy-950-rgb), 0.72) 0%,
-    rgba(var(--color-navy-950-rgb), 0.35) 45%,
-    transparent 70%);
+    rgba(var(--color-navy-950-rgb), 0.62) 0%,
+    rgba(var(--color-navy-950-rgb), 0.3) 28%,
+    transparent 48%);
 }
 
 .category-banner--plain::before {
@@ -97,19 +106,26 @@
     transparent 70%);
 }
 
-/* The melt: the banner's last 90px fade into the page background, so the
+/* The melt: the banner's last band fades into the page background, so the
    category's atmosphere runs into the top of the shopping area instead of
    ending on a line. Photo only — the plain version ends on its hairline
-   instead, and the two cannot both own the bottom edge. */
+   instead, and the two cannot both own the bottom edge.
+
+   44px, and transparent for the first third of it. At 90px with a fade that
+   started immediately, the blush was sitting over the bottom quarter of a
+   440px banner — from far enough back the photograph looked washed out rather
+   than melted. The band is half as tall and the ramp inside it about a third
+   as long, so what the eye gets is an edge that dissolves, not a veil.
+   The phone keeps its own, softer melt below. */
 .category-banner--photo::after {
   content: '';
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 90px;
+  height: 44px;
   z-index: 2;
-  background: linear-gradient(to bottom, transparent, var(--color-bg));
+  background: linear-gradient(to bottom, transparent 0%, transparent 28%, var(--color-bg) 100%);
   pointer-events: none;
 }
 
@@ -218,6 +234,60 @@
 
 /* ---- Responsive ---------------------------------------------------------- */
 
+/* The one min-width block in a file that is otherwise written phone-last, and
+   it is one on purpose. Everything in it either has to stay off the phone or
+   cannot be kept off it any other way:
+
+   - the text-shadows pay for the lighter readability layer above, and the
+     phone's layer was not lightened, so it does not need them;
+   - the per-category exception outweighs `.category-banner--photo::before` on
+     specificity, so from the base level it would win inside the phone's block
+     too and undo the bottom-up gradient there. */
+@media (min-width: 769px) {
+  /* A tight shadow for the edge of the letter and a wide one for the halo
+     around it. The pair is what lets the navy behind the title stop at 0.62
+     instead of 0.72 and still read as deliberate shade. */
+  .category-banner-title {
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45),
+                   0 2px 18px rgba(var(--color-navy-950-rgb), 0.55);
+    }
+
+  /* The description needs it more than the title does: it is 1rem, it is not
+     bold, and being the widest line it reaches furthest left, to where the
+     gradient has already run out. */
+  .category-banner-desc {
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5),
+                   0 1px 10px rgba(var(--color-navy-950-rgb), 0.45);
+    }
+
+  /* The two photographs the lighter layer is not enough for. Both have a
+     bright tiled wall on the title's side: under plumbing's title nearly half
+     the pixels are above 180 luminance, where most of the set sits around a
+     third. Measured at 1920 against the gradient above, white fell to 3.43:1
+     on plumbing's title and 3.72:1 on bathroom's, and bathroom's description —
+     1rem, so it owes 4.5 and not 3 — to 4.46:1.
+
+     One deeper, slightly longer ramp serves both: plumbing's title comes back
+     to 4.99:1, and bathroom to 5.35:1 with its description at 6.22:1, worst
+     pixel 4.62, at 1920 and better at 1366. Every other banner keeps the light
+     layer. Kitchen is the next closest and stays on it by choice — its title
+     clears the 3:1 that 2.6rem bold owes, and its description is at 4.50:1.
+     Garden was the one to suspect and it turned out to be among the darkest of
+     the set on that side — it needs nothing.
+
+     Plumbing's description is the one line still short of 4.5 (4.88:1 on
+     average, 3.06 at its worst pixel): it is the longest string of the twelve,
+     so it reaches further left than any other into the part of the frame this
+     whole change exists to leave alone. The text-shadow above carries it. */
+  .category-banner--photo[data-category='plumbing']::before,
+  .category-banner--photo[data-category='bathroom']::before {
+      background: linear-gradient(to left,
+        rgba(var(--color-navy-950-rgb), 0.74) 0%,
+        rgba(var(--color-navy-950-rgb), 0.42) 30%,
+        transparent 52%);
+    }
+}
+
 /* On a phone there is no room for a subject on one side and a title on the
    other, so the composition turns vertical: the frame is centred, the
    readability gradient comes from the bottom, and the content sits on it. */
@@ -238,9 +308,12 @@
         transparent 80%);
     }
 
-  /* shorter than the desktop melt: over 90px it was eating the title */
+  /* 260px of banner cannot give up 44 sharp pixels the way 440 can, and the
+     content sits on the bottom edge here: the phone keeps the taller, evenly
+     soft melt the desktop one used to be. */
   .category-banner--photo::after {
       height: 60px;
+      background: linear-gradient(to bottom, transparent, var(--color-bg));
     }
 
   .category-banner-watermark {
