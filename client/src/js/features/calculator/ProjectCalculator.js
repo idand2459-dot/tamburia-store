@@ -7,6 +7,7 @@ import {
   ListChecks,
 } from 'lucide-react';
 import { hasPrice } from '../../utils/pricing';
+import { getProducts } from '../../services/productService';
 
 /* ─── Project definitions ──────────────────────────────────────────────── */
 const PROJECTS = [
@@ -108,9 +109,8 @@ function ProjectCalculator({ addBundleToCart }) {
 
   /* fetch products once */
   useEffect(() => {
-    fetch('/api/products')
-      .then(r => r.json())
-      .then(data => setAllProducts(Array.isArray(data) ? data : []))
+    getProducts()
+      .then(({ products }) => setAllProducts(products))
       .catch(() => {});
   }, []);
 

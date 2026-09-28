@@ -22,6 +22,7 @@ import Reveal, { stagger } from '../../components/Reveal';
 import { ProductCardSkeleton } from '../../components/LoadingStates';
 import { PHONES } from '../../utils/storeInfo';
 import { useStore } from '../../context/storeContext';
+import { getProducts, isAbortError } from '../../services/productService';
 
 /* החשיפה של הכרטיסים מהירה מזו של מקטעי עמוד הבית: כאן יש עשרות
    פריטים ולא ארבעה, וההשהיה נעצרת אחרי שמונה כרטיסים כדי שהשורה
@@ -53,7 +54,7 @@ function CategoryView() {
 
   useEffect(() => {
     if (!category) return;
-    let cancelled = false;
+    const controller = new AbortController();
 
     setLoading(true);
     setSearchQuery('');
@@ -63,16 +64,16 @@ function CategoryView() {
     // הזה מציג את כל מוצרי הקטגוריה ולא תצוגה מקוצרת שלהם.
     // החיפוש והמיון שלמטה נשארים בצד הלקוח: הם פועלים על הקבוצה
     // הקטנה שכבר נשלפה, וזה שימוש לגיטימי בסינון מקומי.
-    fetch(`/api/products?category=${encodeURIComponent(category.id)}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (cancelled) return;
-        setProducts(Array.isArray(data) ? data : (data.products || []));
+    getProducts({ category: category.id, signal: controller.signal })
+      .then(({ products: list }) => {
+        setProducts(list);
         setLoading(false);
       })
-      .catch(() => { if (!cancelled) setLoading(false); });
+      // ביטול אינו כישלון: המעבר לקטגוריה אחרת כבר הדליק טעינה
+      // מחדש, וכיבוי שלה כאן היה מציג רשת ריקה עד שהבקשה החדשה תחזור.
+      .catch((err) => { if (!isAbortError(err)) setLoading(false); });
 
-    return () => { cancelled = true; };
+    return () => controller.abort();
   }, [category]);
 
   // מספר המוצרים בכל תת-קטגוריה, מתוך מה שנשלף. מחושב פעם אחת לכל

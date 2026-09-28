@@ -18,6 +18,7 @@ import ProductPage from '../../pages/ProductPage';
 import NotFoundPage from '../../pages/NotFoundPage';
 import { ProductCardSkeleton } from '../../components/LoadingStates';
 import { useStore } from '../../context/storeContext';
+import { getProduct, isAbortError } from '../../services/productService';
 
 /** טוען את המוצר לפי המזהה שבכתובת ומציג אותו. */
 function ProductView() {
@@ -28,26 +29,27 @@ function ProductView() {
   const [status, setStatus] = useState('loading'); // loading | ready | missing
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     setStatus('loading');
     setProduct(null);
 
     // מזהה שאינו מספר חוסך פנייה לשרת.
     if (!/^\d+$/.test(id)) {
       setStatus('missing');
-      return;
+      return undefined;
     }
 
-    fetch(`/api/products/${id}`)
-      .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
+    getProduct(id, { signal: controller.signal })
       .then((data) => {
-        if (cancelled) return;
         setProduct(data);
         setStatus('ready');
       })
-      .catch(() => { if (!cancelled) setStatus('missing'); });
+      // כל כישלון שאינו ביטול מוביל לאותו מסך: 404 מהשרת, תקלה בו
+      // או רשת שנפלה. isNotFound קיים בשירות למי שיצטרך להפריד,
+      // אבל כאן אין לקורא מה לעשות עם ההבדל.
+      .catch((err) => { if (!isAbortError(err)) setStatus('missing'); });
 
-    return () => { cancelled = true; };
+    return () => controller.abort();
   }, [id]);
 
   if (status === 'missing') return <NotFoundPage />;

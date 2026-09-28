@@ -14,6 +14,7 @@ import {
 import { useStore } from '../context/storeContext';
 import { useScrolled } from '../hooks/useScrolled';
 import { priceLabel } from '../utils/pricing';
+import { getProducts, isAbortError } from '../services/productService';
 
 const NAV_ITEMS = [
   { key: 'home', path: '/', label: 'ראשי', Icon: Home },
@@ -71,26 +72,24 @@ function Navbar() {
   /**
    * מריץ חיפוש בשרת ומעדכן את התוצאות.
    *
-   * דגל cancelled לכל בקשה, באותו דפוס של ה-useEffect-ים בפרויקט:
-   * הקלדה מהירה מייצרת כמה בקשות, והן לא בהכרח חוזרות לפי הסדר.
-   * בלי הדגל תשובה איטית של מילה קודמת הייתה דורסת תוצאה עדכנית
-   * שכבר הוצגה.
+   * AbortController לכל בקשה: הקלדה מהירה מייצרת כמה בקשות, והן לא
+   * בהכרח חוזרות לפי הסדר. בלי הביטול תשובה איטית של מילה קודמת
+   * הייתה דורסת תוצאה עדכנית שכבר הוצגה. הביטול גם עוצר את הבקשה
+   * עצמה, וזה מה שהדגל שהיה כאן קודם לא יכול היה לעשות.
    *
-   * עם limit התשובה היא { products, pagination } ולא מערך שטוח.
+   * צורת התשובה כבר אינה עניינו של הסרגל — השירות מנרמל אותה.
    */
   function runSearch(q) {
     cancelSearchRef.current?.();
 
-    let cancelled = false;
-    cancelSearchRef.current = () => { cancelled = true; };
+    const controller = new AbortController();
+    cancelSearchRef.current = () => controller.abort();
 
-    fetch(`/api/products?search=${encodeURIComponent(q)}&limit=8`)
-      .then(r => r.json())
-      .then(data => {
-        if (cancelled) return;
-        setSearchResults(Array.isArray(data) ? data : (data.products || []));
-      })
-      .catch(() => {});
+    getProducts({ search: q, limit: 8, signal: controller.signal })
+      .then(({ products }) => setSearchResults(products))
+      // חיפוש שנכשל מרוקן את התוצאות, כמו קודם. ביטול לא: שם כבר
+      // יצאה בקשה חדשה, וריקון היה מהבהב עד שהיא תחזור.
+      .catch((err) => { if (!isAbortError(err)) setSearchResults([]); });
   }
 
   /** מעדכן את מונח החיפוש ומתזמן חיפוש בשרת. */

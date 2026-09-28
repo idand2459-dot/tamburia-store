@@ -6,6 +6,7 @@ import { Star, X, PenLine, CheckCircle, Loader, Quote, ChevronRight, ChevronLeft
 import reviewsPhoto600 from '../../../assets/images/sections/reviews-photo-600.webp';
 import reviewsPhoto1000 from '../../../assets/images/sections/reviews-photo-1000.webp';
 import { averageRating } from '../../utils/rating';
+import { getReviews } from '../../services/reviewService';
 
 /** מציג את קרוסלת חוות הדעת ואת טופס ההוספה. */
 function ReviewsCarousel() {
@@ -18,10 +19,7 @@ function ReviewsCarousel() {
   const intervalRef = useRef(null);
 
   useEffect(() => {
-    fetch('/api/reviews?type=store')
-      .then(r => r.json())
-      .then(data => setReviews(Array.isArray(data) ? data : []))
-      .catch(() => {});
+    getReviews({ type: 'store' }).then(setReviews).catch(() => {});
   }, []);
 
   useEffect(() => {
