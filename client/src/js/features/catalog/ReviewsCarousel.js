@@ -2,21 +2,30 @@
  * קרוסלת חוות דעת על החנות, עם טופס הוספה.
  */
 import { useState, useEffect, useRef } from 'react';
-import { Star, X, PenLine, CheckCircle, Loader, Quote, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Star, X, PenLine, CheckCircle, AlertCircle, Loader, Quote, ChevronRight, ChevronLeft } from 'lucide-react';
 import reviewsPhoto600 from '../../../assets/images/sections/reviews-photo-600.webp';
 import reviewsPhoto1000 from '../../../assets/images/sections/reviews-photo-1000.webp';
 import { averageRating } from '../../utils/rating';
 import { getReviews } from '../../services/reviewService';
+import { useReviewSubmit } from '../../hooks/useReviewSubmit';
+
+const EMPTY_FORM = { reviewer_name: '', rating: 5, text: '', type: 'store' };
 
 /** מציג את קרוסלת חוות הדעת ואת טופס ההוספה. */
 function ReviewsCarousel() {
   const [reviews, setReviews] = useState([]);
   const [current, setCurrent] = useState(0);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ reviewer_name: '', rating: 5, text: '', type: 'store' });
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const intervalRef = useRef(null);
+
+  /* הניקוי הוא של ההצלחה בלבד: בכישלון הטופס נשאר כמו שהוא, כי מה
+     שהלקוח כתב הוא הדבר היחיד כאן שאי אפשר לשחזר. */
+  const { submitting, error, submit, clearError } = useReviewSubmit(() => {
+    setSubmitted(true);
+    setFormData(EMPTY_FORM);
+  });
 
   useEffect(() => {
     getReviews({ type: 'store' }).then(setReviews).catch(() => {});
@@ -42,20 +51,28 @@ function ReviewsCarousel() {
     setCurrent(c => (c + 1) % reviews.length);
   }
 
-  /** שולח את הטופס לשרת. */
+  /**
+   * שולח את הטופס לשרת.
+   *
+   * הטופס נשאר פתוח: התודה מוצגת *במקומו*, בתוך אותה מסגרת. קודם
+   * השליחה כיבתה את showForm, והמסגרת נעלמה עם ההודעה שבתוכה — כך
+   * שגם הצלחה לא אמרה דבר. זה בדיוק מה שתוקן בעמוד המוצר.
+   */
   async function handleSubmit(e) {
     e.preventDefault();
     if (!formData.reviewer_name || !formData.text) return;
-    setSubmitting(true);
-    await fetch('/api/reviews', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
-    });
-    setSubmitting(false);
-    setSubmitted(true);
-    setShowForm(false);
-    setFormData({ reviewer_name: '', rating: 5, text: '', type: 'store' });
+    await submit(formData);
+  }
+
+  /** פותח או סוגר את הטופס. פתיחה מתחילה בלי שגיאה ובלי תודה ישנה. */
+  function toggleForm() {
+    if (showForm) {
+      setShowForm(false);
+      return;
+    }
+    setSubmitted(false);
+    clearError();
+    setShowForm(true);
   }
 
   /** מציג דירוג בכוכבים, ואופציונלית מאפשר לדרג. */
@@ -118,7 +135,7 @@ function ReviewsCarousel() {
                   <span className="reviews-avg-count">({reviews.length} ביקורות)</span>
                 </div>
               )}
-              <button className="add-review-btn" onClick={() => setShowForm(!showForm)}>
+              <button className="add-review-btn" onClick={toggleForm}>
                 {showForm ? <><X size={18} aria-hidden="true" /> סגור</> : <><PenLine size={18} aria-hidden="true" /> כתוב ביקורת</>}
               </button>
             </div>
@@ -152,6 +169,11 @@ function ReviewsCarousel() {
                         onChange={e => setFormData({...formData, text: e.target.value})} required />
                     </div>
                   </div>
+                  {error && (
+                    <p className="review-error" role="alert">
+                      <AlertCircle size={15} aria-hidden="true" /> {error}
+                    </p>
+                  )}
                   <button type="submit" className="review-submit-btn" disabled={submitting}>
                     {submitting ? <><Loader size={18} aria-hidden="true" /> שולח...</> : <><CheckCircle size={18} aria-hidden="true" /> שלח ביקורת</>}
                   </button>

@@ -9,7 +9,7 @@
  * pages/admin/Admin.js) שמזהה 401 ומחזיר את המנהל למסך ההתחברות,
  * וזו התנהגות שאין לה מקום בחזית: לקורא אנונימי אין לאן לחזור.
  */
-import { errorMessageFrom } from '../utils/apiErrors';
+import { errorMessageFrom, NETWORK_ERROR } from '../utils/apiErrors';
 
 /** שגיאה שהשרת החזיר, עם קוד הסטטוס שלה. */
 export class ApiError extends Error {
@@ -53,9 +53,36 @@ export function buildUrl(path, params = {}) {
   return query ? `${path}?${query}` : path;
 }
 
+/**
+ * ההודעה שמוצגת למשתמש על שגיאה כלשהי מהשירותים כאן.
+ *
+ * שני מסלולי כישלון ושני נוסחים: תשובה מהשרת מביאה את ההסבר שלו
+ * ("חסר שם הכותב"), ואילו fetch שזרק פירושו שלא הגענו לשרת בכלל —
+ * ושם אין מה לצטט אלא לבקש לבדוק את החיבור.
+ */
+export function messageFor(error) {
+  return error instanceof ApiError ? error.message : NETWORK_ERROR;
+}
+
 /** שולף JSON, וזורק ApiError עם הודעת השרת כשהתשובה אינה תקינה. */
 export async function getJson(url, { signal } = {}) {
   const res = await fetch(url, { signal });
+
+  if (!res.ok) {
+    throw new ApiError(await errorMessageFrom(res), res.status);
+  }
+
+  return res.json();
+}
+
+/** שולח JSON, וזורק ApiError עם הודעת השרת כשהתשובה אינה תקינה. */
+export async function postJson(url, body, { signal } = {}) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal,
+  });
 
   if (!res.ok) {
     throw new ApiError(await errorMessageFrom(res), res.status);
