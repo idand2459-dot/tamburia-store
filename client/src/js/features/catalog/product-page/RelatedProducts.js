@@ -12,7 +12,7 @@
  * בעמוד הקטגוריה: זה מה שהכרטיס צריך, ועמוד המוצר אינו מתווך בזה.
  * הניווט הוא הקישור שבתוך הכרטיס עצמו, ולכן אין כאן onSelectProduct.
  */
-import ProductCard from '../../../components/ProductCard';
+import ProductList from '../../../components/ProductList';
 import { useStore } from '../../../context/storeContext';
 
 /* לכל היותר ארבעה — שורה אחת על מסך רחב. */
@@ -23,21 +23,18 @@ function RelatedGrid({ title, items, categoryId, addToCart, wishlistIds, onToggl
   return (
     <section className="product-related">
       <h2 className="product-related-title">{title}</h2>
-      <div className="product-grid">
-        {items.slice(0, MAX_ITEMS).map((p) => (
-          <ProductCard
-            key={p.id}
-            product={p}
-            /* הנצפים לאחרונה נשמרים עם הקטגוריה שלהם, ולכן כל כרטיס
-               מקבל את האייקון של עצמו; רשומה שנשמרה לפני זה נופלת
-               לקטגוריה שהרשת הזו כולה שייכת לה, ואם אין — בלי אייקון. */
-            categoryId={p.category || categoryId}
-            onAddToCart={addToCart}
-            inWishlist={wishlistIds.includes(p.id)}
-            onToggleWishlist={onToggleWishlist}
-          />
-        ))}
-      </div>
+      {/* אותה רשת של עמוד הקטגוריה, בלי החשיפה המדורגת: כאן הכרטיסים
+          מופיעים מיד, כמו קודם. */}
+      <ProductList
+        products={items.slice(0, MAX_ITEMS)}
+        /* הנצפים לאחרונה נשמרים עם הקטגוריה שלהם, ולכן כל כרטיס מקבל
+           את האייקון של עצמו; רשומה שנשמרה לפני זה נופלת לקטגוריה
+           שהרשת הזו כולה שייכת לה, ואם אין — בלי אייקון. */
+        categoryIdFor={(p) => p.category || categoryId}
+        onAddToCart={addToCart}
+        wishlistIds={wishlistIds}
+        onToggleWishlist={onToggleWishlist}
+      />
     </section>
   );
 }
