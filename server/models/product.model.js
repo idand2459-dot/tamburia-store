@@ -83,6 +83,22 @@ async function findById(id) {
   return rows[0] || null;
 }
 
+/**
+ * מחזיר מחיר וגרסאות עבור רשימת מזהים, בשאילתה אחת.
+ *
+ * זה כל מה שבדיקת המחיר שלפני יצירת הזמנה צריכה, ולכן לא findById
+ * בלופ: עגלה של עשרה פריטים הייתה עשר שאילתות. מזהה שאינו קיים פשוט
+ * לא יחזור, וזו גם התשובה על "האם המוצר הזה עוד קיים".
+ */
+async function findPricesByIds(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) return [];
+  const { rows } = await query(
+    'SELECT id, name, price, variants FROM products WHERE id = ANY($1::int[])',
+    [ids]
+  );
+  return rows;
+}
+
 /** יוצר מוצר חדש ומחזיר אותו כפי שנשמר. */
 async function create(data) {
   const columns = Object.keys(data);
@@ -134,4 +150,6 @@ async function listCategories() {
   return rows;
 }
 
-module.exports = { list, count, findById, create, update, remove, listCategories };
+module.exports = {
+  list, count, findById, findPricesByIds, create, update, remove, listCategories,
+};

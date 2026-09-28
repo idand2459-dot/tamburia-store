@@ -6,6 +6,7 @@ import {
   ShowerHead, Lock, Sprout, Wrench, Crown, Check, Circle, ShoppingCart,
   ListChecks,
 } from 'lucide-react';
+import { hasPrice } from '../../utils/pricing';
 
 /* ─── Project definitions ──────────────────────────────────────────────── */
 const PROJECTS = [
@@ -144,10 +145,23 @@ function ProjectCalculator({ addBundleToCart }) {
     setBundleAdded(false);
   }
 
-  /* match each item to a real product */
+  /**
+   * מתאים לפריט ברשימה מוצר אמיתי — הזול שבמלאי.
+   *
+   * hasPrice אינו סינון של מידה טובה אלא התנאי לכך שהבחירה
+   * בזול תהיה הגיונית: ל-124 מוצרים במסד אין מחיר, כלומר 0,
+   * ולכן כל צירוף קטגוריה+תת-קטגוריה שיש בו אחד מהם היה מחזיר
+   * דווקא אותו. זה בדיוק הבאג שמתואר ב-PaintCalculator, שלשם כך
+   * עבר למזהים קבועים.
+   *
+   * פריט שלא נמצא לו מוצר מתומחר מוצג "שאל בחנות" ואינו נכנס
+   * לחבילה, בדיוק כמו פריט שאין לו מוצר בכלל — והשרת בלאו הכי
+   * דוחה הזמנה שיש בה פריט בלי מחיר.
+   */
   function findProduct(category, subcategory) {
     const matches = allProducts.filter(
-      p => p.category === category && p.subcategory === subcategory && p.in_stock !== false
+      p => p.category === category && p.subcategory === subcategory
+        && p.in_stock !== false && hasPrice(p)
     );
     if (matches.length === 0) return null;
     return matches.reduce((a, b) => (a.price <= b.price ? a : b));

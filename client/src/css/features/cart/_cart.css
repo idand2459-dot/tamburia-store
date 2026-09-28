@@ -250,6 +250,23 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* A row whose price never made it into the database. Smaller and quieter than a
+   figure, like the same state on the product card. */
+.cart-row-total.is-no-price {
+  font-size: 0.78rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-subtle);
+}
+
+/* The hint that is a wall rather than a nudge: the order cannot be sent while a
+   row has no price, because the server refuses it. Red, and it reads as a
+   sentence rather than a label. */
+.cart-summary-hint--blocking {
+  color: var(--color-red);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
 .cart-summary-hint {
   color: rgba(var(--color-navy-rgb), 0.55);
   font-size: 0.8rem;

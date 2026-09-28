@@ -75,6 +75,30 @@
   transition: background var(--transition-fast);
 }
 
+/* The call link, in place of "add to cart" for a product with no price.
+
+   Navy and not red: red is "buy this", and this button cannot buy anything. Not
+   green either — that is the colour of the confirmation flash two rules down,
+   and of WhatsApp. It is an <a href="tel:"> and not a button, so it is styled to
+   match .product-buy-add rather than inheriting from it: same height, same
+   radius, same flex: 1, and text-decoration: none because it is a link. */
+.product-buy-call {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--color-navy);
+  color: white;
+  font-family: var(--font-family-base);
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+  transition: background var(--transition-fast);
+}
+
 .product-buy-wish {
   display: flex;
   align-items: center;
@@ -108,6 +132,15 @@
    selector list inside :not() is newer than the browsers this builds for. */
 .product-buy-add:hover:not(:disabled):not(.is-added) {
   background: var(--color-red-dark);
+}
+
+.product-buy-call:hover {
+  background: var(--color-navy-950);
+}
+
+.product-buy-call:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
 }
 
 /* The confirmation flash, the same green the product card's cart button uses

@@ -26,6 +26,7 @@ import ProductReviewsSection from '../features/catalog/product-page/ProductRevie
 import RelatedProducts from '../features/catalog/product-page/RelatedProducts';
 import Stars from '../features/catalog/product-page/Stars';
 import { averageRating } from '../utils/rating';
+import { selectedPrice, NO_PRICE_LABEL } from '../utils/pricing';
 
 const MAX_RECENT = 6;
 const MAX_RELATED = 4;
@@ -95,7 +96,9 @@ function ProductPage({ product, onAddToCart }) {
 
   const inStock = product.in_stock !== false;
   const category = categories.find(c => c.id === product.category);
-  const price = selectedVariant ? selectedVariant.price : product.price;
+  // null כשהמחיר במסד הוא 0, ואז אין מה להוסיף לעגלה אלא להתקשר
+  // ולשאול. הכלל ב-utils/pricing.js, והשרת אוכף אותו שוב ביצירת ההזמנה.
+  const price = selectedPrice(product, selectedVariant);
   const showBuyBar = useOutOfView(addBtnRef, product.id);
 
   useEffect(() => () => clearTimeout(addedTimer.current), []);
@@ -135,6 +138,8 @@ function ProductPage({ product, onAddToCart }) {
 
   /** מוסיף את המוצר לעגלה לאחר בחירת הגרסה, הצבע והמידה. */
   function handleAddToCart() {
+    if (price === null) return;
+
     const missingChoice = firstMissingChoice();
     if (missingChoice) {
       setMissing(missingChoice);
@@ -153,7 +158,9 @@ function ProductPage({ product, onAddToCart }) {
   /** משתף את המוצר בוואטסאפ. */
   function handleShare() {
     const url = window.location.href;
-    const text = `היי! ראיתי את המוצר הזה בטכניק טמבור ונראה לי מעניין 🔧\n*${product.name}* — ₪${product.price}\n${url}`;
+    // מוצר בלי מחיר לא משתתף עם ₪0 בוואטסאפ
+    const priceText = price === null ? NO_PRICE_LABEL : `₪${price}`;
+    const text = `היי! ראיתי את המוצר הזה בטכניק טמבור ונראה לי מעניין 🔧\n*${product.name}* — ${priceText}\n${url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   }
 
@@ -203,7 +210,9 @@ function ProductPage({ product, onAddToCart }) {
           </div>
 
           <div className="product-detail-pricing">
-            <span className="product-detail-price">₪{price}</span>
+            <span className={`product-detail-price ${price === null ? 'is-no-price' : ''}`}>
+              {price === null ? NO_PRICE_LABEL : `₪${price}`}
+            </span>
             {hasVariants && !selectedVariant && (
               <span className="product-detail-price-note">בחר גרסה</span>
             )}
@@ -239,6 +248,7 @@ function ProductPage({ product, onAddToCart }) {
             quantity={quantity}
             onQuantity={setQuantity}
             inStock={inStock}
+            hasPrice={price !== null}
             added={addedToCart}
             onAdd={handleAddToCart}
             addRef={addBtnRef}

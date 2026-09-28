@@ -126,6 +126,15 @@
   color: var(--color-navy);
 }
 
+/* "מחיר בחנות" — the price in the database is 0. Much smaller than the
+   2.2rem figure it replaces: at that size a few words read as a headline, and
+   this is an apology, not the product's name. The buy row shows the shop's
+   number in place of "add to cart". */
+.product-detail-price.is-no-price {
+  font-size: 1.3rem;
+  color: rgba(var(--color-navy-rgb), 0.65);
+}
+
 /* "(בחר גרסה)" — a product whose price depends on a variant nobody has picked
    yet. */
 .product-detail-price-note {

@@ -7,11 +7,22 @@
  * הסיכום והכפתור אינם כאן אלא ב-CartStepFooter שלמטה, כי הם יושבים
  * בשורה התחתונה הדביקה של המגירה ולא בגוף הגולל. שני הרכיבים שואבים
  * מאותו קונטקסט, ולכן אין מצב שהסיכום למטה יסתור את השורות למעלה.
+ *
+ * פריט במחיר 0 הוא מוצר שהמחיר שלו במסד עוד לא הוקלד. באתר כבר אי
+ * אפשר להוסיף מוצר כזה לעגלה, אבל עגלה נשמרת ב-localStorage וכזה
+ * שנוסף קודם עדיין יושב בה — ולכן הוא מטופל גם כאן. השרת דוחה הזמנה
+ * כזו ב-400, אז הכפתור חוסם אותה כאן במקום לשלוח אותה לסירוב.
  */
 import { Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
 import { useStore } from '../../context/storeContext';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
+import { NO_PRICE_LABEL } from '../../utils/pricing';
 import DeliveryOptions from './DeliveryOptions';
+
+/* פריט בעגלה נשפט לפי המחיר שנשמר בו ולא לפי המוצר: המוצר עצמו כבר
+   אינו בהישג יד כאן, והמחיר שהועתק אליו בהוספה הוא מה שההזמנה תישלח
+   איתו בפועל. */
+const itemPriced = (item) => Number(item.price) > 0;
 
 /** מרכיב את שורת הגרסה, הצבע והמידה של פריט — מה שנבחר ממנו. */
 function itemMeta(item) {
@@ -71,7 +82,11 @@ function CartStepView({ closeCart }) {
                       <Plus size={14} aria-hidden="true" />
                     </button>
                   </div>
-                  <span className="cart-row-total">₪{item.price * (item.quantity || 1)}</span>
+                  <span className={`cart-row-total ${itemPriced(item) ? '' : 'is-no-price'}`}>
+                    {itemPriced(item)
+                      ? `₪${item.price * (item.quantity || 1)}`
+                      : NO_PRICE_LABEL}
+                  </span>
                 </div>
               </div>
 
@@ -100,8 +115,11 @@ function CartStepView({ closeCart }) {
  */
 function CartStepFooter({ setCartStep }) {
   const {
-    setCart, subtotal, total, deliveryMethod, setDeliveryMethod,
+    cart, setCart, subtotal, total, deliveryMethod, setDeliveryMethod,
   } = useStore();
+
+  const unpriced = cart.filter((item) => !itemPriced(item));
+  const canContinue = Boolean(deliveryMethod) && unpriced.length === 0;
 
   return (
     <div className="cart-summary">
@@ -122,13 +140,23 @@ function CartStepFooter({ setCartStep }) {
         <span className="cart-summary-amount">₪{total}</span>
       </div>
 
-      {!deliveryMethod && <p className="cart-summary-hint">בחר אופן קבלה לפני המשך</p>}
+      {/* החוסם הראשון קודם: בלי מחיר אין מה להמשיך גם אחרי בחירת אופן
+          קבלה, ושתי הודעות בבת אחת רק מבלבלות */}
+      {unpriced.length > 0 ? (
+        <p className="cart-summary-hint cart-summary-hint--blocking">
+          {unpriced.length === 1
+            ? `"${unpriced[0].name}" ללא מחיר באתר — הסירו אותו מהעגלה, או התקשרו לחנות להזמנה טלפונית`
+            : `${unpriced.length} מוצרים בעגלה ללא מחיר באתר — הסירו אותם, או התקשרו לחנות להזמנה טלפונית`}
+        </p>
+      ) : !deliveryMethod && (
+        <p className="cart-summary-hint">בחר אופן קבלה לפני המשך</p>
+      )}
 
       <button
         type="button"
         className="cart-cta"
-        disabled={!deliveryMethod}
-        onClick={() => deliveryMethod && setCartStep('details')}>
+        disabled={!canContinue}
+        onClick={() => canContinue && setCartStep('details')}>
         המשך לפרטים ←
       </button>
 

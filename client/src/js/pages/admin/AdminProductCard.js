@@ -15,10 +15,16 @@
  *
  * ה-state של העריכה יושב כאן ולא בלשונית: כל שורה עורכת בנפרד,
  * והמפתח לפי id שומר על התיבה פתוחה כשהרשימה נטענת מחדש.
+ *
+ * מוצר שהמחיר שלו 0 מסומן בתגית "ללא מחיר". זה לא קישוט: באתר אי
+ * אפשר להזמין מוצר כזה (utils/pricing.js), ולכן התגית היא מה שאומר
+ * שהמוצר הזה למעשה לא למכירה עד שיוקלד לו מחיר. השבב בראש הלשונית
+ * מסנן בדיוק לפי אותו כלל.
  */
 import { useState, useRef, useEffect } from 'react';
 import { Check, X, Pencil } from 'lucide-react';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
+import { hasPrice } from '../../utils/pricing';
 import { CATEGORIES } from './adminConstants';
 
 /* כמה זמן נשאר סימון ה"נשמר" על השורה. מספיק כדי להיראות, קצר מכדי
@@ -38,6 +44,7 @@ function AdminProductCard({ product, onEdit, onDelete, onToggleStock, onUpdatePr
   const Icon = CATEGORY_ICONS[product.category];
   const inStock = product.in_stock !== false;
   const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
+  const priced = hasPrice(product);
   const categoryLabel = CATEGORIES.find(c => c.id === product.category)?.label;
 
   /** פותח את עריכת המחיר, או את הטופס כשיש וריאנטים. */
@@ -74,7 +81,8 @@ function AdminProductCard({ product, onEdit, onDelete, onToggleStock, onUpdatePr
   }
 
   return (
-    <article className={`admin-product ${saved ? 'is-saved' : ''}`}>
+    <article className={['admin-product', saved ? 'is-saved' : '', priced ? '' : 'is-unpriced']
+      .filter(Boolean).join(' ')}>
       <div className="admin-product-well">
         {product.image_url
           ? <img src={product.image_url} alt="" loading="lazy" />
@@ -90,6 +98,8 @@ function AdminProductCard({ product, onEdit, onDelete, onToggleStock, onUpdatePr
           {categoryLabel}
           {product.sku && <span className="admin-product-sku">מק"ט {product.sku}</span>}
         </p>
+
+        {!priced && <span className="admin-product-flag">ללא מחיר</span>}
 
         {editingPrice ? (
           <div className="admin-price-edit">

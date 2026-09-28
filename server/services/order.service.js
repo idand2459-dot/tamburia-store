@@ -6,6 +6,7 @@
  * { sent, reason? } ואינו זורק, ולכן הזמנה נשמרת גם כשהמייל לא יצא.
  */
 const Order = require('../models/order.model');
+const Product = require('../models/product.model');
 const mailer = require('./email');
 const { broadcast } = require('./realtime');
 const {
@@ -13,6 +14,60 @@ const {
   assertStatusFitsDeliveryMethod,
 } = require('../validators/order.validator');
 const { badRequest, notFound } = require('../utils/AppError');
+
+/**
+ * המחיר שהחנות תכבד עבור מוצר, או null כשאין לה מחיר עבורו.
+ *
+ * אותו כלל של client/src/js/utils/pricing.js, בצד השני: גרסה מתומחרת
+ * אחת מספיקה כדי שלמוצר יהיה מחיר, ובלי גרסאות קובע המחיר של המוצר
+ * עצמו. 0 אינו מחיר — הוא סימן שהמחיר עוד לא הוקלד.
+ */
+function shopPrice(product) {
+  const variants = Array.isArray(product.variants) ? product.variants : [];
+  const priced = variants
+    .map((variant) => Number(variant?.price))
+    .filter((price) => Number.isFinite(price) && price > 0);
+  if (priced.length > 0) return Math.min(...priced);
+
+  const price = Number(product.price);
+  return Number.isFinite(price) && price > 0 ? price : null;
+}
+
+/** ההודעה שהלקוח מקבל על פריט שאין לו מחיר. */
+function noPriceError(name) {
+  return badRequest(
+    `לא ניתן להזמין את "${name}" — המחיר שלו עוד לא עודכן באתר. `
+    + 'אנא הסירו אותו מהעגלה והתקשרו לחנות לבירור מחיר'
+  );
+}
+
+/**
+ * זורק 400 כשההזמנה כוללת פריט שאין לו מחיר.
+ *
+ * במסד יש מוצרים שהמחיר שלהם 0, והחנות לא יכולה למכור אותם. עד עכשיו
+ * אפשר היה להזמין אותם: הקליינט הציג "₪0", חיבר אותם לסכום, וההזמנה
+ * נשמרה — כך נוצרו שלוש הזמנות עם שורות ב-0. עכשיו החנות משיבה 400.
+ *
+ * שתי בדיקות ולא אחת, כי המחיר שהלקוח שולח והמחיר שבמסד הם שני
+ * דברים. המסד הוא הקובע לגבי המוצר עצמו, והמחיר שנשלח הוא הראיה
+ * היחידה שיש לגבי הגרסה שנבחרה — asItems אינה שומרת את שם הגרסה.
+ * לפריט בלי מזהה (חבילה של מחשבון) אין מה לבדוק במסד, ונשארת
+ * הבדיקה על מה שנשלח.
+ *
+ * מוצר שנמחק אינו נדחה כאן: אין מחיר במסד להשוות אליו, וזו בעיה
+ * אחרת מזו שהבדיקה הזו באה לפתור.
+ */
+async function assertItemsPriced(items) {
+  const ids = [...new Set(items.map((item) => item.id).filter(Boolean))];
+  const rows = await Product.findPricesByIds(ids);
+  const byId = new Map(rows.map((row) => [row.id, row]));
+
+  for (const item of items) {
+    const product = item.id ? byId.get(item.id) : null;
+    if (product && shopPrice(product) === null) throw noPriceError(product.name);
+    if (item.price === 0) throw noPriceError(item.name);
+  }
+}
 
 /** שולף הזמנה או זורק 404. משמש כל פעולה שדורשת הזמנה קיימת. */
 async function requireOrder(id) {
@@ -55,6 +110,8 @@ async function findOrdersByPhone(rawPhone) {
  * חלק מ-Promise.all של המיילים — שידור אינו אמור לעכב תשובה ללקוח.
  */
 async function createOrder(data) {
+  await assertItemsPriced(data.items);
+
   const order = await Order.create(data);
 
   broadcast('order:created', { id: order.id, total: order.total });

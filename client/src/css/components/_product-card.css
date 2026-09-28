@@ -182,6 +182,16 @@
   line-height: 1.2;
 }
 
+/* "מחיר בחנות" — a product whose price is 0 in the database, which means
+   nobody has typed one in yet. Quieter and smaller than a figure: it is a state,
+   not an amount, and it should not look like a bargain. The cart button beside it
+   is disabled (utils/pricing.js decides which products these are). */
+.product-card-price.is-no-price {
+  font-size: 0.85rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-subtle);
+}
+
 .product-card-variants {
   font-size: 0.7rem;
   font-weight: 400;

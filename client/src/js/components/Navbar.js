@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '../context/storeContext';
 import { useScrolled } from '../hooks/useScrolled';
+import { priceLabel } from '../utils/pricing';
 
 const NAV_ITEMS = [
   { key: 'home', path: '/', label: 'ראשי', Icon: Home },
@@ -155,7 +156,9 @@ function Navbar() {
                       <span className="search-result-cat">{CATEGORY_LABELS[product.category] || product.category}</span>
                     </div>
                     <div className="search-result-right">
-                      <span className="search-result-price">₪{product.price}</span>
+                      {/* אותו כלל שבכרטיס ובמועדפים: מוצר בלי מחיר אינו
+                          מוצג "₪0" גם כאן */}
+                      <span className="search-result-price">{priceLabel(product)}</span>
                       <span className={`search-result-stock ${product.in_stock !== false ? 'in' : 'out'}`}>
                         {product.in_stock !== false ? 'במלאי' : 'אזל'}
                       </span>

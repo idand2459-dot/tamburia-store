@@ -20,6 +20,7 @@ import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, Check } from 'lucide-react';
 import { SUBCATEGORY_NAMES } from '../features/catalog/categories';
 import CATEGORY_ICONS from '../utils/categoryIcons';
+import { orderablePrice, NO_PRICE_LABEL } from '../utils/pricing';
 
 /* כמה זמן הכפתור מראה וי אחרי הוספה. מספיק כדי להיראות, קצר מכדי
    להיראות כמו מצב תקוע. */
@@ -43,12 +44,15 @@ function ProductCard({
   const inStock = product.in_stock !== false;
   const variants = Array.isArray(product.variants) ? product.variants : [];
   const showImage = Boolean(product.image_url) && !imageFailed;
+  // מוצר בלי מחיר במסד — לא מוצג "₪0" ולא ניתן להוסיף אותו
+  // לעגלה. הכלל עצמו ב-utils/pricing.js.
+  const price = orderablePrice(product);
   const subcategory = SUBCATEGORY_NAMES[product.subcategory];
 
   function handleAdd(e) {
     e.preventDefault();
     e.stopPropagation();
-    if (!inStock) return;
+    if (!inStock || price === null) return;
     onAddToCart(product);
     setAdded(true);
     clearTimeout(timer.current);
@@ -112,23 +116,25 @@ function ProductCard({
         {/* נדחף לתחתית הכרטיס, כך ששורות המחיר של כל הכרטיסים בשורה
             אחת מיושרות גם כשלחלקם יש מק"ט ולחלקם אין */}
         <div className="product-card-foot">
-          <p className="product-card-price">
-            {variants.length > 0 ? (
+          <p className={`product-card-price ${price === null ? 'is-no-price' : ''}`}>
+            {price === null ? NO_PRICE_LABEL : variants.length > 0 ? (
               <>
-                מ-₪{Math.min(...variants.map((v) => v.price))}
+                מ-₪{price}
                 <span className="product-card-variants"> · {variants.length} גרסאות</span>
               </>
             ) : (
-              <>₪{product.price}</>
+              <>₪{price}</>
             )}
           </p>
 
           <button
             type="button"
             className={`product-card-cart ${added ? 'is-added' : ''}`}
-            aria-label={`הוסף לעגלה: ${product.name}`}
+            aria-label={price === null
+              ? `${product.name}: ${NO_PRICE_LABEL}, לא ניתן להוסיף לעגלה`
+              : `הוסף לעגלה: ${product.name}`}
             onClick={handleAdd}
-            disabled={!inStock}
+            disabled={!inStock || price === null}
           >
             {added
               ? <Check size={18} aria-hidden="true" />
