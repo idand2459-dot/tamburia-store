@@ -36,7 +36,17 @@
      against the viewport, and unlike 100vw it leaves room for a desktop
      scrollbar instead of reaching 15px past the edge. */
   max-width: 100%;
+  /* 100vh first as the fallback, then 100dvh for anything that understands it.
+
+     On iOS Safari 100vh is the *large* viewport: the height the page would have
+     if the address bar were collapsed. It is not the height you can see while
+     the bar is up, so the last 60-odd pixels of this panel — which is the total
+     and the "continue" button — sat behind the bar with no way to reach them.
+     The panel is exactly as tall as the viewport and only .drawer-body scrolls
+     inside it, so there was nothing to scroll. 100dvh is the height that is
+     really there at this moment, and it changes as the bar comes and goes. */
   height: 100vh;
+  height: 100dvh;
   background: var(--color-surface);
   box-shadow: 0 0 48px rgba(var(--color-navy-950-rgb), 0.35);
   animation: drawer-in 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
@@ -105,9 +115,13 @@
   overscroll-behavior: contain;
 }
 
+/* The bottom inset on top of the design padding: this is the last thing in the
+   panel and it sits against the bottom edge of the screen, where the home
+   indicator is. */
 .drawer-foot {
   flex-shrink: 0;
   padding: 16px 20px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid rgba(var(--color-navy-rgb), 0.08);
   background: var(--color-surface);
 }
@@ -157,7 +171,11 @@
 
   .drawer-title { font-size: 1.05rem; }
 
-  .drawer-foot { padding: 14px 16px; }
+  /* the shorthand resets padding-bottom, so the inset is restated here */
+  .drawer-foot {
+      padding: 14px 16px;
+      padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    }
 }
 
 /* ---- Reduced motion ------------------------------------------------------ */
