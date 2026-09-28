@@ -5,10 +5,31 @@
  * שייכים ל-useCart, וכפילות שלהם כאן הייתה יכולה להיפרד ממנו. בסיום
  * הזמנה מוצלחת הטופס גם מרוקן את העגלה, ולכן הוא צריך את הסטרים שלה.
  *
- * הסכומים נשלחים לשרת לצורך תיעוד בלבד — השרת מחשב אותם מחדש מתוך
- * הפריטים ומתעלם ממה שהגיע בגוף הבקשה.
+ * הסכומים והמחירים נשלחים לשרת כדי שיהיה מה להשוות אליו, לא כדי
+ * שיישמרו: השרת שולף את המחיר של כל פריט מהקטלוג, מחשב מהם את
+ * הסכומים, ומתעלם ממה שהגיע בגוף הבקשה.
+ *
+ * מכאן גם הטיפול ב-409. מחיר שהשתנה בזמן שהמוצר שכב בעגלה אינו תקלה
+ * ואינו ניסיון רמייה, אבל הוא כן אומר שהלקוח עומד לאשר סכום אחר ממה
+ * שהוא רואה. השרת דוחה, מחזיר את המחירים העדכניים ב-details, והעגלה
+ * מתקנת את עצמה כאן — כך שהניסיון השני כבר מציג את הסכום הנכון.
  */
 import { useState, useMemo, useCallback } from 'react';
+
+/**
+ * מחזיר את העגלה עם המחירים שהשרת החזיר.
+ *
+ * ההתאמה היא לפי מזהה *וגרסה*: אותו מוצר יכול לשבת בעגלה בשתי שורות
+ * בשתי גרסאות במחירים שונים, והתאמה לפי מזהה בלבד הייתה נותנת לשתיהן
+ * את אותו מחיר.
+ */
+function applyPrices(cart, prices) {
+  return cart.map((item) => {
+    const match = prices.find((p) => p.id === item.id
+      && (p.selectedVariant || null) === (item.selectedVariant || null));
+    return match ? { ...item, price: match.price } : item;
+  });
+}
 
 /** מנהל את טופס ההזמנה ואת שליחתה. */
 export function useCheckoutForm(cartState) {
@@ -49,6 +70,9 @@ export function useCheckoutForm(cartState) {
       notes: orderNotes,
       items: cart.map((i) => ({
         id: i.id, name: i.name, price: i.price, quantity: i.quantity || 1,
+        // תווית הגרסה נוסעת לשרת: היא מה שקובע מאיזו גרסה יילקח המחיר,
+        // ובלעדיה לא היה לו איך לתמחר מוצר עם גרסאות
+        selectedVariant: i.selectedVariant || null,
         selectedColor: i.selectedColor || null, selectedSize: i.selectedSize || null,
       })),
       subtotal, delivery_fee: deliveryFee, total,
@@ -76,6 +100,13 @@ export function useCheckoutForm(cartState) {
     if (!res.ok) {
       setSubmittingOrder(false);
       setOrderError(saved?.error || 'שליחת ההזמנה נכשלה. אפשר לנסות שוב.');
+
+      // 409 הוא המקרה היחיד שבו לתשובה יש מה להוסיף לעגלה ולא רק
+      // למסך: המחירים העדכניים, כדי שהסכום שמוצג יתיישר עם מה שהשרת
+      // יקבל בפעם הבאה.
+      if (res.status === 409 && Array.isArray(saved?.details?.prices)) {
+        setCart((prev) => applyPrices(prev, saved.details.prices));
+      }
       return;
     }
 
