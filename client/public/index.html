@@ -3,7 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- viewport-fit=cover is what makes env(safe-area-inset-*) report real
+         numbers on a notched iPhone; without it they are all 0, so the product
+         page's buy bar and the admin's bottom tab bar sat under the home
+         indicator. The elements that now reach the screen edges guard
+         themselves with max(padding, env(...)) — see the navbar, the footer's
+         bottom strip, _product-buy-bar.css and _admin-nav.css.
+         No maximum-scale / user-scalable: pinch-zoom stays available. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#1a1a2e" />
 
     <!-- SEO מרכזי -->

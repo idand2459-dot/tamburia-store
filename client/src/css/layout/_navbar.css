@@ -29,7 +29,12 @@
   backdrop-filter: saturate(160%) blur(14px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   color: white;
-  padding: 0 24px;
+  /* max() and not a plain sum: in landscape on a notched iPhone the side inset
+     is ~50px and has to win, in portrait it is 0 and the design padding does.
+     Physical left/right because that is what the insets are. */
+  padding: 0;
+  padding-left: max(24px, env(safe-area-inset-left, 0px));
+  padding-right: max(24px, env(safe-area-inset-right, 0px));
   height: 68px;
   display: flex;
   align-items: center;
@@ -285,7 +290,9 @@
 @media (max-width: 768px) {
   .navbar {
       height: 60px;
-      padding: 0 12px;
+      padding: 0;
+      padding-left: max(12px, env(safe-area-inset-left, 0px));
+      padding-right: max(12px, env(safe-area-inset-right, 0px));
       /* explicit: the deleted `header { flex-direction: column }` rule used to
          leak into the navbar here and stack it */
       flex-direction: row;

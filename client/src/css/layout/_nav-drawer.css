@@ -9,10 +9,28 @@
    already win.
    ========================================================== */
 
+/* The panel waits off-screen as transform + visibility, not at right: -280px.
+
+   That negative offset was the iOS rotation bug: it made the document 280px
+   wider than the viewport at all times, and Safari, having measured the page
+   while landscape, kept the inflated width when the phone came back to
+   portrait — the whole page zoomed out and shoved to one side until a refresh.
+   A transform moves the panel without touching the layout box, so the document
+   stays exactly as wide as the screen.
+
+   visibility: hidden comes with it, and fixes something the old rule got wrong
+   as well: a panel parked off-screen is still in the tab order, so tabbing
+   through the closed page walked into six invisible links. `visibility` is
+   animatable as a discrete step, so listing it in the transition is what holds
+   the panel visible for the full 0.35s slide out instead of vanishing on
+   frame 1. */
 .nav-drawer {
   position: fixed;
   top: 0;
-  right: -280px;
+  /* physical right, like the border-left below it: the panel comes in from the
+     right, which in this RTL document is the inline *start* side — writing it
+     logically here would have put it on the left. */
+  right: 0;
   width: 280px;
   height: 100vh;
   background:
@@ -21,7 +39,9 @@
     var(--color-navy-950);
   border-left: 1px solid rgba(255, 255, 255, 0.06);
   z-index: 300;
-  transition: right 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transform: translateX(100%);
+  visibility: hidden;
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), visibility 0.35s;
   display: flex;
   flex-direction: column;
 }
@@ -103,7 +123,8 @@
 /* ---- States ------------------------------------------------------------- */
 
 .nav-drawer.open {
-  right: 0;
+  transform: translateX(0);
+  visibility: visible;
 }
 
 .nav-close-btn:hover {
