@@ -81,7 +81,13 @@ function CategoryBanner({ category, productCount }) {
   }, [category.id]);
 
   return (
-    <div className={`category-banner ${photo ? 'category-banner--photo' : 'category-banner--plain'}`}>
+    /* data-category: שכבת הקריאות אחידה לכל הבאנרים, ולשני תצלומים —
+       plumbing ו-bathroom, ששניהם קיר אריחים בהיר בצד של הכותרת — יש
+       חריג ב-CSS שמכהה אותם יותר. */
+    <div
+      className={`category-banner ${photo ? 'category-banner--photo' : 'category-banner--plain'}`}
+      data-category={category.id}
+    >
       {photo ? (
         /* דקורטיבי: את מה שהתמונה מראה אומרת הכותרת שמעליה, ולכן alt ריק.
            fetchPriority high — זו התמונה הראשונה שנראית בעמוד הזה. */
