@@ -174,7 +174,8 @@ client/src/
   css/           app.css imports every partial; base / layout / components / features
 
 test/            five end-to-end suites, 237 checks
-scripts/         CSV product import, demo-data seeding
+scripts/         CSV product import, demo-data seeding, the product photo pipeline
+photos/          raw phone photos in, processed store images out - contents gitignored
 docs/images/     screenshots used by this README
 uploads/         admin image uploads — contents gitignored
 ```
@@ -360,6 +361,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | `npm run migrate` | Runs migrations without starting the server |
 | `npm run seed:demo` | Inserts demo orders and reviews |
 | `npm run seed:demo:clear` | Removes exactly that demo data again |
+| `npm run products:list` | Writes the printable shooting list (CSV + A4 HTML) |
+| `npm run images:products` | Turns raw product photos into 1200x1200 white-background WebP |
 
 ### Demo data
 
@@ -400,6 +403,78 @@ $env:PORT=3001; npm start --prefix client    # React, port 3001
 > `client/build` is not committed. After any change under `client/src`, run
 > `npm run build:client` or the browser at port 3000 will keep serving the previous
 > version.
+
+### Product photos
+
+Most products in the database point at image files that were never uploaded, so the
+storefront falls back to a category icon. The fix is to photograph the products in the
+shop and run them through a local pipeline. Nothing here is generative: the product's
+own pixels are kept exactly as photographed, and all that is removed is the background.
+
+**1. Print the shooting list.**
+
+```bash
+npm run products:list
+```
+
+Writes `design-assets/product-list.csv` and `design-assets/product-list.html`. Open the
+HTML and print it (A4, RTL, grouped by category, products without a photo listed first).
+Each line has a checkbox and the product id in large digits — that id is the filename.
+`has_real_image` is true only when `image_url` is set **and** the file it points at
+actually exists in `uploads/`, which is the distinction that matters: a row can have an
+image URL and still have no image.
+
+**2. Shoot, naming each file after the product id.**
+
+`247.jpg` for the main shot, `247-2.jpg` / `247-3.jpg` for extra angles, and
+`new-<anything>.jpg` for a product that is not in the database yet. On an iPhone, set
+Settings → Camera → Formats → **Most Compatible** first, or the phone writes HEIC, which
+the pipeline reports and skips rather than guessing at. Copy the files into `photos/raw/`.
+
+**3. Process.**
+
+```bash
+npm run images:products
+```
+
+For each photo: auto-orient from EXIF, remove the background, crop to the product's
+bounding box, centre it on a pure white 1200x1200 canvas at up to 80% of the frame
+(never upscaled past the source), flatten and export WebP at quality 82 into
+`photos/processed/`. Roughly 6-8 seconds per photo on a laptop CPU.
+
+The run touches neither the database nor `uploads/`. It writes `photos/preview.html` —
+open it in the browser to see every result next to its original, with a red **לבדיקה**
+badge and a reason on anything suspect: a mask covering under 5% or over 90% of the
+frame, a product crop under 500px on its long side, a filename that matches no product,
+or two files claiming the same slot. Re-running skips photos whose output is newer than
+the source; `--force` redoes everything.
+
+**4. Attach.**
+
+```bash
+npm run images:products -- --apply
+```
+
+Copies the processed images into `uploads/` as `product-<id>.webp` and sets `image_url`
+and `images` through the product model. Flagged images are skipped unless
+`--include-flagged` is passed. Before writing a single row it saves the previous
+`image_url` and `images` of everything it is about to change to
+`design-assets/image-backup-<timestamp>.json`, and prints the command that undoes it:
+
+```bash
+npm run images:products -- --revert design-assets/image-backup-....json
+```
+
+Revert restores the database rows only; files already copied into `uploads/` stay where
+they are, and re-applying overwrites them in place.
+
+**Background removal runs entirely on this machine.** It is
+`@imgly/background-removal-node`, a devDependency that ships the ONNX model weights
+inside the package (about 127 MB in `node_modules`), so there is no first-run download,
+no API key, and no photo ever leaves the computer. It runs in a child process on
+purpose: it pins `sharp` 0.32 while this project is on 0.35, and loading both copies of
+libvips into one process segfaults Node. `scripts/lib/cutout.js` keeps that child alive
+across the whole batch so the model is loaded once, not once per photo.
 
 ---
 

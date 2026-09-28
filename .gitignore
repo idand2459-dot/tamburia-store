@@ -15,3 +15,17 @@ scripts/.seed-demo-manifest.json
 
 # פלט הבילד של הקליינט — נוצר מחדש בכל build, לא נכנס לגיט
 client/build/
+
+# רשימת המוצרים לצילום — פלט של npm run products:list, נוצר מחדש בכל הרצה
+design-assets/product-list.csv
+design-assets/product-list.html
+
+# גיבויי image_url מלפני --apply — מקומיים, לא נכנסים לגיט
+design-assets/image-backup-*.json
+
+# צילומי המוצרים: הגלם מהטלפון והתוצרים המעובדים. התיקיות עצמן נשמרות
+# (.gitkeep) כדי שהסקריפט ימצא לאן לכתוב, התוכן לא.
+photos/raw/*
+!photos/raw/.gitkeep
+photos/processed/
+photos/preview.html
