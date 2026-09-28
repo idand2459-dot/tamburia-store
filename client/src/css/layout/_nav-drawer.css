@@ -32,7 +32,12 @@
      logically here would have put it on the left. */
   right: 0;
   width: 280px;
+  /* 100dvh with a 100vh fallback, the same as .drawer in components/_drawer.css
+     and for the same reason: on iOS Safari 100vh is the height the page would
+     have with the address bar collapsed, so the foot of a full-height panel ends
+     up behind the bar. That file carries the detail. */
   height: 100vh;
+  height: 100dvh;
   background:
     radial-gradient(circle 320px at 100% 0%,
       rgba(var(--color-purple-rgb), 0.16), transparent 70%),
