@@ -25,6 +25,7 @@ import ProductBuyBar from '../features/catalog/product-page/ProductBuyBar';
 import ProductReviewsSection from '../features/catalog/product-page/ProductReviewsSection';
 import RelatedProducts from '../features/catalog/product-page/RelatedProducts';
 import Stars from '../features/catalog/product-page/Stars';
+import { averageRating } from '../utils/rating';
 
 const MAX_RECENT = 6;
 const MAX_RELATED = 4;
@@ -161,9 +162,7 @@ function ProductPage({ product, onAddToCart }) {
     reviewsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  const avgRating = reviews.length > 0
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : null;
+  const avgRating = averageRating(reviews);
 
   return (
     <div className="product-page">
