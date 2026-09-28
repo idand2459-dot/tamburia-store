@@ -267,23 +267,40 @@
      on plumbing's title and 3.72:1 on bathroom's, and bathroom's description —
      1rem, so it owes 4.5 and not 3 — to 4.46:1.
 
-     One deeper, slightly longer ramp serves both: plumbing's title comes back
-     to 4.99:1, and bathroom to 5.35:1 with its description at 6.22:1, worst
-     pixel 4.62, at 1920 and better at 1366. Every other banner keeps the light
-     layer. Kitchen is the next closest and stays on it by choice — its title
-     clears the 3:1 that 2.6rem bold owes, and its description is at 4.50:1.
+     Each gets a deeper ramp, below, and they are not quite the same one.
+     Bathroom's is here: it brings its title to 5.35:1 and its description to
+     6.22:1, worst pixel 4.62, at 1920 and better at 1366. Every other banner
+     keeps the light layer. Kitchen is the next closest and stays on it by
+     choice — its title clears the 3:1 that 2.6rem bold owes, and its
+     description is at 4.50:1.
      Garden was the one to suspect and it turned out to be among the darkest of
      the set on that side — it needs nothing.
 
-     Plumbing's description is the one line still short of 4.5 (4.88:1 on
-     average, 3.06 at its worst pixel): it is the longest string of the twelve,
-     so it reaches further left than any other into the part of the frame this
-     whole change exists to leave alone. The text-shadow above carries it. */
-  .category-banner--photo[data-category='plumbing']::before,
+     Garden was the one to suspect and it turned out to be among the darkest of
+     the set on that side — it needs nothing. */
   .category-banner--photo[data-category='bathroom']::before {
       background: linear-gradient(to left,
         rgba(var(--color-navy-950-rgb), 0.74) 0%,
         rgba(var(--color-navy-950-rgb), 0.42) 30%,
+        transparent 52%);
+    }
+
+  /* Plumbing needs a little more again, and only in the middle. Its
+     description was the longest string of the twelve and reached further left
+     than any other line, to where even this deeper layer has thinned out; it
+     has been shortened in CategoryBanner.js, which took its worst pixel from
+     3.06:1 to 3.18:1 — better, and still short of the 4.5 a 1rem line owes.
+
+     So the ramp holds 0.46 out to 38% instead of thinning to 0.42 by 30%. The
+     ends are deliberately the ones above: it starts at the same 0.74 and is
+     still gone by 52%, so it covers no more of the photograph than bathroom's
+     does — it just does not give up in the middle, which is exactly where that
+     line sits. Worst pixel 4.94:1 on the description and 5.30:1 on the title
+     at 1920, 5.28:1 and better at 1366. */
+  .category-banner--photo[data-category='plumbing']::before {
+      background: linear-gradient(to left,
+        rgba(var(--color-navy-950-rgb), 0.74) 0%,
+        rgba(var(--color-navy-950-rgb), 0.46) 38%,
         transparent 52%);
     }
 }
