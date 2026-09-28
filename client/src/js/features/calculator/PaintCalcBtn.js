@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { PaintRoller } from 'lucide-react';
 
 /** מציג את הכפתור הצף של מחשבון הצבע. */
-function PaintCalcBtn({ menuOpen }) {
+function PaintCalcBtn() {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ function PaintCalcBtn({ menuOpen }) {
 
   return (
     <button
-      className={`paint-calc-float-btn ${menuOpen ? 'menu-open' : ''}`}
+      className="paint-calc-float-btn"
       onClick={scrollToCalc}
       title="מחשבון צבע"
       aria-label="מחשבון צבע"

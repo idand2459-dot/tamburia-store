@@ -22,11 +22,14 @@
   font-size: 1.1rem;
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(var(--color-red-rgb), 0.4);
-  z-index: 997;
+  /* 97, between the buy bar's 95 and the WhatsApp button's 99, and below every
+     overlay on the site. The whole floating group came down from 995-999 for
+     that reason; components/_buttons.css has the note. */
+  z-index: 97;
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: background 0.2s, transform 0.2s;
+  transition: background 0.2s, transform 0.2s, opacity 0.2s, visibility 0.2s;
   animation: fade-in 0.3s ease;
   font-family: 'Heebo', 'Segoe UI', sans-serif;
 }
@@ -46,10 +49,17 @@
   transform: translateY(-3px);
 }
 
-/* כשהתפריט פתוח — ירד למטה */
-.paint-calc-float-btn.menu-open {
-  top: auto;
-  bottom: 155px;
+/* Out of the way while a drawer is open, like the other two floating buttons —
+   components/_buttons.css carries the reasoning and the matching rule.
+
+   This replaces `.paint-calc-float-btn.menu-open`, which moved the button to
+   bottom: 155px whenever the nav menu was open. It was written for a tall phone,
+   where dropping below the drawer's links was enough; held sideways there is no
+   clear band to drop into, and the button landed on the menu either way. */
+body.has-drawer .paint-calc-float-btn {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* ---- Responsive ------------------------------------------------------------ */
@@ -79,12 +89,6 @@
 
   .paint-calc-float-label {
       display: none;
-    }
-
-  /* the drawer opens on the right, so down here there is nothing to dodge */
-  .paint-calc-float-btn.menu-open {
-      top: auto;
-      bottom: 28px;
     }
 }
 

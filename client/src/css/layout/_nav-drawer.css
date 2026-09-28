@@ -48,10 +48,13 @@
 
 /* ---- Elements ------------------------------------------------------------ */
 
+/* flex-shrink: 0, like .drawer-head in the other panel: the header stays put
+   while the list below it scrolls. */
 .nav-drawer-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
   padding: 20px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
@@ -83,10 +86,31 @@
   transition: background 0.2s, color 0.2s;
 }
 
+/* The list, and the part of the drawer that scrolls.
+
+   flex: 1 with min-height: 0 is the pair that makes it work inside the column
+   above: without min-height a flex item will not shrink below its content, so
+   the overflow would move to the drawer itself and the header would scroll away
+   with the links. Nothing changes on a tall screen, where there is less content
+   than room.
+
+   It matters on a phone held sideways. Six items at ~52px plus the header come
+   to a little under 400px, which is the whole height of the page there, so the
+   last link — the wishlist — sat under the bottom edge with no way to reach it.
+   The bottom inset goes on the padding for the same reason: in landscape the
+   home indicator is along the bottom of the drawer.
+
+   overscroll-behavior: contain stops a flick at the end of the list from
+   scrolling the page behind the drawer, the same as .drawer-body does. */
 .nav-drawer-links {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 12px 0;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   gap: 2px;
 }
 
