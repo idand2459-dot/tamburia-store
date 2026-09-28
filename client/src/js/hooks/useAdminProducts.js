@@ -21,7 +21,11 @@ function productBody(fields, imageUrls) {
   return {
     name, price: parseInt(price) || 0, in_stock: inStock,
     image_url: imageUrls[0] || '', images: imageUrls.slice(1),
-    colors: colors.split(',').map(c => c.trim()).filter(Boolean),
+    /* שורה בלי שם נזרקת כאן ולא בשרת: שורה ריקה בטופס היא שורה שעוד
+       לא מולאה, ולא שגיאה שצריך לעצור עליה. */
+    colors: colors
+      .map(c => ({ name: c.name.trim(), hex: c.hex || '' }))
+      .filter(c => c.name),
     category, sku, description,
     image_illustrative: Boolean(imageIllustrative),
     variants: validVariants.map(v => ({ label: v.label.trim(), price: parseFloat(v.price) }))

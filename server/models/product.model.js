@@ -10,7 +10,7 @@ const COLUMNS = `
   image_illustrative
 `;
 
-const JSON_COLUMNS = new Set(['images', 'variants']);
+const JSON_COLUMNS = new Set(['images', 'variants', 'colors']);
 
 /** ממיר ערך לפורמט שמתאים לעמודה, כולל JSON למקום שצריך. */
 function toDbValue(column, value) {

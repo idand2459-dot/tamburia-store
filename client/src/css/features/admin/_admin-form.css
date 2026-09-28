@@ -12,8 +12,10 @@
 
    The stock switch is _admin-switch.css, shared with the products
    list. The image picker is _admin-images.css and the live
-   preview is _admin-preview.css. The variant editor rows came from
-   _catalog.css in an earlier step and belong to this form.
+   preview is _admin-preview.css. The colour editor and the size
+   editor are _admin-colors.css and _admin-variants.css: both grew
+   past a few rows in a form field, and both are components of
+   their own now.
    ========================================================== */
 
 /* The form and its preview, side by side on a wide screen. */
@@ -63,13 +65,6 @@
 }
 
 .admin-required { color: var(--color-red); }
-
-.admin-label-hint {
-  margin-inline-start: 6px;
-  color: var(--color-text-subtle);
-  font-size: var(--font-size-small);
-  font-weight: 400;
-}
 
 .admin-form-group input,
 .admin-form-group select,
@@ -138,91 +133,42 @@
   font-size: var(--font-size-small);
 }
 
-/* the variant editor rows from ProductFormTab */
-.variants-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.variant-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.variant-label-input {
-  flex: 1;
-  min-width: 0;
-  min-height: 48px;
-  padding: 0 12px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
-  direction: rtl;
-}
-
-.variant-price-symbol {
-  color: var(--color-red);
-  font-size: var(--font-size-h3);
-  font-weight: var(--font-weight-bold);
-}
-
-.variant-price-input {
-  width: 90px;
-  min-height: 48px;
-  padding: 0 10px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
-  text-align: center;
-}
-
-.variant-remove-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  padding: 0;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--color-error-bg);
-  color: var(--color-red-dark);
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.variant-add-btn {
-  display: inline-flex;
-  align-self: flex-start;
-  align-items: center;
-  gap: 6px;
-  min-height: 48px;
-  padding: 0 16px;
-  border: 1.5px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--color-navy);
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-body);
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color var(--transition-fast), background var(--transition-fast);
-}
-
-.variant-hint {
-  margin-top: 6px;
+/* The sentence under a label that says what the field is for. The colour and
+   size editors both needed one: neither is obvious from its label alone, and
+   the size editor was ignored by the shop for exactly that reason. */
+.admin-form-explain {
+  margin: -2px 0 2px;
   color: var(--color-text-subtle);
   font-size: var(--font-size-small);
+  line-height: 1.5;
+}
+
+/* The same voice, under the control rather than above it. */
+.admin-form-hint {
+  margin-top: 8px;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-small);
+  line-height: 1.5;
+}
+
+/* What stands where a field used to be, when the field no longer applies — the
+   price, once the product is sold by size. */
+.admin-form-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 48px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(var(--color-navy-rgb), 0.04);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  line-height: 1.45;
+}
+
+.admin-form-note .lucide {
+  flex-shrink: 0;
+  color: var(--color-navy);
 }
 
 .admin-form-buttons {
@@ -265,9 +211,7 @@
 
 .admin-form-group input:focus,
 .admin-form-group select:focus,
-.admin-form-group textarea:focus,
-.variant-label-input:focus,
-.variant-price-input:focus {
+.admin-form-group textarea:focus {
   border-color: var(--color-purple);
 }
 
@@ -283,20 +227,11 @@
   color: var(--color-navy);
 }
 
-.variant-remove-btn:hover { background: var(--color-error-border); }
-
-.variant-add-btn:hover {
-  border-color: var(--color-navy);
-  background: rgba(var(--color-navy-rgb), 0.04);
-}
-
 .admin-form-group input:focus-visible,
 .admin-form-group select:focus-visible,
 .admin-form-group textarea:focus-visible,
 .admin-submit-btn:focus-visible,
 .admin-cancel-btn:focus-visible,
-.variant-add-btn:focus-visible,
-.variant-remove-btn:focus-visible,
 .admin-checkbox input:focus-visible {
   outline: 3px solid var(--color-purple);
   outline-offset: 2px;
@@ -364,8 +299,6 @@
   .admin-form-group input,
   .admin-form-group select,
   .admin-form-group textarea,
-  .variant-label-input,
-  .variant-price-input,
   .admin-cancel-btn {
     background: var(--color-bg-dark);
     border-color: var(--color-surface-dark);

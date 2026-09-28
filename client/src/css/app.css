@@ -58,6 +58,10 @@
 @import './features/admin/_admin-nav.css';
 @import './features/admin/_admin-products.css';
 @import './features/admin/_admin-form.css';
+/* the colour and size editors inside that form, each split out of it when
+   the form reached the line ceiling */
+@import './features/admin/_admin-colors.css';
+@import './features/admin/_admin-variants.css';
 /* the in-stock switch, rendered by both the list above and the form above it.
    After both, so a component that wants to place it can, while the switch's own
    look stays in one file. */

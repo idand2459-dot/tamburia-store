@@ -24,15 +24,38 @@ import {
 } from 'lucide-react';
 import { CATEGORIES } from './adminConstants';
 import { useObjectUrls } from '../../hooks/useObjectUrls';
+import { asColors } from '../../utils/colorPalette';
 import ProductFormPreview from './ProductFormPreview';
+import ColorRows from './ColorRows';
+import VariantRows from './VariantRows';
 
 const MAX_IMAGES = 5;
 
 const EMPTY = {
-  name: '', price: '', inStock: true, colors: '', category: '',
+  name: '', price: '', inStock: true, colors: [], category: '',
   sku: '', description: '', variants: [], existingImages: [],
   imageIllustrative: false,
 };
+
+/**
+ * מחזיר את מה שלא יעבור בשרת, או null כשהטופס תקין.
+ *
+ * הבדיקה כאן אינה מחליפה את זו שבשרת אלא מקדימה אותה: השרת עונה על
+ * הגודל הראשון שנפל, וכאן אפשר לומר את זה ליד הכפתור בלי הלוך ושוב,
+ * ובלי שהודעה באנגלית תגיע למסך של מי שמפעיל את החנות.
+ */
+function formProblem(variants) {
+  const filled = variants.filter(v => v.label.trim() || String(v.price).trim());
+
+  if (filled.some(v => !v.label.trim())) return 'לכל גודל צריך שם — למשל "3 מטר"';
+  if (filled.some(v => !(Number(v.price) > 0))) return 'לכל גודל צריך מחיר גדול מאפס';
+
+  const labels = filled.map(v => v.label.trim());
+  const duplicate = labels.find((label, i) => labels.indexOf(label) !== i);
+  if (duplicate) return `הגודל "${duplicate}" מופיע פעמיים`;
+
+  return null;
+}
 
 /** גוזר את שדות הטופס ממוצר קיים, או מחזיר טופס ריק. */
 function fieldsFromProduct(product) {
@@ -44,7 +67,7 @@ function fieldsFromProduct(product) {
     name: product.name,
     price: product.price,
     inStock: product.in_stock !== false,
-    colors: product.colors ? product.colors.join(', ') : '',
+    colors: asColors(product.colors),
     category: product.category || '',
     sku: product.sku || '',
     description: product.description || '',
@@ -69,6 +92,7 @@ function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, o
   const [existingImages, setExistingImages] = useState(EMPTY.existingImages);
   const [imageIllustrative, setImageIllustrative] = useState(EMPTY.imageIllustrative);
   const [images, setImages] = useState([]);
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     const f = fieldsFromProduct(editingProduct);
@@ -77,6 +101,7 @@ function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, o
     setDescription(f.description); setVariants(f.variants);
     setExistingImages(f.existingImages); setImages([]);
     setImageIllustrative(f.imageIllustrative);
+    setFormError('');
   }, [editingProduct]);
 
   const totalImagesSelected = existingImages.length + images.length;
@@ -98,6 +123,11 @@ function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, o
    */
   async function handleSubmit(e) {
     e.preventDefault();
+
+    const problem = formProblem(variants);
+    if (problem) { setFormError(problem); return; }
+    setFormError('');
+
     const saved = editingProduct
       ? await onUpdate(editingProduct.id, collectFields(), existingImages, images)
       : await onCreate(collectFields(), images);
@@ -129,10 +159,20 @@ function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, o
             <input id="pf-name" placeholder="שם המוצר" value={name} onChange={e => setName(e.target.value)} required />
           </div>
 
-          {variants.length === 0 && (
+          {variants.length === 0 ? (
             <div className="admin-form-group">
               <label htmlFor="pf-price">מחיר (₪) <span className="admin-required">*</span></label>
               <input id="pf-price" placeholder="0" type="number" inputMode="decimal" min="0" value={price} onChange={e => setPrice(e.target.value)} required />
+            </div>
+          ) : (
+            <div className="admin-form-group">
+              <label>מחיר (₪)</label>
+              {/* השדה נעלם ולא מושבת: מספר אפור שאי אפשר לגעת בו מזמין
+                  את השאלה "אז למה הוא שם". מה שנשאר הוא המשפט. */}
+              <p className="admin-form-note">
+                <Info size={16} aria-hidden="true" />
+                המחיר נקבע לפי הגודל שהלקוח בוחר. בכרטיס המוצר יוצג הזול שבהם.
+              </p>
             </div>
           )}
 
@@ -168,8 +208,11 @@ function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, o
           </div>
 
           <div className="admin-form-group full">
-            <label htmlFor="pf-colors">צבעים</label>
-            <input id="pf-colors" placeholder="לבן, שחור, אפור" value={colors} onChange={e => setColors(e.target.value)} />
+            <label>צבעים</label>
+            <p className="admin-form-explain">
+              כל צבע מוצג בעמוד המוצר כעיגול בגוון שנבחר כאן.
+            </p>
+            <ColorRows colors={colors} onChange={setColors} />
           </div>
 
           <div className="admin-form-group full">
@@ -177,41 +220,13 @@ function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, o
             <textarea id="pf-description" value={description} onChange={e => setDescription(e.target.value)} rows={3} />
           </div>
 
-          {/* ── Variants ── */}
+          {/* ── גדלים ── */}
           <div className="admin-form-group full">
-            <label>גרסאות מוצר עם מחיר שונה <span className="admin-label-hint">(גדלים / נפחים / סוגים)</span></label>
-            {variants.length > 0 && (
-              <div className="variants-list">
-                {variants.map((v, i) => (
-                  <div key={i} className="variant-row">
-                    <input
-                      className="variant-label-input"
-                      placeholder="תיאור (למשל: 1 ליטר, 5 ליטר, 20 ליטר)"
-                      value={v.label}
-                      onChange={e => setVariants(variants.map((x, j) => j === i ? { ...x, label: e.target.value } : x))}
-                    />
-                    <span className="variant-price-symbol">₪</span>
-                    <input
-                      className="variant-price-input"
-                      type="number"
-                      inputMode="decimal"
-                      placeholder="מחיר"
-                      value={v.price}
-                      onChange={e => setVariants(variants.map((x, j) => j === i ? { ...x, price: e.target.value } : x))}
-                    />
-                    <button type="button" className="variant-remove-btn" onClick={() => setVariants(variants.filter((_, j) => j !== i))} aria-label="הסר גרסה">
-                      <X size={18} aria-hidden="true" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            <button type="button" className="variant-add-btn" onClick={() => setVariants([...variants, { label: '', price: '' }])}>
-              <Plus size={18} aria-hidden="true" /> הוסף גרסה
-            </button>
-            {variants.length > 0 && (
-              <p className="variant-hint">המחיר הנמוך ביותר יוצג בכרטיס המוצר. לחץ על ה-X להסרת גרסה.</p>
-            )}
+            <label>גדלים / גרסאות עם מחיר שונה</label>
+            <p className="admin-form-explain">
+              למוצר שנמכר בכמה מידות במחירים שונים. למשל כבל מאריך: 3 מטר ₪25, 5 מטר ₪35.
+            </p>
+            <VariantRows variants={variants} onChange={setVariants} />
           </div>
 
           {/* ── Images ── */}
@@ -276,9 +291,9 @@ function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, o
           </div>
         </div>
 
-        {productsError && (
+        {(formError || productsError) && (
           <div className="admin-error">
-            <AlertTriangle size={18} aria-hidden="true" /> {productsError}
+            <AlertTriangle size={18} aria-hidden="true" /> {formError || productsError}
           </div>
         )}
 

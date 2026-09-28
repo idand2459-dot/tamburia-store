@@ -157,6 +157,114 @@ async function testPartialUpdate() {
   check('עדכון מוצר שאינו קיים → 404', missing.status === 404, missing.status);
 }
 
+/**
+ * בודק את המרת הצבעים ואת הולידציה שלהם.
+ *
+ * צבע הוא { name, hex } מאז מיגרציה 008, ולפניה הוא היה שם בלבד.
+ * שתי הצורות מתקבלות בכוונה: ייבוא ה-CSV שולח שמות מופרדים בפסיק,
+ * וכך גם כל לקוח שנשמר ב-cache מלפני השינוי. מה שנשמר במסד הוא תמיד
+ * האובייקט, וזה מה שנבדק כאן.
+ */
+async function testColors() {
+  console.log('\n── צבעים');
+
+  const base = { ...validProduct(), sku: 'TEST-COLORS-1' };
+
+  // מחרוזות — הצורה הישנה
+  const strings = await call('POST', '/products', { ...base, colors: ['לבן', 'אגוז'] });
+  created.push(strings.body.id);
+  // השוואה שדה-שדה ולא ב-JSON.stringify: jsonb מחזיר את המפתחות
+  // ממוינים, והשוואה של מחרוזות היתה בודקת את הסדר הזה.
+  check('מחרוזת מתקבלת ונשמרת כאובייקט',
+    strings.body.colors.length === 2
+      && strings.body.colors[0].name === 'לבן' && strings.body.colors[0].hex === ''
+      && strings.body.colors[1].name === 'אגוז' && strings.body.colors[1].hex === '',
+    strings.body.colors);
+
+  // אובייקטים עם גוון
+  const objects = await call('POST', '/products', {
+    ...base, sku: 'TEST-COLORS-2',
+    colors: [{ name: 'אגוז', hex: '#6B4423' }, { name: 'שקוף', hex: '' }],
+  });
+  created.push(objects.body.id);
+  check('גוון נשמר ומנורמל לאותיות קטנות',
+    objects.body.colors[0].hex === '#6b4423', objects.body.colors[0]);
+  check('גוון ריק הוא מצב חוקי', objects.body.colors[1].hex === '', objects.body.colors[1]);
+
+  // צורה מעורבת באותה רשימה
+  const mixed = await call('POST', '/products', {
+    ...base, sku: 'TEST-COLORS-3',
+    colors: ['לבן', { name: 'פחם', hex: '#36454f' }],
+  });
+  created.push(mixed.body.id);
+  check('מחרוזת ואובייקט באותה רשימה',
+    mixed.body.colors.length === 2 && mixed.body.colors[0].hex === ''
+      && mixed.body.colors[1].hex === '#36454f', mixed.body.colors);
+
+  // שורה בלי שם נופלת ולא מפילה את הבקשה
+  const empty = await call('POST', '/products', {
+    ...base, sku: 'TEST-COLORS-4',
+    colors: [{ name: '  ', hex: '#ffffff' }, { name: 'לבן', hex: '#ffffff' }],
+  });
+  created.push(empty.body.id);
+  check('צבע בלי שם נזרק', empty.body.colors.length === 1, empty.body.colors);
+
+  const bad = [
+    ['גוון בלי סולמית', [{ name: 'אגוז', hex: '6b4423' }]],
+    ['גוון בן שלוש ספרות', [{ name: 'לבן', hex: '#fff' }]],
+    ['גוון עם תו לא חוקי', [{ name: 'לבן', hex: '#gggggg' }]],
+    ['גוון ארוך מדי', [{ name: 'לבן', hex: '#ffffff00' }]],
+    ['צבעים שאינם מערך', 'לבן'],
+    ['פריט שאינו טקסט או אובייקט', [42]],
+  ];
+  for (const [name, colors] of bad) {
+    const res = await call('POST', '/products', { ...base, sku: 'TEST-COLORS-BAD', colors });
+    if (res.status === 201) created.push(res.body.id);
+    check(`${name} → 400`, res.status === 400, `${res.status} ${res.body.error || ''}`);
+  }
+
+  // ועדכון חלקי של צבעים בלבד אינו נוגע בשאר
+  const patch = await call('PUT', `/products/${objects.body.id}`, {
+    colors: [{ name: 'אלון', hex: '#c89f6d' }],
+  });
+  check('עדכון צבעים בלבד — הצבעים התחלפו',
+    patch.body.colors.length === 1 && patch.body.colors[0].name === 'אלון', patch.body.colors);
+  check('עדכון צבעים בלבד — המחיר והתמונות שרדו',
+    patch.body.price === 120 && patch.body.images.length === 2, patch.body);
+}
+
+/**
+ * בודק את הולידציה של הגדלים.
+ *
+ * שני כללים חדשים: מחיר גדול מאפס, כי מחיר המוצר נגזר מהזול שבגדלים
+ * וגודל ב-0 היה מוציא את כל המוצר מהמכירה; ותוויות ייחודיות, כי
+ * התווית היא מה ש-pricing.service מחפש לפיה את מחיר הגודל שנבחר.
+ */
+async function testVariantRules() {
+  console.log('\n── גדלים');
+
+  const base = { ...validProduct(), sku: 'TEST-VARIANTS-1' };
+
+  const ok = await call('POST', '/products', {
+    ...base, variants: [{ label: '3 מטר', price: 25 }, { label: '5 מטר', price: 35 }],
+  });
+  created.push(ok.body.id);
+  check('שני גדלים נשמרים', ok.body.variants.length === 2, ok.body.variants);
+  check('מחיר המוצר הוא הזול שבהם', ok.body.price === 25, ok.body.price);
+
+  const bad = [
+    ['גודל בלי תווית', [{ label: '  ', price: 25 }]],
+    ['מחיר 0', [{ label: '3 מטר', price: 0 }]],
+    ['מחיר שלילי', [{ label: '3 מטר', price: -5 }]],
+    ['תווית כפולה', [{ label: '3 מטר', price: 25 }, { label: '3 מטר', price: 35 }]],
+  ];
+  for (const [name, variants] of bad) {
+    const res = await call('POST', '/products', { ...base, sku: 'TEST-VARIANTS-BAD', variants });
+    if (res.status === 201) created.push(res.body.id);
+    check(`${name} → 400`, res.status === 400, `${res.status} ${res.body.error || ''}`);
+  }
+}
+
 /** מוחק את כל מה שהבדיקה יצרה ומאמת שלא נשארו שאריות. */
 async function cleanup() {
   console.log('\n── ניקוי');
@@ -180,6 +288,8 @@ async function main() {
   const illustrativeId = await testCreate();
   await testRead(illustrativeId);
   await testPartialUpdate();
+  await testColors();
+  await testVariantRules();
   await cleanup();
 
   console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);
