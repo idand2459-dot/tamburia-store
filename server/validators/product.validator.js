@@ -30,6 +30,39 @@ function asStringArray(value, field) {
     .filter(Boolean);
 }
 
+/* גוון תקין: #rrggbb, או ריק כשאין גוון למוצר הזה. שלוש ספרות (#fff)
+   אינן מתקבלות בכוונה — <input type="color"> מחזיר תמיד שש, וצורה אחת
+   פירושה שאין מה לנרמל לפני השוואה. */
+const HEX = /^#[0-9a-f]{6}$/i;
+
+/**
+ * מאמת רשימת צבעים ומחזיר אותה כאובייקטים { name, hex }.
+ *
+ * מחרוזת מתקבלת כשם בלי גוון, וזו אינה נדיבות אלא תאימות לאחור: ייבוא
+ * ה-CSV שולח שמות מופרדים בפסיק, וכך גם כל לקוח ישן. הצורה שנשמרת
+ * במסד היא תמיד האובייקט.
+ *
+ * צבע בלי שם נופל, ולא נדחה: זו בדיוק ההתנהגות של asStringArray
+ * שקדמה כאן, ושורה ריקה בטופס אינה שגיאה אלא שורה שעוד לא מולאה.
+ */
+function asColors(value) {
+  if (!Array.isArray(value)) throw badRequest('השדה colors חייב להיות מערך');
+
+  return value.map((item, i) => {
+    if (typeof item === 'string') return { name: item.trim(), hex: '' };
+    if (!item || typeof item !== 'object') {
+      throw badRequest(`colors[${i}] חייב להיות טקסט או אובייקט`);
+    }
+
+    const name = String(item.name ?? '').trim();
+    const hex = String(item.hex ?? '').trim().toLowerCase();
+    if (hex && !HEX.test(hex)) {
+      throw badRequest(`colors[${i}].hex חייב להיות בפורמט #rrggbb`);
+    }
+    return { name, hex };
+  }).filter((color) => color.name);
+}
+
 /** מוודא שהערך מספר אי-שלילי ומעגל אותו לשלם. */
 function asNonNegativeInt(value, field) {
   const num = Number(value);
@@ -39,18 +72,34 @@ function asNonNegativeInt(value, field) {
   return Math.round(num);
 }
 
-/** מאמת רשימת וריאנטים ומחזיר אותם עם תווית ומחיר בלבד. */
+/**
+ * מאמת רשימת גרסאות ומחזיר אותן עם תווית ומחיר בלבד.
+ *
+ * מחיר גדול מאפס, ולא רק אי-שלילי: המחיר של מוצר עם גרסאות נגזר מהן
+ * (resolvePrice), וגרסה ב-0 הייתה גוררת את כל המוצר ל"ללא מחיר"
+ * ומוציאה אותו מהמכירה. מי שאין לו מחיר לגודל מסוים לא יוסיף אותו.
+ *
+ * ותוויות ייחודיות, כי התווית היא המפתח: services/pricing.service
+ * מוצא לפיה את מחיר הגרסה שנבחרה, ושתי "5 ליטר" באותו מוצר פירושן
+ * שהמחיר שייגבה הוא של הראשונה — לא משנה במה הלקוח בחר.
+ */
 function asVariants(value) {
   if (!Array.isArray(value)) throw badRequest('השדה variants חייב להיות מערך');
+
+  const seen = new Set();
   return value.map((variant, i) => {
     if (!variant || typeof variant !== 'object') {
       throw badRequest(`variants[${i}] חייב להיות אובייקט`);
     }
     const label = String(variant.label ?? '').trim();
     if (!label) throw badRequest(`variants[${i}].label חסר`);
+
+    if (seen.has(label)) throw badRequest(`הגודל "${label}" מופיע יותר מפעם אחת`);
+    seen.add(label);
+
     const price = Number(variant.price);
-    if (!Number.isFinite(price) || price < 0) {
-      throw badRequest(`variants[${i}].price חייב להיות מספר אי-שלילי`);
+    if (!Number.isFinite(price) || price <= 0) {
+      throw badRequest(`variants[${i}].price חייב להיות מספר גדול מאפס`);
     }
     return { label, price };
   });
@@ -84,7 +133,7 @@ function parseField(field, value) {
       return Array.isArray(value) ? value : [];
 
     case 'colors':
-      return value == null ? [] : asStringArray(value, 'colors');
+      return value == null ? [] : asColors(value);
 
     case 'sizes':
       return value == null ? [] : asStringArray(value, 'sizes');

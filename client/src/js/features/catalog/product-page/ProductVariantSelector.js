@@ -9,19 +9,20 @@
  * ה-ref-ים שמגיעים בפרופס הם מה שמאפשר ל-ProductPage להעביר את המיקוד
  * לבורר החסר: הם יושבים על הפקד הראשון בכל קבוצה.
  *
+ * הגוון של כל עיגול מגיע מהמוצר עצמו (color.hex). קודם הוא נקבע
+ * כאן, ממפה של 15 שמות מדויקים, וכל שם אחר — "אגוז", "טיק",
+ * "חום כהה" — קיבל את אותו #ccc אפור.
+ *
+ * צבע בלי גוון מוצג מפוספס ולא אפור אחיד: בעמודת הצבעים
+ * של מוצרים אמיתיים יושבים גם "מספר 2", "על הטיח" ו-"1 מטר",
+ * שאינם צבעים כלל, ועיגול אפור נראה כמו טענה שזה הגוון.
+ *
  * children מוצג בין שבב הגרסאות לעיגולי הצבע — שם יושב תיאור המוצר
  * ב-DOM. הוא מגיע כ-slot מההורה ולא נבלע לתוך הרכיב, כדי שהתיאור
  * יישאר באחריות העמוד וסדר התצוגה לא ישתנה.
  */
 import { AlertCircle } from 'lucide-react';
-
-const COLOR_MAP = {
-  'לבן': '#ffffff', 'שחור': '#1a1a1a', 'אפור': '#888888',
-  'כחול': '#2563eb', 'אדום': '#dc2626', 'ירוק': '#16a34a',
-  'צהוב': '#eab308', 'כתום': '#ea580c', 'חום': '#92400e',
-  'בז': '#d4b896', 'כסף': '#c0c0c0', 'זהב': '#d4af37',
-  'ורוד': '#ec4899', 'סגול': '#9333ea', 'תכלת': '#38bdf8',
-};
+import { asColors } from '../../../utils/colorPalette';
 
 /** שורת השגיאה מתחת לבורר שחסרה בו בחירה. */
 function PickerError({ children }) {
@@ -41,6 +42,8 @@ function ProductVariantSelector({
   missing, variantRef, colorRef, sizeRef,
   children,
 }) {
+  const colors = asColors(product.colors);
+
   return (
     <>
       {hasVariants && (
@@ -66,21 +69,23 @@ function ProductVariantSelector({
 
       {children}
 
-      {product.colors && product.colors.length > 0 && (
+      {colors.length > 0 && (
         <div className="product-picker">
           <h2 className="product-picker-title">
             בחר צבע {selectedColor && <span className="product-picker-choice">— {selectedColor}</span>}
           </h2>
+          {/* המילוי הוא נתון של המוצר ולכן הוא inline. בלי גוון המילוי
+              נשאר ל-CSS, שמצייר פסים אלכסוניים. */}
           <div className="product-picker-colors">
-            {product.colors.map(color => (
-              <button key={color}
+            {colors.map((color, i) => (
+              <button key={color.name}
                 type="button"
-                ref={color === product.colors[0] ? colorRef : null}
-                className="product-picker-color"
-                aria-pressed={selectedColor === color}
-                aria-label={color}
-                style={{ backgroundColor: COLOR_MAP[color] || '#ccc', border: color === 'לבן' ? '2px solid #ddd' : '2px solid transparent' }}
-                onClick={() => onSelectColor(color)} title={color} />
+                ref={i === 0 ? colorRef : null}
+                className={`product-picker-color ${color.hex ? '' : 'is-unknown'}`}
+                aria-pressed={selectedColor === color.name}
+                aria-label={color.name}
+                style={color.hex ? { backgroundColor: color.hex } : undefined}
+                onClick={() => onSelectColor(color.name)} title={color.name} />
             ))}
           </div>
           {missing === 'color' && <PickerError>בחר צבע לפני ההוספה לעגלה</PickerError>}

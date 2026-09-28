@@ -1,0 +1,252 @@
+/* ==========================================================
+   Admin colour editor — the rows in ProductFormTab, one per
+   colour, rendered by ColorRows.js
+
+   It replaced a single text field ("לבן, שחור, אפור"), because a
+   colour is a name *and* a shade now and a comma-separated line
+   cannot carry two things.
+
+   The palette opens under the row whose dot was pressed, and only
+   that row. 24 finger-sized swatches inside every row would be
+   four screens of scrolling on a phone for a product with three
+   colours; the dot itself is always visible and is also the
+   preview, so what opens is the choice, not the information.
+   ========================================================== */
+
+.admin-colors {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.admin-color-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-color-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-color-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* The swatch: the preview and the button that opens the palette, in one. The
+   ring is a box-shadow and not a border because the fill is an inline style
+   from the product data, and a border would fight it. */
+.admin-color-dot {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-surface-alt);
+  box-shadow: inset 0 0 0 1.5px rgba(var(--color-navy-rgb), 0.18);
+  cursor: pointer;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.admin-color-name {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+}
+
+.admin-color-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-error-bg);
+  color: var(--color-red-dark);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.admin-color-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-navy);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+/* The panel that opens under one row. */
+.admin-shades {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1.5px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+}
+
+.admin-shade-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.admin-shade-label {
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+/* auto-fill and not a fixed count: the form is one column on a phone and two on
+   a desk, and the swatches should fill whichever they get without ever going
+   under the 40px that a finger needs. */
+.admin-shade-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 8px;
+}
+
+.admin-shade {
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 0 0 1px rgba(var(--color-navy-rgb), 0.15);
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* The native colour input, for a shade the palette does not hold. It is a
+   platform control and looks different on every system, which is exactly why it
+   is the second choice here and not the first. */
+.admin-shade-custom {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-shade-custom input {
+  width: 40px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.admin-shade-clear {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+/* No shade: the same diagonal stripes the shop shows, so what the form says
+   about a colour and what the customer sees are the same thing.
+   features/product/_product-options.css carries the twin. */
+.admin-color-dot.is-unknown {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(var(--color-navy-rgb), 0.18) 0 4px,
+    transparent 4px 8px);
+}
+
+.admin-color-dot[aria-expanded='true'] {
+  box-shadow:
+    inset 0 0 0 1.5px rgba(var(--color-navy-rgb), 0.18),
+    0 0 0 3px var(--color-purple);
+}
+
+.admin-color-name:focus { border-color: var(--color-purple); }
+
+.admin-color-remove:hover { background: var(--color-error-border); }
+
+.admin-color-add:hover {
+  border-color: var(--color-navy);
+  background: rgba(var(--color-navy-rgb), 0.04);
+}
+
+.admin-shade:hover { transform: scale(1.08); }
+
+.admin-shade[aria-pressed='true'] {
+  box-shadow: 0 0 0 2px var(--color-surface-alt), 0 0 0 4px var(--color-navy);
+}
+
+.admin-color-dot:focus-visible,
+.admin-color-name:focus-visible,
+.admin-color-remove:focus-visible,
+.admin-color-add:focus-visible,
+.admin-shade:focus-visible,
+.admin-shade-clear:focus-visible,
+.admin-shade-custom:focus-within {
+  outline: 3px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+/* ---- Dark mode ----------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .admin-color-name,
+  .admin-shade-custom,
+  .admin-shade-clear {
+    background: var(--color-bg-dark);
+    border-color: var(--color-surface-dark);
+    color: var(--color-text-dark);
+  }
+
+  .admin-shades {
+    border-color: var(--color-surface-dark);
+    background: var(--color-bg-dark);
+  }
+}

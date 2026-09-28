@@ -86,9 +86,30 @@
 .product-picker-color {
   width: 36px;
   height: 36px;
+  border: none;
   border-radius: 50%;
+  /* The hairline that keeps a white circle from vanishing into the card. It was
+     an inline border on the לבן swatch only; as a box-shadow it costs nothing
+     and works for every pale shade, קרם and לבן שלג included. */
+  box-shadow: inset 0 0 0 1px rgba(var(--color-navy-rgb), 0.12);
   cursor: pointer;
   transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+/* No shade on this colour. Stripes and not a flat grey: a grey circle is
+   itself a plausible colour, and the shop's colour list holds plenty of
+   entries that are not colours at all — "שקוף", "מספר 2", "על הטיח".
+   The name is in the title and the aria-label either way, and it appears
+   beside the heading once the circle is chosen.
+   The admin form draws the same stripes on its own swatch
+   (features/admin/_admin-colors.css). */
+.product-picker-color.is-unknown {
+  background-color: var(--color-surface-alt);
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(var(--color-navy-rgb), 0.25) 0 4px,
+    transparent 4px 8px);
+  box-shadow: inset 0 0 0 1px rgba(var(--color-navy-rgb), 0.2);
 }
 
 /* Same field as the category page's sort control — one select, two places, and
@@ -143,7 +164,10 @@
 }
 
 .product-picker-color[aria-pressed='true'] {
-  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-red);
+  box-shadow:
+    inset 0 0 0 1px rgba(var(--color-navy-rgb), 0.12),
+    0 0 0 2px var(--color-surface),
+    0 0 0 4px var(--color-red);
 }
 
 .product-picker-select:hover {
