@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import paintCalcBg from '../../../assets/images/sections/paint-calc-bg-1672.webp';
 import { PHONES } from '../../utils/storeInfo';
+import { getProduct } from '../../services/productService';
 
 const SHADE_CONFIG = {
   light:  { label: 'בהיר',   Icon: Sun,      factor: 0.15 },
@@ -84,9 +85,7 @@ function PaintCalculator({ addBundleToCart }) {
   // יהיו של המוצר האמיתי. מוצר שלא נמצא פשוט לא נכנס לחבילה.
   useEffect(() => {
     const keys = Object.keys(BUNDLE_PRODUCT_IDS);
-    Promise.all(keys.map(key => fetch(`/api/products/${BUNDLE_PRODUCT_IDS[key]}`)
-      .then(r => (r.ok ? r.json() : null))
-      .catch(() => null)))
+    Promise.all(keys.map(key => getProduct(BUNDLE_PRODUCT_IDS[key]).catch(() => null)))
       .then(list => {
         const found = {};
         keys.forEach((key, i) => { if (list[i]) found[key] = list[i]; });

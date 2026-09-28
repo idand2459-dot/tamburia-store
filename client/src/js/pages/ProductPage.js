@@ -27,6 +27,8 @@ import RelatedProducts from '../features/catalog/product-page/RelatedProducts';
 import Stars from '../features/catalog/product-page/Stars';
 import { averageRating } from '../utils/rating';
 import { selectedPrice, NO_PRICE_LABEL } from '../utils/pricing';
+import { getProducts } from '../services/productService';
+import { getReviews } from '../services/reviewService';
 
 const MAX_RECENT = 6;
 const MAX_RELATED = 4;
@@ -114,18 +116,19 @@ function ProductPage({ product, onAddToCart }) {
 
     // הסינון לפי קטגוריה נעשה בשרת ולא כאן. קודם נשלף כל הקטלוג רק
     // כדי למצוא ארבעה מוצרים — חמישה מבוקשים כדי שאפשר יהיה להוציא את
-    // המוצר הנוכחי ועדיין להישאר עם ארבעה. limit גורם לשרת להחזיר
-    // { products, pagination } במקום מערך, ולכן שתי הצורות נתמכות.
-    fetch(`/api/products?category=${encodeURIComponent(product.category)}&limit=${MAX_RELATED + 1}`)
-      .then(r => r.json())
-      .then(data => {
-        const list = Array.isArray(data) ? data : (data.products || []);
+    // המוצר הנוכחי ועדיין להישאר עם ארבעה. שתי צורות התשובה של השרת
+    // כבר אינן עניינו של העמוד הזה — productService מנרמל אותן.
+    getProducts({ category: product.category, limit: MAX_RELATED + 1 })
+      .then(({ products: list }) => {
         setRelatedProducts(list.filter(p => p.id !== product.id).slice(0, MAX_RELATED));
       })
-      .catch(() => {});
+      // שליפה שנכשלה מסתירה את המקטע. הרשימה אינה מתאפסת בתחילת
+      // ה-effect, ובלי הריקון הזה היו נשארים כאן המוצרים הקשורים של
+      // המוצר הקודם — מקטגוריה אחרת לגמרי.
+      .catch(() => setRelatedProducts([]));
 
-    fetch(`/api/reviews?type=product&product_id=${product.id}`)
-      .then(r => r.json()).then(setReviews).catch(() => {});
+    getReviews({ type: 'product', productId: product.id })
+      .then(setReviews).catch(() => {});
   }, [product.id]);
 
   /** מחזיר את שם הבורר הראשון שחסרה בו בחירה, או null. */

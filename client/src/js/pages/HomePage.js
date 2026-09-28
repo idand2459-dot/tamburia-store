@@ -17,6 +17,7 @@ import { useStore } from '../context/storeContext';
 import { formatRating } from '../utils/rating';
 import scrollToSection from '../utils/scrollToSection';
 import { CATEGORIES_SELECTOR, PAINT_CALC_SELECTOR } from '../utils/sections';
+import { getReviewStats } from '../services/reviewService';
 import heroWide from '../../assets/images/sections/hero-tools-1916.webp';
 import heroMid from '../../assets/images/sections/hero-tools-1600.webp';
 import heroMobile from '../../assets/images/sections/hero-tools-mobile-900.webp';
@@ -65,17 +66,15 @@ function HomePage() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    fetch('/api/reviews/stats')
-      .then((r) => r.json())
+    const controller = new AbortController();
+    getReviewStats({ signal: controller.signal })
       .then((data) => {
-        if (cancelled) return;
         if (typeof data?.total === 'number' && data.total > 0) {
           setRating({ average: data.average, total: data.total });
         }
       })
       .catch(() => { /* בלי דירוג פשוט לא מציגים את הפריט */ });
-    return () => { cancelled = true; };
+    return () => controller.abort();
   }, []);
 
   // שלושת הראשונים קבועים ונכונים: 406 מוצרים, 12 קטגוריות, ומאז 1991.
