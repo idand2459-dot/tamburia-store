@@ -4,7 +4,7 @@
    .product-wishlist-btn used to sit at the bottom of this file:
    the heart beside "add to cart" on the product page, parked here
    because it writes to the same list. That button is now
-   features/_product-buy.css's .product-buy-wish. The panel, the
+   features/product/_product-buy.css's .product-buy-wish. The panel, the
    overlay and the header are components/_drawer.css. What is left
    is the list.
 

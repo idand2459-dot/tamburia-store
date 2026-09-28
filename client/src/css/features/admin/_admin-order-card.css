@@ -8,7 +8,7 @@
    reading detail and for fixing a mistake, which is why the
    status select and delete sit down there, far from the two.
 
-   Split out of features/_admin-orders.css, which keeps the tab's
+   Split out of features/admin/_admin-orders.css, which keeps the tab's
    filter row. Replaces the table-based card that was there; gone
    with it: .order-items-table, .order-details-grid,
    .order-totals, .order-detail-item, .order-status-badge,
@@ -309,7 +309,7 @@
 }
 
 /* The five statuses, in the brand colours the customer's own order card uses in
-   features/_order-history-card.css, where the set is explained: purple, navy,
+   features/cart/_order-history-card.css, where the set is explained: purple, navy,
    red, blue, green, from new to done. */
 .order-card-status--new {
   background: rgba(var(--color-purple-rgb), 0.1);

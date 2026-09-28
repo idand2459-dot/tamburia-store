@@ -4,15 +4,15 @@
    No banner above it, unlike a category page: the customer came
    for this product, so the page opens straight on it and the only
    chrome above the columns is the trail
-   (features/_breadcrumb.css).
+   (features/product/_breadcrumb.css).
 
    This file owns the page, the two columns and the card the
    details sit in — nothing that is written inside that card. Its
-   contents are features/_product-detail.css, the pickers under
-   them features/_product-options.css, the buy row
-   features/_product-buy.css and the promises below it
-   features/_product-trust.css; the image column is
-   features/_product-gallery.css.
+   contents are features/product/_product-detail.css, the pickers under
+   them features/product/_product-options.css, the buy row
+   features/product/_product-buy.css and the promises below it
+   features/product/_product-trust.css; the image column is
+   features/product/_product-gallery.css.
 
    What the block below replaces: a 1000px page opened by a dark
    navy "חזרה למוצרים" pill, with the details as a bare column of

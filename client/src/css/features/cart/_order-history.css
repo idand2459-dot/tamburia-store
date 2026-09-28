@@ -6,7 +6,7 @@
    overlay, the panel and the header are components/_drawer.css
    and nothing about the chrome is in this file.
 
-   One result card is features/_order-history-card.css: the two
+   One result card is features/cart/_order-history-card.css: the two
    together passed the 400-line ceiling, and the card is the half
    with a state of its own (open / closed) while this half is the
    frame around it.

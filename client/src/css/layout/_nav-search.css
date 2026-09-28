@@ -2,8 +2,9 @@
    Nav search results — the dropdown under the navbar's search
 
    The backdrop behind it is .search-overlay in
-   components/_modals.css; the in-page product search in
-   CategoryView is features/_product-search.css.
+   components/_modals.css; the in-page product search on a
+   category page is .category-search in
+   features/category/_category-toolbar.css.
    ========================================================== */
 
 .search-results-list {

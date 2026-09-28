@@ -2,7 +2,7 @@
    Category grid — the light categories section on the home page
 
    Not the category *page* — that is CategoryView, whose own
-   atmosphere is now one photograph in features/_category-banner.css.
+   atmosphere is now one photograph in features/category/_category-banner.css.
    This is the first light section on the home page: the Hero and
    the features strip above it are one dark block, and this is
    where the page opens up. --color-blush, a very light tint of

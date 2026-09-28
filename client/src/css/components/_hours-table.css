@@ -3,7 +3,7 @@
 
    Rendered by the HoursTable component in pages/Contact.js and
    reused by pages/About.js, which used to carry a second copy
-   of the same three rules in features/_about.css.
+   of the same three rules in features/pages/_about.css.
 
    Three rows, one per line of storeInfo.js's HOURS. The row
    that matches today is marked .is-today and lifted out of the
