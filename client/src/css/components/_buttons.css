@@ -15,10 +15,21 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 16px rgba(var(--color-whatsapp-rgb), 0.45);
-  z-index: 999;
-  transition: transform 0.2s, box-shadow 0.2s;
+  /* 99, and no longer 999. The floating furniture used to outrank every overlay
+     on the site: a drawer is 300-500 and its backdrop 200-400, so all three of
+     these buttons floated on top of the open panel. They now sit above the page
+     (which reaches 3) and below the navbar, the drawers and the search popup.
+     The relative order of the four fixed controls is unchanged, only the scale:
+     buy bar 95, paint calculator 97, this 99. */
+  z-index: 99;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s, visibility 0.2s;
   text-decoration: none;
-  animation: whatsapp-pop 0.4s ease 1s both;
+  /* `backwards` and not `both`. A filled animation beats any normal declaration
+     in the cascade, so with `both` this element's opacity was pinned at the
+     keyframe's 1 for good and the .has-drawer rule below could never fade it.
+     `backwards` still holds the 0% frame through the 1s delay, which is the only
+     reason the fill was here, and lets go once the pop is over. */
+  animation: whatsapp-pop 0.4s ease 1s backwards;
 }
 
 .whatsapp-float:hover {
@@ -88,8 +99,8 @@
   font-size: 1.2rem;
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  z-index: 998;
-  transition: background 0.2s, transform 0.2s;
+  z-index: 98;
+  transition: background 0.2s, transform 0.2s, opacity 0.2s, visibility 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -104,6 +115,33 @@
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- States ------------------------------------------------------------- */
+
+/* Every floating button gets out of the way while a drawer is open. StoreLayout
+   puts .has-drawer on <body> for all four of them: the nav menu, the cart, the
+   order lookup and the wishlist.
+
+   A phone held sideways is what forced this. The page is about 400px tall there
+   and the nav drawer takes the right-hand 280px, so the paint-calculator button
+   came down squarely on "צור קשר" and ate the tap. Moving the buttons was the
+   old answer — see the .menu-open rule that used to be in
+   features/calculators/_paint-calc-btn.css — but at that size there is nowhere
+   left to move to, and a button that is off screen cannot be in the way.
+
+   visibility rather than display: none is what allows the fade at all, and
+   naming it in the transitions above is what keeps the button on screen for the
+   first half of the 0.2s instead of cutting it on frame one. pointer-events is
+   the belt to that brace: a button on its way out must not still be tappable.
+
+   The paint-calculator button carries the same rule in its own partial, since
+   that is where that component lives. */
+body.has-drawer .whatsapp-float,
+body.has-drawer .scroll-to-top {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* ---- Responsive --------------------------------------------------------- */

@@ -19,6 +19,25 @@ import OrderHistory from './pages/OrderHistory';
 import Wishlist from './pages/Wishlist';
 import { useStore } from './context/storeContext';
 
+/**
+ * מסמן על ה-body שמגירה פתוחה, כדי שה-CSS יסתיר את הכפתורים הצפים.
+ *
+ * ארבע המגירות מסומנות באותו דגל: התפריט, העגלה, איתור ההזמנות
+ * והמועדפים. כולן מכסות את המסך מהצד, וכל כפתור צף שנשאר מעליהן הוא
+ * מכשול — בטלפון אופקי כפתור מחשבון הצבע יושב בדיוק על "צור קשר"
+ * שבתפריט, ובולע את הלחיצה.
+ *
+ * ההסתרה היא ב-CSS ולא ברינדור מותנה, כדי שתהיה עמימה קצרה בכניסה
+ * וביציאה במקום היעלמות בפריים אחד (components/_buttons.css).
+ */
+function useDrawerBodyClass(open) {
+  useEffect(() => {
+    if (!open) return undefined;
+    document.body.classList.add('has-drawer');
+    return () => document.body.classList.remove('has-drawer');
+  }, [open]);
+}
+
 /** מגלל לראש העמוד בכל מעבר כתובת, למעט פתיחת מודאל. */
 function useScrollToTopOnNavigate(pathname) {
   useEffect(() => {
@@ -40,6 +59,9 @@ function StoreLayout() {
   const onWishlist = Boolean(useMatch('/wishlist'));
 
   useScrollToTopOnNavigate(location.pathname);
+  useDrawerBodyClass(
+    store.menuOpen || onCart || onCheckout || onOrderLookup || onWishlist,
+  );
 
   /**
    * סוגר מודאל. חוזר אחורה כשיש לאן, ואחרת עולה לעמוד הבית — כך
@@ -94,7 +116,9 @@ function StoreLayout() {
 
       <WhatsAppButton />
       <ScrollToTop />
-      {location.pathname === '/' && <PaintCalcBtn menuOpen={store.menuOpen} />}
+      {/* בלי menuOpen: הכפתור לא זז יותר כדי לפנות מקום לתפריט, אלא
+          נעלם איתו ככל הכפתורים הצפים (useDrawerBodyClass למעלה). */}
+      {location.pathname === '/' && <PaintCalcBtn />}
     </div>
   );
 }
