@@ -4,7 +4,7 @@
  */
 import { useState, useEffect, useRef, Fragment } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Crown, Star } from 'lucide-react';
+import { Crown, Star, ArrowDown } from 'lucide-react';
 import CategoryPage from './CategoryPage';
 import WhyUs from '../components/WhyUs';
 import PaintCalculator from '../features/calculator/PaintCalculator';
@@ -14,6 +14,7 @@ import ReviewsCarousel from '../features/catalog/ReviewsCarousel';
 import FAQ from './FAQ';
 import Reveal from '../components/Reveal';
 import { useStore } from '../context/storeContext';
+import { formatRating } from '../utils/rating';
 import heroWide from '../../assets/images/sections/hero-tools-1916.webp';
 import heroMid from '../../assets/images/sections/hero-tools-1600.webp';
 import heroMobile from '../../assets/images/sections/hero-tools-mobile-900.webp';
@@ -41,6 +42,11 @@ function useScrollToSection(state) {
   }, [state]);
 }
 
+/* הרשת אינה עמוד נפרד אלא מקטע כאן, ולכן הכפתור גולל ולא מנווט. אותו
+   סלקטור ואותו scrollIntoView שבהם PaintCalcBtn גולל אל מחשבון הצבע
+   ו-NotFoundPage מבקש את הקטגוריות. */
+const CATEGORIES_SELECTOR = '.category-section';
+
 /** מציג את עמוד הבית. */
 function HomePage() {
   const navigate = useNavigate();
@@ -63,6 +69,12 @@ function HomePage() {
     // לא יירה לעולם. complete מכסה גם את המקרה הזה.
     if (heroImgRef.current?.complete) setHeroLoaded(true);
   }, []);
+
+  /** גולל אל רשת הקטגוריות. */
+  function scrollToCategories() {
+    const el = document.querySelector(CATEGORIES_SELECTOR);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -87,7 +99,7 @@ function HomePage() {
 
   if (rating) {
     stats.push({
-      value: <><Star size={16} fill="currentColor" aria-hidden="true" /> {rating.average}</>,
+      value: <><Star size={16} fill="currentColor" aria-hidden="true" /> {formatRating(rating.average)}</>,
       label: rating.total === 1 ? 'ביקורת אחת' : `${rating.total} ביקורות`,
     });
   }
@@ -120,6 +132,10 @@ function HomePage() {
           <div className="hero-badge"><Crown size={14} aria-hidden="true" /> מאז 1991 · פתח תקווה</div>
           <h1 className="hero-title">כל מה שצריך לבית<br/><span className="hero-accent">במקום אחד</span></h1>
           <p className="hero-sub">מוצרי צביעה · אינסטלציה · כלי עבודה · ממנעולים ועד גינה</p>
+          <button type="button" className="hero-cta" onClick={scrollToCategories}>
+            לכל הקטגוריות
+            <ArrowDown size={20} aria-hidden="true" />
+          </button>
           {/* המפרידים נבנים מתוך המערך, כדי שלא יישאר קו תלוי
               כשפריט הדירוג מוסתר */}
           <div className="hero-stats">

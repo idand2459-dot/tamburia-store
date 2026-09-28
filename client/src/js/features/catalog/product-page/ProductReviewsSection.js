@@ -23,6 +23,7 @@
 import { useState, useEffect } from 'react';
 import { X, PenLine, CheckCircle } from 'lucide-react';
 import Stars from './Stars';
+import { averageRating } from '../../../utils/rating';
 
 const EMPTY_FORM = { reviewer_name: '', rating: 5, text: '' };
 
@@ -60,9 +61,7 @@ function ProductReviewsSection({ productId, reviews, ref }) {
     setReviewForm(EMPTY_FORM);
   }
 
-  const avgRating = reviews.length > 0
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : null;
+  const avgRating = averageRating(reviews);
 
   /** פותח או סוגר את הטופס. פתיחה תמיד מתחילה מטופס נקי. */
   function toggleForm() {

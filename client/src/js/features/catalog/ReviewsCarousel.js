@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Star, X, PenLine, CheckCircle, Loader, Quote, ChevronRight, ChevronLeft } from 'lucide-react';
 import reviewsPhoto600 from '../../../assets/images/sections/reviews-photo-600.webp';
 import reviewsPhoto1000 from '../../../assets/images/sections/reviews-photo-1000.webp';
+import { averageRating } from '../../utils/rating';
 
 /** מציג את קרוסלת חוות הדעת ואת טופס ההוספה. */
 function ReviewsCarousel() {
@@ -81,9 +82,7 @@ function ReviewsCarousel() {
     return new Date(d).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
   }
 
-  const avgRating = reviews.length > 0
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : null;
+  const avgRating = averageRating(reviews);
 
   return (
     /* section ולא div: זה מקטע מלא-רוחב בדף הבית, והרקע הבהיר שלו נצבע על
