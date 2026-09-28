@@ -28,6 +28,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const crypto = require('crypto');
 const sharp = require('sharp');
 const db = require('../server/config/db');
 const productModel = require('../server/models/product.model');
@@ -161,6 +162,23 @@ function outputName(slot) {
 /** תיקיית הפלט של שיבוץ. */
 function outputDir(slot) {
   return slot.kind === 'new' ? NEW_DIR : PROCESSED_DIR;
+}
+
+/**
+ * שם הקובץ שנכתב לתיקיית ההעלאות: product-218-a3f9c1b2.webp.
+ *
+ * החתימה היא של תוכן הקובץ, וזו כל מטרתה: /uploads מוגש עם
+ * max-age של שבוע (server/app.js), ולכן צילום מחדש של מוצר שנכתב
+ * לאותו שם היה יושב במטמון של כל מי שכבר ראה את הקודם — עד שבוע.
+ * תוכן אחר הוא שם אחר, וכתובת חדשה נטענת מיד.
+ *
+ * שמונה ספרות הקסדצימליות ולא יותר: החתימה צריכה להבדיל רק בין
+ * גרסאות של אותו שיבוץ, והמזהה כבר בשם.
+ */
+function uploadName(id, index, contents) {
+  const hash = crypto.createHash('sha256').update(contents).digest('hex').slice(0, 8);
+  const slot = index === 1 ? `${id}` : `${id}-${index}`;
+  return `product-${slot}-${hash}.webp`;
 }
 
 // ──────────────────────────── הסרת רקע ────────────────────────────
@@ -728,8 +746,9 @@ async function applyToProducts(entries, products, opts) {
 
   for (const [id, list] of [...byProduct.entries()].sort((a, b) => a[0] - b[0])) {
     const urls = list.map((entry) => {
-      const fileName = entry.index === 1 ? `product-${id}.webp` : `product-${id}-${entry.index}.webp`;
-      fs.copyFileSync(path.join(ROOT, entry.output), path.join(UPLOADS_DIR, fileName));
+      const source = path.join(ROOT, entry.output);
+      const fileName = uploadName(id, entry.index, fs.readFileSync(source));
+      fs.copyFileSync(source, path.join(UPLOADS_DIR, fileName));
       return pathToUrl(fileName);
     });
 
@@ -741,7 +760,32 @@ async function applyToProducts(entries, products, opts) {
     console.log(`  ✓  ${id}  ${products.get(id).name}  →  ${urls.join(', ')}`);
   }
 
-  return { updated, skippedFlagged, unknownIds, waitingNew, backupPath };
+  const orphans = await findOrphanUploads();
+
+  return { updated, skippedFlagged, unknownIds, waitingNew, backupPath, orphans };
+}
+
+/**
+ * מחזיר את קבצי product-*.webp שכבר אף מוצר אינו מפנה אליהם.
+ *
+ * צילום מחדש של מוצר משנה את החתימה ולכן גם את שם הקובץ, והקובץ הקודם
+ * נשאר יתום. לא מוחקים אותו: הגיבוי האחרון עדיין מצביע עליו, ו---revert
+ * אחרי מחיקה היה מחזיר כתובת לקובץ שאיננו. מדווחים, והמחיקה היא החלטה
+ * של מי שיודע שהוא כבר לא צריך לחזור אחורה.
+ */
+async function findOrphanUploads() {
+  const referenced = new Set();
+
+  for (const product of await productModel.list()) {
+    for (const url of [product.image_url, ...(product.images || [])]) {
+      if (typeof url === 'string' && url) referenced.add(path.basename(url));
+    }
+  }
+
+  return fs.readdirSync(UPLOADS_DIR)
+    .filter((file) => /^product-\d+(-\d+)?-[0-9a-f]{8}\.webp$/.test(file))
+    .filter((file) => !referenced.has(file))
+    .sort();
 }
 
 /** מחזיר את image_url ו-images של כל שורה בגיבוי למה שהיה. */
@@ -831,6 +875,14 @@ async function main() {
   console.log(`מזהים שלא במסד:       ${result.unknownIds.size}` +
     (result.unknownIds.size > 0 ? `  (${[...result.unknownIds].join(', ')})` : ''));
   console.log(`מוצרים חדשים ממתינים: ${result.waitingNew}`);
+
+  if (result.orphans.length > 0) {
+    console.log(
+      `
+קבצים ב-uploads שאף מוצר כבר לא מפנה אליהם (${result.orphans.length}) — לא נמחקו:`
+    );
+    result.orphans.forEach((file) => console.log(`  ·  ${file}`));
+  }
 
   if (result.backupPath) {
     console.log(`\nלביטול:  npm run images:products -- --revert ${rel(result.backupPath)}`);

@@ -455,18 +455,25 @@ the source; `--force` redoes everything.
 npm run images:products -- --apply
 ```
 
-Copies the processed images into `uploads/` as `product-<id>.webp` and sets `image_url`
-and `images` through the product model. Flagged images are skipped unless
-`--include-flagged` is passed. Before writing a single row it saves the previous
-`image_url` and `images` of everything it is about to change to
-`design-assets/image-backup-<timestamp>.json`, and prints the command that undoes it:
+Copies the processed images into `uploads/` as `product-<id>-<hash>.webp` and sets
+`image_url` and `images` through the product model. The hash is the first 8 hex digits of
+the file's own content: `/uploads` is served with a one-week `max-age`, so re-shooting a
+product and writing it back to the same name would sit in the cache of everyone who
+already saw the old one. Different content is a different name, which every browser
+fetches immediately. Flagged images are skipped unless `--include-flagged` is passed.
+Before writing a single row it saves the previous `image_url` and `images` of everything
+it is about to change to `design-assets/image-backup-<timestamp>.json`, and prints the
+command that undoes it:
 
 ```bash
 npm run images:products -- --revert design-assets/image-backup-....json
 ```
 
 Revert restores the database rows only; files already copied into `uploads/` stay where
-they are, and re-applying overwrites them in place.
+they are. A re-shoot leaves the previous file behind under its old hash, and the apply
+run lists every `product-*.webp` that no longer belongs to any product rather than
+deleting it — the most recent backup still points at those files, and deleting them would
+leave `--revert` restoring a URL with nothing behind it.
 
 **Background removal runs entirely on this machine.** It is
 `@imgly/background-removal-node`, a devDependency that ships the ONNX model weights
