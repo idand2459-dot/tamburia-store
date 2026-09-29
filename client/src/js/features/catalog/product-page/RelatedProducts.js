@@ -11,15 +11,24 @@
  * העגלה והמועדפים נשלפים כאן מההקשר ולא מגיעים בפרופס, בדיוק כמו
  * בעמוד הקטגוריה: זה מה שהכרטיס צריך, ועמוד המוצר אינו מתווך בזה.
  * הניווט הוא הקישור שבתוך הכרטיס עצמו, ולכן אין כאן onSelectProduct.
+ *
+ * ההבדל בין שתי הרשתות אינו רק בכותרת: "מוצרים נוספים מהקטגוריה"
+ * נשלפים מהשרת ולכן הם תמיד מה שנמכר עכשיו, ו"צפית לאחרונה" נקראים
+ * מ-localStorage ויכולים להיות צילום של מוצר שהוסתר מאז. רק השנייה
+ * נבדקת מול הקטלוג.
  */
+import { useMemo } from 'react';
 import ProductList from '../../../components/ProductList';
 import { useStore } from '../../../context/storeContext';
+import { useAvailability } from '../../../hooks/useAvailability';
 
 /* לכל היותר ארבעה — שורה אחת על מסך רחב. */
 const MAX_ITEMS = 4;
 
 /** מציג רשת אחת של כרטיסי מוצר עם כותרת. */
-function RelatedGrid({ title, items, categoryId, addToCart, wishlistIds, onToggleWishlist }) {
+function RelatedGrid({
+  title, items, categoryId, addToCart, wishlistIds, onToggleWishlist, unavailableIds,
+}) {
   return (
     <section className="product-related">
       <h2 className="product-related-title">{title}</h2>
@@ -34,6 +43,7 @@ function RelatedGrid({ title, items, categoryId, addToCart, wishlistIds, onToggl
         onAddToCart={addToCart}
         wishlistIds={wishlistIds}
         onToggleWishlist={onToggleWishlist}
+        unavailableIds={unavailableIds}
       />
     </section>
   );
@@ -42,6 +52,9 @@ function RelatedGrid({ title, items, categoryId, addToCart, wishlistIds, onToggl
 /** מציג את המוצרים מאותה קטגוריה ואת "צפית לאחרונה". */
 function RelatedProducts({ recentlyViewed, relatedProducts, categoryId }) {
   const { addToCart, wishlistIds, toggleCardWishlist } = useStore();
+
+  const recentIds = useMemo(() => recentlyViewed.map((p) => p.id), [recentlyViewed]);
+  const unavailableIds = useAvailability(recentIds);
 
   const shared = {
     addToCart,
@@ -64,6 +77,7 @@ function RelatedProducts({ recentlyViewed, relatedProducts, categoryId }) {
         <RelatedGrid
           title="צפית לאחרונה"
           items={recentlyViewed}
+          unavailableIds={unavailableIds}
           {...shared}
         />
       )}

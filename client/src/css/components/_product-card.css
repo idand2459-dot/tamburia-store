@@ -260,6 +260,21 @@
   filter: grayscale(0.4);
 }
 
+/* No longer in the catalogue. Only ever reached from a saved list — the
+   wishlist or "recently viewed" — where the card is a stale snapshot. It
+   is dimmed further than out of stock, because it will not come back on
+   its own. */
+.product-card--unavailable .product-card-image,
+.product-card--unavailable .product-card-fallback {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+.product-card--unavailable .product-card-name,
+.product-card--unavailable .product-card-price {
+  color: rgba(var(--color-navy-rgb), 0.5);
+}
+
 /* ---- Responsive ---------------------------------------------------------- */
 
 /* Two cards to a phone row is tight, so the type steps down with it. */

@@ -220,6 +220,21 @@ export function useAdminProducts(api) {
   ), [patchProduct]);
 
   /**
+   * מסתיר את המוצר מהחנות, או מחזיר אותו אליה.
+   *
+   * זו החלופה למחיקה: המוצר נשאר במסד עם כל מה שמפנה אליו — הזמנות
+   * ישנות, ביקורות, מחשבון הצבע — ופשוט מפסיק להופיע בחנות. לכן זו
+   * פעולה בלי אישור, בניגוד ל-deleteProduct: אפשר לבטל אותה בלחיצה.
+   */
+  const toggleActive = useCallback((product) => (
+    patchProduct(
+      product.id,
+      { active: product.active === false },
+      'הסתרת המוצר נכשלה.'
+    )
+  ), [patchProduct]);
+
+  /**
    * משנה את מחיר המוצר בלבד — עריכת המחיר המהירה בלשונית המוצרים.
    *
    * מוצר עם וריאנטים אינו מגיע לכאן: המחיר שלו נגזר מהזול שבהם, ושליחת
@@ -262,7 +277,7 @@ export function useAdminProducts(api) {
 
   return {
     products, fetchProducts, productsError,
-    createProduct, updateProduct, deleteProduct, toggleStock, updatePrice, uploadingImages,
+    createProduct, updateProduct, deleteProduct, toggleStock, toggleActive, updatePrice, uploadingImages,
     csvPreview, csvErrors, importing, importResult,
     downloadTemplate, handleCsvFile, handleImport, resetCsv, clearImportResult,
   };

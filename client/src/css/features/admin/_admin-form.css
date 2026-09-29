@@ -207,6 +207,43 @@
   transition: border-color var(--transition-fast), color var(--transition-fast);
 }
 
+/* Taking the product out of the shop. Separated from save and cancel by a rule
+   and set below them, because it acts on its own the moment it is pressed and
+   has nothing to do with the edit in progress. */
+.admin-form-visibility {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.admin-form-visibility .admin-form-note {
+  flex: 1 1 260px;
+  margin: 0;
+}
+
+.admin-visibility-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
 /* ---- States -------------------------------------------------------------- */
 
 .admin-form-group input:focus,
@@ -220,6 +257,16 @@
 .admin-submit-btn:disabled {
   background: var(--color-text-faint);
   cursor: default;
+}
+
+.admin-visibility-btn:hover {
+  border-color: var(--color-navy);
+  background: rgba(var(--color-navy-rgb), 0.05);
+}
+
+.admin-visibility-btn:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: 2px;
 }
 
 .admin-cancel-btn:hover {
@@ -282,7 +329,10 @@
   }
 
   .admin-submit-btn,
-  .admin-cancel-btn { width: 100%; }
+  .admin-cancel-btn,
+  .admin-visibility-btn { width: 100%; }
+
+  .admin-form-visibility { flex-direction: column; align-items: stretch; }
 }
 
 /* ---- Dark mode ----------------------------------------------------------- */
@@ -299,11 +349,13 @@
   .admin-form-group input,
   .admin-form-group select,
   .admin-form-group textarea,
-  .admin-cancel-btn {
+  .admin-cancel-btn,
+  .admin-visibility-btn {
     background: var(--color-bg-dark);
     border-color: var(--color-surface-dark);
     color: var(--color-text-dark);
   }
 
-  .admin-form-buttons { border-top-color: var(--color-surface-dark); }
+  .admin-form-buttons,
+  .admin-form-visibility { border-top-color: var(--color-surface-dark); }
 }

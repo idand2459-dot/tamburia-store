@@ -104,6 +104,18 @@
   line-height: 1.4;
 }
 
+/* A product hidden from the catalogue after it was added. The row stays
+   readable so the item can be recognised and removed. */
+.cart-row-flag {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
 .cart-row-foot {
   display: flex;
   align-items: center;
@@ -334,6 +346,15 @@
 
 .cart-clear:hover {
   color: var(--color-red);
+}
+
+.cart-row.is-unavailable .cart-row-well {
+  opacity: 0.5;
+  filter: grayscale(0.5);
+}
+
+.cart-row.is-unavailable .cart-row-name {
+  color: rgba(var(--color-navy-rgb), 0.6);
 }
 
 .cart-row-qty button:focus-visible,

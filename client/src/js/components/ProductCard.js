@@ -20,7 +20,7 @@ import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, Check } from 'lucide-react';
 import { SUBCATEGORY_NAMES } from '../features/catalog/categories';
 import CATEGORY_ICONS from '../utils/categoryIcons';
-import { orderablePrice, NO_PRICE_LABEL } from '../utils/pricing';
+import { orderablePrice, NO_PRICE_LABEL, UNAVAILABLE_LABEL } from '../utils/pricing';
 
 /* כמה זמן הכפתור מראה וי אחרי הוספה. מספיק כדי להיראות, קצר מכדי
    להיראות כמו מצב תקוע. */
@@ -29,6 +29,7 @@ const ADDED_MS = 1200;
 /** מציג כרטיס מוצר אחד. */
 function ProductCard({
   product, categoryId, onAddToCart, inWishlist, onToggleWishlist,
+  unavailable = false,
   className = '', style, ref,
 }) {
   const [added, setAdded] = useState(false);
@@ -41,7 +42,9 @@ function ProductCard({
   useEffect(() => () => clearTimeout(timer.current), []);
 
   const Icon = CATEGORY_ICONS[categoryId];
-  const inStock = product.in_stock !== false;
+  /* unavailable מגיע רק מרשימות ששמורות אצל הלקוח — המועדפים והנצפים
+     לאחרונה. רשת שנשלפה מהשרת מכילה ממילא רק מוצרים שנמכרים. */
+  const inStock = product.in_stock !== false && !unavailable;
   const variants = Array.isArray(product.variants) ? product.variants : [];
   const showImage = Boolean(product.image_url) && !imageFailed;
   // מוצר בלי מחיר במסד — לא מוצג "₪0" ולא ניתן להוסיף אותו
@@ -52,7 +55,7 @@ function ProductCard({
   function handleAdd(e) {
     e.preventDefault();
     e.stopPropagation();
-    if (!inStock || price === null) return;
+    if (!inStock || unavailable || price === null) return;
     onAddToCart(product);
     setAdded(true);
     clearTimeout(timer.current);
@@ -69,8 +72,11 @@ function ProductCard({
     <article
       ref={ref}
       style={style}
-      className={['product-card', inStock ? '' : 'product-card--out', className]
-        .filter(Boolean).join(' ')}
+      className={[
+        'product-card',
+        unavailable ? 'product-card--unavailable' : inStock ? '' : 'product-card--out',
+        className,
+      ].filter(Boolean).join(' ')}
     >
       <div className="product-card-window">
         {showImage ? (
@@ -99,7 +105,10 @@ function ProductCard({
           <Heart size={16} fill={inWishlist ? 'currentColor' : 'none'} aria-hidden="true" />
         </button>
 
-        {!inStock && <span className="product-card-badge">אזל מהמלאי</span>}
+        {/* תגית אחת בלבד: מוצר שאינו בקטלוג אינו גם "אזל מהמלאי" */}
+        {unavailable
+          ? <span className="product-card-badge">{UNAVAILABLE_LABEL}</span>
+          : !inStock && <span className="product-card-badge">אזל מהמלאי</span>}
       </div>
 
       <div className="product-card-body">
@@ -130,11 +139,13 @@ function ProductCard({
           <button
             type="button"
             className={`product-card-cart ${added ? 'is-added' : ''}`}
-            aria-label={price === null
-              ? `${product.name}: ${NO_PRICE_LABEL}, לא ניתן להוסיף לעגלה`
-              : `הוסף לעגלה: ${product.name}`}
+            aria-label={unavailable
+              ? `${product.name}: ${UNAVAILABLE_LABEL}, לא ניתן להוסיף לעגלה`
+              : price === null
+                ? `${product.name}: ${NO_PRICE_LABEL}, לא ניתן להוסיף לעגלה`
+                : `הוסף לעגלה: ${product.name}`}
             onClick={handleAdd}
-            disabled={!inStock || price === null}
+            disabled={!inStock || unavailable || price === null}
           >
             {added
               ? <Check size={18} aria-hidden="true" />

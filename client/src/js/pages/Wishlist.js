@@ -10,14 +10,19 @@
  * onSelectProduct ירד מהפרופס: הוא היה קורא ל-navigate במסגרת, ועכשיו
  * הקישור עושה זאת בעצמו. הסגירה נשארת כמו שהייתה — היא חלק מהניווט,
  * כי /wishlist הוא כתובת ומעבר למוצר מוריד את החלון.
+ *
+ * מה ששמור כאן הוא צילום מלפני חודש: שם, מחיר ותמונה כפי שהיו ביום
+ * השמירה. מוצר שהוסתר מהקטלוג מאז ייראה בדיוק כמו קודם, ולכן הרשימה
+ * שואלת את השרת מי מהם עדיין נמכר ומסמנת את השאר "לא זמין כרגע".
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Trash2, Check, X } from 'lucide-react';
 import Drawer from '../components/Drawer';
 import CATEGORY_ICONS from '../utils/categoryIcons';
 import { getWishlist, toggleWishlist } from '../utils/wishlistUtils';
-import { orderablePrice, NO_PRICE_LABEL } from '../utils/pricing';
+import { useAvailability } from '../hooks/useAvailability';
+import { orderablePrice, NO_PRICE_LABEL, UNAVAILABLE_LABEL } from '../utils/pricing';
 
 /** מציג את חלון המועדפים. */
 function Wishlist({ onClose }) {
@@ -26,6 +31,9 @@ function Wishlist({ onClose }) {
   useEffect(() => {
     setItems(getWishlist());
   }, []);
+
+  const ids = useMemo(() => items.map((product) => product.id), [items]);
+  const unavailableIds = useAvailability(ids);
 
   /** מסיר מוצר מהמועדפים. */
   function handleRemove(product) {
@@ -52,10 +60,11 @@ function Wishlist({ onClose }) {
         <ul className="wishlist-rows">
           {items.map(product => {
             const Icon = CATEGORY_ICONS[product.category];
+            const unavailable = unavailableIds.has(product.id);
             const inStock = product.in_stock !== false;
             const price = orderablePrice(product);
             return (
-              <li key={product.id} className="wishlist-row">
+              <li key={product.id} className={`wishlist-row ${unavailable ? 'is-unavailable' : ''}`}>
                 <div className="wishlist-row-well">
                   {product.image_url
                     ? <img className="wishlist-row-img" src={product.image_url} alt={product.name} />
@@ -73,10 +82,15 @@ function Wishlist({ onClose }) {
                   <span className={`wishlist-row-price ${price === null ? 'is-no-price' : ''}`}>
                     {price === null ? NO_PRICE_LABEL : `₪${price}`}
                   </span>
-                  <span className={`wishlist-row-stock ${inStock ? 'is-in' : 'is-out'}`}>
-                    {inStock
-                      ? <><Check size={13} aria-hidden="true" /> במלאי</>
-                      : <><X size={13} aria-hidden="true" /> אזל</>}
+                  {/* מוצר שאינו בקטלוג מחליף את שורת המלאי ולא מתווסף
+                      לידה: "אזל" ו"לא זמין" באותה שורה סותרים זה את זה */}
+                  <span className={`wishlist-row-stock ${
+                    unavailable ? 'is-unavailable' : inStock ? 'is-in' : 'is-out'}`}>
+                    {unavailable
+                      ? <><X size={13} aria-hidden="true" /> {UNAVAILABLE_LABEL}</>
+                      : inStock
+                        ? <><Check size={13} aria-hidden="true" /> במלאי</>
+                        : <><X size={13} aria-hidden="true" /> אזל</>}
                   </span>
                 </div>
 

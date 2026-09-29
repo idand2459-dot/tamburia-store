@@ -13,6 +13,7 @@ import { StoreContext } from './context/storeContext';
 import { useCart } from './hooks/useCart';
 import { useWishlist } from './hooks/useWishlist';
 import { useCheckoutForm } from './hooks/useCheckoutForm';
+import { useAvailability } from './hooks/useAvailability';
 import StoreLayout from './StoreLayout';
 import HomePage from './pages/HomePage';
 import CategoryView from './features/catalog/CategoryView';
@@ -29,6 +30,12 @@ function App() {
   const wishlist = useWishlist();
   const checkout = useCheckoutForm(cart);
 
+  /* העגלה שורדת ב-localStorage, ומוצר שהוסתר אחרי שנכנס אליה עדיין
+     יושב בה עם המחיר שהיה. הבדיקה כאן היא מה שמאפשר לעגלה להגיד את
+     זה ללקוח במקום לשלוח אותו לסירוב של השרת. */
+  const cartIds = useMemo(() => cart.cart.map((item) => item.id), [cart.cart]);
+  const unavailableIds = useAvailability(cartIds);
+
   // התפריט הנפתח אינו שייך לאף אחד משלושת התחומים, ולכן נשאר כאן.
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -36,8 +43,9 @@ function App() {
     ...cart,
     ...wishlist,
     ...checkout,
+    unavailableIds,
     menuOpen, setMenuOpen,
-  }), [cart, wishlist, checkout, menuOpen]);
+  }), [cart, wishlist, checkout, unavailableIds, menuOpen]);
 
   return (
     <StoreContext.Provider value={store}>

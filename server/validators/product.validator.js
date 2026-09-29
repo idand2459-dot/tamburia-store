@@ -7,7 +7,7 @@ const { badRequest } = require('../utils/AppError');
 const WRITABLE = [
   'name', 'price', 'image_url', 'images', 'colors', 'sizes',
   'category', 'subcategory', 'sku', 'description', 'in_stock', 'variants',
-  'image_illustrative',
+  'image_illustrative', 'active',
 ];
 
 const MAX = { name: 255, image_url: 500, category: 100, subcategory: 100, sku: 100 };
@@ -138,7 +138,11 @@ function parseField(field, value) {
     case 'sizes':
       return value == null ? [] : asStringArray(value, 'sizes');
 
+    /* שניהם ברירת מחדל true, ומאותה סיבה: מוצר חדש הוא מוצר שנמכר.
+       ההבדל ביניהם הוא מה הם אומרים — in_stock הוא "אזל כרגע" ומוצג
+       ללקוח, active הוא "אינו בקטלוג" ומעלים את המוצר לגמרי. */
     case 'in_stock':
+    case 'active':
       return value !== false;
 
     /* ברירת המחדל הפוכה מזו של in_stock: מוצר נחשב במלאי אלא אם נאמר
@@ -217,6 +221,31 @@ function parseListQuery(query = {}) {
       throw badRequest('in_stock חייב להיות true או false');
     }
     options.inStock = value === 'true';
+  }
+
+  /* מה שנשלח כאן קובע רק לאדמין. הקונטרולר דורס אותו ב-true לכל פונה
+     אחר, כי מוצר מוסתר אינו עניין של בקשה אלא של מי שואל. */
+  if (query.active !== undefined) {
+    const value = String(query.active).toLowerCase();
+    if (!['true', 'false'].includes(value)) {
+      throw badRequest('active חייב להיות true או false');
+    }
+    options.active = value === 'true';
+  }
+
+  /* רשימת מזהים: מה שהמועדפים, הנצפים לאחרונה והעגלה שואלים כדי
+     לדעת מה מתוך מה ששמור אצלם עדיין בקטלוג. בקשה אחת במקום אחת
+     לכל פריט, ותשובה שמדלגת ממילא על מה שהוסתר. */
+  if (query.ids !== undefined) {
+    const parts = String(query.ids).split(',').map((part) => part.trim()).filter(Boolean);
+    if (parts.length > 100) throw badRequest('ids מוגבל ל-100 מזהים');
+
+    const ids = parts.map((part) => {
+      const id = Number(part);
+      if (!Number.isInteger(id) || id < 1) throw badRequest(`ids מכיל מזהה לא תקין: "${part}"`);
+      return id;
+    });
+    options.ids = [...new Set(ids)];
   }
 
   if (query.limit !== undefined) {

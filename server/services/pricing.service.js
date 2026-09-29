@@ -17,6 +17,10 @@
  *
  * פריט שאי אפשר לזהות בקטלוג — בלי מזהה, או מזהה שאינו קיים — נדחה.
  * בלי מוצר במסד אין ממה לגזור מחיר, וזו בדיוק הדלת שנסגרת כאן.
+ *
+ * וכך גם מוצר שהוסתר: הוא עדיין במסד, כי הזמנות ישנות מפנות אליו,
+ * אבל הוא אינו בקטלוג. עגלה נשמרת ב-localStorage, ולכן מוצר שהוסתר
+ * אחרי שנכנס אליה עוד יגיע לכאן — והדחייה כאן היא זו שנחשבת.
  */
 const Product = require('../models/product.model');
 const config = require('../config/env');
@@ -33,6 +37,14 @@ function noPriceError(name) {
   return badRequest(
     `לא ניתן להזמין את "${name}" — המחיר שלו עוד לא עודכן באתר. `
     + 'אנא הסירו אותו מהעגלה והתקשרו לחנות לבירור מחיר'
+  );
+}
+
+/** ההודעה על מוצר שכבר אינו בקטלוג. */
+function hiddenError(name) {
+  return badRequest(
+    `לא ניתן להזמין את "${name}" — המוצר אינו זמין כרגע. `
+    + 'אנא הסירו אותו מהעגלה והתקשרו לחנות לבירור'
   );
 }
 
@@ -91,6 +103,9 @@ async function priceOrder(data) {
         `"${item.name}" כבר אינו בקטלוג החנות. אנא הסירו אותו מהעגלה ונסו שוב`
       );
     }
+
+    // לפני המחיר: מוצר שאינו בקטלוג לא יימכר גם אם יש לו מחיר.
+    if (product.active === false) throw hiddenError(product.name);
 
     const price = catalogPrice(product, item);
     if (price === null) throw noPriceError(product.name);

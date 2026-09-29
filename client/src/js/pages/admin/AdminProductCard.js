@@ -20,9 +20,14 @@
  * אפשר להזמין מוצר כזה (utils/pricing.js), ולכן התגית היא מה שאומר
  * שהמוצר הזה למעשה לא למכירה עד שיוקלד לו מחיר. השבב בראש הלשונית
  * מסנן בדיוק לפי אותו כלל.
+ *
+ * "הסתר" הוא מה שעושים במקום למחוק. הזמנות ישנות, ביקורות ומחשבון
+ * הצבע מפנים למוצר לפי id, ומחיקה הייתה מנתקת אותם; הסתרה מוציאה
+ * אותו מהחנות ומשאירה הכול מחובר. לכן היא בלי אישור — היא הפיכה
+ * בלחיצה — ו"מחק" נשאר לידה עם האישור שלו, למוצר שנוצר בטעות.
  */
 import { useState, useRef, useEffect } from 'react';
-import { Check, X, Pencil } from 'lucide-react';
+import { Check, X, Pencil, Eye, EyeOff } from 'lucide-react';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
 import { hasPrice } from '../../utils/pricing';
 import { CATEGORIES } from './adminConstants';
@@ -32,7 +37,9 @@ import { CATEGORIES } from './adminConstants';
 const SAVED_MS = 1400;
 
 /** מציג מוצר אחד בלשונית המוצרים. */
-function AdminProductCard({ product, onEdit, onDelete, onToggleStock, onUpdatePrice }) {
+function AdminProductCard({
+  product, onEdit, onDelete, onToggleStock, onToggleActive, onUpdatePrice,
+}) {
   const [editingPrice, setEditingPrice] = useState(false);
   const [draft, setDraft] = useState('');
   const [saving, setSaving] = useState(false);
@@ -45,6 +52,7 @@ function AdminProductCard({ product, onEdit, onDelete, onToggleStock, onUpdatePr
   const inStock = product.in_stock !== false;
   const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
   const priced = hasPrice(product);
+  const visible = product.active !== false;
   const categoryLabel = CATEGORIES.find(c => c.id === product.category)?.label;
 
   /** פותח את עריכת המחיר, או את הטופס כשיש וריאנטים. */
@@ -81,8 +89,12 @@ function AdminProductCard({ product, onEdit, onDelete, onToggleStock, onUpdatePr
   }
 
   return (
-    <article className={['admin-product', saved ? 'is-saved' : '', priced ? '' : 'is-unpriced']
-      .filter(Boolean).join(' ')}>
+    <article className={[
+      'admin-product',
+      saved ? 'is-saved' : '',
+      priced ? '' : 'is-unpriced',
+      visible ? '' : 'is-hidden',
+    ].filter(Boolean).join(' ')}>
       <div className="admin-product-well">
         {product.image_url
           ? <img src={product.image_url} alt="" loading="lazy" />
@@ -99,6 +111,13 @@ function AdminProductCard({ product, onEdit, onDelete, onToggleStock, onUpdatePr
           {product.sku && <span className="admin-product-sku">מק"ט {product.sku}</span>}
         </p>
 
+        {/* שתי התגיות יכולות להופיע יחד: מוצר יכול להיות גם מוסתר
+            וגם בלי מחיר, ולמי שמחזיר אותו לחנות חשוב לדעת את שתיהן */}
+        {!visible && (
+          <span className="admin-product-flag admin-product-flag--hidden">
+            <EyeOff size={13} aria-hidden="true" /> מוסתר מהחנות
+          </span>
+        )}
         {!priced && <span className="admin-product-flag">ללא מחיר</span>}
 
         {editingPrice ? (
@@ -157,6 +176,15 @@ function AdminProductCard({ product, onEdit, onDelete, onToggleStock, onUpdatePr
 
       <div className="admin-product-actions">
         <button type="button" className="admin-edit-btn" onClick={() => onEdit(product)}>ערוך</button>
+        <button
+          type="button"
+          className="admin-hide-btn"
+          onClick={() => onToggleActive(product)}
+          aria-label={visible ? `הסתר מהחנות: ${product.name}` : `הצג בחנות: ${product.name}`}>
+          {visible
+            ? <><EyeOff size={15} aria-hidden="true" /> הסתר</>
+            : <><Eye size={15} aria-hidden="true" /> הצג</>}
+        </button>
         <button type="button" className="admin-delete-btn" onClick={() => onDelete(product.id)}>מחק</button>
       </div>
     </article>

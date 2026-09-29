@@ -32,6 +32,8 @@ const REVEAL_DEFAULTS = { variant: 'up', step: 40, max: 320 };
  * מוצג דבר, כי קורא שאין לו מצב ריק משלו מסתיר את המקטע כולו.
  * `categoryIdFor` מקבל מוצר ומחזיר את הקטגוריה שממנה נלקח אייקון
  * ממלא-המקום, כי לכל קורא יש תשובה אחרת לשאלה הזו.
+ * `unavailableIds` מסמן מוצרים שכבר אינם בקטלוג. הוא ריק בכל רשת
+ * שנשלפה מהשרת, ורלוונטי רק לרשימות ששמורות אצל הלקוח.
  */
 function ProductList({
   products = [],
@@ -42,6 +44,7 @@ function ProductList({
   onAddToCart,
   wishlistIds = [],
   onToggleWishlist,
+  unavailableIds,
   reveal = false,
 }) {
   if (loading) {
@@ -65,6 +68,7 @@ function ProductList({
           onAddToCart,
           inWishlist: wishlistIds.includes(product.id),
           onToggleWishlist,
+          unavailable: Boolean(unavailableIds?.has(product.id)),
         };
 
         /* הכרטיס עצמו הוא אלמנט החשיפה ולא div סביבו — wrapper היה

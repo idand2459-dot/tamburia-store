@@ -6,6 +6,10 @@
  * בודד או היפוך המלאי נשלחים לבדם, ואסור שיאפסו וריאנטים או תמונות
  * שלא נכללו בבקשה. זה מה שמאפשר לעריכת המחיר המהירה בלשונית המוצרים
  * לשלוח רק את השדה שהשתנה.
+ *
+ * ועל ההסתרה, שהיא הכלל היחיד כאן שהתשובה עליו תלויה במי שואל: אותה
+ * כתובת בדיוק מחזירה 404 ללקוח ו-200 לאדמין המחובר. לכן יש כאן שתי
+ * דרכי פנייה — call עם העוגייה, ו-publicCall בלעדיה.
  */
 const { login } = require('./helpers');
 const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
@@ -32,6 +36,19 @@ async function call(method, path, body) {
   const headers = {};
   if (body) headers['Content-Type'] = 'application/json';
   if (authCookie) headers.Cookie = authCookie;
+
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return { status: res.status, body: await res.json() };
+}
+
+/** שולח בקשה בלי עוגייה — מה שלקוח רגיל רואה. */
+async function publicCall(method, path, body) {
+  const headers = {};
+  if (body) headers['Content-Type'] = 'application/json';
 
   const res = await fetch(`${BASE}${path}`, {
     method,
@@ -265,6 +282,77 @@ async function testVariantRules() {
   }
 }
 
+/**
+ * בודק את הסתרת המוצר: מה שהחנות רואה, מה שהאדמין רואה, ומה שקורה
+ * להזמנה עליו.
+ *
+ * זו החלופה למחיקה, ולכן שתי הדרישות שלה הן שהמוצר ייעלם מהחנות
+ * לגמרי ושהוא יישאר במסד לגמרי. שתיהן נבדקות כאן, וגם החזרה.
+ */
+async function testHidden() {
+  console.log('\n── הסתרה');
+
+  const product = (await call('POST', '/products', {
+    ...validProduct(), name: 'מוצר בדיקה להסתרה', sku: 'TEST-HIDDEN-1',
+  })).body;
+  created.push(product.id);
+  const id = product.id;
+
+  check('מוצר חדש נוצר גלוי', product.active === true, product.active);
+
+  const shownToPublic = await publicCall('GET', `/products/${id}`);
+  check('לפני ההסתרה — הלקוח רואה אותו', shownToPublic.status === 200, shownToPublic.status);
+
+  const hidden = await call('PUT', `/products/${id}`, { active: false });
+  check('הסתרה לבדה → 200', hidden.status === 200, hidden.status);
+  check('active התהפך', hidden.body.active === false, hidden.body.active);
+  check('ההסתרה לא נגעה בשאר השדות',
+    hidden.body.price === 120 && hidden.body.images.length === 2 && hidden.body.name === 'מוצר בדיקה להסתרה',
+    hidden.body);
+
+  const publicList = await publicCall('GET', '/products?limit=500');
+  check('מוסתר אינו ברשימת החנות',
+    !publicList.body.products.some((p) => p.id === id), publicList.body.pagination);
+
+  const publicSearch = await publicCall('GET', '/products?search=' + encodeURIComponent('מוצר בדיקה להסתרה'));
+  const searchRows = Array.isArray(publicSearch.body) ? publicSearch.body : publicSearch.body.products;
+  check('מוסתר אינו בחיפוש של החנות', !searchRows.some((p) => p.id === id), searchRows.length);
+
+  const publicOne = await publicCall('GET', `/products/${id}`);
+  check('עמוד המוצר המוסתר → 404 ללקוח', publicOne.status === 404, publicOne.status);
+
+  const publicIds = await publicCall('GET', `/products?ids=${id}`);
+  const idRows = Array.isArray(publicIds.body) ? publicIds.body : publicIds.body.products;
+  check('שליפה לפי ids מדלגת על מוסתר', idRows.length === 0, idRows);
+
+  // אותה כתובת, עם העוגייה — וזה ההבדל כולו
+  const adminOne = await call('GET', `/products/${id}`);
+  check('האדמין עדיין רואה את המוצר', adminOne.status === 200 && adminOne.body.id === id, adminOne.status);
+
+  const adminList = await call('GET', '/products?limit=500');
+  check('מוסתר נשאר ברשימת האדמין',
+    adminList.body.products.some((p) => p.id === id), adminList.body.pagination);
+
+  const order = await publicCall('POST', '/orders', {
+    customer_name: 'ישראל ישראלי',
+    customer_phone: '050-000-0009',
+    delivery_method: 'pickup',
+    items: [{ id, name: product.name, price: 120, quantity: 1 }],
+  });
+  check('הזמנה על מוצר מוסתר → 400', order.status === 400, order.status);
+  check('ההודעה מסבירה שהמוצר אינו זמין',
+    typeof order.body.error === 'string' && order.body.error.includes('אינו זמין'), order.body.error);
+
+  const shown = await call('PUT', `/products/${id}`, { active: true });
+  check('החזרה לחנות → active שוב true', shown.body.active === true, shown.body.active);
+
+  const backInStore = await publicCall('GET', `/products/${id}`);
+  check('המוצר חזר לחנות', backInStore.status === 200, backInStore.status);
+
+  const backInList = await publicCall('GET', '/products?limit=500');
+  check('והוא שוב ברשימה', backInList.body.products.some((p) => p.id === id), backInList.body.pagination);
+}
+
 /** מוחק את כל מה שהבדיקה יצרה ומאמת שלא נשארו שאריות. */
 async function cleanup() {
   console.log('\n── ניקוי');
@@ -290,6 +378,7 @@ async function main() {
   await testPartialUpdate();
   await testColors();
   await testVariantRules();
+  await testHidden();
   await cleanup();
 
   console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);

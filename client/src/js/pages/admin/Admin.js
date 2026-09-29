@@ -46,7 +46,7 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
   const setActiveTab = onTabChange;
 
   const {
-    products, createProduct, updateProduct, deleteProduct, toggleStock, updatePrice,
+    products, createProduct, updateProduct, deleteProduct, toggleStock, toggleActive, updatePrice,
     uploadingImages, productsError,
     csvPreview, csvErrors, importing, importResult,
     downloadTemplate, handleCsvFile, handleImport, resetCsv, clearImportResult,
@@ -61,20 +61,27 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
 
   const { reviews, approveReview, deleteReview, reviewsError } = useAdminReviews(api);
 
-  const [editingProduct, setEditingProduct] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+
+  /* המוצר הנערך נגזר מהרשימה ואינו עותק שנשמר בלחיצה על "ערוך".
+     כך "הסתר מהחנות" שבטופס, ששולח מיד ומרענן את הרשימה, מחליף גם
+     את התווית של הכפתור עצמו — עותק היה נשאר על הערך הישן. */
+  const editingProduct = editingId === null
+    ? null
+    : products.find((p) => p.id === editingId) || null;
 
   const newOrdersCount = orders.filter(o => o.status === 'new').length;
   const pendingReviewsCount = reviews.filter(r => !r.approved).length;
 
   /** פותח את הטופס לעריכת מוצר קיים. */
   function startEdit(product) {
-    setEditingProduct(product);
+    setEditingId(product.id);
     setActiveTab('add');
   }
 
   /** חוזר לרשימת המוצרים ומסיים את מצב העריכה. */
   function finishForm() {
-    setEditingProduct(null);
+    setEditingId(null);
     setActiveTab('products');
   }
 
@@ -84,7 +91,7 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
    * קובץ שנשאר מפעם קודמת.
    */
   function handleTabChange(next) {
-    if (next === 'products') setEditingProduct(null);
+    if (next === 'products') setEditingId(null);
     if (next === 'import') resetCsv();
     setActiveTab(next);
   }
@@ -146,6 +153,7 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
           onEdit={startEdit}
           onDelete={deleteProduct}
           onToggleStock={toggleStock}
+          onToggleActive={toggleActive}
           onUpdatePrice={updatePrice}
           productsError={productsError}
         />
@@ -156,6 +164,7 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
           editingProduct={editingProduct}
           onCreate={createProduct}
           onUpdate={updateProduct}
+          onToggleActive={toggleActive}
           uploadingImages={uploadingImages}
           onDone={finishForm}
           productsError={productsError}
