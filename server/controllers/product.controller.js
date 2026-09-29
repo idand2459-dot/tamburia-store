@@ -3,10 +3,17 @@
  * אינו כותב SQL ואינו תופס שגיאות — הן עולות למטפל המרכזי.
  *
  * מוצר מוסתר (active = false) הוא מוצר שאינו על המדף. עבור הלקוח הוא
- * פשוט אינו קיים: לא ברשימה, לא בחיפוש, ובעמוד שלו 404. עבור האדמין
- * המחובר הוא קיים ונראה, אחרת אי אפשר היה להחזיר אותו. ההחלטה הזו
+ * פשוט אינו קיים: לא ברשימה, לא בחיפוש, ובעמוד שלו 404. ההחלטה הזו
  * נופלת כאן ולא במודל, כי היא תלויה במי שואל — req.isAdmin, שמגיע
  * מ-markAdmin.
+ *
+ * לאדמין זו אינה הרשאה אלא בקשה: גם הוא מקבל מוצרים גלויים בלבד אלא
+ * אם ביקש ?active=all או ?active=false במפורש. אחרת, אדמין עם חיבור
+ * פתוח שגולש בחנות היה רואה בה מוצרים שהוא בעצמו הסתיר — ובודק את
+ * העבודה שלו מול קטלוג שאף לקוח לא רואה.
+ *
+ * היוצא מן הכלל הוא שליפת מוצר בודד: טופס העריכה טוען לפי id, ובלי
+ * החריג הזה לא היה אפשר להחזיר מוצר מוסתר לחנות.
  */
 const Product = require('../models/product.model');
 const { parseCreate, parseUpdate, parseListQuery } = require('../validators/product.validator');
@@ -16,13 +23,12 @@ const { notFound } = require('../utils/AppError');
 async function list(req, res) {
   const options = parseListQuery(req.query);
 
-  // ללקוח אין דרך לבקש מוצרים מוסתרים, ולא משנה מה נשלח ב-query.
-  // לאדמין אין ברירת מחדל: הרשימה שלו היא הקטלוג המלא, והוא מסנן בה.
-  if (req.isAdmin) {
-    if (options.active === undefined) delete options.active;
-  } else {
-    options.active = true;
-  }
+  // activeRequested הוא מה שנשלח, ו-active הוא מה שהמודל יסנן לפיו.
+  // הראשון לא נכנס למודל: הוא נועד רק להכרעה כאן.
+  const requested = options.activeRequested;
+  delete options.activeRequested;
+
+  if (!req.isAdmin || requested === undefined) options.active = true;
 
   const products = await Product.list(options);
 
@@ -75,9 +81,14 @@ async function remove(req, res) {
   res.json({ message: 'נמחק', product });
 }
 
-/** GET /api/products/categories — מחזיר את הקטגוריות הקיימות. */
+/**
+ * GET /api/products/categories — מחזיר את הקטגוריות הקיימות.
+ *
+ * תמיד הגלויים בלבד: הספירה הזו מתארת מה יש בחנות, וזו אותה תשובה
+ * לכל מי ששואל. מסך הניהול סופר בעצמו מתוך הרשימה שהוא מושך.
+ */
 async function categories(req, res) {
-  res.json(await Product.listCategories({ activeOnly: !req.isAdmin }));
+  res.json(await Product.listCategories({ activeOnly: true }));
 }
 
 module.exports = { list, getOne, create, update, remove, categories };

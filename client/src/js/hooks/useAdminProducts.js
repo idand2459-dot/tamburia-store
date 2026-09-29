@@ -73,9 +73,15 @@ export function useAdminProducts(api) {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
 
-  /** טוען את רשימת המוצרים מהשרת. */
+  /**
+   * טוען את רשימת המוצרים מהשרת.
+   *
+   * ?active=all במפורש: השרת מחזיר מוצרים גלויים בלבד לכל מי ששואל,
+   * גם לאדמין מחובר, כדי שגלישה בחנות תיראה כמו שהיא נראית ללקוח.
+   * הרשימה כאן היא היחידה שצריכה גם את המוסתרים.
+   */
   const fetchProducts = useCallback(() => {
-    api('/api/products').then(r => r.json()).then(data => setProducts(Array.isArray(data) ? data : [])).catch(() => {});
+    api('/api/products?active=all').then(r => r.json()).then(data => setProducts(Array.isArray(data) ? data : [])).catch(() => {});
   }, [api]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);

@@ -416,10 +416,19 @@ that is no longer on the shelf would cut an old order loose from the item it sol
 An inactive product simply does not exist for a customer: it is absent from the list,
 from search, from the category counts and from `?ids=`, and `GET /api/products/:id`
 answers 404 — the same 404 as an id that was never there, so the endpoint cannot be used
-to probe which ids exist. For a logged-in admin the same URLs return it, which is what
-makes it possible to bring it back. The decision is made per request in
-`product.controller.js` from `req.isAdmin`, set by the `markAdmin` middleware; the model
-itself just takes an `active` filter.
+to probe which ids exist.
+
+For an admin this is a request rather than a permission. `GET /api/products` returns
+active products only to everyone, including a logged-in admin, unless it is asked for
+more with `?active=all` (everything) or `?active=false` (hidden only) — otherwise an
+admin with a live session browsing the shop would see the very products they had just
+hidden, and would be checking their work against a catalogue no customer can see. Only
+the admin product list passes that flag. The one exception is `GET /api/products/:id`,
+which returns a hidden product to a logged-in admin, because the edit form loads by id
+and without it there would be no way to put a product back.
+
+The decision is made per request in `product.controller.js` from `req.isAdmin`, set by
+the `markAdmin` middleware; the model itself just takes an `active` filter.
 
 The order path enforces it again: `pricing.service.js` rejects an inactive product with
 400 and a Hebrew message, in the same place and shape as the "no price yet" rule. The
