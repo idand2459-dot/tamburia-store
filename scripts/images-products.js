@@ -28,11 +28,10 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const crypto = require('crypto');
 const sharp = require('sharp');
 const db = require('../server/config/db');
 const productModel = require('../server/models/product.model');
-const { UPLOADS_DIR, pathToUrl } = require('./lib/uploads');
+const { UPLOADS_DIR, pathToUrl, uploadName } = require('./lib/uploads');
 const { cutout, stop: stopCutout } = require('./lib/cutout');
 
 const ROOT = path.join(__dirname, '..');
@@ -162,23 +161,6 @@ function outputName(slot) {
 /** תיקיית הפלט של שיבוץ. */
 function outputDir(slot) {
   return slot.kind === 'new' ? NEW_DIR : PROCESSED_DIR;
-}
-
-/**
- * שם הקובץ שנכתב לתיקיית ההעלאות: product-218-a3f9c1b2.webp.
- *
- * החתימה היא של תוכן הקובץ, וזו כל מטרתה: /uploads מוגש עם
- * max-age של שבוע (server/app.js), ולכן צילום מחדש של מוצר שנכתב
- * לאותו שם היה יושב במטמון של כל מי שכבר ראה את הקודם — עד שבוע.
- * תוכן אחר הוא שם אחר, וכתובת חדשה נטענת מיד.
- *
- * שמונה ספרות הקסדצימליות ולא יותר: החתימה צריכה להבדיל רק בין
- * גרסאות של אותו שיבוץ, והמזהה כבר בשם.
- */
-function uploadName(id, index, contents) {
-  const hash = crypto.createHash('sha256').update(contents).digest('hex').slice(0, 8);
-  const slot = index === 1 ? `${id}` : `${id}-${index}`;
-  return `product-${slot}-${hash}.webp`;
 }
 
 // ──────────────────────────── הסרת רקע ────────────────────────────

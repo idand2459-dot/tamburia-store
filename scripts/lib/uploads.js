@@ -8,6 +8,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { UPLOADS_DIR } = require('../../server/middleware/upload');
 
 const PREFIX = '/uploads/';
@@ -43,4 +44,25 @@ function pathToUrl(fileName) {
   return PREFIX + path.basename(fileName);
 }
 
-module.exports = { UPLOADS_DIR, urlToPath, fileExists, pathToUrl };
+/**
+ * שם הקובץ שתמונת מוצר נכתבת בו: product-218-a3f9c1b2.webp.
+ *
+ * החתימה היא של תוכן הקובץ, וזו כל מטרתה: /uploads מוגש עם max-age
+ * של שבוע (server/app.js), ולכן צילום מחדש של מוצר שנכתב לאותו שם
+ * היה יושב במטמון של כל מי שכבר ראה את הקודם — עד שבוע. תוכן אחר הוא
+ * שם אחר, וכתובת חדשה נטענת מיד.
+ *
+ * שמונה ספרות הקסדצימליות ולא יותר: החתימה צריכה להבדיל רק בין
+ * גרסאות של אותו שיבוץ, והמזהה כבר בשם.
+ *
+ * כאן ולא בסקריפט אחד מהם, כי שני סקריפטים כותבים לתיקייה הזו —
+ * images-products (צילום של מוצר קיים) ו-products-import-new (מוצר
+ * שנוצר עכשיו) — ושם קובץ אחד הוא מה שמאפשר לדעת מי יתום.
+ */
+function uploadName(id, index, contents) {
+  const hash = crypto.createHash('sha256').update(contents).digest('hex').slice(0, 8);
+  const slot = index === 1 ? `${id}` : `${id}-${index}`;
+  return `product-${slot}-${hash}.webp`;
+}
+
+module.exports = { UPLOADS_DIR, urlToPath, fileExists, pathToUrl, uploadName };
