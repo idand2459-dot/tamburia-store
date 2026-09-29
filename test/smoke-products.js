@@ -329,9 +329,41 @@ async function testHidden() {
   const adminOne = await call('GET', `/products/${id}`);
   check('האדמין עדיין רואה את המוצר', adminOne.status === 200 && adminOne.body.id === id, adminOne.status);
 
-  const adminList = await call('GET', '/products?limit=500');
-  check('מוסתר נשאר ברשימת האדמין',
-    adminList.body.products.some((p) => p.id === id), adminList.body.pagination);
+  /* לאדמין זו בקשה ולא הרשאה: בלי ?active=all הוא מקבל את אותה
+     רשימה שהלקוח מקבל. בלי זה, אדמין עם חיבור פתוח שגולש בחנות היה
+     רואה בה מוצרים שהוא בעצמו הסתיר. */
+  const adminDefault = await call('GET', '/products?limit=500');
+  check('בלי active=all גם האדמין לא רואה מוסתר ברשימה',
+    !adminDefault.body.products.some((p) => p.id === id), adminDefault.body.pagination);
+
+  const adminAll = await call('GET', '/products?limit=500&active=all');
+  check('עם active=all האדמין רואה אותו',
+    adminAll.body.products.some((p) => p.id === id), adminAll.body.pagination);
+
+  const adminHidden = await call('GET', '/products?limit=500&active=false');
+  check('active=false מחזיר מוסתרים בלבד',
+    adminHidden.body.products.length > 0 && adminHidden.body.products.every((p) => p.active === false),
+    adminHidden.body.pagination);
+
+  // ולמי שאינו מחובר, אותו פרמטר בדיוק לא משנה דבר
+  const publicAll = await publicCall('GET', '/products?limit=500&active=all');
+  check('active=all מלקוח אינו חושף מוסתרים',
+    !publicAll.body.products.some((p) => p.id === id), publicAll.body.pagination);
+
+  const publicHiddenOnly = await publicCall('GET', '/products?limit=500&active=false');
+  check('active=false מלקוח אינו חושף מוסתרים',
+    !publicHiddenOnly.body.products.some((p) => p.id === id), publicHiddenOnly.body.pagination);
+
+  const badActive = await call('GET', '/products?active=maybe');
+  check('active בערך לא חוקי → 400', badActive.status === 400, badActive.status);
+
+  const categoryCounts = await publicCall('GET', '/products/categories');
+  const bathroom = categoryCounts.body.find((row) => row.category === 'bathroom');
+  const adminCounts = await call('GET', '/products/categories');
+  const adminBathroom = adminCounts.body.find((row) => row.category === 'bathroom');
+  check('ספירת הקטגוריות זהה לאדמין וללקוח',
+    bathroom.product_count === adminBathroom.product_count,
+    { public: bathroom, admin: adminBathroom });
 
   const order = await publicCall('POST', '/orders', {
     customer_name: 'ישראל ישראלי',

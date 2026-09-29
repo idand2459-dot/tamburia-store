@@ -223,14 +223,19 @@ function parseListQuery(query = {}) {
     options.inStock = value === 'true';
   }
 
-  /* מה שנשלח כאן קובע רק לאדמין. הקונטרולר דורס אותו ב-true לכל פונה
+  /* שלושה ערכים: true (גלויים), false (מוסתרים בלבד) ו-all (הכול).
+     all הוא היחיד שמחזיר מוצרים מוסתרים, והוא נשמר כאן כ-undefined —
+     כלומר "בלי סינון" — כדי שהמודל לא יצטרך להכיר ערך שלישי.
+
+     מה שנשלח כאן קובע רק לאדמין. הקונטרולר דורס אותו ב-true לכל פונה
      אחר, כי מוצר מוסתר אינו עניין של בקשה אלא של מי שואל. */
   if (query.active !== undefined) {
     const value = String(query.active).toLowerCase();
-    if (!['true', 'false'].includes(value)) {
-      throw badRequest('active חייב להיות true או false');
+    if (!['true', 'false', 'all'].includes(value)) {
+      throw badRequest('active חייב להיות true, false או all');
     }
-    options.active = value === 'true';
+    if (value !== 'all') options.active = value === 'true';
+    options.activeRequested = value;
   }
 
   /* רשימת מזהים: מה שהמועדפים, הנצפים לאחרונה והעגלה שואלים כדי
