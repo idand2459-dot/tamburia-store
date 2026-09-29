@@ -7,7 +7,7 @@ const { query } = require('../config/db');
 const COLUMNS = `
   id, name, price, stock, image_url, images, colors, sizes,
   category, subcategory, sku, description, in_stock, variants,
-  image_illustrative
+  image_illustrative, active
 `;
 
 const JSON_COLUMNS = new Set(['images', 'variants', 'colors']);
@@ -19,11 +19,24 @@ function toDbValue(column, value) {
 
 /** מחזיר מוצרים לפי הסינון, המיון והדפדוף שהתבקשו. */
 async function list(options = {}) {
-  const { category, subcategory, inStock, search, sort = 'id', order = 'ASC', limit, offset } = options;
+  const {
+    category, subcategory, inStock, active, ids, search,
+    sort = 'id', order = 'ASC', limit, offset,
+  } = options;
 
   const conditions = [];
   const params = [];
 
+  if (active !== undefined) {
+    params.push(active);
+    conditions.push(`active = $${params.length}`);
+  }
+  if (Array.isArray(ids)) {
+    // רשימה ריקה היא תשובה ריקה, ולא "בלי סינון": מי שביקש מזהים
+    // מסוימים ולא נקב באף אחד לא ביקש את כל הקטלוג.
+    params.push(ids);
+    conditions.push(`id = ANY($${params.length}::int[])`);
+  }
   if (category) {
     params.push(category);
     conditions.push(`category = $${params.length}`);
@@ -60,10 +73,12 @@ async function list(options = {}) {
 
 /** סופר מוצרים לפי אותם תנאי סינון, לצורך דפדוף. */
 async function count(options = {}) {
-  const { category, subcategory, inStock, search } = options;
+  const { category, subcategory, inStock, active, ids, search } = options;
   const conditions = [];
   const params = [];
 
+  if (active !== undefined) { params.push(active); conditions.push(`active = $${params.length}`); }
+  if (Array.isArray(ids)) { params.push(ids); conditions.push(`id = ANY($${params.length}::int[])`); }
   if (category) { params.push(category); conditions.push(`category = $${params.length}`); }
   if (subcategory) { params.push(subcategory); conditions.push(`subcategory = $${params.length}`); }
   if (inStock !== undefined) { params.push(inStock); conditions.push(`COALESCE(in_stock, true) = $${params.length}`); }
@@ -93,7 +108,7 @@ async function findById(id) {
 async function findPricesByIds(ids) {
   if (!Array.isArray(ids) || ids.length === 0) return [];
   const { rows } = await query(
-    'SELECT id, name, price, variants FROM products WHERE id = ANY($1::int[])',
+    'SELECT id, name, price, variants, active FROM products WHERE id = ANY($1::int[])',
     [ids]
   );
   return rows;
@@ -138,12 +153,18 @@ async function remove(id) {
   return rows[0] || null;
 }
 
-/** מחזיר את הקטגוריות ותתי-הקטגוריות הקיימות בפועל, עם ספירה. */
-async function listCategories() {
+/**
+ * מחזיר את הקטגוריות ותתי-הקטגוריות הקיימות בפועל, עם ספירה.
+ *
+ * activeOnly הוא מה שהחנות שואלת: הספירה שמוצגת ללקוח היא של מה
+ * שאפשר לקנות. מסך הניהול שואל בלי הסינון, כדי לראות גם קטגוריה
+ * שכל המוצרים בה מוסתרים.
+ */
+async function listCategories({ activeOnly = false } = {}) {
   const { rows } = await query(`
     SELECT category, subcategory, COUNT(*)::int AS product_count
     FROM products
-    WHERE category IS NOT NULL
+    WHERE category IS NOT NULL ${activeOnly ? 'AND active' : ''}
     GROUP BY category, subcategory
     ORDER BY category, subcategory NULLS FIRST
   `);

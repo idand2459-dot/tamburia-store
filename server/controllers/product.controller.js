@@ -1,6 +1,12 @@
 /**
  * מטפל בבקשות דומיין המוצרים: מאמת קלט, קורא למודל ומחזיר תשובה.
  * אינו כותב SQL ואינו תופס שגיאות — הן עולות למטפל המרכזי.
+ *
+ * מוצר מוסתר (active = false) הוא מוצר שאינו על המדף. עבור הלקוח הוא
+ * פשוט אינו קיים: לא ברשימה, לא בחיפוש, ובעמוד שלו 404. עבור האדמין
+ * המחובר הוא קיים ונראה, אחרת אי אפשר היה להחזיר אותו. ההחלטה הזו
+ * נופלת כאן ולא במודל, כי היא תלויה במי שואל — req.isAdmin, שמגיע
+ * מ-markAdmin.
  */
 const Product = require('../models/product.model');
 const { parseCreate, parseUpdate, parseListQuery } = require('../validators/product.validator');
@@ -9,6 +15,15 @@ const { notFound } = require('../utils/AppError');
 /** GET /api/products — מחזיר רשימת מוצרים, עם דפדוף אם התבקש. */
 async function list(req, res) {
   const options = parseListQuery(req.query);
+
+  // ללקוח אין דרך לבקש מוצרים מוסתרים, ולא משנה מה נשלח ב-query.
+  // לאדמין אין ברירת מחדל: הרשימה שלו היא הקטלוג המלא, והוא מסנן בה.
+  if (req.isAdmin) {
+    if (options.active === undefined) delete options.active;
+  } else {
+    options.active = true;
+  }
+
   const products = await Product.list(options);
 
   if (options.limit === undefined && options.offset === undefined) {
@@ -29,7 +44,12 @@ async function list(req, res) {
 /** GET /api/products/:id — מחזיר מוצר בודד. */
 async function getOne(req, res) {
   const product = await Product.findById(req.id);
-  if (!product) throw notFound(`מוצר ${req.id} לא נמצא`);
+
+  // אותה 404 בדיוק למוצר שאינו קיים ולמוצר שהוסתר: הבחנה ביניהן
+  // הייתה מספרת למי ששואל אילו מזהים קיימים במסד.
+  if (!product || (!product.active && !req.isAdmin)) {
+    throw notFound(`מוצר ${req.id} לא נמצא`);
+  }
   res.json(product);
 }
 
@@ -57,7 +77,7 @@ async function remove(req, res) {
 
 /** GET /api/products/categories — מחזיר את הקטגוריות הקיימות. */
 async function categories(req, res) {
-  res.json(await Product.listCategories());
+  res.json(await Product.listCategories({ activeOnly: !req.isAdmin }));
 }
 
 module.exports = { list, getOne, create, update, remove, categories };

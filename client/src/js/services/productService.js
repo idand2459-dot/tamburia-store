@@ -33,12 +33,16 @@ function toProductList(data) {
  * כל המוצרים), המוצרים הקשורים (category + limit), תיבת החיפוש
  * (search + limit) ומחשבון הפרויקט (בלי פרמטרים כלל). אין כאן
  * עטיפות נפרדות לכל אחד מהם — ההבדל ביניהם הוא הפרמטרים בלבד.
+ *
+ * ids הוא רשימת מזהים מופרדת בפסיקים, ומשמש רק את useAvailability:
+ * מה מתוך מה ששמור ב-localStorage של הלקוח עדיין בקטלוג. מזהה של
+ * מוצר מוסתר פשוט לא יחזור, וזו התשובה.
  */
 export async function getProducts({
-  category, subcategory, search, inStock, limit, offset, signal,
+  category, subcategory, search, inStock, ids, limit, offset, signal,
 } = {}) {
   const url = buildUrl('/api/products', {
-    category, subcategory, search, in_stock: inStock, limit, offset,
+    category, subcategory, search, in_stock: inStock, ids, limit, offset,
   });
 
   return toProductList(await getJson(url, { signal }));

@@ -22,6 +22,15 @@ export const NO_PRICE_LABEL = 'מחיר בחנות';
 /** מה שכתוב על הכפתור שמחליף את "הוסף לעגלה". */
 export const CALL_FOR_PRICE_LABEL = 'התקשרו לבירור מחיר';
 
+/**
+ * מה שמוצג על מוצר שכבר אינו בקטלוג.
+ *
+ * "לא זמין כרגע" ולא "נמחק": מוצר מוסתר נשאר במסד ויכול לחזור בלחיצה,
+ * והלקוח שרואה אותו במועדפים או בעגלה לא צריך לדעת מה קרה בצד שלנו.
+ * מי מוסתר נקבע בשרת ומגיע דרך hooks/useAvailability.js.
+ */
+export const UNAVAILABLE_LABEL = 'לא זמין כרגע';
+
 /** מספר חיובי או null. 0, null, טקסט וכל השאר הם "אין מחיר". */
 function asPrice(value) {
   const num = Number(value);

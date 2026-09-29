@@ -17,10 +17,16 @@
  * התמונות מגיעות משני כפתורים: צילום במקום, שפותח את המצלמה האחורית
  * בטלפון, ובחירה מהגלריה. שניהם <input type="file"> מוסתר שה-label
  * מפעיל — כפתור אמיתי שפותח בורר קבצים אינו קיים בדפדפן.
+ *
+ * "הסתר מהחנות" אינו שדה בטופס אלא כפתור לידו, והוא שולח מיד ולא
+ * בשמירה. הסיבה היא שהוא אינו עריכה של המוצר אלא החלטה עליו: מי
+ * שפתח את הטופס כדי להסתיר מוצר לא אמור להצטרך לשמור גם את כל השאר,
+ * ובוודאי לא להחליט מה קורה אם הוא לחץ ואז "ביטול". מוצר חדש אינו
+ * מציג אותו כלל — אין מה להסתיר לפני שנוצר.
  */
 import { useState, useEffect } from 'react';
 import {
-  Check, X, AlertTriangle, Loader, Save, Plus, Camera, ImagePlus, Info,
+  Check, X, AlertTriangle, Loader, Save, Plus, Camera, ImagePlus, Info, Eye, EyeOff,
 } from 'lucide-react';
 import { CATEGORIES } from './adminConstants';
 import { useObjectUrls } from '../../hooks/useObjectUrls';
@@ -80,7 +86,9 @@ function fieldsFromProduct(product) {
 }
 
 /** מציג את טופס המוצר, להוספה או לעריכה. */
-function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, onDone, productsError }) {
+function ProductFormTab({
+  editingProduct, onCreate, onUpdate, onToggleActive, uploadingImages, onDone, productsError,
+}) {
   const [name, setName] = useState(EMPTY.name);
   const [price, setPrice] = useState(EMPTY.price);
   const [inStock, setInStock] = useState(EMPTY.inStock);
@@ -307,6 +315,25 @@ function ProductFormTab({ editingProduct, onCreate, onUpdate, uploadingImages, o
           </button>
           {editingProduct && <button type="button" className="admin-cancel-btn" onClick={onDone}>ביטול</button>}
         </div>
+
+        {editingProduct && (
+          <div className="admin-form-visibility">
+            <p className="admin-form-note">
+              <Info size={16} aria-hidden="true" />
+              {editingProduct.active === false
+                ? 'המוצר מוסתר: הוא אינו מופיע בחנות ואי אפשר להזמין אותו. הוא נשאר במסד, וההזמנות הישנות שלו לא נפגעו.'
+                : 'הסתרה מוציאה את המוצר מהחנות בלי למחוק אותו, ואפשר להחזיר אותו בלחיצה.'}
+            </p>
+            <button
+              type="button"
+              className="admin-visibility-btn"
+              onClick={() => onToggleActive(editingProduct)}>
+              {editingProduct.active === false
+                ? <><Eye size={18} aria-hidden="true" /> הצג בחנות</>
+                : <><EyeOff size={18} aria-hidden="true" /> הסתר מהחנות</>}
+            </button>
+          </div>
+        )}
       </form>
 
       <ProductFormPreview

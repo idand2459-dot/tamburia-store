@@ -226,6 +226,23 @@
   color: rgba(var(--color-navy-rgb), 0.55);
 }
 
+/* Hidden from the catalogue since it was saved. Red rather than grey: this
+   is not "back next week" like an empty shelf. */
+.wishlist-row-stock.is-unavailable {
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+}
+
+.wishlist-row.is-unavailable .wishlist-row-well {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+
+.wishlist-row.is-unavailable .wishlist-row-name,
+.wishlist-row.is-unavailable .wishlist-row-price {
+  color: rgba(var(--color-navy-rgb), 0.5);
+}
+
 /* ---- Responsive ---------------------------------------------------------- */
 
 @media (max-width: 560px) {

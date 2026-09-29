@@ -112,6 +112,14 @@
   font-weight: var(--font-weight-extrabold);
 }
 
+/* Hidden from the shop. Grey and not red, matching its chip: the product is
+   fine, it is simply not on the shelf. */
+.admin-product-flag--hidden {
+  gap: 4px;
+  background: rgba(var(--color-navy-rgb), 0.1);
+  color: var(--color-text-subtle);
+}
+
 /* The price, as a button: touching it is what opens the editor. It looks like a
    price and not like a button, with the pencil as the only hint — the price is
    the thing being read here far more often than it is changed. */
@@ -218,6 +226,7 @@
 }
 
 .admin-edit-btn,
+.admin-hide-btn,
 .admin-delete-btn {
   flex: 1;
   min-height: 48px;
@@ -231,6 +240,17 @@
 }
 
 .admin-edit-btn {
+  border-inline-end: 1px solid var(--color-border-soft);
+  color: var(--color-navy);
+}
+
+/* Between edit and delete: this is the safe way out of "I do not want this
+   product in the shop", and it should be the one the thumb lands on. */
+.admin-hide-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   border-inline-end: 1px solid var(--color-border-soft);
   color: var(--color-navy);
 }
@@ -257,6 +277,10 @@
   color: white;
 }
 
+.admin-hide-btn:hover {
+  background: rgba(var(--color-navy-rgb), 0.08);
+}
+
 .admin-delete-btn:hover {
   background: var(--color-red);
   color: white;
@@ -266,6 +290,7 @@
 .admin-price-save:focus-visible,
 .admin-price-cancel:focus-visible,
 .admin-edit-btn:focus-visible,
+.admin-hide-btn:focus-visible,
 .admin-delete-btn:focus-visible {
   outline: 3px solid var(--color-purple);
   outline-offset: -3px;
@@ -288,6 +313,27 @@
   border-start-start-radius: 16px;
   border-end-start-radius: 16px;
   background: var(--color-red);
+}
+
+/* Hidden from the shop: the same start-side edge as the unpriced row, in grey,
+   so both are findable while scrolling without stopping to read the badge. The
+   thumbnail dims — that is what "not on the shelf" looks like everywhere else
+   on the site — while the text stays fully readable, because this row exists to
+   be found and put back. */
+.admin-product.is-hidden::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  border-start-start-radius: 16px;
+  border-end-start-radius: 16px;
+  background: rgba(var(--color-navy-rgb), 0.45);
+}
+
+.admin-product.is-hidden .admin-product-well {
+  opacity: 0.45;
+  filter: grayscale(1);
 }
 
 /* ---- Responsive ---------------------------------------------------------- */

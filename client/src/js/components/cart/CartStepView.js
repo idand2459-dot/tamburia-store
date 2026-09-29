@@ -12,11 +12,15 @@
  * אפשר להוסיף מוצר כזה לעגלה, אבל עגלה נשמרת ב-localStorage וכזה
  * שנוסף קודם עדיין יושב בה — ולכן הוא מטופל גם כאן. השרת דוחה הזמנה
  * כזו ב-400, אז הכפתור חוסם אותה כאן במקום לשלוח אותה לסירוב.
+ *
+ * ופריט של מוצר שהוסתר מהקטלוג מאז שנוסף מטופל בדיוק באותו אופן,
+ * ומאותה סיבה: הוא נראה תקין בעגלה, השרת ידחה אותו, ועדיף שהלקוח
+ * יבין למה כאן. מי אלה — useAvailability, דרך ההקשר.
  */
 import { Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
 import { useStore } from '../../context/storeContext';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
-import { NO_PRICE_LABEL } from '../../utils/pricing';
+import { NO_PRICE_LABEL, UNAVAILABLE_LABEL } from '../../utils/pricing';
 import DeliveryOptions from './DeliveryOptions';
 
 /* פריט בעגלה נשפט לפי המחיר שנשמר בו ולא לפי המוצר: המוצר עצמו כבר
@@ -32,7 +36,7 @@ function itemMeta(item) {
 
 /** מציג את תוכן העגלה ואת בחירת אופן הקבלה. */
 function CartStepView({ closeCart }) {
-  const { cart, updateQuantity, removeFromCart } = useStore();
+  const { cart, updateQuantity, removeFromCart, unavailableIds } = useStore();
 
   if (cart.length === 0) {
     return (
@@ -55,8 +59,9 @@ function CartStepView({ closeCart }) {
         {cart.map((item, index) => {
           const Icon = CATEGORY_ICONS[item.category];
           const meta = itemMeta(item);
+          const unavailable = unavailableIds.has(item.id);
           return (
-            <li key={index} className="cart-row">
+            <li key={index} className={`cart-row ${unavailable ? 'is-unavailable' : ''}`}>
               <div className="cart-row-well">
                 {item.image_url
                   ? <img className="cart-row-img" src={item.image_url} alt={item.name} />
@@ -71,6 +76,7 @@ function CartStepView({ closeCart }) {
               <div className="cart-row-main">
                 <span className="cart-row-name">{item.name}</span>
                 {meta && <span className="cart-row-meta">{meta}</span>}
+                {unavailable && <span className="cart-row-flag">{UNAVAILABLE_LABEL}</span>}
 
                 <div className="cart-row-foot">
                   <div className="cart-row-qty" role="group" aria-label={`כמות: ${item.name}`}>
@@ -115,11 +121,14 @@ function CartStepView({ closeCart }) {
  */
 function CartStepFooter({ setCartStep }) {
   const {
-    cart, setCart, subtotal, total, deliveryMethod, setDeliveryMethod,
+    cart, setCart, subtotal, total, deliveryMethod, setDeliveryMethod, unavailableIds,
   } = useStore();
 
   const unpriced = cart.filter((item) => !itemPriced(item));
-  const canContinue = Boolean(deliveryMethod) && unpriced.length === 0;
+  const unavailable = cart.filter((item) => unavailableIds.has(item.id));
+  const canContinue = Boolean(deliveryMethod)
+    && unpriced.length === 0
+    && unavailable.length === 0;
 
   return (
     <div className="cart-summary">
@@ -140,9 +149,16 @@ function CartStepFooter({ setCartStep }) {
         <span className="cart-summary-amount">₪{total}</span>
       </div>
 
-      {/* החוסם הראשון קודם: בלי מחיר אין מה להמשיך גם אחרי בחירת אופן
-          קבלה, ושתי הודעות בבת אחת רק מבלבלות */}
-      {unpriced.length > 0 ? (
+      {/* חוסם אחד בכל פעם, לפי הסדר שבו הם נפתרים: מוצר שאינו בקטלוג
+          אי אפשר לתקן בכלל, מוצר בלי מחיר אפשר להזמין בטלפון, ובחירת
+          אופן קבלה היא רק צעד שטרם נעשה. שתי הודעות בבת אחת רק מבלבלות */}
+      {unavailable.length > 0 ? (
+        <p className="cart-summary-hint cart-summary-hint--blocking">
+          {unavailable.length === 1
+            ? `"${unavailable[0].name}" ${UNAVAILABLE_LABEL} — הסירו אותו מהעגלה, או התקשרו לחנות לבירור`
+            : `${unavailable.length} מוצרים בעגלה אינם זמינים כרגע — הסירו אותם, או התקשרו לחנות לבירור`}
+        </p>
+      ) : unpriced.length > 0 ? (
         <p className="cart-summary-hint cart-summary-hint--blocking">
           {unpriced.length === 1
             ? `"${unpriced[0].name}" ללא מחיר באתר — הסירו אותו מהעגלה, או התקשרו לחנות להזמנה טלפונית`

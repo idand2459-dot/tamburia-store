@@ -93,6 +93,14 @@
   color: var(--color-red);
 }
 
+/* "Hidden" — products taken out of the shop. Grey rather than red: nothing is
+   wrong with them, they are simply not on the shelf, and the chip should not
+   compete with the unpriced one for attention. */
+.admin-cat--muted {
+  border-color: rgba(var(--color-navy-rgb), 0.35);
+  color: var(--color-text-subtle);
+}
+
 .admin-cat-count {
   padding: 1px 8px;
   border-radius: var(--radius-pill);
@@ -122,6 +130,12 @@
 .admin-cat--alert.is-active {
   border-color: var(--color-red);
   background: var(--color-red);
+  color: white;
+}
+
+.admin-cat--muted.is-active {
+  border-color: var(--color-navy);
+  background: var(--color-navy);
   color: white;
 }
 

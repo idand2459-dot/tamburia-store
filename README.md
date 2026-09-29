@@ -404,6 +404,32 @@ $env:PORT=3001; npm start --prefix client    # React, port 3001
 > `npm run build:client` or the browser at port 3000 will keep serving the previous
 > version.
 
+### Hidden products
+
+`products.active` is how a product leaves the shop without leaving the database.
+Orders, reviews and the paint calculator all reference products by id, so deleting one
+that is no longer on the shelf would cut an old order loose from the item it sold.
+
+An inactive product simply does not exist for a customer: it is absent from the list,
+from search, from the category counts and from `?ids=`, and `GET /api/products/:id`
+answers 404 — the same 404 as an id that was never there, so the endpoint cannot be used
+to probe which ids exist. For a logged-in admin the same URLs return it, which is what
+makes it possible to bring it back. The decision is made per request in
+`product.controller.js` from `req.isAdmin`, set by the `markAdmin` middleware; the model
+itself just takes an `active` filter.
+
+The order path enforces it again: `pricing.service.js` rejects an inactive product with
+400 and a Hebrew message, in the same place and shape as the "no price yet" rule. The
+cart, the wishlist and "recently viewed" are `localStorage` snapshots that never refresh,
+so they ask the server which of their saved ids are still in the catalogue
+(`useAvailability`) and mark the rest **לא זמין כרגע** — not addable, and checkout
+blocked with a message naming the item.
+
+In the admin panel every list is active-only, including "הכל" and each category. A grey
+**מוסתרים** chip with a count opens the hidden ones, a typed search reaches the whole
+catalogue either way, and each product has a הסתר/הצג button in the list and at the
+bottom of its form.
+
 ### Product photos
 
 Most products in the database point at image files that were never uploaded, so the
