@@ -14,7 +14,8 @@
     "seed:demo:clear": "node scripts/seed-demo.js --clear",
     "images:categories": "node scripts/images-categories.js",
     "products:list": "node scripts/products-list.js",
-    "images:products": "node scripts/images-products.js"
+    "images:products": "node scripts/images-products.js",
+    "products:hide-unphotographed": "node scripts/products-hide-unphotographed.js"
   },
   "repository": {
     "type": "git",
