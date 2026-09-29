@@ -15,7 +15,9 @@
     "images:categories": "node scripts/images-categories.js",
     "products:list": "node scripts/products-list.js",
     "images:products": "node scripts/images-products.js",
-    "products:hide-unphotographed": "node scripts/products-hide-unphotographed.js"
+    "products:hide-unphotographed": "node scripts/products-hide-unphotographed.js",
+    "products:new-template": "node scripts/products-new-template.js",
+    "products:import-new": "node scripts/products-import-new.js"
   },
   "repository": {
     "type": "git",
@@ -40,6 +42,7 @@
   },
   "devDependencies": {
     "@imgly/background-removal-node": "^1.4.5",
+    "exceljs": "^4.4.0",
     "sharp": "^0.35.4"
   }
 }

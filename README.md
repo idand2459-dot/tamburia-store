@@ -364,6 +364,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | `npm run products:list` | Writes the printable shooting list (CSV + A4 HTML) |
 | `npm run images:products` | Turns raw product photos into 1200x1200 white-background WebP |
 | `npm run products:hide-unphotographed` | Lists (and with `--apply`, hides) products that were not photographed |
+| `npm run products:new-template` | Writes the Excel sheet for products photographed but not in the catalogue |
+| `npm run products:import-new` | Validates (and with `--apply`, creates) the products from that sheet |
 
 ### Demo data
 
@@ -524,6 +526,47 @@ Products to keep anyway are excluded with `--keep 416,627,628` or
 `active = false` for the rest after saving their ids to
 `design-assets/hide-backup-<timestamp>.json`, and
 `--revert <that file>` puts exactly those products back in the shop.
+
+**6. Add what is new.**
+
+A product photographed as `new-<anything>.jpg` is one that was not on the printed list,
+so it is not in the catalogue yet. Those images land in `photos/processed/new/`, and the
+details have to be typed somewhere:
+
+```bash
+npm run products:new-template
+```
+
+Writes `design-assets/new-products.xlsx` — one row per new image, with the image filename
+already filled in and locked (it is what ties the row to the photo). Category and
+subcategory are dropdowns fed from `categories.js` through a hidden third sheet, because
+Excel caps an inline validation list at 255 characters and 87 Hebrew subcategory names go
+well past that. A second sheet, `הוראות`, explains every column with an example. All
+sheets are right-to-left.
+
+Fill it in, save it in place, then:
+
+```bash
+npm run products:import-new
+```
+
+Another dry run: it reads every row, validates it, and prints what it found and what is
+wrong with it, in Hebrew, without touching anything. Validation is in two layers — the
+sheet's own rules (image file exists, category from the tree, subcategory belonging to
+that category, a price above zero **or** at least one priced size) and then
+`server/validators/product.validator.js`, the same code the admin form goes through,
+called directly rather than reimplemented. Where the two disagree, the validator wins. A
+row with an error is skipped and never guessed at; an untouched row is simply skipped.
+
+`--apply` creates the valid ones through the product model, then copies each image into
+`uploads/` under the same `product-<id>-<hash>.webp` convention as the rest of the
+pipeline (the product is created first, because the filename needs its id) and attaches
+it. Every created id is written to `design-assets/import-backup-<timestamp>.json` as it
+goes, so a run interrupted halfway still leaves an accurate list.
+
+`--revert <that file>` undoes it: products with no orders are deleted, and a product that
+has already been ordered is hidden instead and reported as such — deleting it would cut
+the order loose from the item it sold, which is the whole reason `active` exists.
 
 **Background removal runs entirely on this machine.** It is
 `@imgly/background-removal-node`, a devDependency that ships the ONNX model weights

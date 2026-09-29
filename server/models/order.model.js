@@ -132,6 +132,23 @@ async function remove(id) {
   return rows[0] || null;
 }
 
+/**
+ * סופר כמה הזמנות מכילות את המוצר הזה.
+ *
+ * items הוא JSONB של שורות ההזמנה, וכל שורה נושאת את id המוצר.
+ * ‎@>‎ שואל "האם המערך מכיל אובייקט כזה", וזו השאלה: האם מחיקת המוצר
+ * תנתק הזמנה קיימת מהפריט שנמכר בה.
+ */
+async function countByProductId(productId) {
+  const { rows } = await query(
+    `SELECT COUNT(*)::int AS total
+     FROM orders
+     WHERE items @> $1::jsonb`,
+    [JSON.stringify([{ id: productId }])]
+  );
+  return rows[0].total;
+}
+
 /** מחזיר מספר הזמנות והכנסה מצטברת לכל סטטוס. */
 async function statsByStatus() {
   const { rows } = await query(`
@@ -147,5 +164,5 @@ async function statsByStatus() {
 
 module.exports = {
   list, count, findById, findByPhone,
-  create, update, remove, statsByStatus, digitsOnly,
+  create, update, remove, statsByStatus, countByProductId, digitsOnly,
 };

@@ -33,3 +33,7 @@ photos/preview.html
 # רשימות וגיבויים של ספירת המלאי שאחרי הצילום — מקומיים, לא נכנסים לגיט
 design-assets/to-hide-*.csv
 design-assets/hide-backup-*.json
+
+# גיליון המוצרים החדשים והגיבוי של הייבוא — מקומיים, לא נכנסים לגיט
+design-assets/new-products.xlsx
+design-assets/import-backup-*.json
