@@ -363,6 +363,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | `npm run seed:demo:clear` | Removes exactly that demo data again |
 | `npm run products:list` | Writes the printable shooting list (CSV + A4 HTML) |
 | `npm run images:products` | Turns raw product photos into 1200x1200 white-background WebP |
+| `npm run products:hide-unphotographed` | Lists (and with `--apply`, hides) products that were not photographed |
 
 ### Demo data
 
@@ -500,6 +501,29 @@ they are. A re-shoot leaves the previous file behind under its old hash, and the
 run lists every `product-*.webp` that no longer belongs to any product rather than
 deleting it — the most recent backup still points at those files, and deleting them would
 leave `--revert` restoring a URL with nothing behind it.
+
+**5. Hide what is not on the shelf.**
+
+The shoot doubles as a stock count: every product still sold gets photographed, so a
+product with no processed image is a product that is no longer in the shop.
+
+```bash
+npm run products:hide-unphotographed
+```
+
+A dry run by default — it touches nothing. It lists every **active** product with no
+`photos/processed/<id>.webp`, grouped by category with id, name, price and whether it
+already had a real image, and writes the same list to
+`design-assets/to-hide-<timestamp>.csv` to go over before deciding. It warns separately
+about the product ids the paint calculator adds to the cart by id (627, 628, 416), whose
+absence empties the bundle it recommends — the calculator falls back to "שווה לשאול
+בחנות" rather than breaking, but that is usually not what you want.
+
+Products to keep anyway are excluded with `--keep 416,627,628` or
+`--keep-file keep.txt` (one id per line, `#` starts a comment). `--apply` then sets
+`active = false` for the rest after saving their ids to
+`design-assets/hide-backup-<timestamp>.json`, and
+`--revert <that file>` puts exactly those products back in the shop.
 
 **Background removal runs entirely on this machine.** It is
 `@imgly/background-removal-node`, a devDependency that ships the ONNX model weights
