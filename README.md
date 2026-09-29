@@ -449,6 +449,12 @@ storefront falls back to a category icon. The fix is to photograph the products 
 shop and run them through a local pipeline. Nothing here is generative: the product's
 own pixels are kept exactly as photographed, and all that is removed is the background.
 
+The shoot doubles as a stock count, so the same day's photos decide three things: which
+products get a real image, which are no longer in the shop, and which are new. The full
+sequence in order is written up in Hebrew below under
+[יום הצילומים — לפי הסדר](#יום-הצילומים--לפי-הסדר); what follows here is what each step
+does and why.
+
 **1. Print the shooting list.**
 
 ```bash
@@ -584,6 +590,99 @@ no API key, and no photo ever leaves the computer. It runs in a child process on
 purpose: it pins `sharp` 0.32 while this project is on 0.35, and loading both copies of
 libvips into one process segfaults Node. `scripts/lib/cutout.js` keeps that child alive
 across the whole batch so the model is loaded once, not once per photo.
+
+### יום הצילומים — לפי הסדר
+
+<div dir="rtl">
+
+**לפני**: באייפון — הגדרות ← מצלמה ← עיצובים ← **הכי תואם**. זה שומר JPG במקום HEIC,
+שהמחשב לא יודע לפתוח. הצינור מדווח על HEIC ולא ינחש.
+
+**1. להדפיס את רשימת הצילום.**
+
+```bash
+npm run products:list
+```
+
+פותחים את `design-assets/product-list.html` בדפדפן ומדפיסים (Ctrl+P). מוצר בלי תמונה
+מופיע ראשון בכל קטגוריה — זה מה שבאים לצלם.
+
+**2. לצלם.** שם הקובץ הוא המספר הגדול שברשימה: `247.jpg`. זווית נוספת לאותו מוצר:
+`247-2.jpg`. מוצר שאינו ברשימה: `new-<תיאור>.jpg`. מסמנים ✓ בריבוע אחרי כל צילום.
+מוצר שלא מצלמים הוא מוצר שיירד מהאתר — זו ספירת המלאי.
+
+מעתיקים את כל הקבצים ל-`photos/raw/`.
+
+**3. לעבד.**
+
+```bash
+npm run images:products
+```
+
+כ-6 שניות לתמונה. לא נוגע במסד ולא בתיקיית התמונות של האתר. בסוף פותחים את
+`photos/preview.html` ועוברים על התוצאות — כל מה שמסומן **לבדיקה** באדום צריך מבט.
+תמונה שיצאה לא טוב: מצלמים מחדש, מחליפים את הקובץ ב-`photos/raw/` ומריצים שוב
+(רק היא תעובד מחדש).
+
+**4. לחבר את התמונות למוצרים.**
+
+```bash
+npm run images:products -- --apply
+```
+
+מדפיס בסוף פקודת ביטול עם שם קובץ הגיבוי. כדאי לשמור אותה עד שבודקים באתר.
+
+**5. להוריד מהאתר את מה שלא צולם.**
+
+```bash
+npm run products:hide-unphotographed
+```
+
+ריצה יבשה: מראה מה ייסגר ולא עושה כלום. עוברים על הרשימה (גם ב-CSV שהיא כותבת).
+שימו לב לאזהרה על מוצרי מחשבון הצבע. מה שרוצים להשאיר למרות שלא צולם:
+
+```bash
+npm run products:hide-unphotographed -- --keep 416,627,628 --apply
+```
+
+שום דבר לא נמחק — המוצרים רק יורדים מהאתר, וההזמנות הישנות שלהם נשארות שלמות.
+
+**6. להוסיף את המוצרים החדשים.**
+
+```bash
+npm run products:new-template
+```
+
+פותחים את `design-assets/new-products.xlsx`, ממלאים שורה לכל מוצר חדש (יש גיליון
+"הוראות" לצדו), ושומרים במקום. אז:
+
+```bash
+npm run products:import-new
+```
+
+ריצה יבשה שמראה מה תקין ומה חסר בכל שורה. מתקנים באקסל, מריצים שוב עד שהכול ירוק, ואז:
+
+```bash
+npm run products:import-new -- --apply
+```
+
+**7. לבנות ולהעלות.**
+
+```bash
+npm run build:client
+npm start
+```
+
+**אם משהו יצא לא כמו שרצינו**, לכל שלב יש ביטול, והוא מודפס בסוף הריצה עם שם קובץ
+הגיבוי שלו:
+
+```bash
+npm run images:products -- --revert design-assets/image-backup-....json
+npm run products:hide-unphotographed -- --revert design-assets/hide-backup-....json
+npm run products:import-new -- --revert design-assets/import-backup-....json
+```
+
+</div>
 
 ---
 
