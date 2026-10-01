@@ -19,6 +19,7 @@ const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
 const { login } = require('./helpers');
+const { findOriginal, removeOriginal } = require('../server/utils/originals');
 const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
 
 let passed = 0;
@@ -530,7 +531,8 @@ function bands(width, height, colours) {
 async function testUploads() {
   console.log('\n── העלאת תמונות');
 
-  const big = await uploadFiles([['big.jpg', await jpeg(3000, 2000), 'image/jpeg']]);
+  const bigSource = await jpeg(3000, 2000);
+  const big = await uploadFiles([['big.jpg', bigSource, 'image/jpeg']]);
   check('העלאה → 200', big.status === 200, big.status);
   const bigUrl = big.body.imageUrls?.[0] || '';
   check('שם הקובץ הוא hash עם סיומת webp',
@@ -539,6 +541,18 @@ async function testUploads() {
   check('נשמר כ-WebP', bigMeta.format === 'webp', bigMeta.format);
   check('הוקטן והושלם לריבוע של 1200', bigMeta.width === 1200 && bigMeta.height === 1200,
     [bigMeta.width, bigMeta.height]);
+
+  // הצילום המקורי נשמר כמו שהגיע, בשם המקושר לקובץ המעובד — ולא מוגש
+  const original = findOriginal(path.basename(bigUrl));
+  check('המקור נשמר: אותו בסיס שם, סיומת jpg',
+    original && path.basename(original) === path.basename(bigUrl, '.webp') + '.jpg', original && path.basename(original));
+  check('המקור הוא בדיוק הקובץ שהועלה, ברזולוציה מלאה',
+    original && fs.readFileSync(original).equals(bigSource));
+  const exposed = await fetch(`${BASE.slice(0, -4)}/uploads-originals/${path.basename(original || '')}`);
+  check('תיקיית המקורות אינה מוגשת', !(exposed.headers.get('content-type') || '').startsWith('image/'),
+    `${exposed.status} ${exposed.headers.get('content-type')}`);
+  const sideBySide = await fetch(`${BASE.slice(0, -4)}/uploads/${path.basename(original || '')}`);
+  check('וגם לא דרך /uploads', sideBySide.status === 404, sideBySide.status);
 
   const small = await uploadFiles([['small.png', await sharp({
     create: { width: 300, height: 200, channels: 3, background: '#c89f6d' },
@@ -730,7 +744,9 @@ async function testDelete() {
   check('מוצר בלי הזמנות → 200', removed.status === 200, `${removed.status} ${removed.body.error || ''}`);
   check('גם הביקורת שלו נמחקה (1)', removed.body.deleted?.reviews === 1, removed.body.deleted);
   check('הקובץ שרק הוא השתמש בו נמחק מ-uploads', !exists(own), own);
+  check('והצילום המקורי שלו איתו', findOriginal(path.basename(own)) === null);
   check('הקובץ שמוצר אחר מציג נשאר', exists(shared), shared);
+  check('והמקור שלו נשאר', findOriginal(path.basename(shared)) !== null);
   check('התשובה מונה רק את הקובץ שנמחק',
     JSON.stringify(removed.body.deleted?.files) === JSON.stringify([own]), removed.body.deleted?.files);
 
@@ -788,7 +804,10 @@ async function cleanup() {
   const twice = await call('DELETE', `/products/${created[0]}`);
   check('מחיקה חוזרת → 404', twice.status === 404, twice.status);
 
-  for (const name of uploadedFiles) fs.rmSync(path.join(UPLOADS_DIR, name), { force: true });
+  for (const name of uploadedFiles) {
+    fs.rmSync(path.join(UPLOADS_DIR, name), { force: true });
+    removeOriginal(name);
+  }
 }
 
 /** מריץ את כל הבדיקות לפי הסדר. */
@@ -813,6 +832,9 @@ async function main() {
 main().catch(async (err) => {
   console.error('הבדיקה קרסה:', err);
   for (const id of created) if (id) await call('DELETE', `/products/${id}`).catch(() => {});
-  for (const name of uploadedFiles) fs.rmSync(path.join(UPLOADS_DIR, name), { force: true });
+  for (const name of uploadedFiles) {
+    fs.rmSync(path.join(UPLOADS_DIR, name), { force: true });
+    removeOriginal(name);
+  }
   process.exit(1);
 });

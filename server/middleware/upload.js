@@ -2,13 +2,15 @@
  * מגדיר את קליטת קבצי התמונה: אילו סוגים מותרים, מה גודלם המרבי,
  * ואת שלב העיבוד שבין הקליטה לבין השמירה בתיקייה.
  *
- * הקבצים נקלטים לזיכרון ולא לדיסק, כי מה שנשמר הוא הגרסה המעובדת
- * בשם שנגזר מהתוכן — ראו image.service. המקור לא נכתב לדיסק אף פעם.
+ * הקבצים נקלטים לזיכרון ולא לדיסק, כי מה שנשמר ב-uploads הוא הגרסה
+ * המעובדת בשם שנגזר מהתוכן — ראו image.service. הצילום המקורי נשמר
+ * בנפרד, בתיקייה שאינה מוגשת, בשם מקושר — ראו utils/originals.js.
  */
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const { processAndSave, heicError } = require('../services/image.service');
+const { saveOriginal, originalExt } = require('../utils/originals');
 
 const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -53,6 +55,14 @@ async function processUploads(req, res, next) {
   const files = req.file ? [req.file] : (req.files || []);
   for (const file of files) {
     file.filename = await processAndSave(file.buffer, UPLOADS_DIR);
+    // המקור נשמר רק אחרי שהעיבוד הצליח: קובץ שבור לא מגיע לכאן. כישלון
+    // בשמירתו אינו מכשיל את ההעלאה — התמונה שהאתר מגיש כבר נשמרה, והמקור
+    // הוא רק חומר גלם לעיבוד מחדש.
+    try {
+      saveOriginal(file.buffer, file.filename, originalExt(file.originalname, file.mimetype));
+    } catch (err) {
+      console.error(`המקור של ${file.filename} לא נשמר:`, err.message);
+    }
     file.buffer = null;
   }
   next();

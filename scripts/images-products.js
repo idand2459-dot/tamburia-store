@@ -37,6 +37,7 @@ const db = require('../server/config/db');
 const productModel = require('../server/models/product.model');
 const { UPLOADS_DIR, pathToUrl, uploadName } = require('./lib/uploads');
 const { cutout, stop: stopCutout } = require('./lib/cutout');
+const { sourceForUpload } = require('../server/utils/originals');
 
 const ROOT = path.join(__dirname, '..');
 const RAW_DIR = path.join(ROOT, 'photos', 'raw');
@@ -915,7 +916,13 @@ async function collectUploadJobs(opts) {
       if (!file || !fs.existsSync(file)) { missing.push({ id: product.id, name: product.name, url }); return; }
       const mtimeMs = fs.statSync(file).mtimeMs;
       if (opts.since && mtimeMs < opts.since.getTime()) return;
-      jobs.push({ id: product.id, name: product.name, category: product.category, index: i + 1, url, file, mtimeMs });
+      // העיבוד מתחיל מהצילום המקורי כשהוא נשמר בהעלאה (uploads-originals),
+      // ומהקובץ המעובד כשלא. --since והדילוג נמדדים תמיד על הקובץ שב-uploads.
+      const source = sourceForUpload(file);
+      jobs.push({
+        id: product.id, name: product.name, category: product.category, index: i + 1, url, file, mtimeMs,
+        source: source.path, fromOriginal: source.original,
+      });
     });
   }
   return { jobs, missing, products: rows.length };
@@ -944,10 +951,16 @@ async function runUploadsProcessing(jobs, opts) {
     const position = `[${String(i + 1).padStart(3)}/${jobs.length}]`;
     const outName = job.index === 1 ? `${job.id}.webp` : `${job.id}-${job.index}.webp`;
     const outPath = path.join(UPLOADS_OUT_DIR, outName);
-    const entry = { id: job.id, name: job.name, category: job.category, index: job.index, url: job.url };
+    const entry = {
+      id: job.id, name: job.name, category: job.category, index: job.index, url: job.url,
+      source: rel(job.source), fromOriginal: job.fromOriginal,
+    };
     const before = previous.get(`${job.id}:${job.url}`);
 
-    if (!opts.force && before && before.output && fs.existsSync(outPath) && !before.error) {
+    // עובד כבר — אלא אם בינתיים הופיע מקור אחר (למשל עובד מהקובץ המעובד,
+    // ועכשיו יש מקור מלא)
+    if (!opts.force && before && before.output && fs.existsSync(outPath) && !before.error
+      && before.source === entry.source) {
       Object.assign(entry, before);
       counts.cached += 1;
       console.log(`${position} ⏭  ${job.id}  ${path.basename(job.file)}  (עובד כבר)`);
@@ -962,10 +975,11 @@ async function runUploadsProcessing(jobs, opts) {
         counts.alreadyDone += 1;
         console.log(`${position} ⏭  ${job.id}  ${path.basename(job.file)}  (כבר על לבן — לא נוגעים)`);
       } else {
-        Object.assign(entry, await processPhoto(job.file, outPath, scratch));
+        Object.assign(entry, await processPhoto(job.source, outPath, scratch));
         counts.processed += 1;
         const mark = entry.flags.length > 0 ? '⚠' : '✓';
-        console.log(`${position} ${mark}  ${job.id}  ${path.basename(job.file)} → ${entry.outputName}  (${(entry.ms / 1000).toFixed(1)}s)`);
+        console.log(`${position} ${mark}  ${job.id}  ${path.basename(job.file)} → ${entry.outputName}  ` +
+          `(${(entry.ms / 1000).toFixed(1)}s, ${job.fromOriginal ? 'מהמקור' : 'מהמעובד'})`);
         entry.flags.forEach((f) => console.log(`             לבדיקה: ${f}`));
       }
     } catch (err) {
@@ -980,9 +994,14 @@ async function runUploadsProcessing(jobs, opts) {
   stopCutout();
   fs.rmSync(scratch, { recursive: true, force: true });
 
+  // המניפסט הוא המטמון של כל הריצות, לא רק של זו: ריצה מסוננת
+  // (--ids, --category) מחליפה את הרשומות שלה ומשאירה את השאר, אחרת
+  // היא הייתה מוחקת את המטמון של כל מה שלא נכלל בה.
+  const thisRun = new Set(entries.map((e) => `${e.id}:${e.url}`));
+  const merged = [...previous.values()].filter((e) => !thisRun.has(`${e.id}:${e.url}`)).concat(entries);
   fs.mkdirSync(UPLOADS_OUT_DIR, { recursive: true });
   fs.writeFileSync(UPLOADS_MANIFEST_PATH,
-    JSON.stringify({ generatedAt: new Date().toISOString(), entries }, null, 2), 'utf8');
+    JSON.stringify({ generatedAt: new Date().toISOString(), entries: merged }, null, 2), 'utf8');
   return { entries, counts };
 }
 
@@ -1010,6 +1029,7 @@ function writeUploadsPreview(entries, missing) {
         <div class="line"><span class="id">${e.id}${e.index > 1 ? ` · זווית ${e.index}` : ''}</span>
           ${flags.length ? '<span class="badge">לבדיקה</span>' : ''}</div>
         <div class="name">${escapeHtml(e.name)}</div>
+        <div class="tech">${e.fromOriginal ? 'עובד מהצילום המקורי' : 'עובד מהקובץ שב-uploads (אין מקור)'}</div>
         ${e.cropWidth ? `<div class="tech">${e.sourceWidth}×${e.sourceHeight} → ${e.cropWidth}×${e.cropHeight} · ${(e.coverage * 100).toFixed(1)}% · ${(e.ms / 1000).toFixed(1)}s</div>` : ''}
         ${flags.map((f) => `<div class="reason">${escapeHtml(f)}</div>`).join('')}
       </figcaption>
@@ -1160,6 +1180,7 @@ async function mainFromUploads(opts) {
   console.log(`מוצרים פעילים בטווח:   ${products}`);
   console.log(`תמונות:               ${jobs.length}`);
   console.log(`עובדו עכשיו:          ${counts.processed}`);
+  console.log(`מהם מהצילום המקורי:   ${entries.filter((e) => !e.alreadyDone && e.fromOriginal && e.ms).length}`);
   console.log(`עובדו כבר (מטמון):    ${counts.cached}`);
   console.log(`כבר על לבן — דולגו:    ${counts.alreadyDone}`);
   if (counts.failed) console.log(`נכשלו:                ${counts.failed}`);

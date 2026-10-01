@@ -48,3 +48,6 @@ design-assets/square-backup-*/
 photos/processed-uploads/
 photos/preview-uploads.html
 design-assets/reprocess-backup-*.json
+
+# הצילומים המקוריים מההעלאות, ברזולוציה מלאה — לא מוגשים ולא נכנסים לגיט
+uploads-originals/
