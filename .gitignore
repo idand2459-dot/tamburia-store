@@ -43,3 +43,8 @@ design-assets/price-backup-*.json
 
 # גיבויי ההשלמה לריבוע של תמונות שכבר הועלו — מקומיים, לא נכנסים לגיט
 design-assets/square-backup-*/
+
+# עיבוד מחדש של התמונות שכבר הועלו (images:products --from-uploads) — מקומי, לא נכנס לגיט
+photos/processed-uploads/
+photos/preview-uploads.html
+design-assets/reprocess-backup-*.json
