@@ -16,6 +16,7 @@
  * החריג הזה לא היה אפשר להחזיר מוצר מוסתר לחנות.
  */
 const Product = require('../models/product.model');
+const productService = require('../services/product.service');
 const { parseCreate, parseUpdate, parseListQuery } = require('../validators/product.validator');
 const { notFound } = require('../utils/AppError');
 
@@ -74,11 +75,14 @@ async function update(req, res) {
   res.json(product);
 }
 
-/** DELETE /api/products/:id — מוחק מוצר. */
+/**
+ * DELETE /api/products/:id — מוחק מוצר בלי הזמנות, עם הביקורות שלו
+ * ותמונות שאף מוצר אחר אינו משתמש בהן. מוצר עם הזמנות → 409, ראו
+ * services/product.service.
+ */
 async function remove(req, res) {
-  const product = await Product.remove(req.id);
-  if (!product) throw notFound(`מוצר ${req.id} לא נמצא`);
-  res.json({ message: 'נמחק', product });
+  const { product, reviews, files } = await productService.removeProduct(req.id);
+  res.json({ message: 'נמחק', product, deleted: { reviews, files } });
 }
 
 /**
