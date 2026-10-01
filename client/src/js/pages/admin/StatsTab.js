@@ -19,6 +19,7 @@ import CATEGORY_ICONS from '../../utils/categoryIcons';
 import { Spinner } from '../../components/LoadingStates';
 import { useStatsBaseline } from '../../hooks/useStatsBaseline';
 import { formatDate } from './adminConstants';
+import { formatPrice } from '../../utils/pricing';
 
 /** מציג את לשונית הסטטיסטיקות. */
 function StatsTab({ api, products, getStats, onToggleStock, productsError }) {
@@ -71,25 +72,25 @@ function StatsTab({ api, products, getStats, onToggleStock, productsError }) {
       <div className="stats-grid">
         <div className="stats-card">
           <div className="stats-card-icon"><CalendarDays size={28} aria-hidden="true" /></div>
-          <div className="stats-card-value">₪{stats.revenueToday}</div>
+          <div className="stats-card-value">{formatPrice(stats.revenueToday)}</div>
           <div className="stats-card-label">הכנסות היום</div>
           <div className="stats-card-sub">{stats.todayOrders.length} הזמנות</div>
         </div>
         <div className="stats-card">
           <div className="stats-card-icon"><Calendar size={28} aria-hidden="true" /></div>
-          <div className="stats-card-value">₪{stats.revenueWeek}</div>
+          <div className="stats-card-value">{formatPrice(stats.revenueWeek)}</div>
           <div className="stats-card-label">הכנסות השבוע</div>
           <div className="stats-card-sub">{stats.weekOrders.length} הזמנות</div>
         </div>
         <div className="stats-card">
           <div className="stats-card-icon"><CalendarRange size={28} aria-hidden="true" /></div>
-          <div className="stats-card-value">₪{stats.revenueMonth}</div>
+          <div className="stats-card-value">{formatPrice(stats.revenueMonth)}</div>
           <div className="stats-card-label">הכנסות החודש</div>
           <div className="stats-card-sub">{stats.monthOrders.length} הזמנות</div>
         </div>
         <div className="stats-card accent">
           <div className="stats-card-icon"><Coins size={28} aria-hidden="true" /></div>
-          <div className="stats-card-value">₪{stats.revenueTotal}</div>
+          <div className="stats-card-value">{formatPrice(stats.revenueTotal)}</div>
           <div className="stats-card-label">סה"כ הכנסות</div>
           <div className="stats-card-sub">{stats.totalOrders} הזמנות סה"כ</div>
         </div>

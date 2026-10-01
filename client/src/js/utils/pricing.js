@@ -31,6 +31,51 @@ export const CALL_FOR_PRICE_LABEL = 'התקשרו לבירור מחיר';
  */
 export const UNAVAILABLE_LABEL = 'לא זמין כרגע';
 
+/* ---- אגורות ותצוגה --------------------------------------------------------
+   מחירים יכולים להיות עשרוניים (12.90). כל חיבור והשוואה נעשים באגורות,
+   שהן מספרים שלמים, כי float אינו מדויק: 12.9 * 3 הוא 38.699999999999996.
+   אותם כללים בדיוק יושבים בשרת, ב-server/utils/money.js. */
+
+/** שקלים → אגורות, מספר שלם. */
+export function toAgorot(value) {
+  return Math.round(Number(value) * 100);
+}
+
+/** מחיר ⨉ כמות, מדויק באגורה. */
+export function lineTotal(price, quantity = 1) {
+  return (toAgorot(price) * quantity) / 100;
+}
+
+/** סכום של מחירים, מדויק באגורה. */
+export function sumPrices(values) {
+  return values.reduce((sum, value) => sum + toAgorot(value), 0) / 100;
+}
+
+/**
+ * סכום לתצוגה, בלי ₪: שלם בלי נקודה ("30"), עשרוני עם שתי ספרות
+ * ("12.90"). מעוגל לאגורה קודם, כדי ש-30.000000000004 יוצג 30.
+ */
+export function formatAmount(value) {
+  const agorot = toAgorot(value);
+  return agorot % 100 === 0 ? String(agorot / 100) : (agorot / 100).toFixed(2);
+}
+
+/** סכום לתצוגה עם ₪: "₪12.90" או "₪30". */
+export function formatPrice(value) {
+  return `₪${formatAmount(value)}`;
+}
+
+/**
+ * מפענח מחיר שהוקלד בשדה: "12.90", "12,90" (פסיק ישראלי), "12.9" או
+ * "30". מחזיר מספר אי-שלילי, או null כשהטקסט אינו מחיר — כולל יותר
+ * משתי ספרות אחרי הנקודה, שעדיף לדחות מאשר לעגל בשקט.
+ */
+export function parsePriceInput(text) {
+  const normalized = String(text ?? '').trim().replace(',', '.');
+  if (!/^\d+(\.\d{1,2})?$/.test(normalized)) return null;
+  return toAgorot(normalized) / 100;
+}
+
 /** מספר חיובי או null. 0, null, טקסט וכל השאר הם "אין מחיר". */
 function asPrice(value) {
   const num = Number(value);
@@ -60,10 +105,10 @@ export function hasPrice(product) {
   return orderablePrice(product) !== null;
 }
 
-/** "₪12" או "מחיר בחנות" — למי שרק מציג ולא משנה גם עיצוב. */
+/** "₪12.90", "₪30" או "מחיר בחנות" — למי שרק מציג ולא משנה גם עיצוב. */
 export function priceLabel(product) {
   const price = orderablePrice(product);
-  return price === null ? NO_PRICE_LABEL : `₪${price}`;
+  return price === null ? NO_PRICE_LABEL : formatPrice(price);
 }
 
 /**

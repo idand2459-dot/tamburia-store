@@ -14,6 +14,7 @@ const {
   assertStatusFitsDeliveryMethod,
 } = require('../validators/order.validator');
 const { badRequest, notFound } = require('../utils/AppError');
+const { toAgorot, fromAgorot } = require('../utils/money');
 
 /** שולף הזמנה או זורק 404. משמש כל פעולה שדורשת הזמנה קיימת. */
 async function requireOrder(id) {
@@ -136,7 +137,7 @@ async function getStats() {
     byStatus,
     totals: {
       orders: byStatus.reduce((sum, row) => sum + row.orders, 0),
-      revenue: byStatus.reduce((sum, row) => sum + row.revenue, 0),
+      revenue: fromAgorot(byStatus.reduce((sum, row) => sum + toAgorot(row.revenue), 0)),
     },
   };
 }

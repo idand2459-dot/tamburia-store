@@ -64,6 +64,7 @@ async function setupProducts() {
   await makeProduct('paint', { name: 'צבע לבן בדיקה', price: 100, sku: 'TEST-ORD-PAINT' });
   await makeProduct('brush', { name: 'מברשת בדיקה', price: 30, sku: 'TEST-ORD-BRUSH' });
   await makeProduct('thinner', { name: 'מדלל בדיקה', price: 45, sku: 'TEST-ORD-THINNER' });
+  await makeProduct('roller', { name: 'רולר בדיקה', price: 12.9, sku: 'TEST-ORD-ROLLER' });
 
   // מוצר עם גרסאות: המחיר של המוצר עצמו נגזר מהזולה שבהן
   await makeProduct('bucket', {
@@ -354,6 +355,52 @@ async function testServerPricing() {
   check('מזהה שאינו בקטלוג → 400', ghost.status === 400, ghost.status);
 }
 
+/**
+ * בודק מחיר עשרוני בהזמנה: ההשוואה למסד והסכומים נעשים באגורות.
+ *
+ * שני הבאגים שזה סוגר: הוולידטור עיגל את המחיר שהלקוח שלח (12.90 →
+ * 13) וההשוואה ב-!== דחתה אותו ב-409 על מחיר שלא השתנה; וסכום של
+ * float — 3 × 12.9 — יצא 38.699999999999996.
+ */
+async function testDecimalPricing() {
+  console.log('\n── מחיר עשרוני');
+
+  const order = (items) => ({ ...validOrder(), items });
+
+  const three = await call('POST', '/orders', order([
+    { id: P.roller.id, name: P.roller.name, price: 12.9, quantity: 3 },
+  ]));
+  created.push(three.body.id);
+  check('12.9 מול 12.90 במסד → 201 ולא 409', three.status === 201, `${three.status} ${three.body.error || ''}`);
+  check('המחיר בהזמנה 12.9', three.body.items?.[0]?.price === 12.9, three.body.items?.[0]?.price);
+  check('subtotal מדויק באגורה (38.7)', three.body.subtotal === 38.7, three.body.subtotal);
+  check('total מדויק באגורה (58.7)', three.body.total === 58.7, three.body.total);
+
+  const read = await call('GET', `/orders/${three.body.id}`);
+  check('הסכומים חוזרים מהמסד כמספרים', read.body.subtotal === 38.7 && read.body.total === 58.7,
+    { subtotal: read.body.subtotal, total: read.body.total });
+
+  // אותו מחיר, כתוב אחרת — עדיין אותו מחיר
+  const asString = await call('POST', '/orders', order([
+    { id: P.roller.id, name: P.roller.name, price: '12.90', quantity: 1 },
+  ]));
+  created.push(asString.body.id);
+  check('"12.90" כמחרוזת → 201', asString.status === 201, `${asString.status} ${asString.body.error || ''}`);
+
+  const offByAgora = await call('POST', '/orders', order([
+    { id: P.roller.id, name: P.roller.name, price: 12.91, quantity: 1 },
+  ]));
+  check('אגורה אחת הפרש → 409', offByAgora.status === 409, offByAgora.status);
+  check('ההודעה מציגה ₪12.90 עם שתי ספרות',
+    typeof offByAgora.body.error === 'string' && offByAgora.body.error.includes('₪12.90'), offByAgora.body.error);
+  check('המחיר העדכני חוזר כמספר', offByAgora.body.details?.prices?.[0]?.price === 12.9, offByAgora.body.details);
+
+  const tooPrecise = await call('POST', '/orders', order([
+    { id: P.roller.id, name: P.roller.name, price: 12.901, quantity: 1 },
+  ]));
+  check('שלוש ספרות אחרי הנקודה → 400', tooPrecise.status === 400, tooPrecise.status);
+}
+
 /** בודק שמוצר עם גרסאות מתומחר לפי הגרסה שנבחרה. */
 async function testVariantPricing() {
   console.log('\n── תמחור לפי גרסה');
@@ -421,9 +468,12 @@ async function testSavedTotalsMatch() {
         item.price === expected, { saved: item.price, catalogue: expected });
     }
 
-    const subtotal = order.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    // באגורות, כמו בשרת: 3 × 12.9 ב-float אינו 38.7
+    const agorot = (value) => Math.round(value * 100);
+    const subtotal = order.items.reduce((sum, i) => sum + agorot(i.price) * i.quantity, 0) / 100;
     check(`הזמנה ${id}: subtotal ו-total מתיישבים עם השורות`,
-      order.subtotal === subtotal && order.total === subtotal + order.delivery_fee,
+      agorot(order.subtotal) === agorot(subtotal)
+        && agorot(order.total) === agorot(subtotal) + agorot(order.delivery_fee),
       { subtotal: order.subtotal, fee: order.delivery_fee, total: order.total, fromItems: subtotal });
   }
 }
@@ -460,6 +510,7 @@ async function main() {
   await testZeroPrice();
   await testServerPricing();
   await testVariantPricing();
+  await testDecimalPricing();
   await testSavedTotalsMatch();
   await testUpdate(deliveryId);
   await cleanup();

@@ -15,6 +15,7 @@
  * דרך לדעת איזו גרסה נבחרה, ולכן אין לו ממה לגזור את מחירה.
  */
 const { badRequest } = require('../utils/AppError');
+const { parsePrice } = require('../utils/money');
 
 const STATUSES = ['new', 'processing', 'ready_for_pickup', 'shipped', 'completed'];
 
@@ -192,9 +193,11 @@ function asItems(value) {
 
     // המחיר שהלקוח ראה על המסך. הוא אינו נכנס להזמנה כמו שהוא —
     // pricing.service משווה אותו למחיר שבמסד ודוחה הזמנה שהם נפרדו בה.
-    const price = Number(item.price);
-    if (!Number.isFinite(price) || price < 0) {
-      throw badRequest(`items[${i}].price חייב להיות מספר אי-שלילי`);
+    // לא מעוגל: עיגול כאן היה הופך 12.90 ל-13 והשוואה למסד הייתה
+    // נכשלת ב-409 על מחיר שלא השתנה.
+    const price = parsePrice(item.price, { allowZero: true });
+    if (price === null) {
+      throw badRequest(`items[${i}].price חייב להיות מספר אי-שלילי עם עד שתי ספרות אחרי הנקודה`);
     }
 
     const quantity = Number(item.quantity ?? 1);
@@ -207,7 +210,7 @@ function asItems(value) {
     return {
       id: Number.isInteger(id) && id > 0 ? id : null,
       name,
-      price: Math.round(price),
+      price,
       quantity,
       // תווית הגרסה נשמרת מכאן ואילך. עד עכשיו היא נזרקה, כך שהזמנה
       // של מוצר עם גרסאות לא תיעדה איזו גרסה נמכרה — ולשרת גם לא

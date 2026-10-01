@@ -3,6 +3,8 @@
  * תחתית, טבלת הפריטים והסיכום. כל ערך מהמשתמש עובר בריחת תווים.
  */
 
+const { formatPrice, lineTotal } = require('../../../utils/money');
+
 /** מחליף תווי HTML בערך טקסט, כדי שלא ישברו את מבנה המייל. */
 function escapeHtml(value) {
   if (value == null) return '';
@@ -35,7 +37,7 @@ function itemsRows(items, { alignFirst = false } = {}) {
     `<tr>
       <td style="padding:8px;border-bottom:1px solid #eee${align}">${itemLabel(item)}</td>
       <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${item.quantity}</td>
-      <td style="padding:8px;border-bottom:1px solid #eee;text-align:left">₪${item.price * item.quantity}</td>
+      <td style="padding:8px;border-bottom:1px solid #eee;text-align:left">${formatPrice(lineTotal(item.price, item.quantity))}</td>
     </tr>`
   ).join('');
 }
@@ -54,13 +56,13 @@ function itemsTableHead() {
 /** בונה את שורות הסיכום: סכום מוצרים, משלוח וסך הכל. */
 function summaryRows(order) {
   return `<div style="display:flex;justify-content:space-between;margin-bottom:8px;color:#666">
-          <span>סכום מוצרים:</span><span>₪${order.subtotal}</span>
+          <span>סכום מוצרים:</span><span>${formatPrice(order.subtotal)}</span>
         </div>
         <div style="display:flex;justify-content:space-between;margin-bottom:12px;color:#666">
-          <span>משלוח:</span><span>${order.delivery_fee > 0 ? `₪${order.delivery_fee}` : 'חינם'}</span>
+          <span>משלוח:</span><span>${order.delivery_fee > 0 ? formatPrice(order.delivery_fee) : 'חינם'}</span>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:bold;color:#1a1a2e;border-top:2px solid #e63946;padding-top:12px">
-          <span>סה"כ לתשלום:</span><span>₪${order.total}</span>
+          <span>סה"כ לתשלום:</span><span>${formatPrice(order.total)}</span>
         </div>`;
 }
 

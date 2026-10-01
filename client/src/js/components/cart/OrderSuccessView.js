@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '../../context/storeContext';
 import { ADDRESS, PHONES, whatsappUrl } from '../../utils/storeInfo';
+import { formatPrice } from '../../utils/pricing';
 
 /** מציג את אישור ההזמנה. */
 function OrderSuccessView({ closeCart }) {
@@ -45,7 +46,7 @@ function OrderSuccessView({ closeCart }) {
         </div>
         <div>
           <dt>סה"כ</dt>
-          <dd className="order-success-total">₪{orderSuccess.total}</dd>
+          <dd className="order-success-total">{formatPrice(orderSuccess.total)}</dd>
         </div>
       </dl>
 

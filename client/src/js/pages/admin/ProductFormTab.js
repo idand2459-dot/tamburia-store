@@ -31,6 +31,7 @@ import {
 import { CATEGORIES } from './adminConstants';
 import { useObjectUrls } from '../../hooks/useObjectUrls';
 import { asColors } from '../../utils/colorPalette';
+import { parsePriceInput, formatAmount } from '../../utils/pricing';
 import ProductFormPreview from './ProductFormPreview';
 import ColorRows from './ColorRows';
 import VariantRows from './VariantRows';
@@ -50,11 +51,19 @@ const EMPTY = {
  * הגודל הראשון שנפל, וכאן אפשר לומר את זה ליד הכפתור בלי הלוך ושוב,
  * ובלי שהודעה באנגלית תגיע למסך של מי שמפעיל את החנות.
  */
-function formProblem(variants) {
+function formProblem(price, variants) {
   const filled = variants.filter(v => v.label.trim() || String(v.price).trim());
 
+  // המחיר של המוצר עצמו נבדק רק כשאין גדלים: עם גדלים השדה אינו מוצג,
+  // והמחיר נגזר מהם.
+  if (filled.length === 0 && parsePriceInput(price) === null) {
+    return 'המחיר צריך להיות מספר עם עד שתי ספרות אחרי הנקודה — למשל 12.90';
+  }
+
   if (filled.some(v => !v.label.trim())) return 'לכל גודל צריך שם — למשל "3 מטר"';
-  if (filled.some(v => !(Number(v.price) > 0))) return 'לכל גודל צריך מחיר גדול מאפס';
+  if (filled.some(v => !(parsePriceInput(v.price) > 0))) {
+    return 'לכל גודל צריך מחיר גדול מאפס, עם עד שתי ספרות אחרי הנקודה';
+  }
 
   const labels = filled.map(v => v.label.trim());
   const duplicate = labels.find((label, i) => labels.indexOf(label) !== i);
@@ -71,14 +80,14 @@ function fieldsFromProduct(product) {
   if (product.images && Array.isArray(product.images)) existing.push(...product.images);
   return {
     name: product.name,
-    price: product.price,
+    price: formatAmount(product.price ?? 0),
     inStock: product.in_stock !== false,
     colors: asColors(product.colors),
     category: product.category || '',
     sku: product.sku || '',
     description: product.description || '',
     variants: Array.isArray(product.variants) && product.variants.length > 0
-      ? product.variants.map(v => ({ label: v.label, price: String(v.price) }))
+      ? product.variants.map(v => ({ label: v.label, price: formatAmount(v.price) }))
       : [],
     existingImages: existing,
     imageIllustrative: product.image_illustrative === true,
@@ -132,7 +141,7 @@ function ProductFormTab({
   async function handleSubmit(e) {
     e.preventDefault();
 
-    const problem = formProblem(variants);
+    const problem = formProblem(price, variants);
     if (problem) { setFormError(problem); return; }
     setFormError('');
 
@@ -170,7 +179,11 @@ function ProductFormTab({
           {variants.length === 0 ? (
             <div className="admin-form-group">
               <label htmlFor="pf-price">מחיר (₪) <span className="admin-required">*</span></label>
-              <input id="pf-price" placeholder="0" type="number" inputMode="decimal" min="0" value={price} onChange={e => setPrice(e.target.value)} required />
+              {/* text ולא number: שדה number בדפדפן דוחה "12,90" עוד לפני
+                  שהקוד רואה אותו, ובלי step חוסם 12.90 בשליחה. inputMode
+                  פותח בטלפון את המקלדת המספרית עם נקודה; הפענוח — כולל
+                  פסיק — הוא של parsePriceInput. */}
+              <input id="pf-price" placeholder="0" type="text" inputMode="decimal" autoComplete="off" value={price} onChange={e => setPrice(e.target.value)} required />
             </div>
           ) : (
             <div className="admin-form-group">

@@ -175,6 +175,11 @@
   outline: none;
 }
 
+/* ערך שאינו מחיר (למשל 12.999): השמירה לא נשלחת, והמסגרת אומרת למה. */
+.admin-price-input[aria-invalid="true"] {
+  border-color: var(--color-red);
+}
+
 .admin-price-save,
 .admin-price-cancel {
   display: flex;

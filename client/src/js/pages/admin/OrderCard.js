@@ -19,6 +19,7 @@ import {
   Store, Truck, Phone, ChevronDown, Settings, PackageCheck, Truck as TruckIcon, CheckCircle,
 } from 'lucide-react';
 import { STATUS_CONFIG, statusesForMethod, formatDate, timeAgo } from './adminConstants';
+import { formatPrice, lineTotal } from '../../utils/pricing';
 
 /* הצעד הבא לכל סטטוס. ב-processing הוא תלוי באופן הקבלה — הזמנת
    איסוף עצמי הופכת למוכנה בחנות, הזמנת משלוח יוצאת לדרך — ולכן שם
@@ -78,7 +79,7 @@ function OrderCard({ order, isOpen, onToggle, onStatusChange, onDelete }) {
 
         <span className="order-card-line">
           <span className="order-card-name">{order.customer_name}</span>
-          <span className="order-card-total">₪{order.total}</span>
+          <span className="order-card-total">{formatPrice(order.total)}</span>
         </span>
 
         <span className="order-card-line order-card-line--meta">
@@ -117,7 +118,7 @@ function OrderCard({ order, isOpen, onToggle, onStatusChange, onDelete }) {
                   {itemOptions(item) && <span className="order-item-options">{itemOptions(item)}</span>}
                 </span>
                 <span className="order-item-qty">×{item.quantity}</span>
-                <span className="order-item-price">₪{item.price * item.quantity}</span>
+                <span className="order-item-price">{formatPrice(lineTotal(item.price, item.quantity))}</span>
               </li>
             ))}
           </ul>
@@ -129,7 +130,7 @@ function OrderCard({ order, isOpen, onToggle, onStatusChange, onDelete }) {
             </div>
             <div className="order-fact">
               <dt>סכום מוצרים</dt>
-              <dd>₪{order.subtotal}{order.delivery_fee > 0 && ` + ₪${order.delivery_fee} משלוח`}</dd>
+              <dd>{formatPrice(order.subtotal)}{order.delivery_fee > 0 && ` + ${formatPrice(order.delivery_fee)} משלוח`}</dd>
             </div>
             {order.delivery_address && (
               <div className="order-fact order-fact--wide">

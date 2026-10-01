@@ -20,7 +20,7 @@ import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, Check } from 'lucide-react';
 import { SUBCATEGORY_NAMES } from '../features/catalog/categories';
 import CATEGORY_ICONS from '../utils/categoryIcons';
-import { orderablePrice, NO_PRICE_LABEL, UNAVAILABLE_LABEL } from '../utils/pricing';
+import { orderablePrice, NO_PRICE_LABEL, UNAVAILABLE_LABEL, formatPrice } from '../utils/pricing';
 
 /* כמה זמן הכפתור מראה וי אחרי הוספה. מספיק כדי להיראות, קצר מכדי
    להיראות כמו מצב תקוע. */
@@ -128,11 +128,11 @@ function ProductCard({
           <p className={`product-card-price ${price === null ? 'is-no-price' : ''}`}>
             {price === null ? NO_PRICE_LABEL : variants.length > 0 ? (
               <>
-                מ-₪{price}
+                מ-{formatPrice(price)}
                 <span className="product-card-variants"> · {variants.length} גרסאות</span>
               </>
             ) : (
-              <>₪{price}</>
+              <>{formatPrice(price)}</>
             )}
           </p>
 

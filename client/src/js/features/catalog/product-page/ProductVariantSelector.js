@@ -23,6 +23,7 @@
  */
 import { AlertCircle } from 'lucide-react';
 import { asColors } from '../../../utils/colorPalette';
+import { formatPrice } from '../../../utils/pricing';
 
 /** שורת השגיאה מתחת לבורר שחסרה בו בחירה. */
 function PickerError({ children }) {
@@ -59,7 +60,7 @@ function ProductVariantSelector({
                 aria-pressed={selectedVariant === v}
                 onClick={() => onSelectVariant(v)}>
                 <span className="product-picker-chip-label">{v.label}</span>
-                <span className="product-picker-chip-price">₪{v.price}</span>
+                <span className="product-picker-chip-price">{formatPrice(v.price)}</span>
               </button>
             ))}
           </div>

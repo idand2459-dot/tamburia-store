@@ -25,6 +25,7 @@
 const Product = require('../models/product.model');
 const config = require('../config/env');
 const { badRequest, conflict } = require('../utils/AppError');
+const { toAgorot, fromAgorot, formatPrice } = require('../utils/money');
 
 /** מספר חיובי, או null. 0 אינו מחיר אלא סימן שהמחיר לא הוקלד. */
 function asPrice(value) {
@@ -115,7 +116,9 @@ async function priceOrder(data) {
     const line = { ...item, name: product.name, price };
     priced.push(line);
 
-    if (item.price !== price) {
+    // באגורות ולא ב-!==: 12.9 ו-12.90 הם אותו מחיר, ו-float אינו
+    // מבטיח ששני ייצוגים של אותו סכום יהיו זהים בדיוק.
+    if (toAgorot(item.price) !== toAgorot(price)) {
       changed.push(currentPrice(item, price));
       if (!firstChanged) firstChanged = line;
     }
@@ -123,15 +126,23 @@ async function priceOrder(data) {
 
   if (firstChanged) {
     throw conflict(
-      `המחיר של ${firstChanged.name} עודכן ל-₪${firstChanged.price}. בדקו את העגלה ונסו שוב`,
+      `המחיר של ${firstChanged.name} עודכן ל-${formatPrice(firstChanged.price)}. בדקו את העגלה ונסו שוב`,
       { prices: changed }
     );
   }
 
-  const subtotal = priced.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const delivery_fee = data.delivery_method === 'delivery' ? config.orders.deliveryFee : 0;
+  // הסכומים באגורות, ורק בסוף חזרה לשקלים: 3 × 12.90 הוא 38.70 ולא
+  // 38.699999999999996.
+  const subtotal = priced.reduce((sum, item) => sum + toAgorot(item.price) * item.quantity, 0);
+  const deliveryFee = data.delivery_method === 'delivery' ? toAgorot(config.orders.deliveryFee) : 0;
 
-  return { ...data, items: priced, subtotal, delivery_fee, total: subtotal + delivery_fee };
+  return {
+    ...data,
+    items: priced,
+    subtotal: fromAgorot(subtotal),
+    delivery_fee: fromAgorot(deliveryFee),
+    total: fromAgorot(subtotal + deliveryFee),
+  };
 }
 
 module.exports = { priceOrder };

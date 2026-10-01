@@ -26,7 +26,7 @@ import ProductReviewsSection from '../features/catalog/product-page/ProductRevie
 import RelatedProducts from '../features/catalog/product-page/RelatedProducts';
 import Stars from '../features/catalog/product-page/Stars';
 import { averageRating } from '../utils/rating';
-import { selectedPrice, NO_PRICE_LABEL } from '../utils/pricing';
+import { selectedPrice, NO_PRICE_LABEL, formatPrice } from '../utils/pricing';
 import { getProducts, isAbortError } from '../services/productService';
 import { getReviews } from '../services/reviewService';
 
@@ -175,7 +175,7 @@ function ProductPage({ product, onAddToCart }) {
   function handleShare() {
     const url = window.location.href;
     // מוצר בלי מחיר לא משתתף עם ₪0 בוואטסאפ
-    const priceText = price === null ? NO_PRICE_LABEL : `₪${price}`;
+    const priceText = price === null ? NO_PRICE_LABEL : formatPrice(price);
     const text = `היי! ראיתי את המוצר הזה בטכניק טמבור ונראה לי מעניין 🔧\n*${product.name}* — ${priceText}\n${url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   }
@@ -227,7 +227,7 @@ function ProductPage({ product, onAddToCart }) {
 
           <div className="product-detail-pricing">
             <span className={`product-detail-price ${price === null ? 'is-no-price' : ''}`}>
-              {price === null ? NO_PRICE_LABEL : `₪${price}`}
+              {price === null ? NO_PRICE_LABEL : formatPrice(price)}
             </span>
             {hasVariants && !selectedVariant && (
               <span className="product-detail-price-note">בחר גרסה</span>
