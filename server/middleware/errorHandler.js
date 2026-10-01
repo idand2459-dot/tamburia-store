@@ -3,6 +3,7 @@
  * PostgreSQL ו-multer לקודי HTTP והודעות שהלקוח יכול להבין.
  */
 const config = require('../config/env');
+const { MAX_FILE_SIZE } = require('./upload');
 
 /** מחזיר 404 בפורמט JSON לנתיב API שאינו קיים. */
 function notFoundHandler(req, res) {
@@ -30,7 +31,7 @@ function mapPgError(err) {
 function mapMulterError(err) {
   if (err.name !== 'MulterError') return null;
   switch (err.code) {
-    case 'LIMIT_FILE_SIZE':       return { status: 413, message: 'הקובץ גדול מדי' };
+    case 'LIMIT_FILE_SIZE':       return { status: 413, message: `הקובץ גדול מדי — עד ${MAX_FILE_SIZE / 1024 / 1024}MB לתמונה` };
     case 'LIMIT_FILE_COUNT':      return { status: 400, message: 'נשלחו יותר קבצים מהמותר' };
     case 'LIMIT_UNEXPECTED_FILE': return { status: 400, message: err.message };
     default:                      return { status: 400, message: `שגיאה בהעלאת הקובץ: ${err.message}` };
