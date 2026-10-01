@@ -63,14 +63,14 @@ async function getOne(req, res) {
 /** POST /api/products — יוצר מוצר חדש. */
 async function create(req, res) {
   const data = parseCreate(req.body);
-  const product = await Product.create(data);
+  const product = await productService.createProduct(data);
   res.status(201).json(product);
 }
 
 /** PUT /api/products/:id — מעדכן את השדות שנשלחו בלבד. */
 async function update(req, res) {
   const data = parseUpdate(req.body);
-  const product = await Product.update(req.id, data);
+  const product = await productService.updateProduct(req.id, data);
   if (!product) throw notFound(`מוצר ${req.id} לא נמצא`);
   res.json(product);
 }

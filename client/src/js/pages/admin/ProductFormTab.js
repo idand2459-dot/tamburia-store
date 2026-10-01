@@ -32,6 +32,7 @@ import { CATEGORIES } from './adminConstants';
 import { useObjectUrls } from '../../hooks/useObjectUrls';
 import { asColors } from '../../utils/colorPalette';
 import { parsePriceInput, formatAmount } from '../../utils/pricing';
+import { subcategoriesOf, isSubcategoryOf } from '../../utils/subcategories';
 import ProductFormPreview from './ProductFormPreview';
 import ColorRows from './ColorRows';
 import VariantRows from './VariantRows';
@@ -39,7 +40,7 @@ import VariantRows from './VariantRows';
 const MAX_IMAGES = 5;
 
 const EMPTY = {
-  name: '', price: '', inStock: true, colors: [], category: '',
+  name: '', price: '', inStock: true, colors: [], category: '', subcategory: '', legacySubcategory: '',
   sku: '', description: '', variants: [], existingImages: [],
   imageIllustrative: false,
 };
@@ -84,6 +85,12 @@ function fieldsFromProduct(product) {
     inStock: product.in_stock !== false,
     colors: asColors(product.colors),
     category: product.category || '',
+    /* ערך שאינו תת-קטגוריה של הקטגוריה (שם חופשי מייבוא ישן) לא נכנס
+       לשדה — השרת היה דוחה אותו בשמירה. הוא מוצג באזהרה, כדי שיהיה
+       ברור מה היה שם ומה לבחור במקומו. */
+    subcategory: isSubcategoryOf(product.category, product.subcategory) ? product.subcategory : '',
+    legacySubcategory: product.subcategory && !isSubcategoryOf(product.category, product.subcategory)
+      ? product.subcategory : '',
     sku: product.sku || '',
     description: product.description || '',
     variants: Array.isArray(product.variants) && product.variants.length > 0
@@ -103,6 +110,8 @@ function ProductFormTab({
   const [inStock, setInStock] = useState(EMPTY.inStock);
   const [colors, setColors] = useState(EMPTY.colors);
   const [category, setCategory] = useState(EMPTY.category);
+  const [subcategory, setSubcategory] = useState(EMPTY.subcategory);
+  const [legacySubcategory, setLegacySubcategory] = useState(EMPTY.legacySubcategory);
   const [sku, setSku] = useState(EMPTY.sku);
   const [description, setDescription] = useState(EMPTY.description);
   const [variants, setVariants] = useState(EMPTY.variants);
@@ -115,11 +124,20 @@ function ProductFormTab({
     const f = fieldsFromProduct(editingProduct);
     setName(f.name); setPrice(f.price); setInStock(f.inStock);
     setColors(f.colors); setCategory(f.category); setSku(f.sku);
+    setSubcategory(f.subcategory); setLegacySubcategory(f.legacySubcategory);
     setDescription(f.description); setVariants(f.variants);
     setExistingImages(f.existingImages); setImages([]);
     setImageIllustrative(f.imageIllustrative);
     setFormError('');
   }, [editingProduct]);
+
+  const subcategoryOptions = subcategoriesOf(category);
+
+  /** מחליף קטגוריה, ומנקה תת-קטגוריה שכבר לא שייכת אליה. */
+  function changeCategory(next) {
+    setCategory(next);
+    if (!isSubcategoryOf(next, subcategory)) setSubcategory('');
+  }
 
   const totalImagesSelected = existingImages.length + images.length;
   const room = MAX_IMAGES - totalImagesSelected;
@@ -130,7 +148,7 @@ function ProductFormTab({
 
   /** אוסף את שדות הטופס לצורת הארגומנט שההוק מצפה לה. */
   function collectFields() {
-    return { name, price, inStock, colors, category, sku, description, variants, imageIllustrative };
+    return { name, price, inStock, colors, category, subcategory, sku, description, variants, imageIllustrative };
   }
 
   /**
@@ -219,13 +237,33 @@ function ProductFormTab({
             <input id="pf-sku" placeholder="TT-1042" value={sku} onChange={e => setSku(e.target.value)} />
           </div>
 
-          <div className="admin-form-group">
+          <div className="admin-form-group admin-form-stack">
             <label htmlFor="pf-category">קטגוריה <span className="admin-required">*</span></label>
-            <select id="pf-category" value={category} onChange={e => setCategory(e.target.value)} required>
+            <select id="pf-category" value={category} onChange={e => changeCategory(e.target.value)} required>
               <option value="">בחר קטגוריה</option>
               {/* בלי אייקון: <option> יכול להכיל טקסט בלבד, ו-svg בתוכו לא מרונדר. */}
               {CATEGORIES.map(cat => <option key={cat.id} value={cat.id}>{cat.label}</option>)}
             </select>
+
+            <label htmlFor="pf-subcategory">תת-קטגוריה</label>
+            <select
+              id="pf-subcategory"
+              value={subcategory}
+              onChange={e => setSubcategory(e.target.value)}
+              disabled={subcategoryOptions.length === 0}
+              aria-describedby={subcategory ? undefined : 'pf-subcategory-warning'}>
+              <option value="">{category ? 'בחר תת-קטגוריה' : 'קודם בוחרים קטגוריה'}</option>
+              {subcategoryOptions.map(sub => <option key={sub.id} value={sub.id}>{sub.name}</option>)}
+            </select>
+            {!subcategory && category && subcategoryOptions.length > 0 && (
+              <p className="admin-form-warning" id="pf-subcategory-warning" role="status">
+                <AlertTriangle size={15} aria-hidden="true" />
+                <span>
+                  בלי תת-קטגוריה המוצר לא יופיע בסינון בחנות
+                  {legacySubcategory && <> (הערך הקודם, "{legacySubcategory}", אינו תת-קטגוריה של הקטגוריה הזו)</>}
+                </span>
+              </p>
+            )}
           </div>
 
           <div className="admin-form-group full">

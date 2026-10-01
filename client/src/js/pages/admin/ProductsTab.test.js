@@ -105,3 +105,36 @@ test('"מוסתרים" ריק נשאר פעיל, עם ההודעה שלו', () =
   expect(screen.getByText('כל המוצרים מוצגים בחנות')).toBeInTheDocument();
   expect(search()).toBe('?category=hidden');
 });
+
+/* ---- "ללא תת-קטגוריה" ושיבוץ מהיר ----------------------------------------
+   תת-קטגוריה ריקה, או ערך שאינו שייך לקטגוריה (שם חופשי מייבוא ישן), היא
+   מוצר שהסרגל בחנות לא יסנן אליו. השבב סופר את שניהם, והבורר בכרטיס
+   שולח רק subcategory. */
+
+const WITH_SUBS = [
+  { id: 1, name: 'דבק מגע', price: 30, category: 'adhesives', subcategory: null, active: true, in_stock: true },
+  { id: 2, name: 'מסור עץ', price: 40, category: 'tools', subcategory: 'מסורים', active: true, in_stock: true },
+  { id: 3, name: 'מטר', price: 15, category: 'tools', subcategory: 'measuring', active: true, in_stock: true },
+];
+
+test('"ללא תת-קטגוריה" סופר גם ערך שאינו שייך לקטגוריה', () => {
+  renderAt('', { products: WITH_SUBS });
+  expect(chip('ללא תת-קטגוריה')).toHaveTextContent('2');
+  fireEvent.click(chip('ללא תת-קטגוריה'));
+  expect(listed()).toEqual(['דבק מגע', 'מסור עץ']);
+  expect(search()).toBe('?category=no-sub');
+});
+
+test('שיבוץ מהיר שולח רק את תת-הקטגוריה שנבחרה', async () => {
+  const onUpdateSubcategory = jest.fn(async () => true);
+  renderAt('', { products: WITH_SUBS, onUpdateSubcategory });
+
+  // למוצר שכבר משובץ אין בורר; למסור רואים מה היה שם
+  expect(screen.queryByRole('combobox', { name: 'תת-קטגוריה עבור מטר' })).toBeNull();
+  const saw = screen.getByRole('combobox', { name: 'תת-קטגוריה עבור מסור עץ' });
+  expect(saw).toHaveTextContent('כעת: מסורים');
+
+  fireEvent.change(saw, { target: { value: 'general_tools' } });
+  expect(onUpdateSubcategory).toHaveBeenCalledWith(WITH_SUBS[1], 'general_tools');
+  expect(await screen.findByText('נשמר')).toBeInTheDocument();
+});

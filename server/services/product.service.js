@@ -1,4 +1,7 @@
 /**
+ * כללי המוצר שדורשים יותר מהבקשה עצמה: מחיקה (הזמנות, ביקורות,
+ * תמונות) ותת-קטגוריה (מול הקטגוריה של המוצר הקיים).
+ *
  * מחיקת מוצר: מה מותר למחוק, ומה נמחק איתו.
  *
  * מוצר שיש לו הזמנות אינו נמחק. ההזמנה מפנה אליו לפי id בתוך
@@ -15,7 +18,8 @@ const fs = require('fs/promises');
 const path = require('path');
 const Product = require('../models/product.model');
 const { UPLOADS_DIR } = require('../middleware/upload');
-const { notFound, conflict } = require('../utils/AppError');
+const { notFound, conflict, badRequest } = require('../utils/AppError');
+const { load: loadCategories, isSubcategoryOf } = require('../utils/categories');
 
 const HAS_ORDERS_MESSAGE = 'למוצר יש הזמנות, ולכן אי אפשר למחוק אותו. אפשר להסתיר אותו מהחנות';
 
@@ -65,4 +69,73 @@ async function removeProduct(id) {
   return { product: outcome.product, reviews: outcome.reviews, files };
 }
 
-module.exports = { removeProduct, HAS_ORDERS_MESSAGE };
+// ───────────────────────────── תת-קטגוריה ─────────────────────────────
+//
+// תת-הקטגוריה היא מה שסרגל הסינון בעמוד הקטגוריה משווה אליו, לפי מזהה
+// (?sub=rollers_pads). ערך שאינו מזהה של תת-קטגוריה בקטגוריה של המוצר —
+// שם בעברית שהוקלד ביד, או מזהה מקטגוריה אחרת — הוא מוצר שלא יופיע
+// באף סינון, בלי שום סימן לכך. לכן הוא נדחה כאן. ריק מותר: מוצר בלי
+// תת-קטגוריה מופיע תחת "הכל", ומסך הניהול מסמן אותו לשיבוץ.
+
+/** 400 על תת-קטגוריה שאינה שייכת לקטגוריה, עם השמות בעברית. */
+function wrongSubcategory(categoryId, subcategoryId) {
+  const { categoryNames, subcategoryNames } = loadCategories();
+  const category = categoryNames[categoryId] || categoryId || 'ללא קטגוריה';
+  const sub = subcategoryNames[subcategoryId] || subcategoryId;
+  return badRequest(`תת-הקטגוריה "${sub}" אינה שייכת לקטגוריה "${category}"`);
+}
+
+/** בודק מוצר חדש: תת-קטגוריה, אם נשלחה, חייבת להיות של הקטגוריה שלו. */
+function checkNewSubcategory(data) {
+  if (data.subcategory && !isSubcategoryOf(data.category, data.subcategory)) {
+    throw wrongSubcategory(data.category, data.subcategory);
+  }
+  return data;
+}
+
+/**
+ * בודק עדכון חלקי מול המוצר הקיים, ומחזיר את השדות לעדכון.
+ *
+ * תת-קטגוריה שנשלחה נבדקת מול הקטגוריה שתהיה למוצר אחרי העדכון — זו
+ * שנשלחה, או הקיימת. העריכה המהירה ברשימה שולחת רק subcategory, ולכן
+ * בלי המוצר הקיים אי אפשר לבדוק אותה.
+ *
+ * קטגוריה שהשתנתה בלי תת-קטגוריה בבקשה מנקה תת-קטגוריה שכבר לא שייכת —
+ * כמו שהטופס באדמין עושה. אחרת המוצר היה עובר קטגוריה ונשאר עם תת-
+ * קטגוריה של הקודמת.
+ */
+function checkSubcategoryUpdate(data, existing) {
+  const sentSub = Object.prototype.hasOwnProperty.call(data, 'subcategory');
+  const category = Object.prototype.hasOwnProperty.call(data, 'category') ? data.category : existing.category;
+
+  if (sentSub) {
+    if (data.subcategory && !isSubcategoryOf(category, data.subcategory)) {
+      throw wrongSubcategory(category, data.subcategory);
+    }
+    return data;
+  }
+
+  if (category !== existing.category && existing.subcategory
+    && !isSubcategoryOf(category, existing.subcategory)) {
+    return { ...data, subcategory: null };
+  }
+  return data;
+}
+
+/** יוצר מוצר אחרי בדיקת תת-הקטגוריה. */
+async function createProduct(data) {
+  return Product.create(checkNewSubcategory(data));
+}
+
+/** מעדכן מוצר אחרי בדיקת תת-הקטגוריה מול הקיים. */
+async function updateProduct(id, data) {
+  const touchesCategory = ['subcategory', 'category']
+    .some((field) => Object.prototype.hasOwnProperty.call(data, field));
+  if (!touchesCategory) return Product.update(id, data);
+
+  const existing = await Product.findById(id);
+  if (!existing) return null;
+  return Product.update(id, checkSubcategoryUpdate(data, existing));
+}
+
+module.exports = { removeProduct, createProduct, updateProduct, HAS_ORDERS_MESSAGE };

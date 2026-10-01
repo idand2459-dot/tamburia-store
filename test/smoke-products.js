@@ -633,6 +633,64 @@ async function testUploads() {
 }
 
 /**
+ * בודק את תת-הקטגוריה: מזהה מ-categories.js ששייך לקטגוריה של המוצר.
+ *
+ * שם בעברית או מזהה מקטגוריה אחרת נדחים ב-400 — מוצר כזה לא היה
+ * מופיע באף סינון בחנות. ריק מותר. העריכה המהירה ברשימה שולחת רק
+ * subcategory, והבדיקה שלה היא מול הקטגוריה הקיימת של המוצר.
+ */
+async function testSubcategory() {
+  console.log('\n── תת-קטגוריה');
+
+  const { categories } = require('../server/utils/categories').load();
+  const bathroomSub = categories.find((c) => c.id === 'bathroom').subcategories[0];
+  const bathroomSub2 = categories.find((c) => c.id === 'bathroom').subcategories[1];
+  const paintingSub = categories.find((c) => c.id === 'painting').subcategories[0];
+  const base = { ...validProduct(), category: 'bathroom' };
+
+  const ok = await call('POST', '/products', { ...base, sku: 'TEST-SUB-1', subcategory: bathroomSub.id });
+  created.push(ok.body.id);
+  check('תת-קטגוריה של הקטגוריה → 201', ok.status === 201, `${ok.status} ${ok.body.error || ''}`);
+  check('ונשמרת', ok.body.subcategory === bathroomSub.id, ok.body.subcategory);
+
+  const empty = await call('POST', '/products', { ...base, sku: 'TEST-SUB-2', subcategory: '' });
+  created.push(empty.body.id);
+  check('ריק מותר → 201, נשמר כ-null', empty.status === 201 && empty.body.subcategory === null,
+    `${empty.status} ${empty.body.subcategory}`);
+
+  const foreign = await call('POST', '/products', { ...base, sku: 'TEST-SUB-BAD', subcategory: paintingSub.id });
+  if (foreign.status === 201) created.push(foreign.body.id);
+  check('תת-קטגוריה של קטגוריה אחרת → 400', foreign.status === 400, foreign.status);
+  check('ההודעה בעברית, עם שני השמות',
+    foreign.body.error === `תת-הקטגוריה "${paintingSub.name}" אינה שייכת לקטגוריה "מוצרי אמבטיה"`,
+    foreign.body.error);
+
+  const freeText = await call('POST', '/products', { ...base, sku: 'TEST-SUB-BAD', subcategory: 'מסורים' });
+  if (freeText.status === 201) created.push(freeText.body.id);
+  check('שם חופשי בעברית במקום מזהה → 400', freeText.status === 400, freeText.status);
+
+  // העריכה המהירה: רק subcategory, מול הקטגוריה הקיימת
+  const quick = await call('PUT', `/products/${empty.body.id}`, { subcategory: bathroomSub2.id });
+  check('שיבוץ מהיר (subcategory בלבד) → 200', quick.status === 200 && quick.body.subcategory === bathroomSub2.id,
+    `${quick.status} ${quick.body.subcategory ?? quick.body.error}`);
+  const quickBad = await call('PUT', `/products/${empty.body.id}`, { subcategory: paintingSub.id });
+  check('שיבוץ מהיר לא שייך → 400', quickBad.status === 400, quickBad.status);
+  const unchanged = await call('GET', `/products/${empty.body.id}`);
+  check('והערך הקודם נשאר', unchanged.body.subcategory === bathroomSub2.id, unchanged.body.subcategory);
+
+  const cleared = await call('PUT', `/products/${empty.body.id}`, { subcategory: null });
+  check('ניקוי תת-הקטגוריה מותר', cleared.status === 200 && cleared.body.subcategory === null, cleared.body.subcategory);
+
+  // מעבר קטגוריה בלי תת-קטגוריה בבקשה מנקה את מה שכבר לא שייך
+  const moved = await call('PUT', `/products/${ok.body.id}`, { category: 'painting' });
+  check('מעבר קטגוריה מנקה תת-קטגוריה שלא שייכת', moved.status === 200 && moved.body.subcategory === null,
+    `${moved.status} ${moved.body.subcategory}`);
+  const movedWith = await call('PUT', `/products/${ok.body.id}`, { category: 'painting', subcategory: paintingSub.id });
+  check('מעבר קטגוריה יחד עם תת-קטגוריה שלה → נשמר', movedWith.body.subcategory === paintingSub.id,
+    movedWith.body.subcategory);
+}
+
+/**
  * בודק את מחיקת המוצר, בשני המקרים.
  *
  * בלי הזמנות: המוצר נמחק, הביקורות שלו נמחקות, וקובץ תמונה שאף מוצר
@@ -742,6 +800,7 @@ async function main() {
   await testColors();
   await testVariantRules();
   await testDecimalPrices();
+  await testSubcategory();
   await testHidden();
   await testUploads();
   await testDelete();

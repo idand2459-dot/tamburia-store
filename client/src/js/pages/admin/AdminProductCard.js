@@ -37,6 +37,7 @@ import { Check, X, Pencil, Eye, EyeOff } from 'lucide-react';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
 import { hasPrice, parsePriceInput, toAgorot, formatAmount, formatPrice } from '../../utils/pricing';
 import { CATEGORIES } from './adminConstants';
+import { subcategoriesOf, subcategoryName, lacksSubcategory } from '../../utils/subcategories';
 
 /* כמה זמן נשאר סימון ה"נשמר" על השורה. מספיק כדי להיראות, קצר מכדי
    להיראות כמו מצב תקוע — אותו פרק זמן של הווי בכרטיס המוצר בחנות. */
@@ -44,9 +45,11 @@ const SAVED_MS = 1400;
 
 /** מציג מוצר אחד בלשונית המוצרים. */
 function AdminProductCard({
-  product, onEdit, onDelete, onToggleStock, onToggleActive, onUpdatePrice,
+  product, onEdit, onDelete, onToggleStock, onToggleActive, onUpdatePrice, onUpdateSubcategory,
 }) {
   const [editingPrice, setEditingPrice] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const [assignFailed, setAssignFailed] = useState(false);
   const [draft, setDraft] = useState('');
   const [draftInvalid, setDraftInvalid] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -75,6 +78,28 @@ function AdminProductCard({
     setEditingPrice(true);
   }
 
+  /** מסמן את השורה כ"נשמר" לרגע — אחרי מחיר ואחרי שיבוץ תת-קטגוריה. */
+  function flashSaved() {
+    setSaved(true);
+    clearTimeout(savedTimer.current);
+    savedTimer.current = setTimeout(() => setSaved(false), SAVED_MS);
+  }
+
+  /**
+   * שיבוץ מהיר של תת-קטגוריה מהרשימה. נשלחת רק subcategory, באותו מסלול
+   * של העדכון החלקי כמו המחיר. בהצלחה הבורר נעלם (למוצר יש עכשיו
+   * תת-קטגוריה) והשם שלה מופיע ליד הקטגוריה; בכישלון הבורר נשאר.
+   */
+  async function assignSubcategory(id) {
+    if (!id) return;
+    setAssigning(true);
+    setAssignFailed(false);
+    const ok = await onUpdateSubcategory(product, id);
+    setAssigning(false);
+    if (ok) flashSaved();
+    else setAssignFailed(true);
+  }
+
   /** שומר את המחיר. על כישלון התיבה נשארת פתוחה עם מה שהוקלד. */
   async function savePrice() {
     // "12,90" מתקבל כמו "12.90". ערך שאינו מחיר אינו נשלח — התיבה
@@ -92,9 +117,7 @@ function AdminProductCard({
     if (!ok) return;
 
     setEditingPrice(false);
-    setSaved(true);
-    clearTimeout(savedTimer.current);
-    savedTimer.current = setTimeout(() => setSaved(false), SAVED_MS);
+    flashSaved();
   }
 
   /**
@@ -140,9 +163,32 @@ function AdminProductCard({
         <h3 className="admin-product-name">{product.name}</h3>
 
         <p className="admin-product-meta">
-          {categoryLabel}
+          <span>
+            {categoryLabel}
+            {subcategoryName(product.category, product.subcategory)
+              && ` · ${subcategoryName(product.category, product.subcategory)}`}
+          </span>
           {product.sku && <span className="admin-product-sku">מק"ט {product.sku}</span>}
         </p>
+
+        {onUpdateSubcategory && lacksSubcategory(product) && (
+          <div className="admin-sub-assign">
+            <select
+              value=""
+              onChange={e => assignSubcategory(e.target.value)}
+              disabled={assigning}
+              aria-label={`תת-קטגוריה עבור ${product.name}`}>
+              <option value="">
+                {assigning ? 'שומר…'
+                  : product.subcategory ? `שבץ תת-קטגוריה (כעת: ${product.subcategory})` : 'שבץ תת-קטגוריה…'}
+              </option>
+              {subcategoriesOf(product.category).map(sub => (
+                <option key={sub.id} value={sub.id}>{sub.name}</option>
+              ))}
+            </select>
+            {assignFailed && <span className="admin-sub-assign-error" role="alert">השיבוץ לא נשמר</span>}
+          </div>
+        )}
 
         {/* שתי התגיות יכולות להופיע יחד: מוצר יכול להיות גם מוסתר
             וגם בלי מחיר, ולמי שמחזיר אותו לחנות חשוב לדעת את שתיהן */}
