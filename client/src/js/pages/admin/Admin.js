@@ -58,7 +58,7 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
   const clearScrollTo = useCallback(() => setScrollToId(null), []);
 
   const {
-    products, productsLoaded, createProduct, updateProduct, deleteProduct, toggleStock, toggleActive, updatePrice,
+    products, productsLoaded, createProduct, updateProduct, deleteProduct, toggleStock, toggleActive, updatePrice, updateSubcategory,
     uploadingImages, productsError,
     csvPreview, csvErrors, importing, importResult,
     downloadTemplate, handleCsvFile, handleImport, resetCsv, clearImportResult,
@@ -169,6 +169,7 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
           onToggleStock={toggleStock}
           onToggleActive={toggleActive}
           onUpdatePrice={updatePrice}
+          onUpdateSubcategory={updateSubcategory}
           productsError={productsError}
           scrollToId={scrollToId}
           onScrolled={clearScrollTo}

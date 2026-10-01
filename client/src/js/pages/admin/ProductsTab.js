@@ -30,15 +30,17 @@
  */
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, X, Store, AlertTriangle, CircleDollarSign, EyeOff } from 'lucide-react';
+import { Search, X, Store, AlertTriangle, CircleDollarSign, EyeOff, ListTree } from 'lucide-react';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
 import { hasPrice } from '../../utils/pricing';
+import { lacksSubcategory } from '../../utils/subcategories';
 import { CATEGORIES } from './adminConstants';
 import AdminProductCard from './AdminProductCard';
 
 /* מזהי השבבים שאינם קטגוריה. עם מקף, כדי שלא יתנגשו במזהה קטגוריה. */
 const NO_PRICE_FILTER = 'no-price';
 const HIDDEN_FILTER = 'hidden';
+const NO_SUB_FILTER = 'no-sub';
 
 /** האם המוצר גלוי בחנות. ברירת המחדל היא כן, כמו במסד. */
 const isVisible = (product) => product.active !== false;
@@ -46,7 +48,7 @@ const isVisible = (product) => product.active !== false;
 /** מציג את לשונית המוצרים. */
 function ProductsTab({
   products, productsLoaded = true, onEdit, onDelete, onToggleStock, onToggleActive, onUpdatePrice,
-  productsError, scrollToId, onScrolled,
+  onUpdateSubcategory, productsError, scrollToId, onScrolled,
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedFilter = searchParams.get('category') || 'all';
@@ -72,6 +74,7 @@ function ProductsTab({
   const filterIsValid = requestedFilter === 'all'
     || requestedFilter === HIDDEN_FILTER
     || requestedFilter === NO_PRICE_FILTER
+    || requestedFilter === NO_SUB_FILTER
     || (productsLoaded
       ? usedCategories.some(cat => cat.id === requestedFilter)
       : CATEGORIES.some(cat => cat.id === requestedFilter));
@@ -123,7 +126,9 @@ function ProductsTab({
       ? !isVisible(p)
       : isVisible(p) && (
         filter === 'all'
-        || (filter === NO_PRICE_FILTER ? !hasPrice(p) : p.category === filter)
+        || (filter === NO_PRICE_FILTER && !hasPrice(p))
+        || (filter === NO_SUB_FILTER && lacksSubcategory(p))
+        || p.category === filter
       );
 
     // חיפוש מפורש עוקף את הסינון ומגיע גם למוסתרים: מי שמקליד מק"ט
@@ -147,6 +152,12 @@ function ProductsTab({
      ונשאר כשהוא הסינון הפעיל — אחרת החזרת המוצר האחרון לחנות הייתה
      משאירה רשימה ריקה בלי שבב לחזור דרכו. */
   const showHidden = hiddenCount > 0 || filter === HIDDEN_FILTER;
+
+  /* ושוב אותו כלל, לשבב "ללא תת-קטגוריה": מוצרים גלויים שבחנות יופיעו
+     רק תחת "הכל" — בלי תת-קטגוריה, או עם ערך שאינו שייך לקטגוריה שלהם
+     (שם חופשי מייבוא ישן). זו רשימת העבודה לשיבוץ המהיר בכרטיס. */
+  const noSubCount = visibleProducts.filter(lacksSubcategory).length;
+  const showNoSub = noSubCount > 0 || filter === NO_SUB_FILTER;
 
   /* בזמן חיפוש אף שבב אינו מסומן: החיפוש עובר על הקטלוג כולו, ושבב
      מסומן היה אומר שהרשימה מסוננת לפיו — וזו בדיוק הייתה ההטעיה. */
@@ -206,6 +217,17 @@ function ProductsTab({
           </button>
         )}
 
+        {showNoSub && (
+          <button
+            type="button"
+            className={`admin-cat admin-cat--alert ${isActive(NO_SUB_FILTER) ? 'is-active' : ''}`}
+            aria-pressed={isActive(NO_SUB_FILTER)}
+            onClick={() => setFilter(NO_SUB_FILTER)}>
+            <ListTree size={18} aria-hidden="true" /> ללא תת-קטגוריה
+            <span className="admin-cat-count">{noSubCount}</span>
+          </button>
+        )}
+
         {usedCategories.map(cat => {
           const Icon = CATEGORY_ICONS[cat.id];
           return (
@@ -233,6 +255,7 @@ function ProductsTab({
           {query ? `לא נמצא מוצר בשם "${searchQuery.trim()}"`
             : filter === NO_PRICE_FILTER ? 'לכל המוצרים יש מחיר'
             : filter === HIDDEN_FILTER ? 'כל המוצרים מוצגים בחנות'
+            : filter === NO_SUB_FILTER ? 'לכל המוצרים יש תת-קטגוריה'
             : 'אין מוצרים בקטגוריה הזו'}
         </div>
       ) : (
@@ -246,6 +269,7 @@ function ProductsTab({
               onToggleStock={onToggleStock}
               onToggleActive={onToggleActive}
               onUpdatePrice={onUpdatePrice}
+              onUpdateSubcategory={onUpdateSubcategory}
             />
           ))}
         </div>

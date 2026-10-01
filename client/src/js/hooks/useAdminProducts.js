@@ -17,7 +17,7 @@ const CSV_IDS = CATEGORIES.map(c => c.id);
 
 /** בונה את גוף הבקשה של מוצר מתוך שדות הטופס וכתובות התמונות. */
 function productBody(fields, imageUrls) {
-  const { name, price, inStock, colors, category, sku, description, variants, imageIllustrative } = fields;
+  const { name, price, inStock, colors, category, subcategory, sku, description, variants, imageIllustrative } = fields;
   const validVariants = variants.filter(v => v.label.trim() && v.price !== '');
   return {
     /* parsePriceInput ולא parseInt: parseInt("12.90") הוא 12, וזה היה
@@ -29,7 +29,7 @@ function productBody(fields, imageUrls) {
     colors: colors
       .map(c => ({ name: c.name.trim(), hex: c.hex || '' }))
       .filter(c => c.name),
-    category, sku, description,
+    category, subcategory: subcategory || null, sku, description,
     image_illustrative: Boolean(imageIllustrative),
     variants: validVariants.map(v => ({ label: v.label.trim(), price: parsePriceInput(v.price) }))
   };
@@ -285,6 +285,14 @@ export function useAdminProducts(api) {
     patchProduct(product.id, { price }, 'עדכון המחיר נכשל.')
   ), [patchProduct]);
 
+  /**
+   * משבץ תת-קטגוריה ממסך הרשימה — אותו עדכון חלקי כמו המחיר המהיר:
+   * נשלח רק subcategory, והשרת בודק אותו מול הקטגוריה הקיימת של המוצר.
+   */
+  const updateSubcategory = useCallback((product, subcategory) => (
+    patchProduct(product.id, { subcategory: subcategory || null }, 'שיבוץ תת-הקטגוריה נכשל.')
+  ), [patchProduct]);
+
   /** מנקה את תצוגת ה-CSV, לפתיחה נקייה של לשונית הייבוא. */
   const resetCsv = useCallback(() => {
     setCsvPreview(null); setCsvErrors([]); setImportResult(null);
@@ -317,7 +325,8 @@ export function useAdminProducts(api) {
 
   return {
     products, productsLoaded, fetchProducts, productsError,
-    createProduct, updateProduct, deleteProduct, toggleStock, toggleActive, updatePrice, uploadingImages,
+    createProduct, updateProduct, deleteProduct, toggleStock, toggleActive, updatePrice, updateSubcategory,
+    uploadingImages,
     csvPreview, csvErrors, importing, importResult,
     downloadTemplate, handleCsvFile, handleImport, resetCsv, clearImportResult,
   };

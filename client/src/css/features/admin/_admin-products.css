@@ -97,6 +97,50 @@
   color: var(--color-text-subtle);
 }
 
+/* Quick subcategory assignment, on a product the shop's sidebar cannot filter
+   to. A native select: on a phone it opens the system picker, which is the
+   fastest way through 33 adhesives one after another. Amber edge, the same
+   "needs attention, does not block" voice as the warning in the form. */
+.admin-sub-assign {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.admin-sub-assign select {
+  max-width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1.5px solid rgba(214, 140, 0, 0.55);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-small);
+  cursor: pointer;
+}
+
+.admin-sub-assign select:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: 1px;
+}
+
+.admin-sub-assign select:disabled { opacity: 0.6; cursor: default; }
+
+.admin-sub-assign-error {
+  color: var(--color-red);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  .admin-sub-assign select {
+    background: var(--color-surface-dark);
+    color: var(--color-text-dark);
+  }
+}
+
 /* The badge on a product with no price. Loud on purpose: in a list of hundreds
    this is the thing to find, and the only other way to find it is to read every
    price. Red and filled, the same red as the chip that filters for it in
