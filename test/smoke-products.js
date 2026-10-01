@@ -498,10 +498,34 @@ function jpeg(width, height, orientation) {
   return img.jpeg().toBuffer();
 }
 
+/** צבע הפיקסל (x, y) בקובץ שהשרת שמר, כ-[r, g, b]. */
+async function savedPixel(url, x, y) {
+  const { data, info } = await sharp(fs.readFileSync(path.join(UPLOADS_DIR, path.basename(url))))
+    .raw().toBuffer({ resolveWithObject: true });
+  const at = (y * info.width + x) * info.channels;
+  return [data[at], data[at + 1], data[at + 2]];
+}
+
+/** האם שני צבעים קרובים. WebP מאבד מעט, ולכן לא השוואה מדויקת. */
+const near = (a, b, tolerance = 24) => a.every((v, i) => Math.abs(v - b[i]) <= tolerance);
+
+/** תמונה בגודל נתון מפסים אופקיים בצבעים נתונים, מלמעלה למטה. */
+function bands(width, height, colours) {
+  const band = Math.floor(height / colours.length);
+  return sharp({ create: { width, height, channels: 3, background: colours[colours.length - 1] } })
+    .composite(colours.slice(0, -1).map((background, i) => ({
+      input: { create: { width, height: band, channels: 3, background } }, top: i * band, left: 0,
+    })));
+}
+
 /**
- * בודק את עיבוד התמונות בהעלאה. הסיבוב נבדק דרך המידות: תמונה
- * שנשמרה 400×200 עם תגית סיבוב 6 היא בפועל 200×400, וכך היא
- * צריכה לצאת — בלי התגית, שהעיבוד מסיר יחד עם שאר ה-EXIF.
+ * בודק את עיבוד התמונות בהעלאה: הקטנה לצלע של 1200, השלמה לריבוע בלי
+ * חיתוך, וסיבוב לפי EXIF.
+ *
+ * כל תמונה יוצאת ריבועית, ולכן המידות לבדן כבר לא מראות שהסיבוב קרה.
+ * הסיבוב נבדק לפי התוכן: תמונה שנשמרה שוכבת, חציה השמאלי אדום וחציה
+ * הימני כחול, עם תגית סיבוב 6 (90° עם השעון) — אחרי העיבוד האדום
+ * למעלה והכחול למטה.
  */
 async function testUploads() {
   console.log('\n── העלאת תמונות');
@@ -513,20 +537,57 @@ async function testUploads() {
     /^\/uploads\/[0-9a-f]{16}\.webp$/.test(bigUrl), bigUrl);
   const bigMeta = await savedMeta(bigUrl);
   check('נשמר כ-WebP', bigMeta.format === 'webp', bigMeta.format);
-  check('הוקטן לצלע ארוכה של 1200', bigMeta.width === 1200 && bigMeta.height === 800,
+  check('הוקטן והושלם לריבוע של 1200', bigMeta.width === 1200 && bigMeta.height === 1200,
     [bigMeta.width, bigMeta.height]);
 
   const small = await uploadFiles([['small.png', await sharp({
     create: { width: 300, height: 200, channels: 3, background: '#c89f6d' },
   }).png().toBuffer(), 'image/png']]);
   const smallMeta = await savedMeta(small.body.imageUrls[0]);
-  check('תמונה קטנה לא מוגדלת', smallMeta.width === 300 && smallMeta.height === 200,
+  check('תמונה קטנה לא מוגדלת — רק הושלמה לריבוע של 300', smallMeta.width === 300 && smallMeta.height === 300,
     [smallMeta.width, smallMeta.height]);
 
-  const rotated = await uploadFiles([['rotated.jpg', await jpeg(400, 200, 6), 'image/jpeg']]);
-  const rotatedMeta = await savedMeta(rotated.body.imageUrls[0]);
-  check('סובב לפי EXIF', rotatedMeta.width === 200 && rotatedMeta.height === 400,
-    [rotatedMeta.width, rotatedMeta.height]);
+  const square = await uploadFiles([['square.png', await sharp({
+    create: { width: 640, height: 640, channels: 3, background: '#4a7a3c' },
+  }).png().toBuffer(), 'image/png']]);
+  const squareMeta = await savedMeta(square.body.imageUrls[0]);
+  check('תמונה ריבועית נשארת במידותיה', squareMeta.width === 640 && squareMeta.height === 640,
+    [squareMeta.width, squareMeta.height]);
+
+  // מוצר ארוך בצילום עומד (מגב, מטאטא): ראש אדום, ידית כחולה, קצה ירוק,
+  // על רקע אפור-לבן. שום פס לא נחתך, והתוספת בצדדים בצבע הרקע של אותה שורה.
+  const tall = await bands(300, 600, ['#d22b2b', '#2b4bd2', '#2bd24b']).png().toBuffer();
+  const mop = (await uploadFiles([['mop.png', tall, 'image/png']])).body.imageUrls[0];
+  const mopMeta = await savedMeta(mop);
+  check('תמונה עומדת → ריבוע 600×600', mopMeta.width === 600 && mopMeta.height === 600,
+    [mopMeta.width, mopMeta.height]);
+  check('הראש לא נחתך (אדום בשורה הראשונה)', near(await savedPixel(mop, 300, 4), [210, 43, 43]),
+    await savedPixel(mop, 300, 4));
+  check('הקצה לא נחתך (ירוק בשורה האחרונה)', near(await savedPixel(mop, 300, 595), [43, 210, 75]),
+    await savedPixel(mop, 300, 595));
+  check('התוספת בצד ממשיכה את השורה שלה (אדום ליד הראש)',
+    near(await savedPixel(mop, 10, 60), [210, 43, 43]), await savedPixel(mop, 10, 60));
+  check('ובאמצע — כחול ליד הידית',
+    near(await savedPixel(mop, 590, 300), [43, 75, 210]), await savedPixel(mop, 590, 300));
+
+  // תמונה שוכבת: התוספת למעלה ולמטה
+  const wide = await sharp({ create: { width: 600, height: 300, channels: 3, background: '#c89f6d' } }).png().toBuffer();
+  const wideUrl = (await uploadFiles([['wide.png', wide, 'image/png']])).body.imageUrls[0];
+  const wideMeta = await savedMeta(wideUrl);
+  check('תמונה שוכבת → ריבוע 600×600', wideMeta.width === 600 && wideMeta.height === 600,
+    [wideMeta.width, wideMeta.height]);
+  check('התוספת למעלה בצבע הרקע', near(await savedPixel(wideUrl, 300, 20), [200, 159, 109]),
+    await savedPixel(wideUrl, 300, 20));
+
+  // בשני שלבים: ב-sharp ה-composite רץ אחרי ה-rotate של אותו pipeline
+  const upright = await bands(200, 400, ['#d22b2b', '#2b4bd2']).png().toBuffer();
+  const stored = await sharp(upright).rotate(-90).withMetadata({ orientation: 6 }).jpeg().toBuffer();
+  const rotatedUrl = (await uploadFiles([['rotated.jpg', stored, 'image/jpeg']])).body.imageUrls[0];
+  const rotatedMeta = await savedMeta(rotatedUrl);
+  check('סובב לפי EXIF — אדום למעלה', near(await savedPixel(rotatedUrl, 200, 40), [210, 43, 43], 40),
+    await savedPixel(rotatedUrl, 200, 40));
+  check('וכחול למטה', near(await savedPixel(rotatedUrl, 200, 360), [43, 75, 210], 40),
+    await savedPixel(rotatedUrl, 200, 360));
   check('תגית הסיבוב הוסרה', !rotatedMeta.orientation || rotatedMeta.orientation === 1,
     rotatedMeta.orientation);
 

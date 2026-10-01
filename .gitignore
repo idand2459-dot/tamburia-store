@@ -40,3 +40,6 @@ design-assets/import-backup-*.json
 
 # גיבוי המחירים מלפני החזרת המחירים העשרוניים מה-CSV — מקומי, לא נכנס לגיט
 design-assets/price-backup-*.json
+
+# גיבויי ההשלמה לריבוע של תמונות שכבר הועלו — מקומיים, לא נכנסים לגיט
+design-assets/square-backup-*/
