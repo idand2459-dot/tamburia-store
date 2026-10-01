@@ -10,13 +10,22 @@
  * ועל ההסתרה, שהיא הכלל היחיד כאן שהתשובה עליו תלויה במי שואל: אותה
  * כתובת בדיוק מחזירה 404 ללקוח ו-200 לאדמין המחובר. לכן יש כאן שתי
  * דרכי פנייה — call עם העוגייה, ו-publicCall בלעדיה.
+ *
+ * ועל העלאת התמונות, שעוברות עיבוד בשרת: סיבוב לפי EXIF, הקטנה
+ * ל-1200px ו-WebP בשם שנגזר מהתוכן. התמונות נוצרות כאן ב-sharp,
+ * והקבצים שהשרת שמר נמחקים בסוף.
  */
+const fs = require('fs');
+const path = require('path');
+const sharp = require('sharp');
 const { login } = require('./helpers');
 const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
 
 let passed = 0;
 let failed = 0;
 const created = [];
+const uploadedFiles = new Set();
+const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
 
 /** רושם תוצאה של בדיקה בודדת. */
 function check(name, condition, actual) {
@@ -385,6 +394,112 @@ async function testHidden() {
   check('והוא שוב ברשימה', backInList.body.products.some((p) => p.id === id), backInList.body.pagination);
 }
 
+/** מעלה קבצים ל-upload-multiple; כל קובץ הוא [שם, Buffer, סוג]. */
+async function uploadFiles(files, { auth = true } = {}) {
+  const form = new FormData();
+  for (const [name, buffer, type] of files) {
+    form.append('images', new Blob([buffer], { type }), name);
+  }
+  const res = await fetch(`${BASE}/upload-multiple`, {
+    method: 'POST',
+    headers: auth ? { Cookie: authCookie } : {},
+    body: form,
+  });
+  const body = await res.json();
+  for (const url of body.imageUrls || []) uploadedFiles.add(path.basename(url));
+  return { status: res.status, body };
+}
+
+/**
+ * קורא את מידות ופורמט הקובץ שהשרת שמר בפועל. דרך Buffer ולא נתיב,
+ * כי ב-Windows המטמון של sharp מחזיק את הקובץ פתוח והניקוי נכשל.
+ */
+function savedMeta(url) {
+  return sharp(fs.readFileSync(path.join(UPLOADS_DIR, path.basename(url)))).metadata();
+}
+
+/** תמונת JPEG בגודל נתון, ברעש כדי שלא תהיה זהה בין ריצות. */
+function jpeg(width, height, orientation) {
+  const img = sharp(Buffer.from(Array.from({ length: 12 }, () => Math.floor(Math.random() * 256))), {
+    raw: { width: 2, height: 2, channels: 3 },
+  }).resize(width, height, { kernel: 'nearest' });
+  if (orientation) img.withMetadata({ orientation });
+  return img.jpeg().toBuffer();
+}
+
+/**
+ * בודק את עיבוד התמונות בהעלאה. הסיבוב נבדק דרך המידות: תמונה
+ * שנשמרה 400×200 עם תגית סיבוב 6 היא בפועל 200×400, וכך היא
+ * צריכה לצאת — בלי התגית, שהעיבוד מסיר יחד עם שאר ה-EXIF.
+ */
+async function testUploads() {
+  console.log('\n── העלאת תמונות');
+
+  const big = await uploadFiles([['big.jpg', await jpeg(3000, 2000), 'image/jpeg']]);
+  check('העלאה → 200', big.status === 200, big.status);
+  const bigUrl = big.body.imageUrls?.[0] || '';
+  check('שם הקובץ הוא hash עם סיומת webp',
+    /^\/uploads\/[0-9a-f]{16}\.webp$/.test(bigUrl), bigUrl);
+  const bigMeta = await savedMeta(bigUrl);
+  check('נשמר כ-WebP', bigMeta.format === 'webp', bigMeta.format);
+  check('הוקטן לצלע ארוכה של 1200', bigMeta.width === 1200 && bigMeta.height === 800,
+    [bigMeta.width, bigMeta.height]);
+
+  const small = await uploadFiles([['small.png', await sharp({
+    create: { width: 300, height: 200, channels: 3, background: '#c89f6d' },
+  }).png().toBuffer(), 'image/png']]);
+  const smallMeta = await savedMeta(small.body.imageUrls[0]);
+  check('תמונה קטנה לא מוגדלת', smallMeta.width === 300 && smallMeta.height === 200,
+    [smallMeta.width, smallMeta.height]);
+
+  const rotated = await uploadFiles([['rotated.jpg', await jpeg(400, 200, 6), 'image/jpeg']]);
+  const rotatedMeta = await savedMeta(rotated.body.imageUrls[0]);
+  check('סובב לפי EXIF', rotatedMeta.width === 200 && rotatedMeta.height === 400,
+    [rotatedMeta.width, rotatedMeta.height]);
+  check('תגית הסיבוב הוסרה', !rotatedMeta.orientation || rotatedMeta.orientation === 1,
+    rotatedMeta.orientation);
+
+  // אותו תוכן פעמיים → אותו שם, וקובץ אחד בדיסק
+  const same = await jpeg(500, 500);
+  const twice = await uploadFiles([['a.jpg', same, 'image/jpeg'], ['b.jpg', same, 'image/jpeg']]);
+  check('תוכן זהה → אותו שם', twice.body.imageUrls?.length === 2
+    && twice.body.imageUrls[0] === twice.body.imageUrls[1], twice.body.imageUrls);
+
+  // JPEG תקין עם ריפוד בסופו — המפענח מתעלם ממה שאחרי סוף התמונה,
+  // וכך אפשר לבדוק את מגבלת הגודל בלי לייצר צילום אמיתי של 11MB.
+  const base = await jpeg(800, 600);
+  const eleven = Buffer.concat([base, Buffer.alloc(11 * 1024 * 1024 - base.length)]);
+  const elevenRes = await uploadFiles([['iphone.jpg', eleven, 'image/jpeg']]);
+  check('קובץ של 11MB מתקבל', elevenRes.status === 200, `${elevenRes.status} ${elevenRes.body.error || ''}`);
+
+  const huge = Buffer.concat([base, Buffer.alloc(16 * 1024 * 1024 - base.length)]);
+  const hugeRes = await uploadFiles([['huge.jpg', huge, 'image/jpeg']]);
+  check('קובץ של 16MB → 413', hugeRes.status === 413, hugeRes.status);
+
+  // HEIC: גם לפי השם, וגם כשהוא מתחזה ל-JPG ורק התוכן מסגיר אותו
+  const heicHeader = Buffer.concat([
+    Buffer.from([0, 0, 0, 24]), Buffer.from('ftypheic'), Buffer.from([0, 0, 0, 0]),
+    Buffer.from('mif1heic'), Buffer.alloc(64),
+  ]);
+  const heicByName = await uploadFiles([['IMG_0001.HEIC', heicHeader, 'image/heic']]);
+  check('HEIC לפי שם → 415', heicByName.status === 415, heicByName.status);
+  check('הודעה ברורה בעברית', heicByName.body.error?.includes('המירו ל-JPG'), heicByName.body.error);
+
+  const heicDisguised = await uploadFiles([['IMG_0001.jpg', heicHeader, 'image/jpeg']]);
+  check('HEIC בסיומת jpg → 415', heicDisguised.status === 415, heicDisguised.status);
+  check('גם כאן ההודעה על HEIC', heicDisguised.body.error?.includes('HEIC'), heicDisguised.body.error);
+
+  // AVIF יושב באותה מעטפת ftyp, ואסור שייתפס כ-HEIC
+  const avif = await uploadFiles([['photo.avif', await jpeg(300, 300).then((b) => sharp(b).avif().toBuffer()), 'image/avif']]);
+  check('AVIF מתקבל', avif.status === 200, `${avif.status} ${avif.body.error || ''}`);
+
+  const broken = await uploadFiles([['broken.jpg', Buffer.from('not really an image'), 'image/jpeg']]);
+  check('קובץ פגום → 400', broken.status === 400, broken.status);
+
+  const anonymous = await uploadFiles([['x.jpg', base, 'image/jpeg']], { auth: false });
+  check('בלי התחברות → 401', anonymous.status === 401, anonymous.status);
+}
+
 /** מוחק את כל מה שהבדיקה יצרה ומאמת שלא נשארו שאריות. */
 async function cleanup() {
   console.log('\n── ניקוי');
@@ -400,6 +515,8 @@ async function cleanup() {
 
   const twice = await call('DELETE', `/products/${created[0]}`);
   check('מחיקה חוזרת → 404', twice.status === 404, twice.status);
+
+  for (const name of uploadedFiles) fs.rmSync(path.join(UPLOADS_DIR, name), { force: true });
 }
 
 /** מריץ את כל הבדיקות לפי הסדר. */
@@ -411,6 +528,7 @@ async function main() {
   await testColors();
   await testVariantRules();
   await testHidden();
+  await testUploads();
   await cleanup();
 
   console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);
@@ -420,5 +538,6 @@ async function main() {
 main().catch(async (err) => {
   console.error('הבדיקה קרסה:', err);
   for (const id of created) if (id) await call('DELETE', `/products/${id}`).catch(() => {});
+  for (const name of uploadedFiles) fs.rmSync(path.join(UPLOADS_DIR, name), { force: true });
   process.exit(1);
 });
