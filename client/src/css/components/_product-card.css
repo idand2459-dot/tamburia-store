@@ -53,14 +53,14 @@
   overflow: hidden;
 }
 
-/* contain, not cover: these are product photographs on white backgrounds and
-   cropping them cuts the product. The 10% inset is what keeps a square
-   photograph off the well's edges. */
+/* cover, edge to edge: the photographs are square and carry their own
+   background and margin, so an inset only shrank them inside a grey frame. */
 .product-card-image {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding: 10%;
+  object-fit: cover;
+  border-radius: inherit;
   transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.2s, filter 0.2s;
 }
 
