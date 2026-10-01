@@ -1,9 +1,12 @@
 /**
  * לשונית המוצרים: חיפוש, סינון ורשימת המוצרים.
  *
- * החיפוש והסינון הם state מקומי של הלשונית. "ערוך" אינו טוען את
- * הטופס בעצמו אלא רק מסמן את המוצר הנערך ב-Admin ועובר ללשונית
- * הטופס, וזה מה שממלא את השדות.
+ * החיפוש והסינון יושבים בכתובת (?category=…&q=…) ולא ב-state מקומי,
+ * כדי שרענון, "חזור" בדפדפן וחזרה מהטופס לא יאפסו אותם ל"הכל". בחירת
+ * שבב היא כניסה חדשה בהיסטוריה; הקלדה בחיפוש מחליפה את הנוכחית, אחרת
+ * כל אות הייתה עוד לחיצה על "חזור". "ערוך" אינו טוען את הטופס בעצמו
+ * אלא רק מסמן את המוצר הנערך ב-Admin ועובר ללשונית הטופס, וזה מה
+ * שממלא את השדות.
  *
  * שני שבבים בשורה אינם קטגוריה, ושניהם רשימות משימות ולא עוד דרך
  * לעיין בקטלוג: "ללא מחיר" מראה מוצרים שהמחיר שלהם במסד 0 ולכן אי
@@ -20,7 +23,8 @@
  *
  * מוצר אחד הוא AdminProductCard, שמחזיק גם את עריכת המחיר במקום.
  */
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, X, Store, AlertTriangle, CircleDollarSign, EyeOff } from 'lucide-react';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
 import { hasPrice } from '../../utils/pricing';
@@ -37,9 +41,37 @@ const isVisible = (product) => product.active !== false;
 /** מציג את לשונית המוצרים. */
 function ProductsTab({
   products, onEdit, onDelete, onToggleStock, onToggleActive, onUpdatePrice, productsError,
+  scrollToId, onScrolled,
 }) {
-  const [filter, setFilter] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filter = searchParams.get('category') || 'all';
+  const searchQuery = searchParams.get('q') || '';
+
+  /** מעדכן פרמטר אחד בכתובת. ערך ריק מוחק אותו, כדי ש"הכל" יהיה כתובת נקייה. */
+  function setParam(key, value, replace) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value) next.set(key, value);
+      else next.delete(key);
+      return next;
+    }, { replace });
+  }
+
+  const setFilter = (value) => setParam('category', value === 'all' ? '' : value, false);
+  const setSearchQuery = (value) => setParam('q', value, true);
+
+  /* חזרה מהטופס: גוללים למוצר שנערך. פריים אחד אחרי הציור, כשהרשימה כבר
+     בדף. אם הוא כבר אינו בסינון (נגיד, קיבל מחיר ברשימת "ללא מחיר"),
+     פשוט נשארים בראש. */
+  useEffect(() => {
+    if (scrollToId == null) return undefined;
+    const frame = requestAnimationFrame(() => {
+      document.querySelector(`[data-product-id="${scrollToId}"]`)
+        ?.scrollIntoView({ block: 'center' });
+      onScrolled();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [scrollToId, onScrolled]);
 
   const query = searchQuery.trim().toLowerCase();
 

@@ -51,7 +51,7 @@ function AdminRoute() {
   return (
     <Admin
       tab={tab}
-      onTabChange={(next) => navigate(`/admin/${next}`)}
+      onTabChange={(next, search = '') => navigate(`/admin/${next}${search}`)}
       onBack={handleLogout}
       onExpired={() => setAuth('out')}
     />

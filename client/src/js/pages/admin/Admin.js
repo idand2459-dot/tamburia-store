@@ -16,6 +16,7 @@
  * שהמתג שמכבה אותו יושב בכותרת הזו.
  */
 import { useState, useRef, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Volume2, VolumeX } from 'lucide-react';
 import Confetti from '../../components/Confetti';
 import { useAdminProducts } from '../../hooks/useAdminProducts';
@@ -44,6 +45,17 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
 
   const activeTab = tab;
   const setActiveTab = onTabChange;
+
+  /* הסינון של רשימת המוצרים יושב בכתובת שלה (?category=…&q=…), והטופס
+     נמצא בכתובת אחרת. כדי שחזרה לרשימה — משמירה, מביטול או מהלשונית —
+     תחזיר את אותו סינון, זוכרים כאן את ה-query האחרון שהרשימה הוצגה בו. */
+  const location = useLocation();
+  const listSearchRef = useRef('');
+  if (activeTab === 'products') listSearchRef.current = location.search;
+
+  /* המוצר שהטופס נסגר עליו, כדי שהרשימה תגלול אליו ולא תיפתח בראשה. */
+  const [scrollToId, setScrollToId] = useState(null);
+  const clearScrollTo = useCallback(() => setScrollToId(null), []);
 
   const {
     products, createProduct, updateProduct, deleteProduct, toggleStock, toggleActive, updatePrice,
@@ -79,10 +91,11 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
     setActiveTab('add');
   }
 
-  /** חוזר לרשימת המוצרים ומסיים את מצב העריכה. */
+  /** חוזר לרשימת המוצרים, באותו סינון ועל המוצר שנערך, ומסיים את מצב העריכה. */
   function finishForm() {
+    setScrollToId(editingId);
     setEditingId(null);
-    setActiveTab('products');
+    setActiveTab('products', listSearchRef.current);
   }
 
   /**
@@ -93,7 +106,7 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
   function handleTabChange(next) {
     if (next === 'products') setEditingId(null);
     if (next === 'import') resetCsv();
-    setActiveTab(next);
+    setActiveTab(next, next === 'products' ? listSearchRef.current : '');
   }
 
   return (
@@ -156,6 +169,8 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
           onToggleActive={toggleActive}
           onUpdatePrice={updatePrice}
           productsError={productsError}
+          scrollToId={scrollToId}
+          onScrolled={clearScrollTo}
         />
       )}
 
