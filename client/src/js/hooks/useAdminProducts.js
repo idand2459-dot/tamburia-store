@@ -69,6 +69,10 @@ export function downloadTemplate() {
 /** מנהל את רשימת המוצרים, עדכוניה וייבוא ה-CSV. */
 export function useAdminProducts(api) {
   const [products, setProducts] = useState([]);
+  /* האם הרשימה כבר הגיעה מהשרת. עד אז products הוא [] — וזה לא אותו
+     דבר כמו "אין מוצרים": בלי הדגל, כל קטגוריה בכתובת הייתה נראית
+     ריקה ברגע הראשון, ולשונית המוצרים הייתה מאפסת אותה ל"הכל". */
+  const [productsLoaded, setProductsLoaded] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [productsError, setProductsError] = useState('');
 
@@ -85,7 +89,14 @@ export function useAdminProducts(api) {
    * הרשימה כאן היא היחידה שצריכה גם את המוסתרים.
    */
   const fetchProducts = useCallback(() => {
-    api('/api/products?active=all').then(r => r.json()).then(data => setProducts(Array.isArray(data) ? data : [])).catch(() => {});
+    api('/api/products?active=all')
+      .then(r => r.json())
+      .then(data => {
+        if (!Array.isArray(data)) return;
+        setProducts(data);
+        setProductsLoaded(true);
+      })
+      .catch(() => {});
   }, [api]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
@@ -305,7 +316,7 @@ export function useAdminProducts(api) {
   const clearImportResult = useCallback(() => setImportResult(null), []);
 
   return {
-    products, fetchProducts, productsError,
+    products, productsLoaded, fetchProducts, productsError,
     createProduct, updateProduct, deleteProduct, toggleStock, toggleActive, updatePrice, uploadingImages,
     csvPreview, csvErrors, importing, importResult,
     downloadTemplate, handleCsvFile, handleImport, resetCsv, clearImportResult,

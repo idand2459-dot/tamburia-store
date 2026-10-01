@@ -4,9 +4,14 @@
  * החיפוש והסינון יושבים בכתובת (?category=…&q=…) ולא ב-state מקומי,
  * כדי שרענון, "חזור" בדפדפן וחזרה מהטופס לא יאפסו אותם ל"הכל". בחירת
  * שבב היא כניסה חדשה בהיסטוריה; הקלדה בחיפוש מחליפה את הנוכחית, אחרת
- * כל אות הייתה עוד לחיצה על "חזור". "ערוך" אינו טוען את הטופס בעצמו
- * אלא רק מסמן את המוצר הנערך ב-Admin ועובר ללשונית הטופס, וזה מה
- * שממלא את השדות.
+ * כל אות הייתה עוד לחיצה על "חזור".
+ *
+ * כתובת שנשמרת היא גם כתובת שיכולה להתיישן. לכן לחיצה על שבב מנקה את
+ * החיפוש (חיפוש שנשכח בכתובת עקף כל שבב, והרשימה נראתה תקועה), וערך
+ * בכתובת שאין לו שבב — לא מוכר, או קטגוריה שהתרוקנה — חוזר בשקט ל"הכל".
+ *
+ * "ערוך" אינו טוען את הטופס בעצמו אלא רק מסמן את המוצר הנערך ב-Admin
+ * ועובר ללשונית הטופס, וזה מה שממלא את השדות.
  *
  * שני שבבים בשורה אינם קטגוריה, ושניהם רשימות משימות ולא עוד דרך
  * לעיין בקטלוג: "ללא מחיר" מראה מוצרים שהמחיר שלהם במסד 0 ולכן אי
@@ -40,25 +45,63 @@ const isVisible = (product) => product.active !== false;
 
 /** מציג את לשונית המוצרים. */
 function ProductsTab({
-  products, onEdit, onDelete, onToggleStock, onToggleActive, onUpdatePrice, productsError,
-  scrollToId, onScrolled,
+  products, productsLoaded = true, onEdit, onDelete, onToggleStock, onToggleActive, onUpdatePrice,
+  productsError, scrollToId, onScrolled,
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const filter = searchParams.get('category') || 'all';
+  const requestedFilter = searchParams.get('category') || 'all';
   const searchQuery = searchParams.get('q') || '';
 
-  /** מעדכן פרמטר אחד בכתובת. ערך ריק מוחק אותו, כדי ש"הכל" יהיה כתובת נקייה. */
-  function setParam(key, value, replace) {
+  const visibleProducts = products.filter(isVisible);
+
+  /* רק הקטגוריות שיש בהן מוצרים. שבב עם 0 הוא שבב שאין בו מה ללחוץ,
+     ובטלפון הוא מאריך את הרצועה שצריך לגלול. הספירה היא של הגלויים
+     בלבד, כמו הרשימה שהשבב פותח. */
+  const usedCategories = CATEGORIES
+    .map(cat => ({ ...cat, count: visibleProducts.filter(p => p.category === cat.id).length }))
+    .filter(cat => cat.count > 0);
+
+  /* הסינון שבכתובת תקף רק אם יש לו שבב. ערך שאינו מוכר (קישור ישן,
+     הקלדה ידנית) — או קטגוריה שהתרוקנה, ששבב שלה כבר לא מוצג — הוא
+     "הכל": אחרת המסך מראה רשימה ריקה בלי שום שבב מסומן, ואין ממה להבין
+     למה. "ללא מחיר" ו"מוסתרים" תקפים גם כשהם ריקים — לשבב שלהם יש הודעה
+     משלו ("לכל המוצרים יש מחיר"), והוא נשאר מוצג כשהוא פעיל.
+
+     עד שהרשימה הגיעה מהשרת כל קטגוריה נראית ריקה, ולכן קטגוריה מוכרת
+     נבדקת רק אחרי הטעינה. */
+  const filterIsValid = requestedFilter === 'all'
+    || requestedFilter === HIDDEN_FILTER
+    || requestedFilter === NO_PRICE_FILTER
+    || (productsLoaded
+      ? usedCategories.some(cat => cat.id === requestedFilter)
+      : CATEGORIES.some(cat => cat.id === requestedFilter));
+  const filter = filterIsValid ? requestedFilter : 'all';
+
+  /** מעדכן את הכתובת. ערך ריק מוחק פרמטר, כדי ש"הכל" יהיה כתובת נקייה. */
+  function setParams(changes, replace) {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      if (value) next.set(key, value);
-      else next.delete(key);
+      for (const [key, value] of Object.entries(changes)) {
+        if (value) next.set(key, value);
+        else next.delete(key);
+      }
       return next;
     }, { replace });
   }
 
-  const setFilter = (value) => setParam('category', value === 'all' ? '' : value, false);
-  const setSearchQuery = (value) => setParam('q', value, true);
+  /* ערך לא תקף יוצא מהכתובת בשקט (replace — לא עוד כניסה ב"חזור"), כדי
+     שרענון או קישור מהכתובת הזו לא יחזירו אותו. */
+  useEffect(() => {
+    if (!filterIsValid && productsLoaded) setParams({ category: '' }, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setParams נבנה מחדש בכל רינדור
+  }, [filterIsValid, productsLoaded]);
+
+  /* לחיצה על שבב מנקה גם את החיפוש. חיפוש עוקף את הסינון (ראו למטה),
+     ולכן שבב שנלחץ בזמן שיש חיפוש בכתובת היה מסמן את עצמו ומשנה את
+     הכתובת — והרשימה הייתה נשארת תוצאות החיפוש. חיפוש שנשכח בכתובת
+     (מגיע גם מרענון ומחזרה מהטופס) נראה כמו רשימה תקועה. */
+  const setFilter = (value) => setParams({ category: value === 'all' ? '' : value, q: '' }, false);
+  const setSearchQuery = (value) => setParams({ q: value }, true);
 
   /* חזרה מהטופס: גוללים למוצר שנערך. פריים אחד אחרי הציור, כשהרשימה כבר
      בדף. אם הוא כבר אינו בסינון (נגיד, קיבל מחיר ברשימת "ללא מחיר"),
@@ -92,7 +135,6 @@ function ProductsTab({
     return matchFilter;
   });
 
-  const visibleProducts = products.filter(isVisible);
   const hiddenCount = products.length - visibleProducts.length;
   const noPriceCount = visibleProducts.filter(p => !hasPrice(p)).length;
 
@@ -106,12 +148,9 @@ function ProductsTab({
      משאירה רשימה ריקה בלי שבב לחזור דרכו. */
   const showHidden = hiddenCount > 0 || filter === HIDDEN_FILTER;
 
-  /* רק הקטגוריות שיש בהן מוצרים. שבב עם 0 הוא שבב שאין בו מה ללחוץ,
-     ובטלפון הוא מאריך את הרצועה שצריך לגלול. הספירה היא של הגלויים
-     בלבד, כמו הרשימה שהשבב פותח. */
-  const usedCategories = CATEGORIES
-    .map(cat => ({ ...cat, count: visibleProducts.filter(p => p.category === cat.id).length }))
-    .filter(cat => cat.count > 0);
+  /* בזמן חיפוש אף שבב אינו מסומן: החיפוש עובר על הקטלוג כולו, ושבב
+     מסומן היה אומר שהרשימה מסוננת לפיו — וזו בדיוק הייתה ההטעיה. */
+  const isActive = (id) => !query && filter === id;
 
   return (
     <div className="admin-products">
@@ -134,8 +173,8 @@ function ProductsTab({
       <div className="admin-cats" role="group" aria-label="סינון מוצרים">
         <button
           type="button"
-          className={`admin-cat ${filter === 'all' ? 'is-active' : ''}`}
-          aria-pressed={filter === 'all'}
+          className={`admin-cat ${isActive('all') ? 'is-active' : ''}`}
+          aria-pressed={isActive('all')}
           onClick={() => setFilter('all')}>
           <Store size={18} aria-hidden="true" /> הכל
           <span className="admin-cat-count">{visibleProducts.length}</span>
@@ -146,8 +185,8 @@ function ProductsTab({
         {showHidden && (
           <button
             type="button"
-            className={`admin-cat admin-cat--muted ${filter === HIDDEN_FILTER ? 'is-active' : ''}`}
-            aria-pressed={filter === HIDDEN_FILTER}
+            className={`admin-cat admin-cat--muted ${isActive(HIDDEN_FILTER) ? 'is-active' : ''}`}
+            aria-pressed={isActive(HIDDEN_FILTER)}
             onClick={() => setFilter(HIDDEN_FILTER)}>
             <EyeOff size={18} aria-hidden="true" /> מוסתרים
             <span className="admin-cat-count">{hiddenCount}</span>
@@ -159,8 +198,8 @@ function ProductsTab({
         {showNoPrice && (
           <button
             type="button"
-            className={`admin-cat admin-cat--alert ${filter === NO_PRICE_FILTER ? 'is-active' : ''}`}
-            aria-pressed={filter === NO_PRICE_FILTER}
+            className={`admin-cat admin-cat--alert ${isActive(NO_PRICE_FILTER) ? 'is-active' : ''}`}
+            aria-pressed={isActive(NO_PRICE_FILTER)}
             onClick={() => setFilter(NO_PRICE_FILTER)}>
             <CircleDollarSign size={18} aria-hidden="true" /> ללא מחיר
             <span className="admin-cat-count">{noPriceCount}</span>
@@ -173,8 +212,8 @@ function ProductsTab({
             <button
               key={cat.id}
               type="button"
-              className={`admin-cat ${filter === cat.id ? 'is-active' : ''}`}
-              aria-pressed={filter === cat.id}
+              className={`admin-cat ${isActive(cat.id) ? 'is-active' : ''}`}
+              aria-pressed={isActive(cat.id)}
               onClick={() => setFilter(cat.id)}>
               {Icon && <Icon size={18} aria-hidden="true" />} {cat.label}
               <span className="admin-cat-count">{cat.count}</span>
