@@ -18,6 +18,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const Product = require('../models/product.model');
 const { UPLOADS_DIR } = require('../middleware/upload');
+const { removeOriginal } = require('../utils/originals');
 const { notFound, conflict, badRequest } = require('../utils/AppError');
 const { load: loadCategories, isSubcategoryOf } = require('../utils/categories');
 
@@ -44,6 +45,8 @@ async function removeOrphanImages(urls) {
     const file = path.join(UPLOADS_DIR, path.basename(url));
     try {
       await fs.rm(file, { force: true });
+      // והצילום המקורי שלו, אם נשמר: בלי הקובץ המעובד אין לו לאן לחזור
+      removeOriginal(path.basename(url));
       removed.push(url);
     } catch (err) {
       console.error(`לא הצלחנו למחוק את ${file}:`, err.message);
