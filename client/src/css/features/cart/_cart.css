@@ -65,10 +65,11 @@
 }
 
 .cart-row-img {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding: 8%;
+  object-fit: cover;
+  border-radius: inherit;
 }
 
 .cart-row-fallback {
