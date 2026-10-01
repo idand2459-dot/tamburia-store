@@ -2,7 +2,7 @@
  * גישה לטבלת products: שליפה מסוננת, ספירה, יצירה, עדכון ומחיקה.
  * זהו המקום היחיד בדומיין המוצרים שכותב SQL.
  */
-const { query } = require('../config/db');
+const { query, withTransaction } = require('../config/db');
 
 const COLUMNS = `
   id, name, price, stock, image_url, images, colors, sizes,
@@ -154,6 +154,59 @@ async function remove(id) {
 }
 
 /**
+ * מוחק מוצר יחד עם הביקורות שלו — אלא אם יש לו הזמנות.
+ *
+ * הזמנה מחזיקה את הפריטים כצילום ב-orders.items (JSONB), בלי מפתח זר,
+ * ולכן המסד עצמו לא היה עוצר מחיקה של מוצר שנמכר: ההזמנה הייתה נשארת
+ * עם מזהה שאינו מוביל לשום דבר. הבדיקה כאן, באותה טרנזקציה עם המחיקה
+ * ועם נעילה על שורת המוצר, היא שעוצרת.
+ *
+ * הביקורות נמחקות במפורש ולא רק דרך ה-ON DELETE CASCADE שבמסד: כך
+ * המספר חוזר לקורא, וההתנהגות אינה תלויה בכך שה-CASCADE הוגדר בכל
+ * סביבה.
+ *
+ * מחזיר { product: null } כשהמוצר אינו קיים; { product, orders } כשיש
+ * לו הזמנות ולא נמחק דבר; ו-{ product, orders: 0, reviews } אחרי מחיקה.
+ */
+async function removeUnlessOrdered(id) {
+  return withTransaction(async (client) => {
+    const { rows: [product] } = await client.query(
+      `SELECT ${COLUMNS} FROM products WHERE id = $1 FOR UPDATE`, [id]
+    );
+    if (!product) return { product: null };
+
+    const { rows: [{ total: orders }] } = await client.query(
+      'SELECT COUNT(*)::int AS total FROM orders WHERE items @> $1::jsonb',
+      [JSON.stringify([{ id }])]
+    );
+    if (orders > 0) return { product, orders };
+
+    const { rowCount: reviews } = await client.query('DELETE FROM reviews WHERE product_id = $1', [id]);
+    await client.query('DELETE FROM products WHERE id = $1', [id]);
+    return { product, orders: 0, reviews };
+  });
+}
+
+/**
+ * מתוך רשימת כתובות תמונה, מחזיר את אלה שאף מוצר אינו מפנה אליהן —
+ * לא כתמונה ראשית ולא ברשימת התמונות. שם הקובץ נגזר מהתוכן, ולכן
+ * אותה תמונה יכולה לשמש כמה מוצרים, ואסור למחוק אותה עם הראשון.
+ */
+async function findUnreferencedImages(urls) {
+  if (urls.length === 0) return [];
+  const { rows } = await query(
+    `SELECT u.url
+     FROM unnest($1::text[]) AS u(url)
+     WHERE NOT EXISTS (
+       SELECT 1 FROM products p
+       WHERE p.image_url = u.url OR p.images @> jsonb_build_array(u.url)
+     )`,
+    [urls]
+  );
+  return rows.map((row) => row.url);
+}
+
+/**
  * מחזיר את הקטגוריות ותתי-הקטגוריות הקיימות בפועל, עם ספירה.
  *
  * activeOnly הוא מה שהחנות שואלת: הספירה שמוצגת ללקוח היא של מה
@@ -173,4 +226,5 @@ async function listCategories({ activeOnly = false } = {}) {
 
 module.exports = {
   list, count, findById, findPricesByIds, create, update, remove, listCategories,
+  removeUnlessOrdered, findUnreferencedImages,
 };

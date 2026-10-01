@@ -181,18 +181,37 @@ export function useAdminProducts(api) {
   }, [api, uploadImages, fetchProducts]);
 
   /** מוחק מוצר לאחר אישור המשתמש. */
-  const deleteProduct = useCallback(async (id) => {
-    if (!window.confirm('למחוק את המוצר?')) return;
-
+  /**
+   * מוחק מוצר ומחזיר מה קרה, כדי שהכרטיס יציג את זה במקום שבו לחצו.
+   *
+   * בלי window.confirm: האישור הוא חלק מהכרטיס (AdminProductCard). כאן
+   * היה confirm, ודפדפן שחוסם חלונות קופצים — דפדפן מוטמע, או מי שסימן
+   * "מנע מהדף ליצור תיבות דו-שיח נוספות" — מחזיר ממנו false בלי להציג
+   * כלום. הלחיצה לא שלחה בקשה ולא אמרה דבר.
+   *
+   * מחזיר { status: 'deleted' }, { status: 'has_orders', message } —
+   * מוצר שנמכר אינו נמחק, והכרטיס מציע להסתיר אותו — או
+   * { status: 'error', message }.
+   */
+  const deleteProduct = useCallback(async (product) => {
     try {
-      const res = await api('/api/products/' + id, { method: 'DELETE' });
-      if (!res.ok) {
-        setProductsError(await errorMessageFrom(res, 'מחיקת המוצר נכשלה.'));
-        return;
+      const res = await api('/api/products/' + product.id, { method: 'DELETE' });
+      if (res.ok) {
+        setProductsError('');
+        fetchProducts();
+        return { status: 'deleted' };
       }
-      setProductsError(''); fetchProducts();
+
+      const body = await res.json().catch(() => null);
+      const message = typeof body?.error === 'string' && body.error.trim()
+        ? body.error
+        : 'מחיקת המוצר נכשלה. אפשר לנסות שוב.';
+      if (res.status === 409 && body?.details?.reason === 'has_orders') {
+        return { status: 'has_orders', message };
+      }
+      return { status: 'error', message };
     } catch {
-      setProductsError(NETWORK_ERROR);
+      return { status: 'error', message: NETWORK_ERROR };
     }
   }, [api, fetchProducts]);
 

@@ -25,6 +25,12 @@
  * הצבע מפנים למוצר לפי id, ומחיקה הייתה מנתקת אותם; הסתרה מוציאה
  * אותו מהחנות ומשאירה הכול מחובר. לכן היא בלי אישור — היא הפיכה
  * בלחיצה — ו"מחק" נשאר לידה עם האישור שלו, למוצר שנוצר בטעות.
+ *
+ * האישור של "מחק" הוא פאנל בתוך הכרטיס ולא window.confirm: confirm
+ * שהדפדפן חוסם מחזיר false בשקט, והלחיצה לא עשתה כלום. מה שהשרת עונה
+ * מוצג באותו פאנל — ליד הכפתור שנלחץ, ולא בפס שגיאה בראש רשימה שכבר
+ * גללו ממנה. מוצר שיש לו הזמנות אינו נמחק (השרת עונה 409), והפאנל
+ * מציע במקום זאת להסתיר אותו.
  */
 import { useState, useRef, useEffect } from 'react';
 import { Check, X, Pencil, Eye, EyeOff } from 'lucide-react';
@@ -46,6 +52,11 @@ function AdminProductCard({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const savedTimer = useRef(null);
+
+  /* null, או מצב הפאנל של המחיקה: { step: 'confirm' | 'deleting' |
+     'has_orders' | 'error', message?, busy? }. busy — ההסתרה שהפאנל
+     הציע במקום המחיקה בדרך לשרת. */
+  const [deletion, setDeletion] = useState(null);
 
   useEffect(() => () => clearTimeout(savedTimer.current), []);
 
@@ -84,6 +95,24 @@ function AdminProductCard({
     setSaved(true);
     clearTimeout(savedTimer.current);
     savedTimer.current = setTimeout(() => setSaved(false), SAVED_MS);
+  }
+
+  /**
+   * שולח את המחיקה אחרי האישור. בהצלחה הכרטיס נעלם עם טעינת הרשימה
+   * מחדש; בכל תשובה אחרת הפאנל נשאר פתוח ואומר מה קרה.
+   */
+  async function confirmDelete() {
+    setDeletion({ step: 'deleting' });
+    const result = await onDelete(product);
+    if (result.status === 'deleted') return;
+    setDeletion({ step: result.status, message: result.message });
+  }
+
+  /** "הסתר" מתוך ההודעה על מוצר עם הזמנות. */
+  async function hideInstead() {
+    setDeletion({ ...deletion, busy: true });
+    const ok = await onToggleActive(product);
+    setDeletion(ok ? null : { step: 'error', message: 'הסתרת המוצר נכשלה. אפשר לנסות שוב.' });
   }
 
   /** Enter שומר, Escape מבטל — מה שהאצבע עושה בלי לחשוב. */
@@ -191,8 +220,70 @@ function AdminProductCard({
             ? <><EyeOff size={15} aria-hidden="true" /> הסתר</>
             : <><Eye size={15} aria-hidden="true" /> הצג</>}
         </button>
-        <button type="button" className="admin-delete-btn" onClick={() => onDelete(product.id)}>מחק</button>
+        <button
+          type="button"
+          className="admin-delete-btn"
+          onClick={() => setDeletion({ step: 'confirm' })}
+          disabled={deletion !== null}
+          aria-expanded={deletion !== null}>
+          מחק
+        </button>
       </div>
+
+      {deletion && (
+        <div
+          className={`admin-product-notice ${deletion.step === 'confirm' || deletion.step === 'deleting' ? '' : 'is-problem'}`}
+          role={deletion.step === 'confirm' || deletion.step === 'deleting' ? 'group' : 'alert'}
+          aria-label={deletion.step === 'confirm' ? 'אישור מחיקה' : undefined}>
+          {(deletion.step === 'confirm' || deletion.step === 'deleting') && (
+            <>
+              <p className="admin-product-notice-text">למחוק את "{product.name}" לצמיתות?</p>
+              <div className="admin-product-notice-actions">
+                <button
+                  type="button"
+                  className="admin-notice-danger"
+                  onClick={confirmDelete}
+                  disabled={deletion.step === 'deleting'}
+                  autoFocus>
+                  {deletion.step === 'deleting' ? 'מוחק…' : 'מחק לצמיתות'}
+                </button>
+                <button
+                  type="button"
+                  className="admin-notice-cancel"
+                  onClick={() => setDeletion(null)}
+                  disabled={deletion.step === 'deleting'}>
+                  ביטול
+                </button>
+              </div>
+            </>
+          )}
+
+          {deletion.step === 'has_orders' && (
+            <>
+              <p className="admin-product-notice-text">{deletion.message}</p>
+              <div className="admin-product-notice-actions">
+                {visible ? (
+                  <button type="button" className="admin-notice-primary" onClick={hideInstead} disabled={deletion.busy}>
+                    <EyeOff size={15} aria-hidden="true" /> {deletion.busy ? 'מסתיר…' : 'הסתר'}
+                  </button>
+                ) : (
+                  <span className="admin-product-notice-note">המוצר כבר מוסתר מהחנות.</span>
+                )}
+                <button type="button" className="admin-notice-cancel" onClick={() => setDeletion(null)}>סגור</button>
+              </div>
+            </>
+          )}
+
+          {deletion.step === 'error' && (
+            <>
+              <p className="admin-product-notice-text">{deletion.message}</p>
+              <div className="admin-product-notice-actions">
+                <button type="button" className="admin-notice-cancel" onClick={() => setDeletion(null)}>סגור</button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </article>
   );
 }

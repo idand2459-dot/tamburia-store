@@ -571,6 +571,88 @@ async function testUploads() {
   check('בלי התחברות → 401', anonymous.status === 401, anonymous.status);
 }
 
+/**
+ * בודק את מחיקת המוצר, בשני המקרים.
+ *
+ * בלי הזמנות: המוצר נמחק, הביקורות שלו נמחקות, וקובץ תמונה שאף מוצר
+ * אחר אינו משתמש בו נמחק מ-uploads — אבל קובץ שמוצר אחר עדיין מציג
+ * נשאר. השם נגזר מהתוכן, ולכן תמונה משותפת היא מקרה אמיתי ולא תיאורטי.
+ *
+ * עם הזמנות: 409 עם ההודעה שמסך הניהול מציג כמו שהיא, הפרטים שהוא
+ * צריך כדי להציע "הסתר", ושום דבר לא נמחק — לא המוצר, לא הביקורות
+ * ולא התמונות.
+ */
+async function testDelete() {
+  console.log('\n── מחיקה');
+
+  const exists = (url) => fs.existsSync(path.join(UPLOADS_DIR, path.basename(url)));
+
+  const [own, shared] = (await uploadFiles([
+    ['own.jpg', await jpeg(320, 320), 'image/jpeg'],
+    ['shared.jpg', await jpeg(330, 330), 'image/jpeg'],
+  ])).body.imageUrls;
+  check('שתי תמונות הועלו', exists(own) && exists(shared), [own, shared]);
+
+  const doomed = await call('POST', '/products', {
+    ...validProduct(), sku: 'TEST-DELETE-1', image_url: own, images: [shared],
+  });
+  const keeper = await call('POST', '/products', {
+    ...validProduct(), sku: 'TEST-DELETE-2', image_url: shared, images: [],
+  });
+  created.push(keeper.body.id);
+
+  const review = await publicCall('POST', '/reviews', {
+    reviewer_name: 'בודק מחיקה', rating: 5, text: 'ביקורת שאמורה להימחק עם המוצר',
+    type: 'product', product_id: doomed.body.id,
+  });
+  check('נוצרה ביקורת על המוצר', review.status === 201, review.status);
+
+  const removed = await call('DELETE', `/products/${doomed.body.id}`);
+  check('מוצר בלי הזמנות → 200', removed.status === 200, `${removed.status} ${removed.body.error || ''}`);
+  check('גם הביקורת שלו נמחקה (1)', removed.body.deleted?.reviews === 1, removed.body.deleted);
+  check('הקובץ שרק הוא השתמש בו נמחק מ-uploads', !exists(own), own);
+  check('הקובץ שמוצר אחר מציג נשאר', exists(shared), shared);
+  check('התשובה מונה רק את הקובץ שנמחק',
+    JSON.stringify(removed.body.deleted?.files) === JSON.stringify([own]), removed.body.deleted?.files);
+
+  const gone = await call('GET', `/products/${doomed.body.id}`);
+  check('המוצר אינו במסד', gone.status === 404, gone.status);
+  const reviewGone = await call('GET', `/reviews/${review.body.id}`);
+  check('הביקורת אינה במסד', reviewGone.status === 404, reviewGone.status);
+
+  // מוצר שנמכר
+  const sold = await call('POST', '/products', { ...validProduct(), sku: 'TEST-DELETE-3', price: 15, image_url: shared });
+  created.push(sold.body.id);
+  const order = await publicCall('POST', '/orders', {
+    customer_name: 'בודק מחיקה', customer_phone: '050-673-5040', delivery_method: 'pickup',
+    items: [{ id: sold.body.id, name: sold.body.name, price: 15, quantity: 1 }],
+  });
+  check('נוצרה הזמנה על המוצר', order.status === 201, `${order.status} ${order.body.error || ''}`);
+
+  const blocked = await call('DELETE', `/products/${sold.body.id}`);
+  check('מוצר עם הזמנות → 409', blocked.status === 409, blocked.status);
+  check('ההודעה בעברית, כמו שהיא מוצגת',
+    blocked.body.error === 'למוצר יש הזמנות, ולכן אי אפשר למחוק אותו. אפשר להסתיר אותו מהחנות', blocked.body.error);
+  check('הפרטים אומרים למסך הניהול להציע "הסתר"',
+    blocked.body.details?.reason === 'has_orders' && blocked.body.details?.orders === 1
+      && blocked.body.details?.active === true, blocked.body.details);
+
+  const stillThere = await call('GET', `/products/${sold.body.id}`);
+  check('המוצר נשאר במסד', stillThere.status === 200, stillThere.status);
+  check('והתמונה שלו נשארה', exists(shared), shared);
+
+  // מה שהכפתור "הסתר" בהודעה עושה
+  const hidden = await call('PUT', `/products/${sold.body.id}`, { active: false });
+  check('"הסתר" במקום מחיקה עובד', hidden.status === 200 && hidden.body.active === false, hidden.body.active);
+
+  const missing = await call('DELETE', '/products/999999');
+  check('מחיקת מוצר שאינו קיים → 404', missing.status === 404, missing.status);
+
+  // ההזמנה נמחקת כאן, כדי שהניקוי יוכל למחוק את המוצר
+  const orderDeleted = await call('DELETE', `/orders/${order.body.id}`);
+  check('ניקוי: הזמנת הבדיקה נמחקה', orderDeleted.status === 200, orderDeleted.status);
+}
+
 /** מוחק את כל מה שהבדיקה יצרה ומאמת שלא נשארו שאריות. */
 async function cleanup() {
   console.log('\n── ניקוי');
@@ -601,6 +683,7 @@ async function main() {
   await testDecimalPrices();
   await testHidden();
   await testUploads();
+  await testDelete();
   await cleanup();
 
   console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);
