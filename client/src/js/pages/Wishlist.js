@@ -22,7 +22,7 @@ import Drawer from '../components/Drawer';
 import CATEGORY_ICONS from '../utils/categoryIcons';
 import { getWishlist, toggleWishlist } from '../utils/wishlistUtils';
 import { useAvailability } from '../hooks/useAvailability';
-import { orderablePrice, NO_PRICE_LABEL, UNAVAILABLE_LABEL } from '../utils/pricing';
+import { orderablePrice, NO_PRICE_LABEL, UNAVAILABLE_LABEL, formatPrice } from '../utils/pricing';
 
 /** מציג את חלון המועדפים. */
 function Wishlist({ onClose }) {
@@ -80,7 +80,7 @@ function Wishlist({ onClose }) {
                     <Link className="wishlist-row-link" to={`/product/${product.id}`}>{product.name}</Link>
                   </span>
                   <span className={`wishlist-row-price ${price === null ? 'is-no-price' : ''}`}>
-                    {price === null ? NO_PRICE_LABEL : `₪${price}`}
+                    {price === null ? NO_PRICE_LABEL : formatPrice(price)}
                   </span>
                   {/* מוצר שאינו בקטלוג מחליף את שורת המלאי ולא מתווסף
                       לידה: "אזל" ו"לא זמין" באותה שורה סותרים זה את זה */}

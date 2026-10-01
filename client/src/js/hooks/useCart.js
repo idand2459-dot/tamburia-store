@@ -6,6 +6,7 @@
  * הן אינן תלויות בעגלה הנוכחית ואפשר לקרוא להן בבטחה מכל מקום.
  */
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { sumPrices, lineTotal } from '../utils/pricing';
 
 const STORAGE_KEY = 'tamburia-cart';
 const DELIVERY_FEE = 20;
@@ -23,9 +24,10 @@ export function useCart() {
 
   const [deliveryMethod, setDeliveryMethod] = useState(null);
 
-  const subtotal = cart.reduce((sum, i) => sum + i.price * (i.quantity || 1), 0);
+  // באגורות: 3 × 12.90 הוא 38.70 ולא 38.699999999999996
+  const subtotal = sumPrices(cart.map(i => lineTotal(i.price, i.quantity || 1)));
   const deliveryFee = deliveryMethod === 'delivery' ? DELIVERY_FEE : 0;
-  const total = subtotal + deliveryFee;
+  const total = sumPrices([subtotal, deliveryFee]);
   const cartCount = cart.reduce((sum, i) => sum + (i.quantity || 1), 0);
 
   /**

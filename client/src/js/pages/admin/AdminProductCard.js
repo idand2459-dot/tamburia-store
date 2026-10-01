@@ -29,7 +29,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Check, X, Pencil, Eye, EyeOff } from 'lucide-react';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
-import { hasPrice } from '../../utils/pricing';
+import { hasPrice, parsePriceInput, toAgorot, formatAmount, formatPrice } from '../../utils/pricing';
 import { CATEGORIES } from './adminConstants';
 
 /* כמה זמן נשאר סימון ה"נשמר" על השורה. מספיק כדי להיראות, קצר מכדי
@@ -42,6 +42,7 @@ function AdminProductCard({
 }) {
   const [editingPrice, setEditingPrice] = useState(false);
   const [draft, setDraft] = useState('');
+  const [draftInvalid, setDraftInvalid] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const savedTimer = useRef(null);
@@ -58,17 +59,20 @@ function AdminProductCard({
   /** פותח את עריכת המחיר, או את הטופס כשיש וריאנטים. */
   function startPriceEdit() {
     if (hasVariants) { onEdit(product); return; }
-    setDraft(String(product.price ?? ''));
+    setDraft(formatAmount(product.price ?? 0));
+    setDraftInvalid(false);
     setEditingPrice(true);
   }
 
   /** שומר את המחיר. על כישלון התיבה נשארת פתוחה עם מה שהוקלד. */
   async function savePrice() {
-    const value = Number(draft);
-    if (!Number.isFinite(value) || value < 0) return;
+    // "12,90" מתקבל כמו "12.90". ערך שאינו מחיר אינו נשלח — התיבה
+    // מסומנת, במקום שהלחיצה תיבלע בלי סימן.
+    const value = parsePriceInput(draft);
+    if (value === null) { setDraftInvalid(true); return; }
 
-    // מחיר שלא השתנה — סגירה בלי בקשה לשרת
-    if (Math.round(value) === product.price) { setEditingPrice(false); return; }
+    // מחיר שלא השתנה — סגירה בלי בקשה לשרת. באגורות: 12.9 ו-12.90 זהים.
+    if (toAgorot(value) === toAgorot(product.price)) { setEditingPrice(false); return; }
 
     setSaving(true);
     const ok = await onUpdatePrice(product, value);
@@ -125,14 +129,16 @@ function AdminProductCard({
             <span className="admin-price-currency">₪</span>
             <input
               className="admin-price-input"
-              type="number"
+              type="text"
               inputMode="decimal"
-              min="0"
+              autoComplete="off"
               value={draft}
               autoFocus
               onFocus={e => e.target.select()}
-              onChange={e => setDraft(e.target.value)}
+              onChange={e => { setDraft(e.target.value); setDraftInvalid(false); }}
               onKeyDown={handleKeyDown}
+              aria-invalid={draftInvalid}
+              title={draftInvalid ? 'מחיר עם עד שתי ספרות אחרי הנקודה, למשל 12.90' : undefined}
               aria-label={`מחיר עבור ${product.name}`}
             />
             <button
@@ -153,7 +159,7 @@ function AdminProductCard({
           </div>
         ) : (
           <button type="button" className="admin-price-btn" onClick={startPriceEdit}>
-            {hasVariants ? `מ-₪${product.price}` : `₪${product.price}`}
+            {hasVariants ? `מ-${formatPrice(product.price)}` : formatPrice(product.price)}
             <Pencil size={15} aria-hidden="true" />
             {hasVariants && <span className="admin-price-variants">{product.variants.length} גרסאות</span>}
           </button>

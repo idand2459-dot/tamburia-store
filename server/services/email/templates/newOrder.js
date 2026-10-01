@@ -3,6 +3,7 @@
  * הפריטים, הסיכום וקישור למסך הניהול.
  */
 const config = require('../../../config/env');
+const { formatPrice } = require('../../../utils/money');
 const {
   escapeHtml, deliveryText, itemsRows,
   itemsTableHead, summaryRows, header, footer, layout,
@@ -10,7 +11,7 @@ const {
 
 /** מחזיר את שורת הנושא של המייל. */
 function subject(order) {
-  return `📦 הזמנה חדשה #${order.id} — ${order.customer_name} — ₪${order.total}`;
+  return `📦 הזמנה חדשה #${order.id} — ${order.customer_name} — ${formatPrice(order.total)}`;
 }
 
 /** בונה כותרת סעיף עם קו הפרדה. */

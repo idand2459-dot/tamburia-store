@@ -14,6 +14,7 @@ import {
 import Drawer from '../components/Drawer';
 import { Spinner } from '../components/LoadingStates';
 import { PHONES, whatsappUrl } from '../utils/storeInfo';
+import { formatPrice, lineTotal } from '../utils/pricing';
 
 const STATUS_CONFIG = {
   new: { label: 'התקבלה', Icon: Inbox },
@@ -116,7 +117,7 @@ function OrderHistory({ onClose }) {
                         <span className={`order-history-status order-history-status--${order.status || 'new'}`}>
                           <cfg.Icon size={14} aria-hidden="true" /> {cfg.label}
                         </span>
-                        <span className="order-history-total">₪{order.total}</span>
+                        <span className="order-history-total">{formatPrice(order.total)}</span>
                       </span>
 
                       <ChevronDown className="order-history-chevron" size={18} aria-hidden="true" />
@@ -140,15 +141,15 @@ function OrderHistory({ onClose }) {
                                 {item.name}{item.selectedColor ? ` (${item.selectedColor})` : ''}
                               </span>
                               <span className="order-history-item-qty">×{item.quantity}</span>
-                              <span className="order-history-item-price">₪{item.price * item.quantity}</span>
+                              <span className="order-history-item-price">{formatPrice(lineTotal(item.price, item.quantity))}</span>
                             </li>
                           ))}
                         </ul>
 
                         <div className="order-history-sums">
-                          <span>מוצרים ₪{order.subtotal}</span>
-                          <span>משלוח {order.delivery_fee > 0 ? `₪${order.delivery_fee}` : 'חינם'}</span>
-                          <strong>סה"כ ₪{order.total}</strong>
+                          <span>מוצרים {formatPrice(order.subtotal)}</span>
+                          <span>משלוח {order.delivery_fee > 0 ? formatPrice(order.delivery_fee) : 'חינם'}</span>
+                          <strong>סה"כ {formatPrice(order.total)}</strong>
                         </div>
                       </div>
                     </div>

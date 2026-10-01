@@ -12,6 +12,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { CATEGORIES, STATUS_CONFIG, formatDate } from '../pages/admin/adminConstants';
 import { useWebSocket } from './useWebSocket';
 import { errorMessageFrom, NETWORK_ERROR } from '../utils/apiErrors';
+import { sumPrices } from '../utils/pricing';
 
 // הסקר הוא מסלול חלופי בלבד מאז שיש WebSocket: הודעה על הזמנה חדשה
 // מגיעה תוך פחות משנייה, והסקר נשאר רק למקרה שהחיבור למטה.
@@ -147,10 +148,10 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
     const weekOrders = counted.filter(o => new Date(o.created_at) >= weekStart);
     const monthOrders = counted.filter(o => new Date(o.created_at) >= monthStart);
 
-    const revenueToday = todayOrders.reduce((s, o) => s + o.total, 0);
-    const revenueWeek = weekOrders.reduce((s, o) => s + o.total, 0);
-    const revenueMonth = monthOrders.reduce((s, o) => s + o.total, 0);
-    const revenueTotal = counted.reduce((s, o) => s + o.total, 0);
+    const revenueToday = sumPrices(todayOrders.map(o => o.total));
+    const revenueWeek = sumPrices(weekOrders.map(o => o.total));
+    const revenueMonth = sumPrices(monthOrders.map(o => o.total));
+    const revenueTotal = sumPrices(counted.map(o => o.total));
 
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(todayStart);

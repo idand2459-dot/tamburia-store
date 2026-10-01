@@ -7,6 +7,7 @@
 import { FileText, Upload, AlertTriangle, CheckCircle, XCircle, Check, X, Loader } from 'lucide-react';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
 import { CATEGORIES } from './adminConstants';
+import { formatPrice } from '../../utils/pricing';
 
 /** מציג את לשונית הייבוא. */
 function ImportTab({
@@ -44,7 +45,7 @@ function ImportTab({
           <div className="import-preview-table-wrap">
             <table className="import-preview-table">
               <thead><tr><th>שם</th><th>מחיר</th><th>מלאי</th><th>מק"ט</th><th>קטגוריה</th></tr></thead>
-              <tbody>{csvPreview.slice(0,10).map((r,i) => <tr key={i}><td>{r.name}</td><td>₪{r.price}</td><td>{r.in_stock ? <><Check size={16} aria-hidden="true" /> יש</> : <><X size={16} aria-hidden="true" /> אזל</>}</td><td>{r.sku||'—'}</td><td>{CATEGORIES.find(c=>c.id===r.category)?.label}</td></tr>)}</tbody>
+              <tbody>{csvPreview.slice(0,10).map((r,i) => <tr key={i}><td>{r.name}</td><td>{formatPrice(r.price)}</td><td>{r.in_stock ? <><Check size={16} aria-hidden="true" /> יש</> : <><X size={16} aria-hidden="true" /> אזל</>}</td><td>{r.sku||'—'}</td><td>{CATEGORIES.find(c=>c.id===r.category)?.label}</td></tr>)}</tbody>
             </table>
             {csvPreview.length > 10 && <p className="import-preview-more">...ועוד {csvPreview.length - 10}</p>}
           </div>

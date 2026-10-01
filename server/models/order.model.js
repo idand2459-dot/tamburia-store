@@ -154,7 +154,7 @@ async function statsByStatus() {
   const { rows } = await query(`
     SELECT status,
            COUNT(*)::int      AS orders,
-           COALESCE(SUM(total), 0)::int AS revenue
+           COALESCE(SUM(total), 0) AS revenue
     FROM orders
     GROUP BY status
     ORDER BY status

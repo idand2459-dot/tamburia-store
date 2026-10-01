@@ -46,10 +46,12 @@ function VariantRows({ variants, onChange }) {
 
               <div className="admin-variant-price">
                 <span aria-hidden="true">₪</span>
+                {/* text ולא number, מאותה סיבה כמו שדה המחיר בטופס: כדי
+                    ש-"12,90" יתקבל. הפענוח ב-parsePriceInput. */}
                 <input
-                  type="number"
+                  type="text"
                   inputMode="decimal"
-                  min="1"
+                  autoComplete="off"
                   placeholder="מחיר"
                   value={v.price}
                   onChange={e => setRow(i, { price: e.target.value })}

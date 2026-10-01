@@ -3,6 +3,7 @@
  * כך שהמודל מקבל רק שדות מוכרים בערכים תקינים.
  */
 const { badRequest } = require('../utils/AppError');
+const { parsePrice } = require('../utils/money');
 
 const WRITABLE = [
   'name', 'price', 'image_url', 'images', 'colors', 'sizes',
@@ -63,13 +64,23 @@ function asColors(value) {
   }).filter((color) => color.name);
 }
 
-/** מוודא שהערך מספר אי-שלילי ומעגל אותו לשלם. */
-function asNonNegativeInt(value, field) {
-  const num = Number(value);
-  if (!Number.isFinite(num) || num < 0) {
-    throw badRequest(`השדה ${field} חייב להיות מספר אי-שלילי`);
+/**
+ * מאמת את מחיר המוצר: גדול מאפס, עם עד שתי ספרות אחרי הנקודה.
+ *
+ * 0 מתקבל, ואינו מחיר אלא "המחיר עוד לא הוקלד" — זה מה שהחנות מציגה
+ * כ"מחיר בחנות" ושבב "ללא מחיר" באדמין מונה. כל ערך אחר מתחת ל-0.01
+ * נדחה.
+ *
+ * עד כאן המחיר עוגל כאן לשלם (Math.round), כך ש-12.90 נשמר 13 בלי
+ * שגיאה ובלי שאיש ידע. עכשיו ערך עם יותר משתי ספרות נדחה ולא מעוגל:
+ * עיגול שקט של מחיר הוא בדיוק התקלה שנסגרת כאן.
+ */
+function asProductPrice(value) {
+  const price = parsePrice(value, { allowZero: true });
+  if (price === null) {
+    throw badRequest('המחיר חייב להיות מספר גדול מאפס עם עד שתי ספרות אחרי הנקודה (למשל 12.90), או 0 למוצר בלי מחיר');
   }
-  return Math.round(num);
+  return price;
 }
 
 /**
@@ -97,9 +108,9 @@ function asVariants(value) {
     if (seen.has(label)) throw badRequest(`הגודל "${label}" מופיע יותר מפעם אחת`);
     seen.add(label);
 
-    const price = Number(variant.price);
-    if (!Number.isFinite(price) || price <= 0) {
-      throw badRequest(`variants[${i}].price חייב להיות מספר גדול מאפס`);
+    const price = parsePrice(variant.price);
+    if (price === null) {
+      throw badRequest(`המחיר של "${label}" חייב להיות מספר גדול מאפס עם עד שתי ספרות אחרי הנקודה`);
     }
     return { label, price };
   });
@@ -112,7 +123,7 @@ function parseField(field, value) {
       return asTrimmedString(value, 'name', { maxLength: MAX.name });
 
     case 'price':
-      return asNonNegativeInt(value, 'price');
+      return asProductPrice(value);
 
     case 'image_url':
       return value == null ? '' : asTrimmedString(value, 'image_url', { maxLength: MAX.image_url });

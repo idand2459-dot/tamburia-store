@@ -11,6 +11,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CATEGORIES } from '../pages/admin/adminConstants';
 import { errorMessageFrom, NETWORK_ERROR } from '../utils/apiErrors';
+import { parsePriceInput } from '../utils/pricing';
 
 const CSV_IDS = CATEGORIES.map(c => c.id);
 
@@ -19,7 +20,9 @@ function productBody(fields, imageUrls) {
   const { name, price, inStock, colors, category, sku, description, variants, imageIllustrative } = fields;
   const validVariants = variants.filter(v => v.label.trim() && v.price !== '');
   return {
-    name, price: parseInt(price) || 0, in_stock: inStock,
+    /* parsePriceInput ולא parseInt: parseInt("12.90") הוא 12, וזה היה
+       אחד משלושת המקומות שמחיר עשרוני נחתך בהם בדרך למסד. */
+    name, price: parsePriceInput(price) ?? 0, in_stock: inStock,
     image_url: imageUrls[0] || '', images: imageUrls.slice(1),
     /* שורה בלי שם נזרקת כאן ולא בשרת: שורה ריקה בטופס היא שורה שעוד
        לא מולאה, ולא שגיאה שצריך לעצור עליה. */
@@ -28,7 +31,7 @@ function productBody(fields, imageUrls) {
       .filter(c => c.name),
     category, sku, description,
     image_illustrative: Boolean(imageIllustrative),
-    variants: validVariants.map(v => ({ label: v.label.trim(), price: parseFloat(v.price) }))
+    variants: validVariants.map(v => ({ label: v.label.trim(), price: parsePriceInput(v.price) }))
   };
 }
 
@@ -47,9 +50,10 @@ export function parseCSV(text) {
     cols.push(cur.trim());
     const [n, p, is, sk, cat, col, desc] = cols;
     if (!n) { errors.push(`שורה ${i+1}: חסר שם`); continue; }
-    if (!p || isNaN(parseInt(p))) { errors.push(`שורה ${i+1}: מחיר לא תקין`); continue; }
+    const price = parsePriceInput(p);
+    if (price === null) { errors.push(`שורה ${i+1}: מחיר לא תקין "${p ?? ''}" — עד שתי ספרות אחרי הנקודה`); continue; }
     if (!cat || !CSV_IDS.includes(cat)) { errors.push(`שורה ${i+1}: קטגוריה לא תקינה "${cat}"`); continue; }
-    rows.push({ name: n, price: parseInt(p), in_stock: is !== 'false', sku: sk||'', category: cat, colors: col ? col.split(',').map(c=>c.trim()).filter(Boolean) : [], description: desc||'' });
+    rows.push({ name: n, price, in_stock: is !== 'false', sku: sk||'', category: cat, colors: col ? col.split(',').map(c=>c.trim()).filter(Boolean) : [], description: desc||'' });
   }
   return { rows, errors };
 }
@@ -248,7 +252,7 @@ export function useAdminProducts(api) {
    * המוצרים פותחת לו את הטופס המלא במקום.
    */
   const updatePrice = useCallback((product, price) => (
-    patchProduct(product.id, { price: Math.round(Number(price)) }, 'עדכון המחיר נכשל.')
+    patchProduct(product.id, { price }, 'עדכון המחיר נכשל.')
   ), [patchProduct]);
 
   /** מנקה את תצוגת ה-CSV, לפתיחה נקייה של לשונית הייבוא. */

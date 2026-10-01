@@ -20,7 +20,7 @@
 import { Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
 import { useStore } from '../../context/storeContext';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
-import { NO_PRICE_LABEL, UNAVAILABLE_LABEL } from '../../utils/pricing';
+import { NO_PRICE_LABEL, UNAVAILABLE_LABEL, formatPrice, lineTotal } from '../../utils/pricing';
 import DeliveryOptions from './DeliveryOptions';
 
 /* פריט בעגלה נשפט לפי המחיר שנשמר בו ולא לפי המוצר: המוצר עצמו כבר
@@ -90,7 +90,7 @@ function CartStepView({ closeCart }) {
                   </div>
                   <span className={`cart-row-total ${itemPriced(item) ? '' : 'is-no-price'}`}>
                     {itemPriced(item)
-                      ? `₪${item.price * (item.quantity || 1)}`
+                      ? formatPrice(lineTotal(item.price, item.quantity || 1))
                       : NO_PRICE_LABEL}
                   </span>
                 </div>
@@ -134,7 +134,7 @@ function CartStepFooter({ setCartStep }) {
     <div className="cart-summary">
       <div className="cart-summary-row">
         <span>סכום מוצרים</span>
-        <span>₪{subtotal}</span>
+        <span>{formatPrice(subtotal)}</span>
       </div>
       {deliveryMethod && (
         <div className="cart-summary-row">
@@ -146,7 +146,7 @@ function CartStepFooter({ setCartStep }) {
       )}
       <div className="cart-summary-total">
         <span>סה"כ לתשלום</span>
-        <span className="cart-summary-amount">₪{total}</span>
+        <span className="cart-summary-amount">{formatPrice(total)}</span>
       </div>
 
       {/* חוסם אחד בכל פעם, לפי הסדר שבו הם נפתרים: מוצר שאינו בקטלוג

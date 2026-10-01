@@ -6,7 +6,7 @@ import {
   ShowerHead, Lock, Sprout, Wrench, Crown, Check, Circle, ShoppingCart,
   ListChecks,
 } from 'lucide-react';
-import { hasPrice } from '../../utils/pricing';
+import { hasPrice, formatPrice, sumPrices } from '../../utils/pricing';
 import { getProducts } from '../../services/productService';
 
 /* ─── Project definitions ──────────────────────────────────────────────── */
@@ -170,7 +170,7 @@ function ProjectCalculator({ addBundleToCart }) {
   const rawItems     = project ? project.getItems(inputs) : [];
   const resolvedItems = rawItems.map(item => ({ ...item, found: findProduct(item.category, item.subcategory) }));
   const foundItems    = resolvedItems.filter(i => i.found);
-  const totalEstimate = foundItems.reduce((s, i) => s + i.found.price, 0);
+  const totalEstimate = sumPrices(foundItems.map(i => i.found.price));
   const hasUnknown    = resolvedItems.some(i => !i.found);
 
   /** מוסיף לעגלה את כל המוצרים שהמחשבון המליץ עליהם. */
@@ -277,7 +277,7 @@ function ProjectCalculator({ addBundleToCart }) {
                     )}
                   </div>
                   <span className="proj-item-price">
-                    {item.found ? `₪${item.found.price}` : 'שאל בחנות'}
+                    {item.found ? formatPrice(item.found.price) : 'שאל בחנות'}
                   </span>
                 </div>
               ))}
@@ -288,7 +288,7 @@ function ProjectCalculator({ addBundleToCart }) {
               <div className="proj-estimate">
                 <span className="proj-estimate-label">הערכת עלות</span>
                 <div className="proj-estimate-right">
-                  <span className="proj-estimate-total">₪{totalEstimate.toLocaleString()}</span>
+                  <span className="proj-estimate-total">₪{totalEstimate.toLocaleString(undefined, { minimumFractionDigits: Number.isInteger(totalEstimate) ? 0 : 2, maximumFractionDigits: 2 })}</span>
                   {hasUnknown && <span className="proj-estimate-plus">+</span>}
                   {hasUnknown && (
                     <span className="proj-estimate-note">+ פריטים לשאול בחנות</span>

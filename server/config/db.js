@@ -2,8 +2,15 @@
  * מנהל את החיבור היחיד ל-PostgreSQL ומספק את הממשק שדרכו כל
  * המודלים ניגשים למסד: שאילתה, טרנזקציה, בדיקת חיבור וסגירה.
  */
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
 const config = require('./env');
+
+/* NUMERIC מגיע מ-pg כמחרוזת ("12.90"), כי הוא יכול להחזיק יותר ממה
+   ש-float מחזיק. המחירים כאן הם NUMERIC(10,2) — עד 99,999,999.99 —
+   ו-float מייצג אותם במלואם, ולכן ממירים למספר במקום אחד ולא בכל מודל.
+   החשבון עצמו נעשה באגורות (utils/money.js), כך שאי-הדיוק של float
+   בספרה ה-16 לא מגיע לשום השוואה. */
+types.setTypeParser(types.builtins.NUMERIC, (value) => (value === null ? null : parseFloat(value)));
 
 const pool = new Pool({
   host: config.db.host,

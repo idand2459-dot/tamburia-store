@@ -31,6 +31,7 @@ const db = require('../server/config/db');
 const productModel = require('../server/models/product.model');
 const orderModel = require('../server/models/order.model');
 const { parseCreate } = require('../server/validators/product.validator');
+const { formatPrice } = require('../server/utils/money');
 const { UPLOADS_DIR, pathToUrl, uploadName } = require('./lib/uploads');
 const { load: loadCategories } = require('./lib/categories');
 const { parseColors } = require('./lib/palette');
@@ -218,7 +219,9 @@ function readRow(sheetRow, rowNumber, taxonomy) {
   if (raw.price) {
     const parsed = Number(raw.price);
     if (!Number.isFinite(parsed) || parsed < 0) errors.push(`המחיר "${raw.price}" אינו מספר`);
-    else price = Math.round(parsed);
+    // לא מעוגל: parseCreate בודק שיש עד שתי ספרות אחרי הנקודה, ומחיר
+    // של 12.90 צריך להגיע למסד כ-12.90 ולא כ-13
+    else price = parsed;
   }
 
   // מוצר בלי מחיר ובלי גדלים הוא מוצר שאי אפשר להזמין. מוצר כזה קיים
@@ -283,8 +286,8 @@ function printRow(entry, taxonomy) {
   const bits = [categoryName];
   if (subName) bits.push(subName);
   bits.push(body.variants.length > 0
-    ? `${body.variants.length} גדלים, מ-₪${body.price}`
-    : `₪${body.price}`);
+    ? `${body.variants.length} גדלים, מ-${formatPrice(body.price)}`
+    : formatPrice(body.price));
   if (body.colors.length > 0) bits.push(`${body.colors.length} צבעים`);
   if (!body.in_stock) bits.push('אזל');
   if (body.image_illustrative) bits.push('תמונה להמחשה');

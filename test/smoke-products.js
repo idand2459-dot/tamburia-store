@@ -292,6 +292,77 @@ async function testVariantRules() {
 }
 
 /**
+ * בודק מחירים עשרוניים מקצה לקצה דרך ה-API: הוולידציה, העמודה במסד
+ * (NUMERIC(10,2) — עד כאן INTEGER שעיגל בשקט), והקריאה חזרה כמספר.
+ *
+ * הבאג שזה סוגר: 12.90 נשמר 13. שלוש שכבות עיגלו בדרך — הקליינט
+ * (parseInt), הוולידטור (Math.round) והעמודה — ולכן הבדיקה היא שמה
+ * שנשלח הוא בדיוק מה שחוזר, גם ביצירה, גם בעדכון וגם בגרסאות.
+ */
+async function testDecimalPrices() {
+  console.log('\n── מחירים עשרוניים');
+
+  const base = { ...validProduct(), sku: 'TEST-DECIMAL-1' };
+
+  const decimal = await call('POST', '/products', { ...base, price: 12.9 });
+  created.push(decimal.body.id);
+  check('12.9 נשמר → 201', decimal.status === 201, `${decimal.status} ${decimal.body.error || ''}`);
+  check('המחיר חוזר 12.9 ולא 13', decimal.body.price === 12.9, decimal.body.price);
+
+  const read = await call('GET', `/products/${decimal.body.id}`);
+  check('גם בקריאה מהמסד — מספר 12.9, לא המחרוזת "12.90"',
+    read.body.price === 12.9 && typeof read.body.price === 'number', read.body.price);
+
+  const asString = await call('POST', '/products', { ...base, sku: 'TEST-DECIMAL-2', price: '12.90' });
+  created.push(asString.body.id);
+  check('"12.90" כמחרוזת → 12.9', asString.body.price === 12.9, asString.body.price);
+
+  const updated = await call('PUT', `/products/${decimal.body.id}`, { price: 7.5 });
+  check('עדכון ל-7.5 נשמר כמו שהוא', updated.status === 200 && updated.body.price === 7.5,
+    `${updated.status} ${updated.body.price ?? updated.body.error}`);
+
+  const cents = await call('PUT', `/products/${decimal.body.id}`, { price: 0.01 });
+  check('אגורה אחת היא מחיר תקין', cents.body.price === 0.01, cents.body.price);
+
+  const whole = await call('PUT', `/products/${decimal.body.id}`, { price: 30 });
+  check('מחיר שלם נשאר שלם', whole.body.price === 30, whole.body.price);
+
+  // 0 אינו מחיר אלא "המחיר עוד לא הוקלד" — כך נוצרים מוצרים בלי מחיר
+  const zero = await call('PUT', `/products/${decimal.body.id}`, { price: 0 });
+  check('0 (ללא מחיר) עדיין מתקבל', zero.status === 200 && zero.body.price === 0, zero.body.price);
+
+  const bad = [
+    ['שלוש ספרות אחרי הנקודה', 12.999],
+    ['שלילי', -1],
+    ['טקסט', 'יקר'],
+    ['פסיק (הקליינט ממיר, השרת לא מנחש)', '12,90'],
+    ['מעל התקרה של NUMERIC(10,2)', 100_000_000],
+  ];
+  for (const [name, price] of bad) {
+    const res = await call('PUT', `/products/${decimal.body.id}`, { price });
+    check(`${name} → 400`, res.status === 400, `${res.status} ${res.body.error || ''}`);
+  }
+  const unchanged = await call('GET', `/products/${decimal.body.id}`);
+  check('ערך שנדחה לא שינה את המחיר', unchanged.body.price === 0, unchanged.body.price);
+
+  const variants = await call('POST', '/products', {
+    ...base, sku: 'TEST-DECIMAL-3',
+    variants: [{ label: '1 ליטר', price: 19.5 }, { label: '3 ליטר', price: '12.90' }],
+  });
+  created.push(variants.body.id);
+  check('גרסאות עשרוניות נשמרות', variants.status === 201
+    && variants.body.variants[0].price === 19.5 && variants.body.variants[1].price === 12.9,
+  variants.body.variants || variants.body.error);
+  check('מחיר המוצר הוא הזולה שבגרסאות (12.9)', variants.body.price === 12.9, variants.body.price);
+
+  const badVariant = await call('POST', '/products', {
+    ...base, sku: 'TEST-DECIMAL-BAD', variants: [{ label: '1 ליטר', price: 19.999 }],
+  });
+  if (badVariant.status === 201) created.push(badVariant.body.id);
+  check('גרסה עם שלוש ספרות אחרי הנקודה → 400', badVariant.status === 400, badVariant.status);
+}
+
+/**
  * בודק את הסתרת המוצר: מה שהחנות רואה, מה שהאדמין רואה, ומה שקורה
  * להזמנה עליו.
  *
@@ -527,6 +598,7 @@ async function main() {
   await testPartialUpdate();
   await testColors();
   await testVariantRules();
+  await testDecimalPrices();
   await testHidden();
   await testUploads();
   await cleanup();

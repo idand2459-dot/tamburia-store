@@ -12,17 +12,18 @@
  * אינו מנווט לעמוד של מוצר שאינו קיים.
  */
 import ProductCard from '../../components/ProductCard';
+import { parsePriceInput } from '../../utils/pricing';
 
 /** בונה אובייקט בצורת מוצר מתוך שדות הטופס. */
 function productFromFields(fields, imageUrl) {
   const variants = fields.variants
     .filter(v => v.label.trim() && v.price !== '')
-    .map(v => ({ label: v.label.trim(), price: Number(v.price) || 0 }));
+    .map(v => ({ label: v.label.trim(), price: parsePriceInput(v.price) ?? 0 }));
 
   return {
     id: 0,
     name: fields.name.trim() || 'שם המוצר',
-    price: Number(fields.price) || 0,
+    price: parsePriceInput(fields.price) ?? 0,
     sku: fields.sku.trim(),
     in_stock: fields.inStock,
     image_url: imageUrl,

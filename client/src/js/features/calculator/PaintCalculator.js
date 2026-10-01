@@ -9,6 +9,7 @@ import {
 import paintCalcBg from '../../../assets/images/sections/paint-calc-bg-1672.webp';
 import { PHONES } from '../../utils/storeInfo';
 import { getProduct } from '../../services/productService';
+import { formatPrice, lineTotal, sumPrices } from '../../utils/pricing';
 
 const SHADE_CONFIG = {
   light:  { label: 'בהיר',   Icon: Sun,      factor: 0.15 },
@@ -199,7 +200,7 @@ function PaintCalculator({ addBundleToCart }) {
   const resolvedBundle = recommended.map(line => ({ ...line, found: findBundleProduct(line.key) }));
   const bundleItems = resolvedBundle.filter(line => line.found);
   const bundleHasUnknown = resolvedBundle.some(line => !line.found);
-  const bundleTotal = bundleItems.reduce((sum, line) => sum + line.found.price * line.quantity, 0);
+  const bundleTotal = sumPrices(bundleItems.map(line => lineTotal(line.found.price, line.quantity)));
   const isValid = walls.some(w => parseFloat(w.length) > 0 && parseFloat(w.height) > 0);
 
   return (
@@ -419,7 +420,7 @@ function PaintCalculator({ addBundleToCart }) {
                   disabled={bundleAdded}>
                   {bundleAdded
                     ? <><CheckCircle size={18} aria-hidden="true" /> נוסף לעגלה!</>
-                    : <><ShoppingCart size={18} aria-hidden="true" /> {`הוסף חבילה לעגלה — ${chosenBucket ? `${chosenBucket.quantity} דלי ${BUCKET_LABELS[chosenBucket.key]}` : ''} + ${result.colorMixBottles} בקבוק קולור MIX · ₪${bundleTotal}`}</>}
+                    : <><ShoppingCart size={18} aria-hidden="true" /> {`הוסף חבילה לעגלה — ${chosenBucket ? `${chosenBucket.quantity} דלי ${BUCKET_LABELS[chosenBucket.key]}` : ''} + ${result.colorMixBottles} בקבוק קולור MIX · ${formatPrice(bundleTotal)}`}</>}
                 </button>
               )}
 

@@ -14,7 +14,7 @@
 import { useEffect } from 'react';
 import { ShoppingCart, Check, Phone } from 'lucide-react';
 import { PHONES } from '../../../utils/storeInfo';
-import { NO_PRICE_LABEL, CALL_FOR_PRICE_LABEL } from '../../../utils/pricing';
+import { NO_PRICE_LABEL, CALL_FOR_PRICE_LABEL, formatPrice } from '../../../utils/pricing';
 
 /**
  * מציג את פס הקנייה הצף.
@@ -32,7 +32,7 @@ function ProductBuyBar({ price, quantity, inStock, added, onAdd }) {
   return (
     <div className="product-buy-bar">
       <span className={`product-buy-bar-price ${price === null ? 'is-no-price' : ''}`}>
-        {price === null ? NO_PRICE_LABEL : `₪${price}`}
+        {price === null ? NO_PRICE_LABEL : formatPrice(price)}
         {price !== null && quantity > 1 && <span className="product-buy-bar-qty">× {quantity}</span>}
       </span>
 

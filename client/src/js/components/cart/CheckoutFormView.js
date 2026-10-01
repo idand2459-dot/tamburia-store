@@ -12,6 +12,7 @@
 import { Ban, Check, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Spinner } from '../LoadingStates';
 import { useStore } from '../../context/storeContext';
+import { formatPrice } from '../../utils/pricing';
 
 const ALLOWED_CITIES = ['פתח תקווה', 'פתח-תקווה', 'גני תקווה', 'גני-תקווה', 'קריית אונו', 'קרית אונו', 'קריית-אונו', 'קרית-אונו'];
 
@@ -62,7 +63,7 @@ function CheckoutFormView({ setCartStep }) {
 
       <div className="checkout-recap">
         <span>{cartCount} פריטים</span>
-        <span className="checkout-recap-total">סה"כ ₪{total}</span>
+        <span className="checkout-recap-total">סה"כ {formatPrice(total)}</span>
       </div>
 
       <div className="checkout-fields">
