@@ -89,7 +89,7 @@ function AdminProductCard({
   }
 
   return (
-    <article className={[
+    <article data-product-id={product.id} className={[
       'admin-product',
       saved ? 'is-saved' : '',
       priced ? '' : 'is-unpriced',
