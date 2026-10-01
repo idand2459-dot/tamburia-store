@@ -78,6 +78,19 @@ function CategoryView() {
     return counts;
   }, [products]);
 
+  /* ?sub= שמצביע על תת-קטגוריה בלי מוצרים — שאינה מוצגת בסרגל, ואולי
+     כבר לא קיימת — חוזר בשקט ל"הכל" (replace, לא עוד כניסה ב"חזור").
+     רק אחרי הטעינה: לפניה כל תת-קטגוריה נראית ריקה. */
+  const subIsEmpty = Boolean(selectedSubcategory) && !loading && !subcategoryCounts[selectedSubcategory];
+  useEffect(() => {
+    if (!subIsEmpty) return;
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('sub');
+      return next;
+    }, { replace: true });
+  }, [subIsEmpty, setSearchParams]);
+
   if (!category) return <NotFoundPage />;
 
   /** מחליף תת-קטגוריה, ומחליף את רשומת ההיסטוריה כדי לא להציף אותה. */
@@ -88,11 +101,13 @@ function CategoryView() {
     setSearchParams(next, { replace: true });
   }
 
+  const activeSubcategory = subIsEmpty ? null : selectedSubcategory;
+
   const filtered = products
-    .filter((p) => !selectedSubcategory || p.subcategory === selectedSubcategory)
+    .filter((p) => !activeSubcategory || p.subcategory === activeSubcategory)
     .filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  const hasFilters = Boolean(searchQuery || selectedSubcategory);
+  const hasFilters = Boolean(searchQuery || activeSubcategory);
 
   /** מנקה את החיפוש ואת הסינון, מהמצב הריק. */
   function clearFilters() {
@@ -121,7 +136,7 @@ function CategoryView() {
               subcategories={category.subcategories}
               counts={subcategoryCounts}
               total={products.length}
-              selected={selectedSubcategory}
+              selected={activeSubcategory}
               onSelect={selectSubcategory}
             />
           )}

@@ -9,6 +9,9 @@
  * המספרים מחושבים מהמוצרים שנשלפו, ולא בשליפה נפרדת: השליפה הזו כבר
  * הביאה את כל מוצרי הקטגוריה, וספירה שלהם כאן זולה משנים-עשר מסלולי
  * שרת נוספים.
+ *
+ * תת-קטגוריה בלי מוצרים אינה מוצגת: כפתור שמוביל לרשת ריקה הוא מבוי
+ * סתום, ושורה של אפסים נראית כמו אתר שבור. "הכל" מוצג תמיד.
  */
 
 /** מציג את רשימת תתי-הקטגוריות עם מספר המוצרים בכל אחת. */
@@ -16,7 +19,9 @@ function CategoryFilters({ subcategories, counts, total, selected, onSelect }) {
   /* "הכל" הוא פריט ברשימה ולא מקרה מיוחד: אותו כפתור, עם null כמזהה. */
   const items = [
     { id: null, name: 'הכל', count: total },
-    ...subcategories.map((sub) => ({ id: sub.id, name: sub.name, count: counts[sub.id] || 0 })),
+    ...subcategories
+      .map((sub) => ({ id: sub.id, name: sub.name, count: counts[sub.id] || 0 }))
+      .filter((item) => item.count > 0),
   ];
 
   return (
