@@ -18,7 +18,8 @@
     "products:hide-unphotographed": "node scripts/products-hide-unphotographed.js",
     "products:new-template": "node scripts/products-new-template.js",
     "products:import-new": "node scripts/products-import-new.js",
-    "images:square-uploads": "node scripts/images-square-uploads.js"
+    "images:square-uploads": "node scripts/images-square-uploads.js",
+    "a11y": "node scripts/a11y-audit.js"
   },
   "repository": {
     "type": "git",
@@ -44,6 +45,8 @@
   },
   "devDependencies": {
     "@imgly/background-removal-node": "^1.4.5",
-    "exceljs": "^4.4.0"
+    "axe-core": "^4.13.0",
+    "exceljs": "^4.4.0",
+    "puppeteer-core": "^25.12.0"
   }
 }
