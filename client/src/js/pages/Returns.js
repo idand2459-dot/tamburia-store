@@ -13,6 +13,7 @@ import {
   Shield, Coins, CreditCard, Gift, ScrollText, Phone, Package, ClipboardList,
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { ADDRESS, PHONES, hoursSummary } from '../utils/storeInfo';
 
 const REFUND_CASES = [
@@ -102,6 +103,8 @@ function PolicyList({ items, allowed }) {
 
 /** מציג את עמוד מדיניות ההחזרות. */
 function Returns() {
+  usePageTitle('מדיניות החזרים');
+
   return (
     <div className="page-container">
       <PageHeader

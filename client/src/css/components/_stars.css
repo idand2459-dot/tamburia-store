@@ -51,12 +51,23 @@
 /* ---- States ---------------------------------------------------------------- */
 
 .star.interactive:hover { transform: scale(1.2); color: var(--color-red); }
+.star.interactive:focus-visible { outline: 2px solid var(--color-purple); outline-offset: 1px; border-radius: 4px; }
 
 /* ---- Variants -------------------------------------------------------------- */
 
 .star.filled { color: var(--color-red); }
 
-.star.interactive { cursor: pointer; }
+/* A <button> since the accessibility pass, so the reset comes first. An empty
+   star in the picker is a control, not decoration, and has to be seen at 3:1
+   (WCAG 1.4.11) — the 0.15 tint of a read-only row is not enough there. */
+.star.interactive {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 2px;
+  font: inherit;
+}
+.star.interactive:not(.filled) { color: rgba(var(--color-navy-rgb), 0.55); }
 
 /* ---- Dark mode ------------------------------------------------------------- */
 

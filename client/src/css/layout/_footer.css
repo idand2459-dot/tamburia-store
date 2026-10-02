@@ -161,8 +161,12 @@
   gap: 9px 12px;
 }
 
+/* a <Link> now, not a button — display and text-decoration are what a button
+   gave for free */
 .footer-link {
   position: relative;
+  display: inline-block;
+  text-decoration: none;
   background: none;
   border: none;
   color: rgba(255, 255, 255, 0.68);
@@ -249,6 +253,7 @@
 .footer-bottom-sep { color: rgba(255, 255, 255, 0.2); }
 
 .footer-bottom-link {
+  text-decoration: none;
   background: none;
   border: none;
   color: rgba(255, 255, 255, 0.5);

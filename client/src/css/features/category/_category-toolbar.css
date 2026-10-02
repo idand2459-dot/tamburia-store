@@ -30,7 +30,7 @@
    fetch: while loading this element is empty. */
 .category-toolbar-count {
   font-size: var(--font-size-small);
-  color: rgba(var(--color-navy-rgb), 0.6);
+  color: rgba(var(--color-navy-rgb), 0.7);
   min-height: 20px;
 }
 
@@ -73,7 +73,7 @@
 }
 
 .category-search input::placeholder {
-  color: rgba(var(--color-navy-rgb), 0.4);
+  color: rgba(var(--color-navy-rgb), 0.65);
 }
 
 /* appearance: none removes the platform arrow, which on Windows sits on the

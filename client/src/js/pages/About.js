@@ -4,6 +4,7 @@
 import { BookOpen, Headset, Handshake, Banknote, CalendarDays, Clock } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import { HoursTable } from './Contact';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const POINTS = [
   {
@@ -30,6 +31,8 @@ const POINTS = [
 
 /** מציג את עמוד האודות. */
 function About() {
+  usePageTitle('אודות');
+
   return (
     <div className="page-container">
       <PageHeader

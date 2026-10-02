@@ -97,22 +97,24 @@ function ProductReviewsSection({ productId, reviews, ref }) {
       {showReviewForm && (
         <div className="review-form-wrap">
           {reviewSubmitted ? (
-            <div className="review-submitted"><span><CheckCircle size={40} aria-hidden="true" /></span><p>תודה! הביקורת תפורסם לאחר אישור.</p></div>
+            <div className="review-submitted" role="status"><span><CheckCircle size={40} aria-hidden="true" /></span><p>תודה! הביקורת תפורסם לאחר אישור.</p></div>
           ) : (
             <form className="review-form" onSubmit={handleReviewSubmit}>
               <div className="review-form-fields">
                 <div className="review-field">
-                  <label>שמך *</label>
-                  <input placeholder="ישראל ישראלי" value={reviewForm.reviewer_name}
+                  <label htmlFor="product-review-name">שמך <span aria-hidden="true">*</span></label>
+                  <input id="product-review-name" placeholder="ישראל ישראלי" value={reviewForm.reviewer_name}
+                    autoComplete="name"
                     onChange={e => setReviewForm({...reviewForm, reviewer_name: e.target.value})} required />
                 </div>
                 <div className="review-field">
-                  <label>דירוג *</label>
-                  <Stars rating={reviewForm.rating} interactive onRate={r => setReviewForm({...reviewForm, rating: r})} />
+                  <span className="review-field-label" id="product-review-rating">דירוג</span>
+                  <Stars rating={reviewForm.rating} interactive labelledBy="product-review-rating"
+                    onRate={r => setReviewForm({...reviewForm, rating: r})} />
                 </div>
                 <div className="review-field full">
-                  <label>הביקורת שלך *</label>
-                  <textarea placeholder="מה דעתך על המוצר?" rows={3} value={reviewForm.text}
+                  <label htmlFor="product-review-text">הביקורת שלך <span aria-hidden="true">*</span></label>
+                  <textarea id="product-review-text" placeholder="מה דעתך על המוצר?" rows={3} value={reviewForm.text}
                     onChange={e => setReviewForm({...reviewForm, text: e.target.value})} required />
                 </div>
               </div>

@@ -34,7 +34,7 @@
   font-size: 0.8rem;
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.3px;
-  color: rgba(var(--color-navy-rgb), 0.5);
+  color: rgba(var(--color-navy-rgb), 0.7);
   padding: 0 10px;
   margin-bottom: 10px;
 }
@@ -85,7 +85,7 @@
   flex-shrink: 0;
   font-size: var(--font-size-xs);
   font-variant-numeric: tabular-nums;
-  color: rgba(var(--color-navy-rgb), 0.45);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 /* ---- States -------------------------------------------------------------- */

@@ -121,7 +121,7 @@
 
 .reviews-avg-count {
   font-size: 0.8rem;
-  color: rgba(var(--color-navy-rgb), 0.6);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 /* An outline button. The filled navy pill it was belongs to _review-form.css,
@@ -203,7 +203,8 @@
 
 .reviews-section .review-form h3 { color: var(--color-navy); }
 
-.reviews-section .review-field label { color: rgba(var(--color-navy-rgb), 0.7); }
+.reviews-section .review-field label,
+.reviews-section .review-field-label { color: rgba(var(--color-navy-rgb), 0.7); }
 
 .reviews-section .review-field input,
 .reviews-section .review-field textarea {
@@ -214,7 +215,7 @@
 
 .reviews-section .review-field input::placeholder,
 .reviews-section .review-field textarea::placeholder {
-  color: rgba(var(--color-navy-rgb), 0.4);
+  color: rgba(var(--color-navy-rgb), 0.65);
 }
 
 /* ---- States -------------------------------------------------------------- */

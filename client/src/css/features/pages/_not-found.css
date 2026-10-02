@@ -101,7 +101,7 @@
 
 .not-found-info {
   font-size: 0.85rem;
-  color: rgba(var(--color-navy-rgb), 0.5);
+  color: rgba(var(--color-navy-rgb), 0.7);
   margin: 32px 0 0;
   padding-top: 20px;
   border-top: 1px solid rgba(var(--color-navy-rgb), 0.1);

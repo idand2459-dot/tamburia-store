@@ -56,7 +56,7 @@
 
 .product-grid-empty p {
   font-size: var(--font-size-small);
-  color: rgba(var(--color-navy-rgb), 0.6);
+  color: rgba(var(--color-navy-rgb), 0.7);
   line-height: 1.6;
   max-width: 380px;
 }

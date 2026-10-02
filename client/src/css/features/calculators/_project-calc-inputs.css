@@ -84,7 +84,7 @@
 .proj-unit {
   padding: 10px 12px;
   background: rgba(var(--color-navy-rgb), 0.03);
-  color: rgba(var(--color-navy-rgb), 0.6);
+  color: rgba(var(--color-navy-rgb), 0.7);
   font-size: 0.8rem;
   border-right: 1px solid rgba(var(--color-navy-rgb), 0.15);
   white-space: nowrap;

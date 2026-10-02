@@ -38,7 +38,7 @@
 /* the chosen colour's or size's name, beside the heading */
 .product-picker-choice {
   font-weight: 400;
-  color: rgba(var(--color-navy-rgb), 0.55);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 .product-picker-chips {

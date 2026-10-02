@@ -52,7 +52,10 @@
   gap: 6px;
 }
 
-.review-field label {
+/* .review-field-label: the rating, a group of buttons rather than one field,
+   so it is named by a span and not a <label> — same look */
+.review-field label,
+.review-field-label {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--color-text-muted);

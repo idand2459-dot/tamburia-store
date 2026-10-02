@@ -101,7 +101,7 @@
   border: none;
   border-radius: var(--radius-md);
   background: none;
-  color: rgba(var(--color-navy-rgb), 0.55);
+  color: rgba(var(--color-navy-rgb), 0.7);
   cursor: pointer;
   transition: background var(--transition-fast), color var(--transition-fast);
 }

@@ -125,7 +125,7 @@
 }
 
 .category-sub-hint {
-  color: rgba(var(--color-navy-rgb), 0.6);
+  color: rgba(var(--color-navy-rgb), 0.7);
   font-size: 0.82rem;
   line-height: 1.45;
   margin-top: 6px;

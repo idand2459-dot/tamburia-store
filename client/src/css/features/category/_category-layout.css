@@ -11,14 +11,10 @@
    page's light sections, and it is body that paints it. What
    this file owns is the column, its width and its gutter.
 
-   The element this class sits on is still a <main> — it is the
-   page's content. But it is not layout/_grid.css's `main`: that
-   shared column is 1200px with a 40px margin, and this one has
-   to hold a 240px sidebar plus four product cards, so it is
-   1280px and owns its own gutter. All three of that rule's
-   declarations are overridden below, on purpose; a class beats
-   an element selector, so the order of the two imports does not
-   matter.
+   The element this class sits on used to be a <main>; it is a
+   <div> now, inside the one <main> StoreLayout puts around every
+   page. It holds a 240px sidebar plus four product cards, so it
+   is 1280px and owns its own gutter.
    ========================================================== */
 
 /* ---- Block --------------------------------------------------------------- */

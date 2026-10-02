@@ -42,5 +42,6 @@
 .section-pill--light {
   background: rgba(var(--color-purple-rgb), 0.1);
   border-color: rgba(var(--color-purple-rgb), 0.2);
-  color: var(--color-purple);
+  /* deep, not the full-strength purple: on this film that was 4.0–4.5:1 */
+  color: var(--color-purple-deep);
 }

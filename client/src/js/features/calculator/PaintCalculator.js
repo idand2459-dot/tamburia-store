@@ -290,17 +290,19 @@ function PaintCalculator({ addBundleToCart }) {
                   <div className="paint-wall-inputs">
                     <div className="paint-input-group">
                       <input type="number" placeholder="אורך" min="0" step="0.1"
+                        aria-label={`אורך קיר ${i + 1}, במטרים`}
                         value={wall.length} onChange={e => updateWall(i, 'length', e.target.value)} />
                       <span className="paint-unit">מ'</span>
                     </div>
                     <span className="paint-wall-x">×</span>
                     <div className="paint-input-group">
                       <input type="number" placeholder="גובה" min="0" step="0.1"
+                        aria-label={`גובה קיר ${i + 1}, במטרים`}
                         value={wall.height} onChange={e => updateWall(i, 'height', e.target.value)} />
                       <span className="paint-unit">מ'</span>
                     </div>
                     {walls.length > 1 && (
-                      <button className="paint-remove-btn" onClick={() => removeWall(i)} aria-label="הסר קיר"><X size={16} aria-hidden="true" /></button>
+                      <button className="paint-remove-btn" onClick={() => removeWall(i)} aria-label={`הסר את קיר ${i + 1}`}><X size={16} aria-hidden="true" /></button>
                     )}
                   </div>
                 </div>

@@ -53,10 +53,10 @@ body {
   color: var(--color-text);
 }
 
-@media (prefers-color-scheme: dark) {
-  /* רקע כללי */
-  body {
-      background-color: var(--color-bg-dark);
-      color: var(--color-text-dark);
-    }
-}
+/* No dark-mode rule on body any more. The storefront is art-directed light —
+   the home page never followed the system theme — but this rule turned the page
+   backdrop dark under every section that assumed blush, and left their navy
+   headings and breadcrumbs on near-black (1.1:1). The admin, which does follow
+   the theme, now sets its own text colour (.admin, features/admin/_admin-layout.css);
+   it already painted its own backdrop. Components that paint their own dark
+   surface in dark mode (the search popup, the review forms) still do. */
