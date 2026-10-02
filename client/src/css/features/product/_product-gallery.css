@@ -70,7 +70,7 @@
 
 .product-gallery-empty span {
   font-size: var(--font-size-small);
-  color: rgba(var(--color-navy-rgb), 0.45);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 /* White circles on the photograph's edges. inset-inline rather than left/right:

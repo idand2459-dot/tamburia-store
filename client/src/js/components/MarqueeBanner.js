@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import {
-  Wrench, MapPin, Phone, Smartphone, Clock, Star, Handshake, Banknote, Headset,
+  Pause, Play, Wrench, MapPin, Phone, Smartphone, Clock, Star, Handshake, Banknote, Headset,
 } from 'lucide-react';
 import { ADDRESS, PHONES, OPEN_HOURS, hoursRange } from '../utils/storeInfo';
 
@@ -17,10 +18,28 @@ const ITEMS = [
   { Icon: Headset,    text: 'עזרה טכנית מקצועית' },
 ];
 
-/** מציג את רצועת ההודעות הנגללת. */
+/**
+ * מציג את רצועת ההודעות הנגללת.
+ *
+ * aside עם שם: הרצועה היא מידע משני שחוזר בפוטר, והיא יושבת מחוץ
+ * ל-header ול-main — בלי אזור משלה, קורא מסך היה פוגש אותה כטקסט יתום.
+ *
+ * כפתור ההשהיה הוא WCAG 2.2.2: תוכן שזז מעצמו בלי סוף צריך דרך לעצור
+ * אותו. העצירה במעבר עכבר נשארת, אבל מקלדת ומסך מגע לא יכולים לרחף.
+ */
 function MarqueeBanner() {
+  const [paused, setPaused] = useState(false);
+
   return (
-    <div className="marquee-banner">
+    <aside className={`marquee-banner ${paused ? 'is-paused' : ''}`} aria-label="מידע על החנות">
+      <button
+        type="button"
+        className="marquee-pause"
+        onClick={() => setPaused((p) => !p)}
+        aria-label={paused ? 'הפעל את רצועת ההודעות' : 'עצור את רצועת ההודעות'}
+      >
+        {paused ? <Play size={12} aria-hidden="true" /> : <Pause size={12} aria-hidden="true" />}
+      </button>
       {/* שני עותקים של הרשימה, כל אחד ב-group משלו: הגלילה ל--50% מזיזה
           בדיוק group אחד, ולכן הפריים בסוף זהה לפריים בהתחלה. ה-min-width
           שב-CSS הוא מה שמבטיח שגם במסך רחב group אחד ממלא את הרוחב. */}
@@ -44,7 +63,7 @@ function MarqueeBanner() {
           </div>
         ))}
       </div>
-    </div>
+    </aside>
   );
 }
 

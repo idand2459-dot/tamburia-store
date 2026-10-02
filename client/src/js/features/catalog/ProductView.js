@@ -56,12 +56,12 @@ function ProductView() {
 
   if (status === 'loading') {
     return (
-      <main className="product-page">
+      <div className="product-page">
         {/* אותה רשת שהקטגוריה משתמשת בה, כי אותו שלד יושב בה. */}
         <div className="product-grid">
           {Array(4).fill(0).map((_, i) => <ProductCardSkeleton key={i} />)}
         </div>
-      </main>
+      </div>
     );
   }
 

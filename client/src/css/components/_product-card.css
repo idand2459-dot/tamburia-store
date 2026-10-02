@@ -272,7 +272,7 @@
 
 .product-card--unavailable .product-card-name,
 .product-card--unavailable .product-card-price {
-  color: rgba(var(--color-navy-rgb), 0.5);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 /* ---- Responsive ---------------------------------------------------------- */

@@ -28,7 +28,7 @@ function OrderSuccessView({ closeCart }) {
         <Check size={40} strokeWidth={2.5} />
       </span>
 
-      <h3 className="order-success-title">ההזמנה התקבלה!</h3>
+      <h2 className="order-success-title">ההזמנה התקבלה!</h2>
       <p className="order-success-id">#{orderSuccess.id}</p>
 
       <dl className="order-success-details">

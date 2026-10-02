@@ -29,6 +29,7 @@ import { averageRating } from '../utils/rating';
 import { selectedPrice, NO_PRICE_LABEL, formatPrice } from '../utils/pricing';
 import { getProducts, isAbortError } from '../services/productService';
 import { getReviews } from '../services/reviewService';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const MAX_RECENT = 6;
 const MAX_RELATED = 4;
@@ -77,6 +78,7 @@ function useOutOfView(ref, resetKey) {
 
 /** מציג את עמוד המוצר. */
 function ProductPage({ product, onAddToCart }) {
+  usePageTitle(product.name);
   const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);

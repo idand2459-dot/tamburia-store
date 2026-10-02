@@ -99,7 +99,7 @@
   text-align: center;
 }
 
-.paint-input-group input::placeholder { color: rgba(255, 255, 255, 0.35); }
+.paint-input-group input::placeholder { color: rgba(255, 255, 255, 0.65); }
 
 .paint-unit {
   font-size: 0.8rem;

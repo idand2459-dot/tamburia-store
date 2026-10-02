@@ -99,10 +99,40 @@
   flex-shrink: 0;
 }
 
+/* Pause / play (WCAG 2.2.2). Pinned to the strip's left edge over the moving
+   text, on the strip's own colour so the words pass under it rather than
+   through it. Left and not inline-end because the strip is direction: ltr. */
+.marquee-pause {
+  position: absolute;
+  top: 50%;
+  left: 6px;
+  z-index: 1;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: var(--color-navy-950);
+  color: white;
+  cursor: pointer;
+}
+
 /* ---- States ------------------------------------------------------------- */
 
-.marquee-track:hover {
+.marquee-track:hover,
+.marquee-banner.is-paused .marquee-track {
   animation-play-state: paused;
+}
+
+.marquee-pause:hover { border-color: white; }
+
+.marquee-pause:focus-visible {
+  outline: 2px solid var(--color-purple-soft);
+  outline-offset: 1px;
 }
 
 /* ---- Animations --------------------------------------------------------- */
@@ -129,5 +159,10 @@
 @media (prefers-reduced-motion: reduce) {
   .marquee-track {
       animation: none;
+    }
+
+  /* nothing moves, so there is nothing to pause */
+  .marquee-pause {
+      display: none;
     }
 }

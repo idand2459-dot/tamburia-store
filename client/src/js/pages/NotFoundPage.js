@@ -3,6 +3,7 @@
  */
 import { useNavigate } from 'react-router-dom';
 import NotFound from '../components/NotFound';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { CATEGORIES_SELECTOR } from '../utils/sections';
 
 const PATHS = { home: '/', categories: '/', about: '/about', contact: '/contact', returns: '/returns' };
@@ -16,6 +17,7 @@ const SCROLL_TARGETS = { categories: CATEGORIES_SELECTOR };
 /** מציג את מסך ה-404 ומתרגם את הניווט שלו לכתובות. */
 function NotFoundPage() {
   const navigate = useNavigate();
+  usePageTitle('העמוד לא נמצא');
 
   /** מנווט לעמוד המבוקש, ואם הוא מקטע — מבקש גם את הגלילה אליו. */
   function handleNavigate(page) {

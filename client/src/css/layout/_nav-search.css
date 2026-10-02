@@ -16,7 +16,15 @@
 
 /* ---- Elements ------------------------------------------------------------ */
 
+/* a <button> inside the <li> now, so the results can be reached from the
+   keyboard; the first six declarations undo what a button brings */
 .search-result-item {
+  width: 100%;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: start;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -102,7 +110,8 @@
 /* #f8f8f6 is the old cream page background, kept here because it is the tint on
    a row inside a white panel rather than a page surface, and no token carries
    that value. Worth revisiting when the dropdown itself is redesigned. */
-.search-result-item:hover {
+.search-result-item:hover,
+.search-result-item:focus-visible {
   background: #f8f8f6;
 }
 

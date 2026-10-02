@@ -233,6 +233,10 @@
 /* ---- Dark mode ----------------------------------------------------------- */
 
 @media (prefers-color-scheme: dark) {
+  /* the light text body used to give it in dark mode, before the storefront
+     stopped following the system theme (base/_reset.css) */
+  .admin { color: var(--color-text-dark); }
+
   .admin::before { background: var(--color-bg-dark); }
 
   .admin-title { color: var(--color-text-dark); }

@@ -6,7 +6,7 @@
  * את העיצוב: /cart מציג את המודאל מעל עמוד הבית, וכפתור "חזור"
  * בדפדפן פשוט סוגר אותו, כי הוא חוזר לכתובת הקודמת.
  */
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation, useMatch } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import MarqueeBanner from './components/MarqueeBanner';
@@ -38,12 +38,32 @@ function useDrawerBodyClass(open) {
   }, [open]);
 }
 
-/** מגלל לראש העמוד בכל מעבר כתובת, למעט פתיחת מודאל. */
+const OVERLAY_PATHS = ['/cart', '/checkout', '/orders/lookup', '/wishlist'];
+
+/** האם הכתובת היא של מודאל, שמוצג מעל העמוד ולא במקומו. */
+function isOverlayPath(pathname) {
+  return OVERLAY_PATHS.some((p) => pathname.startsWith(p));
+}
+
+/**
+ * מגלל לראש העמוד בכל מעבר כתובת, למעט פתיחת מודאל, ומעביר את
+ * המיקוד ל-<main>.
+ *
+ * המיקוד הוא בשביל קורא מסך ומקלדת: בלעדיו, אחרי לחיצה על קישור
+ * בניווט המיקוד נשאר על הקישור, והקורא לא אומר דבר על כך שהעמוד
+ * התחלף. לא בטעינה הראשונה — שם קישור "דלג לתוכן" צריך להיות התחנה
+ * הראשונה. וגם לא ביציאה ממודאל: שם המגירה מחזירה את המיקוד לכפתור
+ * שפתח אותה, וזה המקום הנכון.
+ */
 function useScrollToTopOnNavigate(pathname) {
+  const previous = useRef(null);
   useEffect(() => {
-    const isOverlay = ['/cart', '/checkout', '/orders/lookup', '/wishlist']
-      .some((p) => pathname.startsWith(p));
-    if (!isOverlay) window.scrollTo(0, 0);
+    const from = previous.current;
+    previous.current = pathname;
+    if (isOverlayPath(pathname)) return;
+    window.scrollTo(0, 0);
+    if (from === null || isOverlayPath(from)) return;
+    document.getElementById('main-content')?.focus({ preventScroll: true });
   }, [pathname]);
 }
 
@@ -91,14 +111,38 @@ function StoreLayout() {
     else navigate('/cart');
   }
 
+  const overlayOpen = onCart || onCheckout || onOrderLookup || onWishlist;
+
   return (
     <div className="App">
-      <Navbar />
-      <MarqueeBanner />
+      {/* כל מה שמאחורי המודאל. inert כשמודאל פתוח: קורא המסך לא רואה את
+          העמוד שמאחור, ו-Tab לא מגיע אליו. display: contents, כך שהעטיפה
+          לא משנה דבר בפריסה. */}
+      <div className="store-frame" inert={overlayOpen || undefined}>
+        <a className="skip-link" href="#main-content">דלג לתוכן</a>
+        <Navbar />
 
-      <Outlet />
+        {/* כשהתפריט פתוח הוא לבדו פעיל, כמו המגירות */}
+        <div className="store-frame" inert={store.menuOpen || undefined}>
+          <MarqueeBanner />
 
-      <Footer />
+          <main id="main-content" tabIndex={-1}>
+            <Outlet />
+          </main>
+
+          <Footer />
+
+          {/* הכפתורים הצפים, באזור משלהם כדי שקורא מסך ימצא אותם — הם
+              יושבים מחוץ ל-main ולפוטר. display: contents, כמו העטיפות. */}
+          <aside className="store-frame" aria-label="פעולות מהירות">
+            <WhatsAppButton />
+            <ScrollToTop />
+            {/* בלי menuOpen: הכפתור לא זז יותר כדי לפנות מקום לתפריט, אלא
+                נעלם איתו ככל הכפתורים הצפים (useDrawerBodyClass למעלה). */}
+            {location.pathname === '/' && <PaintCalcBtn />}
+          </aside>
+        </div>
+      </div>
 
       {(onCart || onCheckout) && (
         <CartModal
@@ -113,12 +157,6 @@ function StoreLayout() {
       {/* הניווט לעמוד מוצר הוא קישור בתוך החלון עצמו, ולכן אין כאן
           onSelectProduct: מעבר הכתובת הוא גם הסגירה. */}
       {onWishlist && <Wishlist onClose={closeOverlay} />}
-
-      <WhatsAppButton />
-      <ScrollToTop />
-      {/* בלי menuOpen: הכפתור לא זז יותר כדי לפנות מקום לתפריט, אלא
-          נעלם איתו ככל הכפתורים הצפים (useDrawerBodyClass למעלה). */}
-      {location.pathname === '/' && <PaintCalcBtn />}
     </div>
   );
 }

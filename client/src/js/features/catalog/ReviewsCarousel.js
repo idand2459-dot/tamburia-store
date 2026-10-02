@@ -2,7 +2,8 @@
  * קרוסלת חוות דעת על החנות, עם טופס הוספה.
  */
 import { useState, useEffect, useRef } from 'react';
-import { Star, X, PenLine, CheckCircle, AlertCircle, Loader, Quote, ChevronRight, ChevronLeft } from 'lucide-react';
+import { X, PenLine, CheckCircle, AlertCircle, Loader, Quote, ChevronRight, ChevronLeft, Pause, Play } from 'lucide-react';
+import Stars from './product-page/Stars';
 import reviewsPhoto600 from '../../../assets/images/sections/reviews-photo-600.webp';
 import reviewsPhoto1000 from '../../../assets/images/sections/reviews-photo-1000.webp';
 import { averageRating } from '../../utils/rating';
@@ -20,6 +21,16 @@ function ReviewsCarousel() {
   const [submitted, setSubmitted] = useState(false);
   const intervalRef = useRef(null);
 
+  // ההחלפה האוטומטית. WCAG 2.2.2: תוכן שזז מעצמו יותר מחמש שניות
+  // צריך דרך לעצור אותו, ולכן יש כפתור השהיה. מי שביקש תנועה מופחתת
+  // מתחיל במצב עצור. hovering ו-focused עוצרים זמנית, כדי שהביקורת לא
+  // תתחלף מתחת למי שקורא אותה או מתחת למיקוד.
+  const [playing, setPlaying] = useState(
+    () => !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+  );
+  const [hovering, setHovering] = useState(false);
+  const [focused, setFocused] = useState(false);
+
   /* הניקוי הוא של ההצלחה בלבד: בכישלון הטופס נשאר כמו שהוא, כי מה
      שהלקוח כתב הוא הדבר היחיד כאן שאי אפשר לשחזר. */
   const { submitting, error, submit, clearError } = useReviewSubmit(() => {
@@ -32,22 +43,25 @@ function ReviewsCarousel() {
   }, []);
 
   useEffect(() => {
-    if (reviews.length <= 1) return;
+    if (reviews.length <= 1 || !playing || hovering || focused) return undefined;
     intervalRef.current = setInterval(() => {
       setCurrent(c => (c + 1) % reviews.length);
     }, 4000);
     return () => clearInterval(intervalRef.current);
-  }, [reviews.length]);
+  }, [reviews.length, playing, hovering, focused]);
+
+  /* מעבר ידני עוצר את ההחלפה האוטומטית לגמרי, כמו קודם — אבל עכשיו
+     דרך playing, כך שכפתור ההשהיה מראה את המצב האמיתי. */
 
   /** עובר לחוות הדעת הקודמת. */
   function prev() {
-    clearInterval(intervalRef.current);
+    setPlaying(false);
     setCurrent(c => (c === 0 ? reviews.length - 1 : c - 1));
   }
 
   /** עובר לחוות הדעת הבאה. */
   function next() {
-    clearInterval(intervalRef.current);
+    setPlaying(false);
     setCurrent(c => (c + 1) % reviews.length);
   }
 
@@ -73,23 +87,6 @@ function ReviewsCarousel() {
     setSubmitted(false);
     clearError();
     setShowForm(true);
-  }
-
-  /** מציג דירוג בכוכבים, ואופציונלית מאפשר לדרג. */
-  function renderStars(rating, interactive = false, onRate = null) {
-    return (
-      <div className="stars">
-        {[1,2,3,4,5].map(s => (
-          <span
-            key={s}
-            className={`star ${s <= rating ? 'filled' : ''} ${interactive ? 'interactive' : ''}`}
-            onClick={() => interactive && onRate && onRate(s)}
-          >
-            <Star size={18} fill={s <= rating ? 'currentColor' : 'none'} aria-hidden="true" />
-          </span>
-        ))}
-      </div>
-    );
   }
 
   /** ממיר תאריך לתצוגה בעברית. */
@@ -131,7 +128,7 @@ function ReviewsCarousel() {
               {avgRating && (
                 <div className="reviews-avg">
                   <span className="reviews-avg-num">{avgRating}</span>
-                  {renderStars(Math.round(avgRating))}
+                  <Stars rating={Math.round(avgRating)} />
                   <span className="reviews-avg-count">({reviews.length} ביקורות)</span>
                 </div>
               )}
@@ -145,7 +142,7 @@ function ReviewsCarousel() {
           {showForm && (
             <div className="review-form-wrap">
               {submitted ? (
-                <div className="review-submitted">
+                <div className="review-submitted" role="status">
                   <span><CheckCircle size={40} aria-hidden="true" /></span>
                   <p>תודה! הביקורת שלך התקבלה ותפורסם לאחר אישור.</p>
                 </div>
@@ -154,17 +151,19 @@ function ReviewsCarousel() {
                   <h3>ביקורת על החנות</h3>
                   <div className="review-form-fields">
                     <div className="review-field">
-                      <label>שמך *</label>
-                      <input placeholder="ישראל ישראלי" value={formData.reviewer_name}
+                      <label htmlFor="store-review-name">שמך <span aria-hidden="true">*</span></label>
+                      <input id="store-review-name" placeholder="ישראל ישראלי" value={formData.reviewer_name}
+                        autoComplete="name"
                         onChange={e => setFormData({...formData, reviewer_name: e.target.value})} required />
                     </div>
                     <div className="review-field">
-                      <label>דירוג *</label>
-                      {renderStars(formData.rating, true, r => setFormData({...formData, rating: r}))}
+                      <span className="review-field-label" id="store-review-rating">דירוג</span>
+                      <Stars rating={formData.rating} interactive labelledBy="store-review-rating"
+                        onRate={r => setFormData({...formData, rating: r})} />
                     </div>
                     <div className="review-field full">
-                      <label>הביקורת שלך *</label>
-                      <textarea placeholder="שתף את החוויה שלך..." rows={3}
+                      <label htmlFor="store-review-text">הביקורת שלך <span aria-hidden="true">*</span></label>
+                      <textarea id="store-review-text" placeholder="שתף את החוויה שלך..." rows={3}
                         value={formData.text}
                         onChange={e => setFormData({...formData, text: e.target.value})} required />
                     </div>
@@ -188,7 +187,16 @@ function ReviewsCarousel() {
               <p>אין ביקורות עדיין — היה הראשון! 😊</p>
             </div>
           ) : (
-            <div className="reviews-carousel">
+            <div
+              className="reviews-carousel"
+              role="region"
+              aria-roledescription="קרוסלה"
+              aria-label="ביקורות לקוחות"
+              onMouseEnter={() => setHovering(true)}
+              onMouseLeave={() => setHovering(false)}
+              onFocus={() => setFocused(true)}
+              onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false); }}
+            >
               <button className="carousel-arrow carousel-arrow-right" onClick={prev} aria-label="הביקורת הקודמת">
                 <ChevronRight size={20} aria-hidden="true" />
               </button>
@@ -198,6 +206,10 @@ function ReviewsCarousel() {
                   <div
                     key={review.id}
                     className={`review-card ${i === current ? 'active' : i === (current + 1) % reviews.length ? 'next' : i === (current - 1 + reviews.length) % reviews.length ? 'prev' : 'hidden'}`}
+                    role="group"
+                    aria-roledescription="ביקורת"
+                    aria-label={`${i + 1} מתוך ${reviews.length}`}
+                    aria-hidden={i === current ? undefined : 'true'}
                   >
                     <div className="review-card-top">
                       <div className="reviewer-avatar">
@@ -208,7 +220,7 @@ function ReviewsCarousel() {
                         <div className="review-date">{formatDate(review.created_at)}</div>
                       </div>
                       <div className="review-card-stars">
-                        {renderStars(review.rating)}
+                        <Stars rating={review.rating} />
                       </div>
                     </div>
                     {/* הגרשיים שהיו סביב הטקסט הוחלפו בסימן הציטוט הזה: שניהם
@@ -225,11 +237,21 @@ function ReviewsCarousel() {
 
               {/* Dots */}
               <div className="carousel-dots">
+                {reviews.length > 1 && (
+                  <button
+                    type="button"
+                    className="carousel-pause"
+                    onClick={() => setPlaying((p) => !p)}
+                    aria-label={playing ? 'עצור את החלפת הביקורות' : 'הפעל את החלפת הביקורות'}
+                  >
+                    {playing ? <Pause size={14} aria-hidden="true" /> : <Play size={14} aria-hidden="true" />}
+                  </button>
+                )}
                 {reviews.map((_, i) => (
                   <button key={i} className={`carousel-dot ${i === current ? 'active' : ''}`}
                     aria-label={`ביקורת ${i + 1}`}
                     aria-current={i === current ? 'true' : undefined}
-                    onClick={() => { clearInterval(intervalRef.current); setCurrent(i); }} />
+                    onClick={() => { setPlaying(false); setCurrent(i); }} />
                 ))}
               </div>
             </div>

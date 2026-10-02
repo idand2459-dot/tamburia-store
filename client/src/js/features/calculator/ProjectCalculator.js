@@ -217,10 +217,15 @@ function ProjectCalculator({ addBundleToCart }) {
               <div className="proj-inputs-row">
                 {project.inputs.map(inp => (
                   <div key={inp.id} className="proj-input-group">
-                    <label className="proj-input-label">{inp.label}</label>
+                    {/* תווית אמיתית לבחירה ולמספר; לסטפר, שהוא שני כפתורים
+                        ולא שדה, התווית היא שם הקבוצה */}
+                    {inp.type === 'stepper'
+                      ? <span className="proj-input-label" id={`proj-${inp.id}-label`}>{inp.label}</span>
+                      : <label className="proj-input-label" htmlFor={`proj-${inp.id}`}>{inp.label}</label>}
 
                     {inp.type === 'select' && (
                       <select
+                        id={`proj-${inp.id}`}
                         className="proj-select"
                         value={inputs[inp.id] ?? inp.default}
                         onChange={e => setInput(inp.id, e.target.value)}
@@ -232,6 +237,7 @@ function ProjectCalculator({ addBundleToCart }) {
                     {inp.type === 'number' && (
                       <div className="proj-number-wrap">
                         <input
+                          id={`proj-${inp.id}`}
                           type="number"
                           className="proj-number-input"
                           value={inputs[inp.id] ?? inp.default}
@@ -243,13 +249,13 @@ function ProjectCalculator({ addBundleToCart }) {
                     )}
 
                     {inp.type === 'stepper' && (
-                      <div className="proj-stepper">
-                        <button type="button"
+                      <div className="proj-stepper" role="group" aria-labelledby={`proj-${inp.id}-label`}>
+                        <button type="button" aria-label={`הפחת: ${inp.label}`}
                           onClick={() => setInput(inp.id, Math.max(inp.min, (inputs[inp.id] ?? inp.default) - 1))}>−</button>
-                        <span className="proj-stepper-val">
+                        <span className="proj-stepper-val" aria-live="polite">
                           {inputs[inp.id] ?? inp.default}{inp.unit ? ` ${inp.unit}` : ''}
                         </span>
-                        <button type="button"
+                        <button type="button" aria-label={`הוסף: ${inp.label}`}
                           onClick={() => setInput(inp.id, Math.min(inp.max, (inputs[inp.id] ?? inp.default) + 1))}>+</button>
                       </div>
                     )}

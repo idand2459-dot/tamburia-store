@@ -34,7 +34,10 @@ function FeaturesBanner() {
   return (
     /* .features-strip נמתחת לכל הרוחב ונושאת את שני קווי השיער;
        .features-banner היא הרשת שבפנים, מוגבלת לרוחב התוכן. */
-    <section className="features-strip">
+    <section className="features-strip" aria-labelledby="features-title">
+      {/* כותרת לקורא המסך בלבד: בלעדיה ארבע כותרות ה-h3 היו יושבות ישר
+          מתחת ל-h1 של ה-Hero, בדילוג רמה. */}
+      <h2 id="features-title" className="visually-hidden">למה לקנות אצלנו</h2>
       <div className="features-banner">
         {FEATURES.map(({ Icon, title, text }, i) => (
           <div key={i} className="feature-item">

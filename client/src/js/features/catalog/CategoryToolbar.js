@@ -16,7 +16,9 @@ function CategoryToolbar({ count, loading, searchQuery, onSearch, sortBy, onSort
     <div className="category-toolbar">
       {/* בזמן הטעינה הפריט נשאר ריק ושומר על הגובה, כדי שהשורה לא תזוז
           כשהמספר מגיע */}
-      <p className="category-toolbar-count">
+      {/* role="status": המספר משתנה בזמן חיפוש וסינון, וזו הדרך של קורא
+          המסך לדעת על כך בלי שהמיקוד יעזוב את שדה החיפוש (WCAG 4.1.3) */}
+      <p className="category-toolbar-count" role="status">
         {!loading && (count === 1 ? 'מוצר אחד' : `${count} מוצרים`)}
       </p>
 

@@ -100,7 +100,7 @@
 }
 
 .cart-row-meta {
-  color: rgba(var(--color-navy-rgb), 0.55);
+  color: rgba(var(--color-navy-rgb), 0.7);
   font-size: 0.78rem;
   line-height: 1.4;
 }
@@ -178,7 +178,7 @@
   border: none;
   border-radius: var(--radius-md);
   background: none;
-  color: rgba(var(--color-navy-rgb), 0.4);
+  color: rgba(var(--color-navy-rgb), 0.6);
   cursor: pointer;
   transition: background var(--transition-fast), color var(--transition-fast);
 }
@@ -214,7 +214,7 @@
 }
 
 .cart-empty-text {
-  color: rgba(var(--color-navy-rgb), 0.6);
+  color: rgba(var(--color-navy-rgb), 0.7);
   font-size: 0.9rem;
   line-height: 1.6;
   margin: 0 0 22px;
@@ -281,7 +281,7 @@
 }
 
 .cart-summary-hint {
-  color: rgba(var(--color-navy-rgb), 0.55);
+  color: rgba(var(--color-navy-rgb), 0.7);
   font-size: 0.8rem;
   text-align: center;
   margin: 6px 0 0;
@@ -317,7 +317,7 @@
   border: none;
   border-radius: var(--radius-sm);
   background: none;
-  color: rgba(var(--color-navy-rgb), 0.5);
+  color: rgba(var(--color-navy-rgb), 0.7);
   font-family: var(--font-family-base);
   font-size: 0.82rem;
   cursor: pointer;
@@ -355,7 +355,7 @@
 }
 
 .cart-row.is-unavailable .cart-row-name {
-  color: rgba(var(--color-navy-rgb), 0.6);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 .cart-row-qty button:focus-visible,

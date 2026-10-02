@@ -21,6 +21,7 @@ import ProductList from '../../components/ProductList';
 import { PHONES } from '../../utils/storeInfo';
 import { useStore } from '../../context/storeContext';
 import { getProducts, isAbortError } from '../../services/productService';
+import { usePageTitle } from '../../hooks/usePageTitle';
 
 const SORT_OPTIONS = [
   { value: 'default', label: 'ברירת מחדל' },
@@ -37,6 +38,9 @@ function CategoryView() {
   const { addToCart, wishlistIds, toggleCardWishlist } = useStore();
 
   const category = categories.find((c) => c.id === slug);
+  // קטגוריה שלא קיימת מוצגת כ-404, ושם הכותרת צריכה להגיד את זה:
+  // האפקט של ההורה רץ אחרי זה של NotFoundPage, וידרוס אותו.
+  usePageTitle(category ? category.name : 'העמוד לא נמצא');
   const selectedSubcategory = searchParams.get('sub');
 
   const [products, setProducts] = useState([]);
@@ -129,7 +133,7 @@ function CategoryView() {
     <>
       <CategoryBanner category={category} productCount={loading ? null : products.length} />
 
-      <main className="category-page">
+      <div className="category-page">
         <div className="category-layout">
           {category.subcategories?.length > 0 && (
             <CategoryFilters
@@ -151,6 +155,10 @@ function CategoryView() {
               onSort={setSortBy}
               sortOptions={SORT_OPTIONS}
             />
+
+            {/* כותרת לקורא המסך: כרטיסי המוצר הם h3, ובטלפון כותרת תתי-
+                הקטגוריות מוסתרת — בלי זו הם היו יושבים ישר מתחת ל-h1. */}
+            <h2 className="visually-hidden">מוצרים</h2>
 
             <ProductList
               products={sorted}
@@ -188,7 +196,7 @@ function CategoryView() {
             />
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
 }

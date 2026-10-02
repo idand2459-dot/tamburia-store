@@ -9,6 +9,7 @@
  * מתחלפים. לכן מעבר מהעגלה לפרטים אינו מריץ את ההחלקה מחדש ואינו
  * מחזיר את המיקוד לכפתור שפתח.
  */
+import { useState } from 'react';
 import { ShoppingCart, ClipboardList, CheckCircle } from 'lucide-react';
 import { useStore } from '../../context/storeContext';
 import Drawer from '../Drawer';
@@ -28,10 +29,14 @@ function CartModal({ cartStep, setCartStep, closeCart }) {
 
   const head = HEADS[cartStep] || HEADS.cart;
 
+  // הטופס והכפתור הם שני רכיבים (הכפתור יושב בשורה התחתונה), וזה הדגל
+  // שמחבר ביניהם: לחיצה על "שלח" עם שדה חסר מדליקה את ההודעות בטופס.
+  const [showErrors, setShowErrors] = useState(false);
+
   // מסך התודה אינו מחזיק שורה תחתונה: הסגירה ודרכי הקשר הם התוכן שלו.
   // עגלה ריקה גם לא — אין מה לסכם.
   const footer = cartStep === 'details'
-    ? <CheckoutFormFooter />
+    ? <CheckoutFormFooter onInvalid={() => setShowErrors(true)} />
     : cartStep === 'cart' && cart.length > 0
       ? <CartStepFooter setCartStep={setCartStep} />
       : null;
@@ -40,7 +45,7 @@ function CartModal({ cartStep, setCartStep, closeCart }) {
     <Drawer title={head.title} icon={head.icon} onClose={closeCart} footer={footer}>
       {cartStep === 'cart' && <CartStepView closeCart={closeCart} />}
 
-      {cartStep === 'details' && <CheckoutFormView setCartStep={setCartStep} />}
+      {cartStep === 'details' && <CheckoutFormView setCartStep={setCartStep} showErrors={showErrors} />}
 
       {cartStep === 'success' && orderSuccess && <OrderSuccessView closeCart={closeCart} />}
     </Drawer>

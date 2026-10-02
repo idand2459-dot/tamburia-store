@@ -57,15 +57,15 @@ function OrderHistory({ onClose }) {
   return (
     <Drawer title="ההזמנות שלי" icon={ClipboardList} onClose={onClose}>
       <div className="order-history">
-        <p className="order-history-desc">הכניסו את מספר הטלפון שלכם לצפייה בהזמנות</p>
+        <label className="order-history-desc" htmlFor="order-lookup-phone">הכניסו את מספר הטלפון שלכם לצפייה בהזמנות</label>
 
         <form onSubmit={handleSearch} className="order-history-search">
           <input
+            id="order-lookup-phone"
             type="tel"
             inputMode="tel"
             autoComplete="tel"
             placeholder="050-0000000"
-            aria-label="מספר טלפון"
             value={phone}
             onChange={e => setPhone(e.target.value)}
             className="order-history-input"
@@ -79,6 +79,14 @@ function OrderHistory({ onClose }) {
               : <><Search size={17} aria-hidden="true" /> חפש</>}
           </button>
         </form>
+
+        {/* מה שקורא המסך שומע כשהחיפוש נגמר: התוצאות מופיעות מתחת
+            לטופס, והמיקוד נשאר על הכפתור */}
+        <p className="visually-hidden" role="status">
+          {searched && orders !== null && (orders.length === 0
+            ? 'לא נמצאו הזמנות למספר הזה'
+            : `נמצאו ${orders.length} הזמנות`)}
+        </p>
 
         {searched && orders !== null && (
           orders.length === 0 ? (

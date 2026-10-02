@@ -73,7 +73,7 @@
 
 .product-detail-sku {
   font-size: var(--font-size-xs);
-  color: rgba(var(--color-navy-rgb), 0.45);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 /* A button, because it does something: it takes you down to the reviews it is
@@ -109,7 +109,7 @@
 
 .product-detail-rating-count {
   font-size: var(--font-size-small);
-  color: rgba(var(--color-navy-rgb), 0.55);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 .product-detail-pricing {
@@ -140,7 +140,7 @@
 .product-detail-price-note {
   font-size: var(--font-size-small);
   font-weight: 400;
-  color: rgba(var(--color-navy-rgb), 0.5);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 .product-detail-stock {

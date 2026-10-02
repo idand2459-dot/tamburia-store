@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useStore } from '../context/storeContext';
 import { useScrolled } from '../hooks/useScrolled';
+import { useModalFocus } from '../hooks/useModalFocus';
 import { priceLabel } from '../utils/pricing';
 import { getProducts, isAbortError } from '../services/productService';
 
@@ -43,6 +44,9 @@ function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const searchInputRef = useRef(null);
+  const searchPopupRef = useRef(null);
+  const drawerRef = useRef(null);
+  const drawerCloseRef = useRef(null);
   const searchTimerRef = useRef(null);
   const cancelSearchRef = useRef(null);
 
@@ -56,18 +60,15 @@ function Navbar() {
     cancelSearchRef.current?.();
   }, [searchOpen]);
 
-  useEffect(() => {
-    if (searchOpen && searchInputRef.current) {
-      setTimeout(() => searchInputRef.current.focus(), 50);
-    }
-  }, [searchOpen]);
-
-  useEffect(() => {
-    /** סוגר את החיפוש בלחיצה על Escape. */
-    function handleKey(e) { if (e.key === 'Escape') closeSearch(); }
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, []);
+  // התפריט וחלון החיפוש הם חלונות מודאליים כמו המגירות: המיקוד נכנס
+  // אליהם וחוזר לכפתור שפתח, Escape סוגר ו-Tab לא יוצא מהם. התפריט
+  // נשאר ב-DOM גם סגור (בשביל אנימציית הכניסה), ולכן active.
+  useModalFocus(drawerRef, {
+    active: menuOpen, onClose: () => setMenuOpen(false), initialFocus: drawerCloseRef,
+  });
+  useModalFocus(searchPopupRef, {
+    active: searchOpen, onClose: closeSearch, initialFocus: searchInputRef,
+  });
 
   /**
    * מריץ חיפוש בשרת ומעדכן את התוצאות.
@@ -126,28 +127,40 @@ function Navbar() {
 
   return (
     <>
-      {menuOpen && <div className="nav-overlay" onClick={() => setMenuOpen(false)} />}
+      {menuOpen && <div className="nav-overlay" onClick={() => setMenuOpen(false)} aria-hidden="true" />}
 
       {/* Search Popup */}
       {searchOpen && (
         <>
-          <div className="search-overlay" onClick={closeSearch} />
-          <div className="search-popup">
+          <div className="search-overlay" onClick={closeSearch} aria-hidden="true" />
+          <div className="search-popup" ref={searchPopupRef} role="dialog" aria-modal="true" aria-label="חיפוש מוצרים">
             <div className="search-popup-input-wrap">
               <span className="search-popup-icon"><Search size={18} aria-hidden="true" /></span>
               <input ref={searchInputRef} className="search-popup-input" placeholder="חפש מוצר..."
+                type="search" aria-label="חיפוש מוצר"
                 value={searchQuery} onChange={handleSearchChange} />
               <button className="search-popup-close" onClick={closeSearch} aria-label="סגור חיפוש"><X size={18} aria-hidden="true" /></button>
             </div>
+            {/* מה שקורא המסך שומע כשהתוצאות מתחלפות — הרשימה עצמה
+                מתעדכנת בשקט, וכך לא מוקראת מחדש בכל הקשה */}
+            <p className="visually-hidden" role="status">
+              {searchQuery && (searchResults.length === 0
+                ? 'לא נמצאו מוצרים'
+                : `נמצאו ${searchResults.length} מוצרים`)}
+            </p>
             {searchQuery && searchResults.length === 0 && (
               <div className="search-no-results">לא נמצאו מוצרים עבור "{searchQuery}"</div>
             )}
             {searchResults.length > 0 && (
               <ul className="search-results-list">
                 {searchResults.map(product => (
-                  <li key={product.id} className="search-result-item" onClick={() => handleSelectProduct(product)}>
+                  <li key={product.id}>
+                    {/* כפתור ולא li עם onClick: li לא מקבל מיקוד, ולכן
+                        התוצאות היו בלתי נגישות ממקלדת. alt ריק כי השם
+                        כתוב ממש לידה, והקורא היה אומר אותו פעמיים. */}
+                    <button type="button" className="search-result-item" onClick={() => handleSelectProduct(product)}>
                     {product.image_url
-                      ? <img src={product.image_url} alt={product.name} className="search-result-img" />
+                      ? <img src={product.image_url} alt="" className="search-result-img" />
                       : <div className="search-result-no-img"><ImageOff size={24} aria-hidden="true" /></div>
                     }
                     <div className="search-result-info">
@@ -162,6 +175,7 @@ function Navbar() {
                         {product.in_stock !== false ? 'במלאי' : 'אזל'}
                       </span>
                     </div>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -172,14 +186,26 @@ function Navbar() {
       )}
 
       {/* Side Drawer */}
-      <div className={`nav-drawer ${menuOpen ? 'open' : ''}`}>
+      {/* inert כשסגור: התפריט ממתין מחוץ למסך, ובלי זה כפתור הסגירה
+          שלו היה תחנת ה-Tab הראשונה בכל עמוד — בלתי נראית. */}
+      <div
+        id="nav-drawer"
+        ref={drawerRef}
+        className={`nav-drawer ${menuOpen ? 'open' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="תפריט"
+        tabIndex={-1}
+        inert={!menuOpen || undefined}
+      >
         <div className="nav-drawer-header">
           <span className="nav-drawer-logo"><Wrench size={20} aria-hidden="true" /> טכניק טמבור</span>
-          <button className="nav-close-btn" onClick={() => setMenuOpen(false)} aria-label="סגור תפריט"><X size={20} aria-hidden="true" /></button>
+          <button ref={drawerCloseRef} className="nav-close-btn" onClick={() => setMenuOpen(false)} aria-label="סגור תפריט"><X size={20} aria-hidden="true" /></button>
         </div>
-        <nav className="nav-drawer-links">
+        <nav className="nav-drawer-links" aria-label="ניווט ראשי">
           {NAV_ITEMS.map(({ key, path, label, Icon }) => (
-            <button key={key} className={`nav-drawer-item ${currentPage === key ? 'active' : ''}`} onClick={() => handleNav(path)}>
+            <button key={key} className={`nav-drawer-item ${currentPage === key ? 'active' : ''}`} onClick={() => handleNav(path)}
+              aria-current={currentPage === key ? 'page' : undefined}>
               <span className="nav-item-icon"><Icon size={18} aria-hidden="true" /></span>{label}
             </button>
           ))}
@@ -193,9 +219,11 @@ function Navbar() {
       </div>
 
       {/* Top Navbar */}
-      <header className={`navbar ${scrolled ? 'scrolled' : ''}`}>
+      {/* inert מאחורי התפריט ומאחורי חלון החיפוש, כמו שאר העמוד */}
+      <header className={`navbar ${scrolled ? 'scrolled' : ''}`} inert={menuOpen || searchOpen || undefined}>
         <div className="navbar-right">
-          <button className="hamburger-btn" onClick={() => setMenuOpen(true)} aria-label="פתח תפריט">
+          <button className="hamburger-btn" onClick={() => setMenuOpen(true)} aria-label="פתח תפריט"
+            aria-expanded={menuOpen} aria-controls="nav-drawer">
             <span /><span /><span />
           </button>
           {/* navbar-home-btn הוא רק מודיפייר: הוא מסתיר את הכפתור מתחת
@@ -216,18 +244,19 @@ function Navbar() {
           <button className="navbar-icon-btn" onClick={openWishlist} title="רשימת משאלות" aria-label={`רשימת משאלות${wishlistCount > 0 ? ` — ${wishlistCount} מוצרים` : ''}`}>
             <Heart size={20} aria-hidden="true" />
             {wishlistCount > 0 && (
-              <span className="navbar-wishlist-count">{wishlistCount}</span>
+              <span className="navbar-wishlist-count" aria-hidden="true">{wishlistCount}</span>
             )}
           </button>
-          <button className={`navbar-link navbar-link--page ${currentPage === 'about' ? 'active' : ''}`} onClick={() => handleNav('/about')}>אודות</button>
-          <button className={`navbar-link navbar-link--page ${currentPage === 'contact' ? 'active' : ''}`} onClick={() => handleNav('/contact')}>צור קשר</button>
-          <button className={`navbar-link navbar-link--page ${currentPage === 'returns' ? 'active' : ''}`} onClick={() => handleNav('/returns')}>החזרים</button>
+          <button className={`navbar-link navbar-link--page ${currentPage === 'about' ? 'active' : ''}`} onClick={() => handleNav('/about')} aria-current={currentPage === 'about' ? 'page' : undefined}>אודות</button>
+          <button className={`navbar-link navbar-link--page ${currentPage === 'contact' ? 'active' : ''}`} onClick={() => handleNav('/contact')} aria-current={currentPage === 'contact' ? 'page' : undefined}>צור קשר</button>
+          <button className={`navbar-link navbar-link--page ${currentPage === 'returns' ? 'active' : ''}`} onClick={() => handleNav('/returns')} aria-current={currentPage === 'returns' ? 'page' : undefined}>החזרים</button>
 
           {/* כפתור עגלה — תמיד מוצג */}
-          <button className="navbar-cart-btn" onClick={() => navigate('/cart')} aria-label="עגלת קניות">
+          <button className="navbar-cart-btn" onClick={() => navigate('/cart')}
+            aria-label={`עגלת קניות${cartCount > 0 ? ` — ${cartCount} פריטים` : ''}`}>
             <ShoppingCart size={20} aria-hidden="true" />
             {cartCount > 0 && (
-              <span className="navbar-cart-badge">{cartCount}</span>
+              <span className="navbar-cart-badge" aria-hidden="true">{cartCount}</span>
             )}
           </button>
         </div>

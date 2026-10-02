@@ -75,7 +75,7 @@
 .product-buy-bar-qty {
   font-size: var(--font-size-small);
   font-weight: 600;
-  color: rgba(var(--color-navy-rgb), 0.5);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 .product-buy-bar-add {

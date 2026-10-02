@@ -3,12 +3,15 @@
  */
 import { MapPin, Phone, Clock, ArrowLeft } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
+import { usePageTitle } from '../hooks/usePageTitle';
 import {
   ADDRESS, PHONES, HOURS, hoursRangePadded, todayRow,
 } from '../utils/storeInfo';
 
 /** מציג את עמוד יצירת הקשר. */
 function Contact() {
+  usePageTitle('צור קשר');
+
   /* נקרא פעם אחת לכל רינדור ולא לכל שורה: שלוש הקריאות היו יכולות
      ליפול משני צדי חצות ולסמן שני ימים. */
   const today = todayRow();

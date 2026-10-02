@@ -66,7 +66,7 @@
   align-items: center;
   gap: 6px;
   font-size: var(--font-size-small);
-  color: rgba(var(--color-navy-rgb), 0.55);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 .product-reviews-summary .star {
@@ -129,7 +129,7 @@
 }
 
 .product-review-top .review-date {
-  color: rgba(var(--color-navy-rgb), 0.5);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 /* the stars go to the far end of the byline row */
@@ -157,7 +157,7 @@
 
 .product-reviews-empty p {
   font-size: 0.95rem;
-  color: rgba(var(--color-navy-rgb), 0.6);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 /* ---- States ------------------------------------------------------------- */
@@ -183,8 +183,9 @@
       background: var(--color-surface);
     }
 
-  .product-reviews .review-field label {
-      color: rgba(var(--color-navy-rgb), 0.6);
+  .product-reviews .review-field label,
+  .product-reviews .review-field-label {
+      color: rgba(var(--color-navy-rgb), 0.7);
     }
 
   .product-reviews .review-field input,

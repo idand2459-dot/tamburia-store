@@ -31,7 +31,7 @@
   padding: 4px 0;
   border: none;
   background: none;
-  color: rgba(var(--color-navy-rgb), 0.6);
+  color: rgba(var(--color-navy-rgb), 0.7);
   font-family: var(--font-family-base);
   font-size: 0.88rem;
   cursor: pointer;
@@ -80,6 +80,14 @@
   color: var(--color-red);
 }
 
+/* "fields marked * are required": the asterisk alone is a convention, and a
+   colour mark that explains nothing (WCAG 3.3.2) */
+.checkout-required-note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(var(--color-navy-rgb), 0.7);
+}
+
 /* 48px, the height of every other input the redesign has drawn. The textarea
    opts out of the fixed height and keeps its rows. */
 .checkout-field input,
@@ -105,7 +113,7 @@
 
 .checkout-field input::placeholder,
 .checkout-field textarea::placeholder {
-  color: rgba(var(--color-navy-rgb), 0.35);
+  color: rgba(var(--color-navy-rgb), 0.65);
 }
 
 /* Out of the delivery area. Red text and a Ban beside it, under the field it

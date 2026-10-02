@@ -23,7 +23,7 @@
 .proj-items-title {
   font-size: 0.8rem;
   font-weight: var(--font-weight-bold);
-  color: rgba(var(--color-navy-rgb), 0.6);
+  color: rgba(var(--color-navy-rgb), 0.7);
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 12px;
@@ -64,7 +64,7 @@
 
 .proj-item-sku {
   font-size: 0.78rem;
-  color: rgba(var(--color-navy-rgb), 0.55);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 .proj-item-price {
@@ -94,7 +94,7 @@
 
 .proj-estimate-label {
   font-size: 0.8rem;
-  color: rgba(var(--color-navy-rgb), 0.6);
+  color: rgba(var(--color-navy-rgb), 0.7);
   font-weight: 600;
   letter-spacing: 0.5px;
 }
@@ -115,14 +115,14 @@
 .proj-estimate-plus {
   font-size: 1.4rem;
   font-weight: var(--font-weight-extrabold);
-  color: rgba(var(--color-navy-rgb), 0.45);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 /* not italic: a synthesised Hebrew oblique slants letterforms that were never
    drawn to slant — the same call made on the WhyUs quote */
 .proj-estimate-note {
   font-size: 0.8rem;
-  color: rgba(var(--color-navy-rgb), 0.6);
+  color: rgba(var(--color-navy-rgb), 0.7);
 }
 
 .proj-add-btn {
@@ -160,7 +160,7 @@
 
 .proj-add-btn.disabled {
   background: rgba(var(--color-navy-rgb), 0.12);
-  color: rgba(var(--color-navy-rgb), 0.45);
+  color: rgba(var(--color-navy-rgb), 0.7);
   cursor: not-allowed;
   box-shadow: none;
 }
@@ -173,7 +173,7 @@
 
 .proj-item.found .proj-item-name { color: var(--color-navy); }
 
-.proj-item.missing .proj-item-name { color: rgba(var(--color-navy-rgb), 0.5); }
+.proj-item.missing .proj-item-name { color: rgba(var(--color-navy-rgb), 0.7); }
 
 .proj-item.found .proj-item-price { color: var(--color-navy); }
 

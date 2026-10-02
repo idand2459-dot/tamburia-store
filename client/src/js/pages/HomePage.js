@@ -14,6 +14,7 @@ import ReviewsCarousel from '../features/catalog/ReviewsCarousel';
 import FAQ from './FAQ';
 import Reveal from '../components/Reveal';
 import { useStore } from '../context/storeContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { formatRating } from '../utils/rating';
 import scrollToSection from '../utils/scrollToSection';
 import { CATEGORIES_SELECTOR, PAINT_CALC_SELECTOR } from '../utils/sections';
@@ -47,6 +48,9 @@ function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { addBundleToCart } = useStore();
+  // null: כותרת הבית מ-index.html. המגירות שנפתחות מעל העמוד הזה
+  // קובעות את שלהן ומחזירות את זו בסגירה.
+  usePageTitle(null);
 
   useScrollToSection(location.state);
 

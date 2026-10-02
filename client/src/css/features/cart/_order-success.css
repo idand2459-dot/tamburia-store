@@ -82,7 +82,7 @@
 }
 
 .order-success-details dt {
-  color: rgba(var(--color-navy-rgb), 0.55);
+  color: rgba(var(--color-navy-rgb), 0.7);
   font-size: 0.85rem;
 }
 
@@ -136,7 +136,7 @@
 }
 
 .order-success-contact p {
-  color: rgba(var(--color-navy-rgb), 0.6);
+  color: rgba(var(--color-navy-rgb), 0.7);
   font-size: 0.85rem;
   margin: 0 0 12px;
 }

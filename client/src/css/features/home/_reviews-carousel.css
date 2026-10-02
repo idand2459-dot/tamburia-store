@@ -90,7 +90,7 @@
 
 .reviews-section .reviewer-name { color: var(--color-navy); }
 
-.reviews-section .review-date { color: rgba(var(--color-navy-rgb), 0.55); }
+.reviews-section .review-date { color: rgba(var(--color-navy-rgb), 0.7); }
 
 .review-card-stars { margin-right: auto; }
 
@@ -136,8 +136,34 @@
 .carousel-dots {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 6px;
   margin-top: 20px;
+}
+
+/* Pause / play for the automatic rotation (WCAG 2.2.2), at the start of the
+   dots row: the control that stops the movement sits with the controls that
+   show where it is. */
+.carousel-pause {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-inline-end: 6px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.5);
+  background: var(--color-surface);
+  color: var(--color-navy);
+  cursor: pointer;
+  padding: 0;
+}
+
+.carousel-pause:hover { background: var(--color-blush-deep); }
+
+.carousel-pause:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
 }
 
 /* width, not transform: scale, is what the active dot animates below: a 20px
@@ -147,7 +173,8 @@
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: rgba(var(--color-navy-rgb), 0.22);
+  /* 0.5, not 0.22: a dot is a control and has to be seen at 3:1 (WCAG 1.4.11) */
+  background: rgba(var(--color-navy-rgb), 0.5);
   border: none;
   cursor: pointer;
   padding: 0;

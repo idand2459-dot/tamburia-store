@@ -47,7 +47,7 @@
    page belongs to the CTAs and to Saturday's "closed". */
 .hours-today-mark {
   background: rgba(var(--color-purple-rgb), 0.12);
-  color: var(--color-purple);
+  color: var(--color-purple-deep);
   border-radius: var(--radius-pill);
   padding: 2px 9px;
   font-size: 0.68rem;
