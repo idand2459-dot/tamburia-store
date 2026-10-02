@@ -95,3 +95,11 @@
 .hours-row.is-closed .hours-time {
   color: var(--color-red);
 }
+
+/* Closed *and* today — Saturday, or a Friday evening after closing. The blush
+   fill drops brand red to 4.3:1, under AA's 4.5; the darker red is 5.2:1 on it.
+   The audit only sees this row on the days it is today, which is how it got
+   past the a11y pass. */
+.hours-row.is-today.is-closed .hours-time {
+  color: var(--color-red-dark);
+}
