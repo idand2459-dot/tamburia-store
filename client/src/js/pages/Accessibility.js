@@ -10,26 +10,58 @@
  * שורה בה נבדקת ב-npm run a11y או שנעשתה בקוד. מי שמוסיף או מוריד
  * התאמה — מעדכן גם כאן.
  *
- * ┌──────────────────────────────────────────────────────────────────┐
- * │ למילוי לפני העלייה לאוויר: הערכים ב-FILL_IN למטה.               │
- * │ כל ערך שנשאר null מוצג באתר כתיבה צהובה בולטת "למילוי".         │
- * └──────────────────────────────────────────────────────────────────┘
+ * FILL_IN למטה הם הפרטים שרק בעל החנות יכול לתת. כל ערך שהופך ל-null
+ * מוצג באתר כתיבה צהובה בולטת "[למילוי]", כדי שחוסר לא יעבור בשקט.
+ *
+ * הסדרי הנגישות בחנות כתובים כמו שהם, כולל מה שאינו נגיש — המדרגה,
+ * המעברים הצרים, היעדר חניית נכים ושירותים. הצהרה שמשאירה אותם בחוץ
+ * שולחת אדם בכיסא גלגלים לחנות שהוא לא יוכל להיכנס אליה.
  */
 import {
   Accessibility as AccessibilityIcon, ListChecks, AlertTriangle, Store, UserRound, CalendarDays,
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { ADDRESS, PHONES } from '../utils/storeInfo';
+
+/** קישור טלפון של החנות, בכיוון שמאל-לימין כדי שהמספר לא יתהפך. */
+function Tel({ phone }) {
+  return <a href={`tel:${phone.tel}`} dir="ltr">{phone.display}</a>;
+}
 
 const FILL_IN = {
-  coordinatorName: null,    // שם רכז/ת הנגישות
-  coordinatorPhone: null,   // טלפון ישיר לפניות נגישות
-  coordinatorEmail: null,   // כתובת דוא"ל לפניות נגישות
-  lastUpdated: null,        // תאריך עדכון ההצהרה, למשל '15 באוקטובר 2026'
-  // הסדרי הנגישות בחנות הפיזית, בבר כוכבא 52: חניית נכים, כניסה ללא
-  // מדרגות, עמדת שירות נמוכה וכו'. מערך של משפטים, או null.
-  storeArrangements: null,
+  coordinatorName: 'אנרי דביר',
+  coordinatorPhone: '050-6735040',
+  coordinatorEmail: 'idand2459@gmail.com',
+  responseTime: 'עד 7 ימי עסקים',
+  lastUpdated: '02.10.2026',
+  // הסדרי הנגישות בחנות, בשלושה נושאים. null בכל אחד מהם מציג placeholder.
+  storeArrival: [
+    'החניה היא חניה ברחוב, צמודה לחנות (מדרכה בסימון אפור). אין חניית נכים מסומנת בסמוך לחנות.',
+    'תחנת האוטובוס הקרובה נמצאת במרחק של כ-200 עד 300 מטר מהחנות.',
+  ],
+  storePhysical: [
+    'בכניסה לחנות יש מדרגה אחת, ואין רמפה.',
+    'החנות קטנה והמעברים בה צרים, ולכן היא אינה נגישה לכיסא גלגלים מבפנים.',
+    <>
+      לקוחות שמתקשים להיכנס מקבלים שירות מלא מחוץ לחנות: הצוות מביא את המוצרים
+      החוצה, נותן ייעוץ ומבצע את התשלום מחוץ לחנות. אפשר להתקשר מראש
+      ל-<Tel phone={PHONES.store} /> או ל-<Tel phone={PHONES.mobile} />, כדי שנהיה מוכנים.
+    </>,
+    'כלבי נחייה מוזמנים להיכנס.',
+    'אין בחנות שירותים ללקוחות.',
+  ],
+  storeRemote: [
+    'אפשר להזמין דרך האתר, בטלפון או בוואטסאפ, בלי להגיע לחנות.',
+    'את ההזמנה אפשר לקבל במשלוח לפתח תקווה, גני תקווה וקריית אונו, או לאסוף בשירות מחוץ לחנות.',
+  ],
 };
+
+const STORE_SECTIONS = [
+  { key: 'arrival', title: 'הגעה לחנות', items: FILL_IN.storeArrival, missing: 'חניה ותחבורה ציבורית' },
+  { key: 'physical', title: 'נגישות פיזית ושירות במקום', items: FILL_IN.storePhysical, missing: 'כניסה, מעברים, שירותים' },
+  { key: 'remote', title: 'שירות מרחוק', items: FILL_IN.storeRemote, missing: 'הזמנה ומשלוח' },
+];
 
 const ADJUSTMENTS = [
   'קישור "דלג לתוכן" בתחילת כל עמוד, שמוביל ישירות לתוכן העיקרי.',
@@ -123,25 +155,28 @@ function Accessibility() {
             {LIMITATIONS.map((text) => <li key={text}>{text}</li>)}
           </ul>
           <p className="a11y-text">
-            נתקלתם ברכיב שאינו נגיש? נשמח לדעת. פנו לרכז הנגישות, ונטפל בכך בהקדם.
+            נתקלתם ברכיב שאינו נגיש? נשמח לדעת. פנו לרכז הנגישות (הפרטים למטה).
+            זמן המענה לפניות בנושא נגישות: <Filled value={FILL_IN.responseTime} label="זמן מענה" />.
           </p>
         </section>
 
         <section className="a11y-card">
           <span className="a11y-card-icon"><Store size={22} strokeWidth={1.75} aria-hidden="true" /></span>
           <h2 className="a11y-card-title">הסדרי נגישות בחנות</h2>
-          {FILL_IN.storeArrangements ? (
-            <ul className="a11y-list">
-              {FILL_IN.storeArrangements.map((text) => <li key={text}>{text}</li>)}
-            </ul>
-          ) : (
-            <p className="a11y-text">
-              <Placeholder>
-                הסדרי הנגישות בחנות בבר כוכבא 52, פתח תקווה — חניית נכים, כניסה,
-                מעברים, עמדת שירות, שירותים נגישים (או ציון שאינם קיימים)
-              </Placeholder>
-            </p>
-          )}
+          <p className="a11y-text">החנות נמצאת ברחוב {ADDRESS.full}.</p>
+          {STORE_SECTIONS.map(({ key, title, items, missing }) => (
+            <div key={key} className="a11y-subsection">
+              <h3 className="a11y-subtitle">{title}</h3>
+              {items ? (
+                <ul className="a11y-list">
+                  {/* מפתח לפי מיקום: חלק מהפריטים הם JSX ולא מחרוזת */}
+                  {items.map((item, i) => <li key={i}>{item}</li>)}
+                </ul>
+              ) : (
+                <p className="a11y-text"><Placeholder>{missing}</Placeholder></p>
+              )}
+            </div>
+          ))}
         </section>
 
         <section className="a11y-card a11y-contact">
@@ -159,7 +194,7 @@ function Accessibility() {
               <dt>טלפון</dt>
               <dd>
                 {FILL_IN.coordinatorPhone
-                  ? <a href={`tel:${FILL_IN.coordinatorPhone.replace(/\D/g, '')}`}>{FILL_IN.coordinatorPhone}</a>
+                  ? <a href={`tel:${FILL_IN.coordinatorPhone.replace(/\D/g, '')}`} dir="ltr">{FILL_IN.coordinatorPhone}</a>
                   : <Placeholder>טלפון</Placeholder>}
               </dd>
             </div>
@@ -167,9 +202,13 @@ function Accessibility() {
               <dt>דוא"ל</dt>
               <dd>
                 {FILL_IN.coordinatorEmail
-                  ? <a href={`mailto:${FILL_IN.coordinatorEmail}`}>{FILL_IN.coordinatorEmail}</a>
+                  ? <a href={`mailto:${FILL_IN.coordinatorEmail}`} dir="ltr">{FILL_IN.coordinatorEmail}</a>
                   : <Placeholder>כתובת דוא"ל</Placeholder>}
               </dd>
+            </div>
+            <div>
+              <dt>זמן מענה</dt>
+              <dd><Filled value={FILL_IN.responseTime} label="זמן מענה לפניות" /></dd>
             </div>
           </dl>
         </section>
