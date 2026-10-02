@@ -10,6 +10,9 @@
 @import './base/_variables.css';
 @import './base/_reset.css';
 @import './base/_typography.css';
+/* the skip link, .visually-hidden and the zero-specificity focus fallback.
+   Last in base so the fallback sits under every component's own focus rule. */
+@import './base/_accessibility.css';
 
 /* 2. Layout */
 @import './layout/_grid.css';
@@ -155,5 +158,8 @@
    out of _returns.css at the 300-line target; it declares nothing that
    file does, so it simply follows it */
 @import './features/pages/_returns-steps.css';
+/* the accessibility statement; the returns page's reading frame, under its own
+   classes, so it follows it */
+@import './features/pages/_accessibility.css';
 @import './features/pages/_not-found.css';
 @import './features/home/_faq.css';

@@ -23,6 +23,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Returns from './pages/Returns';
+import Accessibility from './pages/Accessibility';
 
 /** מציג את האפליקציה ומנהל את המצב המשותף לכל המסכים. */
 function App() {
@@ -57,6 +58,7 @@ function App() {
           <Route path="about" element={<About />} />
           <Route path="contact" element={<Contact />} />
           <Route path="returns" element={<Returns />} />
+          <Route path="accessibility" element={<Accessibility />} />
 
           {/* מודאלים עם כתובת — המסגרת מציגה אותם מעל עמוד הבית */}
           <Route path="cart" element={<HomePage />} />

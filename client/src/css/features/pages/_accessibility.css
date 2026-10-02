@@ -1,0 +1,141 @@
+/* ==========================================================
+   Accessibility statement — /accessibility
+
+   Same reading frame as the returns page (an 820px measure,
+   1rem at 1.8, one white card per topic on the blush), because
+   it is the same kind of page: legal text people actually need
+   to read. Its own classes rather than borrowing .returns-*, so
+   a change to one page cannot quietly restyle the other.
+
+   .a11y-placeholder is meant to be loud. It marks the details
+   only the owner can supply (the coordinator, the date, the
+   physical store's arrangements), and has to be impossible to
+   miss on a last look before the site goes live.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.a11y-sections {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 56px 24px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.a11y-card {
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 32px;
+}
+
+.a11y-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+  margin-bottom: 16px;
+}
+
+.a11y-card-title {
+  font-size: 1.3rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  margin: 0 0 14px;
+}
+
+.a11y-text {
+  font-size: 1rem;
+  color: rgba(var(--color-navy-rgb), 0.8);
+  line-height: 1.8;
+  margin: 0;
+}
+
+.a11y-text + .a11y-text,
+.a11y-list + .a11y-text,
+.a11y-text + .a11y-list {
+  margin-top: 14px;
+}
+
+.a11y-text strong {
+  color: var(--color-navy);
+}
+
+.a11y-list {
+  margin: 0;
+  padding-inline-start: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: rgba(var(--color-navy-rgb), 0.8);
+  line-height: 1.7;
+}
+
+.a11y-list li::marker {
+  color: var(--color-red);
+}
+
+.a11y-contact-list {
+  margin: 16px 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.a11y-contact-list > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
+}
+
+.a11y-contact-list dt {
+  min-width: 56px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+}
+
+.a11y-contact-list dd {
+  margin: 0;
+  color: rgba(var(--color-navy-rgb), 0.8);
+}
+
+.a11y-contact-list a {
+  color: var(--color-red);
+  font-weight: 600;
+}
+
+/* black on amber: 12:1, and nothing else on the site is this colour */
+.a11y-placeholder {
+  display: inline;
+  padding: 2px 8px;
+  border: 2px dashed #92400e;
+  border-radius: 6px;
+  background: #fde68a;
+  color: #1c1917;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.9;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 560px) {
+  .a11y-sections {
+      padding: 32px 16px 56px;
+      gap: 16px;
+    }
+
+  .a11y-card {
+      padding: 22px;
+    }
+}
