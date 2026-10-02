@@ -84,6 +84,24 @@
   color: var(--color-red);
 }
 
+/* the store section's three topics: arrival, physical access, remote service */
+.a11y-subsection {
+  margin-top: 22px;
+}
+
+.a11y-subtitle {
+  font-size: 1.05rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  margin: 0 0 10px;
+}
+
+.a11y-list a {
+  color: var(--color-red);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .a11y-contact-list {
   margin: 16px 0 0;
   display: grid;
