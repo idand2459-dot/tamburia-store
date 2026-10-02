@@ -1,0 +1,370 @@
+/* ==========================================================
+   Admin stats — the statistics tab: the number cards, the bar
+   chart, the top-categories list and the out-of-stock list
+
+   The last two arrived from _catalog.css in the previous step;
+   StatsTab is the only thing that renders them.
+
+   The old file's 480px block is gone: it set .stats-grid to
+   repeat(2, 1fr), which the 900px block above already applies
+   at that width.
+
+   Brought into the redesigned panel rather than redesigned: the
+   layout is unchanged and what moved is the scale — 16px body
+   text and 48px buttons, so the tab can be read and used from a
+   phone. The reset row at the top is the one addition.
+   ========================================================== */
+
+/* ===== STATS PAGE ===== */
+.stats-page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* ---- Elements ------------------------------------------------------------------ */
+
+/* While the counting range is being fetched. The sums wait for it rather than
+   drawing all-time numbers and then correcting themselves. */
+.stats-loading {
+  display: flex;
+  justify-content: center;
+  padding: 80px 0;
+}
+
+/* The counting range and the button that changes it. Nothing is deleted by it:
+   it moves the date the sums are counted from, which is why the range is always
+   spelled out beside it and why the undo sits in the same row. */
+.stats-reset {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.stats-reset-since {
+  flex: 1;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-body);
+}
+
+.stats-reset-btn,
+.stats-reset-undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+/* כרטיסי מכירות */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.stats-card {
+  background: white;
+  border-radius: 18px;
+  padding: 24px 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.2s;
+}
+
+.stats-card-icon { font-size: 1.6rem; }
+
+.stats-card-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.stats-card-label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-body);
+  font-weight: 500;
+}
+
+.stats-card-sub {
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-small);
+}
+
+/* תחתית */
+.stats-bottom {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+.stats-section {
+  background: white;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+
+.stats-section h3 {
+  font-size: var(--font-size-h3);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stats-side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* גרף עמודות */
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 160px;
+  padding-bottom: 28px;
+  position: relative;
+}
+
+.bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  gap: 4px;
+}
+
+.bar-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text);
+  min-height: 16px;
+}
+
+.bar-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+
+.bar-fill {
+  width: 100%;
+  background: linear-gradient(to top, var(--color-navy), var(--color-blue));
+  border-radius: 6px 6px 0 0;
+  min-height: 4px;
+  transition: height 0.3s ease;
+}
+
+.bar-label {
+  font-size: 0.7rem;
+  color: var(--color-text-faint);
+  text-align: center;
+  white-space: nowrap;
+  position: absolute;
+  bottom: 0;
+}
+
+.restock-btn {
+  min-height: 48px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-success-bg);
+  color: var(--color-green);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.stats-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-body);
+}
+
+.stats-more {
+  font-size: 0.78rem;
+  color: var(--color-text-faint);
+  text-align: center;
+  padding-top: 4px;
+}
+
+/* קטגוריות נמכרות */
+.top-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.top-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #f8f8f6;
+  border-radius: 10px;
+}
+
+.top-cat-rank {
+  font-size: 0.78rem;
+  color: var(--color-text-faint);
+  font-weight: 700;
+  min-width: 24px;
+}
+
+.top-cat-icon { font-size: 1rem; }
+
+.top-cat-name {
+  flex: 1;
+  font-size: 0.88rem;
+  color: #333;
+}
+
+.top-cat-count {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text);
+  background: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* מוצרים שאזלו */
+.out-of-stock-count {
+  background: var(--color-red);
+  color: white;
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.out-of-stock-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.out-of-stock-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--color-error-bg);
+  border-radius: 10px;
+  gap: 10px;
+}
+
+.out-of-stock-item span {
+  font-size: 0.88rem;
+  color: #333;
+  flex: 1;
+}
+
+/* ---- States -------------------------------------------------------------------- */
+
+.stats-card:hover { transform: translateY(-2px); }
+
+.restock-btn:hover { background: var(--color-green); color: white; }
+
+.stats-reset-btn:hover,
+.stats-reset-undo:hover {
+  border-color: var(--color-navy);
+  color: var(--color-navy);
+}
+
+.stats-reset-btn:focus-visible,
+.stats-reset-undo:focus-visible,
+.restock-btn:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+/* ---- Variants ------------------------------------------------------------------ */
+
+.stats-card.accent {
+  background: linear-gradient(135deg, var(--color-navy), var(--color-navy-deep));
+  color: white;
+}
+
+.stats-card.accent .stats-card-value { color: white; }
+
+.stats-card.accent .stats-card-label { color: rgba(255,255,255,0.6); }
+
+.stats-card.accent .stats-card-sub { color: rgba(255,255,255,0.4); }
+
+/* ---- Responsive ---------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+
+  .stats-bottom { grid-template-columns: 1fr; }
+
+  .stats-section { padding: 18px 16px; }
+
+  /* the button goes full width once the range wraps onto its own line */
+  .stats-reset-btn,
+  .stats-reset-undo {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* ---- Dark mode ----------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  /* סטטיסטיקות */
+  .stats-card,
+  .stats-reset-btn,
+  .stats-reset-undo {
+    background: var(--color-navy);
+    border-color: var(--color-surface-dark);
+    color: var(--color-text-dark);
+  }
+
+  .stats-card-value { color: var(--color-text-dark); }
+
+  .stats-section { background: var(--color-navy); }
+
+  .stats-section h3 { color: var(--color-text-dark); }
+
+  .bar-fill { background: linear-gradient(to top, var(--color-blue), #a8dadc); }
+
+  .top-cat-row { background: var(--color-bg-dark); }
+
+  .top-cat-name { color: #ccc; }
+
+  .top-cat-count { background: var(--color-navy); color: var(--color-text-dark); }
+
+  .out-of-stock-item { background: #1f0d0d; }
+
+  .out-of-stock-item span { color: #ccc; }
+}

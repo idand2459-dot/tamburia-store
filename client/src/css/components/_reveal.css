@@ -1,0 +1,84 @@
+/* ==========================================================================
+   Scroll reveal
+
+   Built on animations, not transitions, and that is the whole point of this
+   file. The obvious implementation is `transition: opacity, transform` on
+   .reveal plus `transform: none` on .is-visible — but the elements that get
+   revealed are the components' own root elements, and those already declare a
+   transition of their own:
+
+     _category-grid.css:  .category-card { transition: transform 0.3s
+                       cubic-bezier(0.34,1.4,0.64,1), box-shadow 0.3s ease; }
+     _whyus.css:    .whyus-point   { transition: background 0.2s; }
+
+   Both are one class, exactly like .reveal, and both live in partials that
+   app.css imports after this one — so they would win, and the reveal would
+   lose its opacity transition entirely and snap into place. Raising .reveal's
+   specificity to beat them would work but would then hijack the hover
+   transition those components need.
+
+   Animations sidestep the fight: they are a different property, they outrank
+   every normal author declaration while they run, and with no forwards fill
+   they leave nothing behind. Once an element has revealed, its own hover
+   transform and transition behave exactly as they did before.
+   ========================================================================== */
+
+.reveal {
+  opacity: 0;
+}
+
+/* animation-fill-mode is `backwards`, not `both`, on purpose:
+   - backwards holds the first keyframe through animation-delay, which is what
+     makes the stagger read as "wait, then rise" instead of a flash;
+   - not forwards, so the moment the animation ends the element drops back to
+     its own styles. A forwards fill would pin transform: none onto the element
+     and silently kill .category-card:hover's lift for the rest of the session.
+   The base opacity: 1 below is what holds the element visible afterwards. */
+.reveal.is-visible {
+  opacity: 1;
+  animation-duration: 0.8s;
+  animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+  animation-delay: var(--reveal-delay, 0ms);
+  animation-fill-mode: backwards;
+}
+
+.reveal--up.is-visible   { animation-name: reveal-up; }
+.reveal--zoom.is-visible { animation-name: reveal-zoom; }
+.reveal--tilt.is-visible { animation-name: reveal-tilt; }
+
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes reveal-zoom {
+  from { opacity: 0; transform: translateY(20px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* transform-origin is set in both keyframes rather than on the element: the
+   card should pivot up from its bottom edge, but leaving that origin on the
+   element afterwards would move the pivot of its own hover scale too. */
+@keyframes reveal-tilt {
+  from {
+    opacity: 0;
+    transform: perspective(900px) translateY(40px) rotateX(10deg);
+    transform-origin: 50% 100%;
+  }
+  to {
+    opacity: 1;
+    transform: perspective(900px) translateY(0) rotateX(0deg);
+    transform-origin: 50% 100%;
+  }
+}
+
+/* Reduced motion: useReveal already reports visible straight away, so
+   .is-visible is on from the first render. This kills the animation that would
+   otherwise still run on it. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal.is-visible {
+    opacity: 1;
+    animation: none;
+  }
+}

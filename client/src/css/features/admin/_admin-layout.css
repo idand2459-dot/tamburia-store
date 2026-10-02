@@ -1,0 +1,259 @@
+/* ==========================================================
+   Admin layout — the dashboard frame, its header, the wide-screen
+   tab row, and the shared empty / error states
+
+   The phone's bottom bar and the sheet it opens are
+   features/admin/_admin-nav.css. Each tab's own styles are in
+   _admin-products.css, _admin-form.css, _admin-filters.css,
+   _admin-import.css, _admin-orders.css, _admin-order-card.css
+   and _admin-stats.css.
+
+   The panel is used on a phone at the counter and on the shop
+   computer, so everything here is sized for a thumb: 48px is the
+   floor for anything tappable and 16px the floor for body text.
+
+   Two rules the old file opened with are gone: a first .admin
+   block that the redesign further down overrode in every
+   declaration (900px max-width, 40px margin) and
+   `.admin-products h2`, whose container no JSX renders. The
+   `.admin h1` rule went with the redesign too — the only h1 in
+   the panel is .admin-title, which sizes itself.
+   ========================================================== */
+
+.admin {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px 60px;
+  direction: rtl;
+}
+
+/* The admin's own page backdrop. --color-bg turned blush when the storefront
+   went warm, and the panel is a work tool rather than the shop, so it keeps the
+   neutral cool slate that --color-bg used to be.
+
+   Why a fixed pseudo-element and not `background` on .admin: .admin is the
+   outermost element the /admin route renders, but it is a centred 1100px
+   column, so painting it would leave the page background showing down both
+   sides. This covers the viewport instead. z-index: -1 puts it under the
+   panel's own content while still painting over the root background. */
+.admin::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--color-bg-admin);
+  pointer-events: none;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 20px 0 0;
+  margin-bottom: 20px;
+}
+
+.admin-title {
+  flex: 1;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+}
+
+.admin-count {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--color-navy-rgb), 0.06);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* The new-order sound toggle. Icon plus a word, because a crossed-out speaker
+   on its own is the kind of thing you have to stop and decode. */
+.admin-sound-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.admin-back-link {
+  padding: 12px 4px;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* The wide-screen tab row. */
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 28px;
+  border-bottom: 2px solid rgba(var(--color-navy-rgb), 0.1);
+}
+
+.admin-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 18px;
+  margin-bottom: -2px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+/* The line of counts some tabs open with ("12 reviews, 3 waiting"). Shared, so
+   it is here rather than in whichever tab happens to render one; it replaces
+   .admin-results-info and the inline margin ReviewsTab carried. */
+.admin-tab-summary {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-body);
+}
+
+.admin-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-h3);
+}
+
+/* הודעת כישלון של פעולת כתיבה בניהול.
+   אותה שפה חזותית של .checkout-alert בעגלה, אבל מחלקה משל הניהול —
+   שם שמדבר על משלוחים בתוך מסך המוצרים היה מבלבל. */
+.admin-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--color-red);
+  border-radius: var(--radius-sm);
+  background: var(--color-error-bg);
+  color: var(--color-red-dark);
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.admin-sound-btn:hover,
+.admin-back-link:hover {
+  color: var(--color-navy);
+}
+
+.admin-sound-btn.is-on {
+  border-color: rgba(var(--color-purple-rgb), 0.4);
+  color: var(--color-purple);
+}
+
+.admin-tab:hover {
+  color: var(--color-navy);
+}
+
+.admin-tab.is-active {
+  color: var(--color-navy);
+  font-weight: var(--font-weight-bold);
+  border-bottom-color: var(--color-red);
+}
+
+.admin-sound-btn:focus-visible,
+.admin-back-link:focus-visible,
+.admin-tab:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: -3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* lg — the phone: the tab row gives way to the bottom bar in _admin-nav.css,
+   and the content clears that bar's height plus the home-indicator inset. */
+@media (max-width: 900px) {
+  .admin {
+    padding: 0 16px calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .admin-header {
+    gap: 10px;
+    padding-top: 14px;
+    margin-bottom: 16px;
+  }
+
+  .admin-title { font-size: 1.2rem; }
+
+  .admin-tabs { display: none; }
+
+  /* On the phone the way out of the panel lives in the sheet, so the header
+     keeps only the title, the count and the sound toggle. */
+  .admin-back-link { display: none; }
+
+  .admin-sound-btn {
+    min-width: 48px;
+    padding: 0 12px;
+  }
+
+  .admin-sound-label { display: none; }
+}
+
+/* xs — the count moves off the title's line before the title starts wrapping. */
+@media (max-width: 430px) {
+  .admin-title { flex-basis: 100%; }
+}
+
+/* ---- Dark mode ----------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  /* the light text body used to give it in dark mode, before the storefront
+     stopped following the system theme (base/_reset.css) */
+  .admin { color: var(--color-text-dark); }
+
+  .admin::before { background: var(--color-bg-dark); }
+
+  .admin-title { color: var(--color-text-dark); }
+
+  .admin-count {
+    background: var(--color-surface-dark);
+    color: var(--color-text-faint);
+  }
+
+  .admin-sound-btn {
+    background: var(--color-navy);
+    border-color: var(--color-surface-dark);
+    color: var(--color-text-faint);
+  }
+
+  .admin-tabs { border-bottom-color: var(--color-surface-dark); }
+
+  .admin-tab:hover,
+  .admin-tab.is-active { color: var(--color-text-dark); }
+}

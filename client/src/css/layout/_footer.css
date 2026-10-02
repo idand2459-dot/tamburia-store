@@ -1,166 +1,306 @@
-/* ==========================================================================
-   Footer
-   ========================================================================== */
+/* ==========================================================
+   Footer — the four columns and the bottom bar
 
-/* ===== FOOTER ===== */
+   The floor under the page, painted --color-ink and carrying a
+   photograph of a pegboard wall under a heavy overlay — see
+   ::before. The FAQ above it is light now, so this is the page's
+   last dark/light edge and the red-to-purple hairline that marks
+   it is on this side of it, as everywhere else.
+
+   Dark in both themes, so the prefers-color-scheme block that
+   used to darken the gradient is gone — there is nothing left for
+   it to override.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+/* No margin-top: it had 60px, which opened a strip of page background between
+   the FAQ and the footer. The sections touch now, edge to edge. */
 .site-footer {
-  background: linear-gradient(135deg, #0a0a1a 0%, #1a1a2e 100%);
-  color: #ccc;
-  margin-top: 60px;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-ink);
   direction: rtl;
 }
 
+/* The backdrop layer: the pegboard photograph, with a flat --color-ink film
+   over it. Two layers of one `background`, the overlay first because the
+   first layer in the list is the top one. Every column keeps sitting over
+   both, because the two content blocks below carry z-index: 1.
+
+   0.7, not the 0.78 this was specified at: the source is already almost
+   black — its mean channel values are 9/3/12 — and at 0.78 the wall stopped
+   reading as anything at all. What the overlay is really holding down is the
+   handful of specular red highlights, which peak at 253. At 0.7 the hottest
+   of them composites to about 76, and the weakest text in the footer (the
+   bottom bar, 0.8rem at 50% white) still clears 4.5:1 against it, while the
+   rim light along the tools stays visible as texture.
+
+   Declared in the min-width block at the bottom of this file, not here: a
+   background image cannot be un-fetched by a max-width query, and the footer
+   on a phone is a plain ink surface. */
+.site-footer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  pointer-events: none;
+}
+
+/* The seam with the FAQ section above: the same hairline every dark/light
+   boundary on the page uses — lit in the middle, faded out at both ends, and
+   drawn on the dark side of the edge. */
+.site-footer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  z-index: 1;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(var(--color-red-rgb), 0.6),
+    rgba(var(--color-purple-rgb), 0.6),
+    transparent);
+  pointer-events: none;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
 .footer-main {
-  max-width: 1200px;
+  position: relative;
+  z-index: 1;
+  max-width: var(--content-max-width);
   margin: 0 auto;
-  padding: 48px 40px 32px;
+  padding: 56px 40px 36px;
   display: grid;
   grid-template-columns: 1.4fr 1fr 1.2fr 1fr;
   gap: 40px;
 }
 
-/* עמודות */
-.footer-col {}
+/* Brand column
+   -------------------------------------------------------------------------- */
 
+/* flex, because the name carries a Lucide wrench ahead of it. */
 .footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 1.3rem;
-  font-weight: 800;
+  font-weight: var(--font-weight-extrabold);
   color: white;
   margin-bottom: 12px;
 }
 
 .footer-about-text {
-  font-size: 0.88rem;
-  color: #888;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.62);
   line-height: 1.7;
   margin-bottom: 20px;
 }
 
+/* WhatsApp green, on purpose: it is the one colour on the page that is not ours
+   to restyle — people look for it. */
 .footer-whatsapp-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #25d366;
+  background: var(--color-whatsapp);
   color: white;
   padding: 9px 18px;
-  border-radius: 20px;
+  border-radius: var(--radius-pill);
   font-size: 0.88rem;
   font-weight: 600;
   text-decoration: none;
-  transition: background 0.2s, transform 0.2s;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: background var(--transition-base), transform var(--transition-base);
+  font-family: var(--font-family-base);
 }
 
-.footer-whatsapp-btn:hover {
-  background: #1ebe59;
-  transform: translateY(-1px);
-}
+/* Column headings
+   -------------------------------------------------------------------------- */
 
+/* The bar is a pseudo-element of a fixed 24px rather than a border-bottom on an
+   inline-block, so it is the same width under every heading instead of as wide
+   as each heading's words. */
 .footer-col-title {
+  position: relative;
   font-size: 0.95rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: white;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #e63946;
-  display: inline-block;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
 }
 
-/* לינקים */
+.footer-col-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 24px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-red);
+}
+
+/* Links
+   -------------------------------------------------------------------------- */
+
 .footer-links {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
 }
 
 .footer-links-2col {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px 12px;
+  gap: 9px 12px;
 }
 
+/* a <Link> now, not a button — display and text-decoration are what a button
+   gave for free */
 .footer-link {
+  position: relative;
+  display: inline-block;
+  text-decoration: none;
   background: none;
   border: none;
-  color: #888;
-  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.9rem;
   cursor: pointer;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  padding: 0;
+  font-family: var(--font-family-base);
+  padding: 0 0 3px;
   text-align: right;
-  transition: color 0.15s;
+  transition: color var(--transition-base);
 }
 
-.footer-link:hover { color: #e63946; }
+/* The navbar's indicator, at the footer's scale: it grows from the centre
+   outwards, so it reads as the link claiming the space under itself rather than
+   as a line sliding in from one side. Red alone here, not the navbar's
+   red→purple gradient — a 60px rule is too short to show two stops. */
+.footer-link::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-red);
+  transform: scaleX(0);
+  transition: transform var(--transition-base);
+}
 
-/* צור קשר */
+/* Contact column
+   -------------------------------------------------------------------------- */
+
 .footer-contact-list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 11px;
 }
 
 .footer-contact-list li {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 0.85rem;
-  color: #888;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.72);
 }
 
-.footer-contact-icon { font-size: 1rem; flex-shrink: 0; }
+.footer-contact-icon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--color-red-soft);
+}
 
 .footer-contact-link {
-  color: #aaa;
+  color: rgba(255, 255, 255, 0.72);
   text-decoration: none;
-  transition: color 0.15s;
+  transition: color var(--transition-base);
 }
 
-.footer-contact-link:hover { color: #e63946; }
+/* Bottom bar
+   -------------------------------------------------------------------------- */
 
-/* תחתית */
+/* The last strip on the page, so with viewport-fit=cover it is what the home
+   indicator would cover. The bottom inset is added to its own padding rather
+   than max()'d against it: this is the floor of the document and the line has
+   to clear the indicator, not merely avoid it. */
 .footer-bottom {
-  border-top: 1px solid rgba(255,255,255,0.07);
-  padding: 16px 40px;
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 18px 40px;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(40px, env(safe-area-inset-left, 0px));
+  padding-right: max(40px, env(safe-area-inset-right, 0px));
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  font-size: 0.78rem;
-  color: #555;
-  max-width: 1200px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  max-width: var(--content-max-width);
   margin: 0 auto;
 }
 
-.footer-bottom-sep { color: #333; }
+.footer-bottom-sep { color: rgba(255, 255, 255, 0.2); }
 
 .footer-bottom-link {
+  text-decoration: none;
   background: none;
   border: none;
-  color: #555;
-  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
   cursor: pointer;
-  font-family: 'Heebo', 'Segoe UI', sans-serif;
-  transition: color 0.15s;
+  font-family: var(--font-family-base);
+  transition: color var(--transition-base);
 }
 
-.footer-bottom-link:hover { color: #e63946; }
+/* ---- States -------------------------------------------------------------- */
 
-/* Dark mode */
-@media (prefers-color-scheme: dark) {
-  .site-footer {
-      background: linear-gradient(135deg, #050510 0%, #0a0a1a 100%);
+.footer-whatsapp-btn:hover {
+  background: var(--color-whatsapp-dark);
+  transform: translateY(-1px);
+}
+
+.footer-link:hover,
+.footer-link:focus-visible { color: white; }
+
+.footer-link:hover::after,
+.footer-link:focus-visible::after { transform: scaleX(1); }
+
+.footer-contact-link:hover { color: white; }
+
+.footer-bottom-link:hover { color: white; }
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* The one min-width query in the project, and it earns it: this is how the
+   pegboard photograph is kept off phones. A background image declared on the
+   base rule and switched off in a max-width block is a fetch the phone may
+   still pay for; one declared only here is never asked for below 769px, and
+   the footer there is the plain ink surface. 769 is the complement of the md
+   breakpoint (max-width: 768px), so the two meet with no gap. */
+@media (min-width: 769px) {
+  .site-footer::before {
+      background-image:
+        linear-gradient(rgba(var(--color-ink-rgb), 0.7), rgba(var(--color-ink-rgb), 0.7)),
+        url('../../assets/images/sections/footer-bg-1916.webp');
     }
 }
 
-/* Responsive */
 @media (max-width: 900px) {
   .footer-main {
       grid-template-columns: 1fr 1fr;
       gap: 32px;
-      padding: 40px 24px 24px;
+      padding: 44px 24px 28px;
     }
 }
 
@@ -168,20 +308,27 @@
   .footer-main {
       grid-template-columns: 1fr;
       gap: 28px;
-      padding: 32px 20px 20px;
+      padding: 36px 20px 24px;
     }
 
   .footer-bottom {
       flex-direction: column;
       gap: 6px;
-      padding: 14px 20px;
+      padding: 16px 20px;
+      padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      padding-left: max(20px, env(safe-area-inset-left, 0px));
+      padding-right: max(20px, env(safe-area-inset-right, 0px));
     }
 
   .footer-bottom-sep { display: none; }
 }
 
-.site-footer         { margin-top: 60px; }
+/* ---- Reduced motion ------------------------------------------------------ */
 
-@media (max-width: 768px) {
-  .site-footer      { margin-top: 40px; }
+@media (prefers-reduced-motion: reduce) {
+  .footer-whatsapp-btn,
+  .footer-link,
+  .footer-link::after {
+    transition: none;
+  }
 }

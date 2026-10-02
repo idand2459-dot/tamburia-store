@@ -1,0 +1,188 @@
+/* ==========================================================
+   Admin phone navigation — the fixed bottom bar and the sheet
+   its "more" button opens
+
+   Split out of features/admin/_admin-layout.css, which keeps the
+   header and the wide-screen tab row. Both navigations are in
+   the markup at once and CSS picks between them, so turning the
+   phone does not remount anything: this file's .admin-bar is
+   display: none until the lg breakpoint, where _admin-layout.css
+   hides .admin-tabs.
+
+   Bottom and not top because that is where the thumb reaches —
+   the panel is worked one-handed while standing at a counter.
+   ========================================================== */
+
+.admin-bar {
+  display: none;
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 60;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  /* the home-indicator inset sits below the buttons' own 64px, and in landscape
+     the notch takes a bite out of one side of a bar this wide */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  box-shadow: 0 -2px 12px rgba(var(--color-navy-rgb), 0.08);
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.admin-bar-btn {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 64px;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-family-base);
+  cursor: pointer;
+}
+
+.admin-bar-label {
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+/* The count of new orders / reviews waiting. Used on both navigations, so it is
+   here rather than on either one of them. */
+.admin-tab-badge {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-red);
+  color: white;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  line-height: 18px;
+  text-align: center;
+}
+
+.admin-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(var(--color-navy-950-rgb), 0.5);
+}
+
+.admin-sheet {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 71;
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px calc(16px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+  border-radius: 20px 20px 0 0;
+  background: var(--color-surface);
+  direction: rtl;
+}
+
+.admin-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 8px 12px;
+  border-bottom: 1px solid var(--color-border-soft);
+  color: var(--color-navy);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-sheet-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.admin-sheet-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 60px;
+  padding: 0 8px;
+  border: none;
+  border-bottom: 1px solid var(--color-border-soft);
+  background: none;
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-h3);
+  text-align: start;
+  cursor: pointer;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.admin-bar-btn.is-active,
+.admin-sheet-btn.is-active {
+  color: var(--color-red);
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-bar-btn:focus-visible,
+.admin-sheet-btn:focus-visible,
+.admin-sheet-close:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: -3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+/* The last row of the sheet: leaving the panel, the one thing in there that is
+   not a tab. No rule under it, because nothing follows. */
+.admin-sheet-btn--back {
+  border-bottom: none;
+  color: var(--color-text-muted);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* lg — where the bar takes over from the tab row. */
+@media (max-width: 900px) {
+  .admin-bar { display: flex; }
+
+  /* On the bar the badge floats over the icon; in the tab row it sits inline
+     after the label, which is why it is positioned only here. */
+  .admin-bar-btn .admin-tab-badge {
+    position: absolute;
+    top: 8px;
+    inset-inline-end: 50%;
+    margin-inline-end: -26px;
+  }
+}
+
+/* ---- Dark mode ----------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .admin-bar,
+  .admin-sheet {
+    background: var(--color-navy);
+    border-color: var(--color-surface-dark);
+    color: var(--color-text-faint);
+  }
+
+  .admin-sheet-head { color: var(--color-text-dark); }
+
+  .admin-sheet-btn {
+    border-bottom-color: var(--color-surface-dark);
+    color: var(--color-text-dark);
+  }
+}

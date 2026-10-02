@@ -3,12 +3,18 @@
  * הסטטוס 'new' אינו מופיע כאן, כי עליו יוצא מייל אישור נפרד.
  */
 const { escapeHtml, header, footer, layout } = require('./shared');
+const { formatPrice } = require('../../../utils/money');
 
 const STATUS_LABELS = {
   processing: {
     label: 'בטיפול',
     emoji: '⚙️',
     desc: 'קיבלנו את הזמנתך ואנחנו מתחילים לטפל בה. נעדכן אותך כשהיא תהיה מוכנה.',
+  },
+  ready_for_pickup: {
+    label: 'מוכנה לאיסוף',
+    emoji: '📦',
+    desc: 'ההזמנה שלך מוכנה ומחכה לך בחנות — בר כוכבא 52, פתח תקווה.\n\nנשמח לראותך בשעות הפעילות.',
   },
   shipped: {
     label: 'נשלחה',
@@ -51,7 +57,7 @@ ${header(`${cfg.emoji} עדכון הזמנה #${order.id}`)}
       <div style="background:#f8f8f8;border-radius:8px;padding:16px;margin:20px 0">
         ${summaryLine('מספר הזמנה:', `<strong>#${order.id}</strong>`)}
         ${summaryLine('סטטוס:', `<strong style="color:#e63946">${cfg.emoji} ${cfg.label}</strong>`)}
-        ${summaryLine('סה"כ:', `<strong>₪${order.total}</strong>`, { last: true })}
+        ${summaryLine('סה"כ:', `<strong>${formatPrice(order.total)}</strong>`, { last: true })}
       </div>
       <p style="color:#999;font-size:0.85rem">שאלות? צרו קשר: 03-9315750 | 050-6735040</p>
     </div>

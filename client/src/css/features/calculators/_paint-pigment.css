@@ -1,0 +1,179 @@
+/* ==========================================================
+   Paint pigment — the colour family, shade and live preview
+   swatch inside the paint calculator
+
+   The card this lives in is a .paint-calc-card, styled in
+   _paint-calculator.css. What is here is only what the colour
+   picker adds on top of it.
+
+   Note what is deliberately NOT restyled: .paint-preview-swatch
+   and the colour dots take their fill from an inline style in
+   PaintCalculator.js, because that fill IS the mixed paint. No
+   rule here may set a background on them.
+   ========================================================== */
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.paint-pigment-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.paint-color-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.paint-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  transition: transform var(--transition-fast), border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.paint-color-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  color: white;
+  font-weight: 600;
+}
+
+.paint-color-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
+/* ── Shade selector ───────────────────────────────────────────────────────── */
+
+.paint-shade-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.paint-shade-label {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.88rem;
+  flex-shrink: 0;
+}
+
+.paint-shade-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.paint-shade-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.82);
+  font-family: var(--font-family-base);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background var(--transition-base), border-color var(--transition-base),
+    color var(--transition-base), box-shadow var(--transition-base);
+}
+
+/* ── Live preview swatch ──────────────────────────────────────────────────── */
+
+.paint-preview-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.paint-preview-swatch {
+  height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: background 0.5s ease;
+}
+
+/* opacity rather than a colour: the text colour here is chosen in JS to
+   contrast with the mixed paint, and a fixed white or grey would fail against
+   half the palette */
+.paint-preview-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.75;
+}
+
+.paint-preview-name {
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-bold);
+}
+
+.paint-preview-note {
+  background: rgba(var(--color-navy-950-rgb), 0.55);
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.72);
+  text-align: center;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.paint-swatch:hover:not(.active) {
+  transform: scale(1.2);
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+.paint-shade-btn:hover:not(.active) {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+/* Red ring, not white. A white ring on a white-bordered swatch only read as
+   "slightly brighter", and every other selected control in this section — the
+   coat buttons, the shade chips — now says selected in red. */
+.paint-swatch.active {
+  transform: scale(1.25);
+  border-color: var(--color-red);
+  box-shadow: 0 0 0 3px rgba(var(--color-red-rgb), 0.35),
+    0 0 18px rgba(var(--color-red-rgb), 0.3);
+}
+
+.paint-shade-btn.active {
+  background: rgba(var(--color-red-rgb), 0.14);
+  border-color: var(--color-red);
+  color: white;
+  font-weight: var(--font-weight-bold);
+  box-shadow: 0 0 18px rgba(var(--color-red-rgb), 0.25);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* 600px, matching the rest of the section — see the note in
+   _paint-calc-section.css. */
+@media (max-width: 600px) {
+  .paint-shade-row {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+  .paint-swatch {
+      width: 26px;
+      height: 26px;
+    }
+}

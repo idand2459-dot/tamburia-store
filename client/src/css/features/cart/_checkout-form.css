@@ -1,0 +1,214 @@
+/* ==========================================================
+   Checkout form — the name, phone and address step
+
+   The middle step of the flow, rendered by CheckoutFormView
+   inside the shared drawer. The button it submits with is
+   .cart-cta from _cart.css, in the drawer's sticky foot, so
+   there is no button of its own here.
+
+   Everything in this file is new prefixing: .order-form and its
+   .order-field / .order-back-btn / .order-summary-mini children
+   are gone, and so is .input-error — the one selector on the
+   site that needed two !important declarations to beat the field
+   styling above it. The invalid address field is
+   .checkout-field input.is-invalid now — a second class on the
+   same element, which wins on specificity alone.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.checkout-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 20px 20px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.checkout-back {
+  align-self: flex-start;
+  padding: 4px 0;
+  border: none;
+  background: none;
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-family: var(--font-family-base);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+/* What is in the cart, in one line, so the form is not the only thing on
+   screen at the moment money is being committed to. */
+.checkout-recap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: var(--radius-md);
+  background: rgba(var(--color-navy-rgb), 0.04);
+  color: rgba(var(--color-navy-rgb), 0.65);
+  font-size: 0.85rem;
+}
+
+.checkout-recap-total {
+  color: var(--color-navy);
+  font-weight: var(--font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+}
+
+.checkout-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.checkout-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checkout-field label {
+  color: var(--color-navy);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.checkout-req {
+  color: var(--color-red);
+}
+
+/* "fields marked * are required": the asterisk alone is a convention, and a
+   colour mark that explains nothing (WCAG 3.3.2) */
+.checkout-required-note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(var(--color-navy-rgb), 0.7);
+}
+
+/* 48px, the height of every other input the redesign has drawn. The textarea
+   opts out of the fixed height and keeps its rows. */
+.checkout-field input,
+.checkout-field textarea {
+  padding: 0 14px;
+  height: 48px;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.15);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-family: var(--font-family-base);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.checkout-field textarea {
+  height: auto;
+  padding: 12px 14px;
+  line-height: 1.6;
+  resize: none;
+}
+
+.checkout-field input::placeholder,
+.checkout-field textarea::placeholder {
+  color: rgba(var(--color-navy-rgb), 0.65);
+}
+
+/* Out of the delivery area. Red text and a Ban beside it, under the field it
+   is about — not a filled panel: the field's own red border already says
+   which line is wrong. */
+.checkout-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 2px 0 0;
+  color: var(--color-red-dark);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+/* The quiet other half of the same check. Navy, not green: nothing has
+   happened yet, the address is simply one we serve. */
+.checkout-ok {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.checkout-error .lucide {
+  flex-shrink: 0;
+  margin-top: 0.15em;
+}
+
+.checkout-ok .lucide {
+  flex-shrink: 0;
+}
+
+/* The drawer's foot for this step: the alert, then the button. .cart-cta's own
+   top margin is for the cart's summary above it and is dropped here — this
+   file is imported after _cart.css, which is what lets it. */
+.checkout-submit > .cart-cta {
+  margin-top: 0;
+}
+
+/* The server said no. This one is a filled box, because it is about the whole
+   order rather than about one field, and it sits above the button that just
+   failed. */
+.checkout-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 11px 13px;
+  border: 1px solid rgba(var(--color-red-rgb), 0.35);
+  border-radius: var(--radius-md);
+  background: rgba(var(--color-red-rgb), 0.07);
+  color: var(--color-red-dark);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.checkout-alert .lucide {
+  flex-shrink: 0;
+  margin-top: 0.1em;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.checkout-back:hover {
+  color: var(--color-red);
+}
+
+.checkout-back:focus-visible,
+.checkout-field input:focus-visible,
+.checkout-field textarea:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+.checkout-field input:focus,
+.checkout-field textarea:focus {
+  border-color: rgba(var(--color-purple-rgb), 0.5);
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+/* A second class on the same input, so it beats the border above without
+   !important. The focus rule is repeated because :focus would otherwise win
+   the border back while the invalid address is still in the field. */
+.checkout-field input.is-invalid,
+.checkout-field input.is-invalid:focus {
+  border-color: var(--color-red);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 560px) {
+  .checkout-form { padding: 14px 16px 18px; }
+}

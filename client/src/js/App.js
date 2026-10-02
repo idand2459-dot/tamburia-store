@@ -13,6 +13,7 @@ import { StoreContext } from './context/storeContext';
 import { useCart } from './hooks/useCart';
 import { useWishlist } from './hooks/useWishlist';
 import { useCheckoutForm } from './hooks/useCheckoutForm';
+import { useAvailability } from './hooks/useAvailability';
 import StoreLayout from './StoreLayout';
 import HomePage from './pages/HomePage';
 import CategoryView from './features/catalog/CategoryView';
@@ -22,12 +23,19 @@ import NotFoundPage from './pages/NotFoundPage';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Returns from './pages/Returns';
+import Accessibility from './pages/Accessibility';
 
 /** מציג את האפליקציה ומנהל את המצב המשותף לכל המסכים. */
 function App() {
   const cart = useCart();
   const wishlist = useWishlist();
   const checkout = useCheckoutForm(cart);
+
+  /* העגלה שורדת ב-localStorage, ומוצר שהוסתר אחרי שנכנס אליה עדיין
+     יושב בה עם המחיר שהיה. הבדיקה כאן היא מה שמאפשר לעגלה להגיד את
+     זה ללקוח במקום לשלוח אותו לסירוב של השרת. */
+  const cartIds = useMemo(() => cart.cart.map((item) => item.id), [cart.cart]);
+  const unavailableIds = useAvailability(cartIds);
 
   // התפריט הנפתח אינו שייך לאף אחד משלושת התחומים, ולכן נשאר כאן.
   const [menuOpen, setMenuOpen] = useState(false);
@@ -36,8 +44,9 @@ function App() {
     ...cart,
     ...wishlist,
     ...checkout,
+    unavailableIds,
     menuOpen, setMenuOpen,
-  }), [cart, wishlist, checkout, menuOpen]);
+  }), [cart, wishlist, checkout, unavailableIds, menuOpen]);
 
   return (
     <StoreContext.Provider value={store}>
@@ -49,6 +58,7 @@ function App() {
           <Route path="about" element={<About />} />
           <Route path="contact" element={<Contact />} />
           <Route path="returns" element={<Returns />} />
+          <Route path="accessibility" element={<Accessibility />} />
 
           {/* מודאלים עם כתובת — המסגרת מציגה אותם מעל עמוד הבית */}
           <Route path="cart" element={<HomePage />} />
@@ -59,7 +69,7 @@ function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
 
-        <Route path="/admin" element={<Navigate to="/admin/stats" replace />} />
+        <Route path="/admin" element={<Navigate to="/admin/orders" replace />} />
         <Route path="/admin/:tab" element={<AdminRoute />} />
       </Routes>
     </StoreContext.Provider>

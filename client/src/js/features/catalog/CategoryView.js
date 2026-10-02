@@ -5,15 +5,23 @@
  * כ-404 ולא כעמוד ריק. תת-הקטגוריה נשמרת ב-query (?sub=), כך שגם
  * סינון אפשר לשתף בקישור; החיפוש והמיון נשארו מצב מקומי, כי הם
  * משתנים בכל הקלדה והיו מציפים את היסטוריית הדפדפן.
+ *
+ * מבנה העמוד: באנר תצלום למעלה, ומתחתיו אזור קנייה בהיר — סרגל סינון
+ * בצד ההתחלה (צ'יפים בטלפון), שורת כלים ורשת המוצרים.
  */
-import { useState, useEffect } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { PackageSearch, X, Phone } from 'lucide-react';
 import categories from './categories';
 import CategoryBanner from './CategoryBanner';
-import CategoryAmbience from './CategoryAmbience';
+import CategoryFilters from './CategoryFilters';
+import CategoryToolbar from './CategoryToolbar';
 import NotFoundPage from '../../pages/NotFoundPage';
-import { ProductCardSkeleton } from '../../components/LoadingStates';
+import ProductList from '../../components/ProductList';
+import { PHONES } from '../../utils/storeInfo';
 import { useStore } from '../../context/storeContext';
+import { getProducts, isAbortError } from '../../services/productService';
+import { usePageTitle } from '../../hooks/usePageTitle';
 
 const SORT_OPTIONS = [
   { value: 'default', label: 'ברירת מחדל' },
@@ -27,10 +35,12 @@ const SORT_OPTIONS = [
 function CategoryView() {
   const { slug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const { addToCart, wishlistIds, toggleCardWishlist } = useStore();
 
   const category = categories.find((c) => c.id === slug);
+  // קטגוריה שלא קיימת מוצגת כ-404, ושם הכותרת צריכה להגיד את זה:
+  // האפקט של ההורה רץ אחרי זה של NotFoundPage, וידרוס אותו.
+  usePageTitle(category ? category.name : 'העמוד לא נמצא');
   const selectedSubcategory = searchParams.get('sub');
 
   const [products, setProducts] = useState([]);
@@ -40,7 +50,7 @@ function CategoryView() {
 
   useEffect(() => {
     if (!category) return;
-    let cancelled = false;
+    const controller = new AbortController();
 
     setLoading(true);
     setSearchQuery('');
@@ -50,17 +60,40 @@ function CategoryView() {
     // הזה מציג את כל מוצרי הקטגוריה ולא תצוגה מקוצרת שלהם.
     // החיפוש והמיון שלמטה נשארים בצד הלקוח: הם פועלים על הקבוצה
     // הקטנה שכבר נשלפה, וזה שימוש לגיטימי בסינון מקומי.
-    fetch(`/api/products?category=${encodeURIComponent(category.id)}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (cancelled) return;
-        setProducts(Array.isArray(data) ? data : (data.products || []));
+    getProducts({ category: category.id, signal: controller.signal })
+      .then(({ products: list }) => {
+        setProducts(list);
         setLoading(false);
       })
-      .catch(() => { if (!cancelled) setLoading(false); });
+      // ביטול אינו כישלון: המעבר לקטגוריה אחרת כבר הדליק טעינה
+      // מחדש, וכיבוי שלה כאן היה מציג רשת ריקה עד שהבקשה החדשה תחזור.
+      .catch((err) => { if (!isAbortError(err)) setLoading(false); });
 
-    return () => { cancelled = true; };
+    return () => controller.abort();
   }, [category]);
+
+  // מספר המוצרים בכל תת-קטגוריה, מתוך מה שנשלף. מחושב פעם אחת לכל
+  // שליפה ולא בכל הקלדה בחיפוש.
+  const subcategoryCounts = useMemo(() => {
+    const counts = {};
+    products.forEach((p) => {
+      if (p.subcategory) counts[p.subcategory] = (counts[p.subcategory] || 0) + 1;
+    });
+    return counts;
+  }, [products]);
+
+  /* ?sub= שמצביע על תת-קטגוריה בלי מוצרים — שאינה מוצגת בסרגל, ואולי
+     כבר לא קיימת — חוזר בשקט ל"הכל" (replace, לא עוד כניסה ב"חזור").
+     רק אחרי הטעינה: לפניה כל תת-קטגוריה נראית ריקה. */
+  const subIsEmpty = Boolean(selectedSubcategory) && !loading && !subcategoryCounts[selectedSubcategory];
+  useEffect(() => {
+    if (!subIsEmpty) return;
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('sub');
+      return next;
+    }, { replace: true });
+  }, [subIsEmpty, setSearchParams]);
 
   if (!category) return <NotFoundPage />;
 
@@ -72,9 +105,19 @@ function CategoryView() {
     setSearchParams(next, { replace: true });
   }
 
+  const activeSubcategory = subIsEmpty ? null : selectedSubcategory;
+
   const filtered = products
-    .filter((p) => !selectedSubcategory || p.subcategory === selectedSubcategory)
+    .filter((p) => !activeSubcategory || p.subcategory === activeSubcategory)
     .filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  const hasFilters = Boolean(searchQuery || activeSubcategory);
+
+  /** מנקה את החיפוש ואת הסינון, מהמצב הריק. */
+  function clearFilters() {
+    setSearchQuery('');
+    selectSubcategory(null);
+  }
 
   const sorted = (() => {
     switch (sortBy) {
@@ -88,99 +131,72 @@ function CategoryView() {
 
   return (
     <>
-      <CategoryAmbience categoryId={category.id} />
-      <CategoryBanner category={category} onBack={() => navigate('/')} />
+      <CategoryBanner category={category} productCount={loading ? null : products.length} />
 
-      {category.subcategories?.length > 0 && (
-        <div className="subcategory-chips">
-          <button
-            className={`subcategory-chip ${!selectedSubcategory ? 'active' : ''}`}
-            onClick={() => selectSubcategory(null)}>
-            הכל
-          </button>
-          {category.subcategories.map((sub) => (
-            <button
-              key={sub.id}
-              className={`subcategory-chip ${selectedSubcategory === sub.id ? 'active' : ''}`}
-              onClick={() => selectSubcategory(selectedSubcategory === sub.id ? null : sub.id)}>
-              {sub.name}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="category-page">
+        <div className="category-layout">
+          {category.subcategories?.length > 0 && (
+            <CategoryFilters
+              subcategories={category.subcategories}
+              counts={subcategoryCounts}
+              total={products.length}
+              selected={activeSubcategory}
+              onSelect={selectSubcategory}
+            />
+          )}
 
-      <main style={{ '--cat-color': category.color }}>
-        <div className="products-toolbar">
-          <div className="search-bar">
-            <input
-              placeholder="🔍 חפש מוצר..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+          <div className="category-main">
+            <CategoryToolbar
+              count={sorted.length}
+              loading={loading}
+              searchQuery={searchQuery}
+              onSearch={setSearchQuery}
+              sortBy={sortBy}
+              onSort={setSortBy}
+              sortOptions={SORT_OPTIONS}
+            />
+
+            {/* כותרת לקורא המסך: כרטיסי המוצר הם h3, ובטלפון כותרת תתי-
+                הקטגוריות מוסתרת — בלי זו הם היו יושבים ישר מתחת ל-h1. */}
+            <h2 className="visually-hidden">מוצרים</h2>
+
+            <ProductList
+              products={sorted}
+              loading={loading}
+              categoryIdFor={() => category.id}
+              onAddToCart={addToCart}
+              wishlistIds={wishlistIds}
+              onToggleWishlist={toggleCardWishlist}
+              reveal
+              emptyState={(
+                <div className="product-grid-empty">
+                  <span className="product-grid-empty-icon">
+                    <PackageSearch size={30} strokeWidth={1.5} aria-hidden="true" />
+                  </span>
+                  <h2>לא נמצאו מוצרים</h2>
+                  <p>
+                    {hasFilters
+                      ? 'אף מוצר בקטגוריה הזו לא מתאים לחיפוש ולסינון הנוכחיים.'
+                      : 'הקטגוריה הזו עדיין מתמלאת. בחנות יש הרבה יותר ממה שהאתר מספיק להציג.'}
+                  </p>
+                  <div className="product-grid-empty-actions">
+                    {/* מוצג רק כשיש מה לנקות: בקטגוריה ריקה באמת הכפתור הזה
+                        לא היה משנה כלום */}
+                    {hasFilters && (
+                      <button type="button" onClick={clearFilters}>
+                        <X size={15} aria-hidden="true" /> נקה חיפוש וסינון
+                      </button>
+                    )}
+                    <a href={`tel:${PHONES.store.tel}`}>
+                      <Phone size={15} aria-hidden="true" /> להתייעצות: {PHONES.store.display}
+                    </a>
+                  </div>
+                </div>
+              )}
             />
           </div>
-          <div className="sort-bar">
-            {SORT_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                className={`sort-btn ${sortBy === opt.value ? 'active' : ''}`}
-                onClick={() => setSortBy(opt.value)}>
-                {opt.label}
-              </button>
-            ))}
-          </div>
         </div>
-
-        <div className="products-count">{!loading && `${sorted.length} מוצרים`}</div>
-
-        <div className="products-grid">
-          {loading
-            ? Array(6).fill(0).map((_, i) => <ProductCardSkeleton key={i} />)
-            : sorted.map((product) => (
-              <div
-                key={product.id}
-                className="product-card"
-                onClick={() => navigate(`/product/${product.id}`)}
-                style={{ cursor: 'pointer' }}>
-                <div className="product-img-wrap">
-                  <div className="product-img-placeholder" data-icon={category.icon}>
-                    <span className="product-img-initial">{product.name.charAt(0)}</span>
-                  </div>
-                  {product.image_url && (
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                    />
-                  )}
-                </div>
-                <h3>{product.name}</h3>
-                {product.sku && <p className="product-sku">מק"ט: {product.sku}</p>}
-                <p className="price">
-                  {Array.isArray(product.variants) && product.variants.length > 0
-                    ? <>מ-₪{Math.min(...product.variants.map((v) => v.price))} <span className="price-variants-hint">· {product.variants.length} גרסאות</span></>
-                    : <>₪{product.price}</>}
-                </p>
-                <p className={`stock ${product.in_stock !== false ? '' : 'out-of-stock-label'}`}>
-                  {product.in_stock !== false ? '✓ יש במלאי' : '✗ אזל מהמלאי'}
-                </p>
-                <div className="card-bottom-actions">
-                  <button
-                    className={`card-add-btn ${product.in_stock === false ? 'btn-disabled' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); if (product.in_stock !== false) addToCart(product); }}
-                    disabled={product.in_stock === false}>
-                    {product.in_stock !== false ? 'הוסף לעגלה' : 'אזל מהמלאי'}
-                  </button>
-                  <button
-                    className={`card-wishlist-btn ${wishlistIds.includes(product.id) ? 'active' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); toggleCardWishlist(product); }}
-                    title={wishlistIds.includes(product.id) ? 'הסר' : 'הוסף למשאלות'}>
-                    {wishlistIds.includes(product.id) ? '❤️' : '🤍'}
-                  </button>
-                </div>
-              </div>
-            ))}
-        </div>
-      </main>
+      </div>
     </>
   );
 }

@@ -1,101 +1,96 @@
 /**
- * לשונית ההזמנות: סיכום לפי סטטוס, סינון, ייצוא וכרטיס הזמנה נפתח.
+ * לשונית ההזמנות: שורת סינון וכרטיס לכל הזמנה.
  *
  * הסינון וההזמנה הפתוחה הם state מקומי של הלשונית — הם לא מעניינים
  * אף לשונית אחרת.
+ *
+ * שורת הסיכום לפי סטטוס שהייתה כאן נמחקה. היא הציגה חמישה מספרים
+ * שאיש לא פועל לפיהם, ואותם מספרים מופיעים עכשיו על שבבי הסינון
+ * עצמם — שם הם גם אומרים למה הם טובים.
  */
 import { useState } from 'react';
-import { STATUS_CONFIG, formatDate } from './adminConstants';
+import { FileSpreadsheet, AlertTriangle } from 'lucide-react';
+import { STATUS_CONFIG } from './adminConstants';
+import OrderCard from './OrderCard';
+
+/* שבבי הסינון. "פתוחות" ראשון ומסומן בהתחלה: הזמנה שהושלמה היא
+   היסטוריה, ומה שנשאר לעשות הוא כל השאר. "הכל" לידו למי שמחפש הזמנה
+   מסוימת, ו"הושלמו" הוא שבב אחד משם. */
+const OPEN_FILTER = { id: 'open', label: 'פתוחות' };
+const ALL_FILTER = { id: 'all', label: 'הכל' };
+
+const STATUS_FILTERS = Object.entries(STATUS_CONFIG).map(([id, cfg]) => ({
+  id,
+  /* לשון רבים על שבב שמסנן רשימה, יחיד על תווית שמתארת הזמנה אחת. */
+  label: { new: 'חדשות', processing: 'בטיפול', ready_for_pickup: 'מוכנות לאיסוף', shipped: 'נשלחו', completed: 'הושלמו' }[id] || cfg.label,
+}));
+
+const FILTERS = [OPEN_FILTER, ALL_FILTER, ...STATUS_FILTERS];
+
+/** מחזיר את ההזמנות שהשבב הנתון מציג. */
+function applyFilter(orders, filter) {
+  if (filter === 'all') return orders;
+  if (filter === 'open') return orders.filter(o => o.status !== 'completed');
+  return orders.filter(o => o.status === filter);
+}
 
 /** מציג את לשונית ההזמנות. */
 function OrdersTab({ orders, onStatusChange, onDeleteOrder, onExport, ordersError }) {
   const [expandedOrder, setExpandedOrder] = useState(null);
-  const [orderFilter, setOrderFilter] = useState('all');
+  const [filter, setFilter] = useState('open');
 
-  const filteredOrders = orders.filter(o => orderFilter === 'all' || o.status === orderFilter);
+  /* מהחדשה לישנה. השרת ממיין כך, אבל הסדר הוא החלטה של המסך הזה
+     ולא משהו להסתמך עליו מרחוק. */
+  const visible = applyFilter(orders, filter)
+    .slice()
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   return (
-    <div>
-      <div className="orders-stats">
-        {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-          <div key={key} className="orders-stat-card" style={{ borderTop: `3px solid ${cfg.color}` }}>
-            <div className="stat-number" style={{ color: cfg.color }}>{orders.filter(o => o.status === key).length}</div>
-            <div className="stat-label">{cfg.label}</div>
-          </div>
-        ))}
-      </div>
+    <div className="admin-orders">
       <div className="orders-filter">
-        <button className={`admin-cat-btn ${orderFilter === 'all' ? 'active' : ''}`} onClick={() => setOrderFilter('all')}>הכל <span className="admin-cat-count">{orders.length}</span></button>
-        {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-          <button key={key} className={`admin-cat-btn ${orderFilter === key ? 'active' : ''}`} onClick={() => setOrderFilter(key)}>
-            {cfg.label} <span className="admin-cat-count">{orders.filter(o => o.status === key).length}</span>
-          </button>
-        ))}
+        <div className="orders-chips" role="group" aria-label="סינון הזמנות">
+          {FILTERS.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              className={`orders-chip ${filter === id ? 'is-active' : ''}`}
+              aria-pressed={filter === id}
+              onClick={() => setFilter(id)}>
+              {label}
+              <span className="orders-chip-count">{applyFilter(orders, id).length}</span>
+            </button>
+          ))}
+        </div>
+
         {orders.length > 0 && (
-          <button className="export-orders-btn" onClick={onExport} title="ייצא לאקסל">
-            📊 ייצא לאקסל
+          <button type="button" className="orders-export-btn" onClick={onExport}>
+            <FileSpreadsheet size={18} aria-hidden="true" /> ייצא לאקסל
           </button>
         )}
       </div>
-      {ordersError && <div className="admin-error">⚠️ {ordersError}</div>}
-      {filteredOrders.length === 0 ? <div className="admin-empty">אין הזמנות עדיין</div> : (
+
+      {ordersError && (
+        <div className="admin-error">
+          <AlertTriangle size={18} aria-hidden="true" /> {ordersError}
+        </div>
+      )}
+
+      {visible.length === 0 ? (
+        <div className="admin-empty">
+          {filter === 'open' ? 'אין הזמנות שמחכות לטיפול' : 'אין הזמנות להצגה'}
+        </div>
+      ) : (
         <div className="orders-list">
-          {filteredOrders.map(order => {
-            const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.new;
-            const isExpanded = expandedOrder === order.id;
-            return (
-              <div key={order.id} className="order-card">
-                <div className="order-card-header" onClick={() => setExpandedOrder(isExpanded ? null : order.id)}>
-                  <div className="order-card-right">
-                    <span className="order-id">#{order.id}</span>
-                    <div><div className="order-customer-name">{order.customer_name}</div><div className="order-meta">{order.customer_phone} • {formatDate(order.created_at)}</div></div>
-                  </div>
-                  <div className="order-card-left">
-                    <span className="order-total-badge">₪{order.total}</span>
-                    <span className="order-delivery-badge">{order.delivery_method === 'pickup' ? '🏪 איסוף' : '🚚 משלוח'}</span>
-                    <span className="order-status-badge" style={{ color: cfg.color, background: cfg.bg }}>{cfg.label}</span>
-                    <span className="order-expand-btn">{isExpanded ? '▲' : '▼'}</span>
-                  </div>
-                </div>
-                {isExpanded && (
-                  <div className="order-card-body">
-                    <div className="order-details-grid">
-                      <div className="order-detail-item"><span className="order-detail-label">שם</span><span>{order.customer_name}</span></div>
-                      <div className="order-detail-item"><span className="order-detail-label">טלפון</span><a href={`tel:${order.customer_phone}`}>{order.customer_phone}</a></div>
-                      {order.customer_email && <div className="order-detail-item"><span className="order-detail-label">אימייל</span><span>{order.customer_email}</span></div>}
-                      {order.delivery_address && <div className="order-detail-item"><span className="order-detail-label">כתובת</span><span>{order.delivery_address}</span></div>}
-                      {order.notes && <div className="order-detail-item full"><span className="order-detail-label">הערות</span><span>{order.notes}</span></div>}
-                    </div>
-                    <div className="order-items">
-                      <strong>פריטים:</strong>
-                      <table className="order-items-table">
-                        <thead><tr><th>מוצר</th><th>צבע</th><th>כמות</th><th>מחיר</th></tr></thead>
-                        <tbody>{order.items.map((item, i) => <tr key={i}><td>{item.name}</td><td>{item.selectedColor||'—'}</td><td>{item.quantity}</td><td>₪{item.price * item.quantity}</td></tr>)}</tbody>
-                      </table>
-                      <div className="order-totals">
-                        <span>מוצרים: ₪{order.subtotal}</span>
-                        <span>משלוח: {order.delivery_fee > 0 ? `₪${order.delivery_fee}` : 'חינם'}</span>
-                        <strong>סה"כ: ₪{order.total}</strong>
-                      </div>
-                    </div>
-                    <div className="order-actions">
-                      <div className="order-status-select">
-                        <label>שנה סטטוס:</label>
-                        <div className="status-buttons">
-                          {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                            <button key={key} className={`status-btn ${order.status === key ? 'active' : ''}`}
-                              style={order.status === key ? { background: cfg.color, color: 'white' } : {}}
-                              onClick={() => onStatusChange(order.id, key)}>{cfg.label}</button>
-                          ))}
-                        </div>
-                      </div>
-                      <button className="delete-btn" onClick={() => onDeleteOrder(order.id)}>מחק הזמנה</button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {visible.map(order => (
+            <OrderCard
+              key={order.id}
+              order={order}
+              isOpen={expandedOrder === order.id}
+              onToggle={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
+              onStatusChange={onStatusChange}
+              onDelete={onDeleteOrder}
+            />
+          ))}
         </div>
       )}
     </div>

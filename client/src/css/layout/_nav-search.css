@@ -1,0 +1,144 @@
+/* ==========================================================
+   Nav search results — the dropdown under the navbar's search
+
+   The backdrop behind it is .search-overlay in
+   components/_modals.css; the in-page product search on a
+   category page is .category-search in
+   features/category/_category-toolbar.css.
+   ========================================================== */
+
+.search-results-list {
+  list-style: none;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* a <button> inside the <li> now, so the results can be reached from the
+   keyboard; the first six declarations undo what a button brings */
+.search-result-item {
+  width: 100%;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.search-result-img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.search-result-no-img {
+  width: 48px;
+  height: 48px;
+  background: var(--color-border-soft);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.search-result-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.search-result-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.search-result-cat {
+  font-size: 0.78rem;
+  color: #999;
+}
+
+.search-result-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.search-result-price {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-red);
+}
+
+.search-result-stock {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.search-no-results {
+  padding: 24px 20px;
+  text-align: center;
+  color: var(--color-text-faint);
+  font-size: 0.95rem;
+}
+
+.search-hint {
+  padding: 24px 20px;
+  text-align: center;
+  color: #bbb;
+  font-size: 0.9rem;
+}
+
+/* ---- States ------------------------------------------------------------- */
+
+/* #f8f8f6 is the old cream page background, kept here because it is the tint on
+   a row inside a white panel rather than a page surface, and no token carries
+   that value. Worth revisiting when the dropdown itself is redesigned. */
+.search-result-item:hover,
+.search-result-item:focus-visible {
+  background: #f8f8f6;
+}
+
+/* ---- Variants ----------------------------------------------------------- */
+
+.search-result-stock.in {
+  background: var(--color-success-bg);
+  color: var(--color-green);
+}
+
+.search-result-stock.out {
+  background: var(--color-error-border);
+  color: var(--color-red-dark);
+}
+
+/* ---- Dark mode ---------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .search-result-item:hover {
+      background: var(--color-bg-dark);
+    }
+
+  .search-result-name {
+      color: var(--color-text-dark);
+    }
+
+  .search-result-no-img {
+      background: var(--color-surface-dark);
+    }
+}

@@ -1,0 +1,65 @@
+/* ==========================================================
+   Category layout — the shopping area below the category banner
+
+   Two columns on a desk: the subcategory sidebar on the start
+   side (the right, in RTL) and the products next to it. Below
+   the lg breakpoint the sidebar becomes a row of chips above the
+   products — see features/category/_category-filters.css, which owns both
+   forms — and this file drops to one column.
+
+   The page background is --color-bg, the same blush as the home
+   page's light sections, and it is body that paints it. What
+   this file owns is the column, its width and its gutter.
+
+   The element this class sits on used to be a <main>; it is a
+   <div> now, inside the one <main> StoreLayout puts around every
+   page. It holds a 240px sidebar plus four product cards, so it
+   is 1280px and owns its own gutter.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.category-page {
+  max-width: 1280px;
+  /* the shared `main` rule's 40px top margin is deliberately not kept: the
+     banner above melts into the page, and a margin would have put a blush gap
+     between the two */
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* 240px is the sidebar's fixed width; the products take what is left.
+   align-items: start is what lets the sidebar be sticky — stretched to the
+   row's height (the grid default) it would have nothing to scroll within. */
+.category-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+/* minmax(0, 1fr) above and this min-width: 0 are the same guard from two
+   sides: without them a long product name with no break opportunity sets the
+   column's minimum width and pushes the sidebar off the grid. */
+.category-main {
+  min-width: 0;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* The sidebar's breakpoint. Below it the filter turns into chips, which are
+   part of the single column rather than a column of their own. */
+@media (max-width: 900px) {
+  .category-layout {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+  .category-page {
+      padding: 20px 16px 56px;
+    }
+}

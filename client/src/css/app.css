@@ -10,30 +10,156 @@
 @import './base/_variables.css';
 @import './base/_reset.css';
 @import './base/_typography.css';
+/* the skip link, .visually-hidden and the zero-specificity focus fallback.
+   Last in base so the fallback sits under every component's own focus rule. */
+@import './base/_accessibility.css';
 
 /* 2. Layout */
 @import './layout/_grid.css';
-@import './layout/_header.css';
+/* The navbar system, in the order the rules had inside the old _header.css:
+   the shared focus ring lives in _navbar.css and has to stay ahead of the
+   drawer's own :hover rules. */
+@import './layout/_navbar.css';
+@import './layout/_nav-search.css';
+@import './layout/_nav-drawer.css';
+@import './layout/_ticker.css';
 @import './layout/_footer.css';
 
 /* 3. Reusable components */
 @import './components/_buttons.css';
 @import './components/_modals.css';
-@import './components/_notifications.css';
+/* the side panel the cart, the order lookup and the wishlist open in. After
+   _modals.css because that file still owns the nav backdrop and the search
+   popup, and the three panels this replaces used to live in it. */
+@import './components/_drawer.css';
 @import './components/_loading.css';
+@import './components/_reveal.css';
+@import './components/_product-card.css';
+/* the rows the card above is laid out in, and the empty state that takes their
+   place. After the card because it sizes what the card fills, not the other
+   way round; neither declares anything the other does. */
+@import './components/_product-grid.css';
+@import './components/_stars.css';
+/* the purple label above every section title on the home page; the five
+   sections that wear it all import nothing, they just use the class */
+@import './components/_section-pill.css';
+/* the dark band that opens about, contact and returns. After _section-pill.css
+   because it wears that pill, though it overrides nothing in it. */
+@import './components/_page-header.css';
+/* the opening hours, rendered on the contact page and reused by about */
+@import './components/_hours-table.css';
 
 /* 4. Feature modules */
-@import './features/_admin.css';
-@import './features/_auth.css';
-@import './features/_calculator.css';
-@import './features/_catalog.css';
-@import './features/_cart.css';
-@import './features/_orders.css';
-@import './features/_wishlist.css';
-@import './features/_reviews.css';
-@import './features/_home.css';
-@import './features/_pages.css';
-
-/* 5. Theme overrides — must stay last: these repaint components
-      per category and rely on winning over the rules above. */
-@import './features/_category-themes.css';
+/* The admin dashboard, one partial per tab. No two of these carry the same
+   selector at the same specificity, so the order here is the reading order
+   rather than a cascade constraint. */
+@import './features/admin/_admin-layout.css';
+/* the phone's bottom bar and its sheet, split out of the frame above at the
+   300-line target. It has to follow _admin-layout.css: that file hides
+   .admin-tabs at the same breakpoint where this one shows .admin-bar, and the
+   two only make sense read in that order. */
+@import './features/admin/_admin-nav.css';
+@import './features/admin/_admin-products.css';
+@import './features/admin/_admin-form.css';
+/* the colour and size editors inside that form, each split out of it when
+   the form reached the line ceiling */
+@import './features/admin/_admin-colors.css';
+@import './features/admin/_admin-variants.css';
+/* the in-stock switch, rendered by both the list above and the form above it.
+   After both, so a component that wants to place it can, while the switch's own
+   look stays in one file. */
+@import './features/admin/_admin-switch.css';
+@import './features/admin/_admin-images.css';
+/* the storefront card rendered from the form's values. After _product-card.css
+   in section 3, which it needs already in the cascade; it styles only the frame
+   around the card and declares nothing that file does. */
+@import './features/admin/_admin-preview.css';
+@import './features/admin/_admin-filters.css';
+@import './features/admin/_admin-import.css';
+@import './features/admin/_admin-orders.css';
+/* one card inside the list that file lays out, split out of it at the 400-line
+   ceiling; no selector appears in both */
+@import './features/admin/_admin-order-card.css';
+@import './features/admin/_admin-stats.css';
+@import './features/admin/_auth.css';
+/* Two unrelated calculators that shared one file. In the order their rules had
+   inside it; no selector appears in more than one of the six. */
+/* The dark band, its background photograph and the section header, split out
+   of _paint-calculator.css when that file passed the 300-line ceiling. It owns
+   nothing the form partials below it also declare, so it leads simply because
+   it is the outermost of the four. */
+@import './features/calculators/_paint-calc-section.css';
+@import './features/calculators/_paint-calculator.css';
+@import './features/calculators/_paint-pigment.css';
+@import './features/calculators/_paint-calc-results.css';
+@import './features/calculators/_paint-calc-btn.css';
+@import './features/calculators/_project-calculator.css';
+@import './features/calculators/_project-calc-inputs.css';
+@import './features/calculators/_project-calc-items.css';
+@import './features/home/_category-grid.css';
+/* The product page, outermost first: the page and its two columns, then the
+   image column, the trail above them, and the details card's contents from the
+   name down to the trust row. No selector appears in more than one of these, so
+   the order is the reading order rather than a cascade constraint — with one
+   exception, noted on _product-buy-bar.css. */
+@import './features/product/_product-page.css';
+@import './features/product/_product-gallery.css';
+@import './features/product/_breadcrumb.css';
+@import './features/product/_product-detail.css';
+@import './features/product/_product-options.css';
+@import './features/product/_product-buy.css';
+@import './features/product/_product-trust.css';
+/* The exception: while the phone's buy strip is up it lifts the two floating
+   buttons clear of it, so it has to come after components/_buttons.css, which
+   declares where they sit. It does — that file is in section 3 above. */
+@import './features/product/_product-buy-bar.css';
+@import './features/product/_related-products.css';
+@import './features/product/_product-reviews.css';
+/* The three steps of the cart flow, in order. */
+@import './features/cart/_cart.css';
+@import './features/cart/_delivery-options.css';
+@import './features/cart/_checkout-form.css';
+@import './features/cart/_order-success.css';
+@import './features/cart/_order-history.css';
+/* one result card inside that lookup, split out of the file above it at the
+   400-line ceiling; no selector appears in both */
+@import './features/cart/_order-history-card.css';
+@import './features/cart/_wishlist.css';
+@import './features/home/_reviews.css';
+/* the rotating card, split out of _reviews.css; it needs the dark band that
+   file paints to already be in the cascade, and declares nothing it does */
+@import './features/home/_reviews-carousel.css';
+@import './features/reviews/_review-form.css';
+@import './features/admin/_admin-reviews.css';
+@import './features/home/_hero.css';
+/* the Hero's button row, split out of _hero.css at the line ceiling. After it:
+   .hero-cta--ghost and .hero-cta set the same properties at the same
+   specificity, and the shared entry animation is declared in _hero.css */
+@import './features/home/_hero-cta.css';
+/* the photo band at the top of a category page. Where features/_category-themes.css
+   used to be: that file painted every category page in one saturated colour and
+   is gone — a category's atmosphere is now this banner alone. */
+@import './features/category/_category-banner.css';
+/* The shopping area below that banner, outermost first. Together they replace
+   features/_products-toolbar.css (a row of sort buttons and a count) and
+   features/_product-search.css (the full-width pill input), both deleted.
+   No selector appears in more than one of the three. */
+@import './features/category/_category-layout.css';
+@import './features/category/_category-filters.css';
+@import './features/category/_category-toolbar.css';
+@import './features/home/_features-banner.css';
+@import './features/home/_whyus.css';
+/* One partial per static page, in the order their rules had inside the old
+   _pages.css. The three heroes' shared h1 rule is split per page. */
+@import './features/pages/_about.css';
+@import './features/pages/_contact.css';
+@import './features/pages/_returns.css';
+/* the refund options, the numbered steps and the contact block, split
+   out of _returns.css at the 300-line target; it declares nothing that
+   file does, so it simply follows it */
+@import './features/pages/_returns-steps.css';
+/* the accessibility statement; the returns page's reading frame, under its own
+   classes, so it follows it */
+@import './features/pages/_accessibility.css';
+@import './features/pages/_not-found.css';
+@import './features/home/_faq.css';

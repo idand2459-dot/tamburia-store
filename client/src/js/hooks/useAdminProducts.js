@@ -11,19 +11,27 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CATEGORIES } from '../pages/admin/adminConstants';
 import { errorMessageFrom, NETWORK_ERROR } from '../utils/apiErrors';
+import { parsePriceInput } from '../utils/pricing';
 
 const CSV_IDS = CATEGORIES.map(c => c.id);
 
 /** בונה את גוף הבקשה של מוצר מתוך שדות הטופס וכתובות התמונות. */
 function productBody(fields, imageUrls) {
-  const { name, price, inStock, colors, category, sku, description, variants } = fields;
+  const { name, price, inStock, colors, category, subcategory, sku, description, variants, imageIllustrative } = fields;
   const validVariants = variants.filter(v => v.label.trim() && v.price !== '');
   return {
-    name, price: parseInt(price) || 0, in_stock: inStock,
+    /* parsePriceInput ולא parseInt: parseInt("12.90") הוא 12, וזה היה
+       אחד משלושת המקומות שמחיר עשרוני נחתך בהם בדרך למסד. */
+    name, price: parsePriceInput(price) ?? 0, in_stock: inStock,
     image_url: imageUrls[0] || '', images: imageUrls.slice(1),
-    colors: colors.split(',').map(c => c.trim()).filter(Boolean),
-    category, sku, description,
-    variants: validVariants.map(v => ({ label: v.label.trim(), price: parseFloat(v.price) }))
+    /* שורה בלי שם נזרקת כאן ולא בשרת: שורה ריקה בטופס היא שורה שעוד
+       לא מולאה, ולא שגיאה שצריך לעצור עליה. */
+    colors: colors
+      .map(c => ({ name: c.name.trim(), hex: c.hex || '' }))
+      .filter(c => c.name),
+    category, subcategory: subcategory || null, sku, description,
+    image_illustrative: Boolean(imageIllustrative),
+    variants: validVariants.map(v => ({ label: v.label.trim(), price: parsePriceInput(v.price) }))
   };
 }
 
@@ -42,9 +50,10 @@ export function parseCSV(text) {
     cols.push(cur.trim());
     const [n, p, is, sk, cat, col, desc] = cols;
     if (!n) { errors.push(`שורה ${i+1}: חסר שם`); continue; }
-    if (!p || isNaN(parseInt(p))) { errors.push(`שורה ${i+1}: מחיר לא תקין`); continue; }
+    const price = parsePriceInput(p);
+    if (price === null) { errors.push(`שורה ${i+1}: מחיר לא תקין "${p ?? ''}" — עד שתי ספרות אחרי הנקודה`); continue; }
     if (!cat || !CSV_IDS.includes(cat)) { errors.push(`שורה ${i+1}: קטגוריה לא תקינה "${cat}"`); continue; }
-    rows.push({ name: n, price: parseInt(p), in_stock: is !== 'false', sku: sk||'', category: cat, colors: col ? col.split(',').map(c=>c.trim()).filter(Boolean) : [], description: desc||'' });
+    rows.push({ name: n, price, in_stock: is !== 'false', sku: sk||'', category: cat, colors: col ? col.split(',').map(c=>c.trim()).filter(Boolean) : [], description: desc||'' });
   }
   return { rows, errors };
 }
@@ -60,6 +69,10 @@ export function downloadTemplate() {
 /** מנהל את רשימת המוצרים, עדכוניה וייבוא ה-CSV. */
 export function useAdminProducts(api) {
   const [products, setProducts] = useState([]);
+  /* האם הרשימה כבר הגיעה מהשרת. עד אז products הוא [] — וזה לא אותו
+     דבר כמו "אין מוצרים": בלי הדגל, כל קטגוריה בכתובת הייתה נראית
+     ריקה ברגע הראשון, ולשונית המוצרים הייתה מאפסת אותה ל"הכל". */
+  const [productsLoaded, setProductsLoaded] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [productsError, setProductsError] = useState('');
 
@@ -68,9 +81,22 @@ export function useAdminProducts(api) {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
 
-  /** טוען את רשימת המוצרים מהשרת. */
+  /**
+   * טוען את רשימת המוצרים מהשרת.
+   *
+   * ?active=all במפורש: השרת מחזיר מוצרים גלויים בלבד לכל מי ששואל,
+   * גם לאדמין מחובר, כדי שגלישה בחנות תיראה כמו שהיא נראית ללקוח.
+   * הרשימה כאן היא היחידה שצריכה גם את המוסתרים.
+   */
   const fetchProducts = useCallback(() => {
-    api('/api/products').then(r => r.json()).then(data => setProducts(Array.isArray(data) ? data : [])).catch(() => {});
+    api('/api/products?active=all')
+      .then(r => r.json())
+      .then(data => {
+        if (!Array.isArray(data)) return;
+        setProducts(data);
+        setProductsLoaded(true);
+      })
+      .catch(() => {});
   }, [api]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
@@ -166,38 +192,106 @@ export function useAdminProducts(api) {
   }, [api, uploadImages, fetchProducts]);
 
   /** מוחק מוצר לאחר אישור המשתמש. */
-  const deleteProduct = useCallback(async (id) => {
-    if (!window.confirm('למחוק את המוצר?')) return;
-
+  /**
+   * מוחק מוצר ומחזיר מה קרה, כדי שהכרטיס יציג את זה במקום שבו לחצו.
+   *
+   * בלי window.confirm: האישור הוא חלק מהכרטיס (AdminProductCard). כאן
+   * היה confirm, ודפדפן שחוסם חלונות קופצים — דפדפן מוטמע, או מי שסימן
+   * "מנע מהדף ליצור תיבות דו-שיח נוספות" — מחזיר ממנו false בלי להציג
+   * כלום. הלחיצה לא שלחה בקשה ולא אמרה דבר.
+   *
+   * מחזיר { status: 'deleted' }, { status: 'has_orders', message } —
+   * מוצר שנמכר אינו נמחק, והכרטיס מציע להסתיר אותו — או
+   * { status: 'error', message }.
+   */
+  const deleteProduct = useCallback(async (product) => {
     try {
-      const res = await api('/api/products/' + id, { method: 'DELETE' });
+      const res = await api('/api/products/' + product.id, { method: 'DELETE' });
+      if (res.ok) {
+        setProductsError('');
+        fetchProducts();
+        return { status: 'deleted' };
+      }
+
+      const body = await res.json().catch(() => null);
+      const message = typeof body?.error === 'string' && body.error.trim()
+        ? body.error
+        : 'מחיקת המוצר נכשלה. אפשר לנסות שוב.';
+      if (res.status === 409 && body?.details?.reason === 'has_orders') {
+        return { status: 'has_orders', message };
+      }
+      return { status: 'error', message };
+    } catch {
+      return { status: 'error', message: NETWORK_ERROR };
+    }
+  }, [api, fetchProducts]);
+
+  /**
+   * שולח עדכון של שדה בודד, ומחזיר true רק כשהשמירה הצליחה.
+   *
+   * השרת כותב רק את מה שנשלח (parseUpdate עובר על השדות שקיימים בגוף
+   * הבקשה בלבד), ולכן וריאנטים, תמונות, צבעים ומידות שלא נכללו כאן
+   * נשארים כפי שהם. זו הסיבה שאפשר לשנות מחיר בלי לשלוח את כל המוצר,
+   * וזה מכוסה בבדיקה — test/smoke-products.js, "עדכון חלקי".
+   */
+  const patchProduct = useCallback(async (id, patch, failMessage) => {
+    try {
+      const res = await api('/api/products/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+
       if (!res.ok) {
-        setProductsError(await errorMessageFrom(res, 'מחיקת המוצר נכשלה.'));
-        return;
+        setProductsError(await errorMessageFrom(res, failMessage));
+        return false;
       }
       setProductsError(''); fetchProducts();
+      return true;
     } catch {
       setProductsError(NETWORK_ERROR);
+      return false;
     }
   }, [api, fetchProducts]);
 
   /** מחליף את סימון המלאי של המוצר. */
-  const toggleStock = useCallback(async (product) => {
-    try {
-      const res = await api('/api/products/' + product.id, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: product.name, price: product.price, in_stock: !product.in_stock, image_url: product.image_url || '', images: product.images || [], colors: product.colors || [], category: product.category, sku: product.sku || '', description: product.description || '' })
-      });
+  const toggleStock = useCallback((product) => (
+    patchProduct(product.id, { in_stock: !product.in_stock }, 'עדכון המלאי נכשל.')
+  ), [patchProduct]);
 
-      if (!res.ok) {
-        setProductsError(await errorMessageFrom(res, 'עדכון המלאי נכשל.'));
-        return;
-      }
-      setProductsError(''); fetchProducts();
-    } catch {
-      setProductsError(NETWORK_ERROR);
-    }
-  }, [api, fetchProducts]);
+  /**
+   * מסתיר את המוצר מהחנות, או מחזיר אותו אליה.
+   *
+   * זו החלופה למחיקה: המוצר נשאר במסד עם כל מה שמפנה אליו — הזמנות
+   * ישנות, ביקורות, מחשבון הצבע — ופשוט מפסיק להופיע בחנות. לכן זו
+   * פעולה בלי אישור, בניגוד ל-deleteProduct: אפשר לבטל אותה בלחיצה.
+   */
+  const toggleActive = useCallback((product) => (
+    patchProduct(
+      product.id,
+      { active: product.active === false },
+      'הסתרת המוצר נכשלה.'
+    )
+  ), [patchProduct]);
+
+  /**
+   * משנה את מחיר המוצר בלבד — עריכת המחיר המהירה בלשונית המוצרים.
+   *
+   * מוצר עם וריאנטים אינו מגיע לכאן: המחיר שלו נגזר מהזול שבהם, ושליחת
+   * price לבדו הייתה קובעת לו מחיר שאינו תואם את הגרסאות. לשונית
+   * המוצרים פותחת לו את הטופס המלא במקום.
+   */
+  const updatePrice = useCallback((product, price) => (
+    patchProduct(product.id, { price }, 'עדכון המחיר נכשל.')
+  ), [patchProduct]);
+
+  /**
+   * משבץ תת-קטגוריה ממסך הרשימה — אותו עדכון חלקי כמו המחיר המהיר:
+   * נשלח רק subcategory, והשרת בודק אותו מול הקטגוריה הקיימת של המוצר.
+   */
+  const updateSubcategory = useCallback((product, subcategory) => (
+    patchProduct(product.id, { subcategory: subcategory || null }, 'שיבוץ תת-הקטגוריה נכשל.')
+  ), [patchProduct]);
 
   /** מנקה את תצוגת ה-CSV, לפתיחה נקייה של לשונית הייבוא. */
   const resetCsv = useCallback(() => {
@@ -230,8 +324,9 @@ export function useAdminProducts(api) {
   const clearImportResult = useCallback(() => setImportResult(null), []);
 
   return {
-    products, fetchProducts, productsError,
-    createProduct, updateProduct, deleteProduct, toggleStock, uploadingImages,
+    products, productsLoaded, fetchProducts, productsError,
+    createProduct, updateProduct, deleteProduct, toggleStock, toggleActive, updatePrice, updateSubcategory,
+    uploadingImages,
     csvPreview, csvErrors, importing, importResult,
     downloadTemplate, handleCsvFile, handleImport, resetCsv, clearImportResult,
   };

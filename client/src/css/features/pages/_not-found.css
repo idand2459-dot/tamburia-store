@@ -1,0 +1,164 @@
+/* ==========================================================
+   404 page — the code, the two ways out
+
+   The one content page with no dark header: it is not a page
+   you meant to arrive at, and a full band across the top would
+   give it the weight of one. Blush, centred, and over as
+   quickly as possible.
+
+   The wiggling icon is gone. An error screen that jiggles at
+   you forever is a distraction in a place where the whole aim
+   is to get you somewhere else, and it ran regardless of what
+   the OS had been asked for.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.not-found {
+  min-height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  padding: 64px 24px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.not-found-content {
+  text-align: center;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.not-found-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 62px;
+  border-radius: var(--radius-lg);
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+  margin-bottom: 20px;
+}
+
+/* Navy, with only the middle zero in red. The gradient-clipped text this used
+   to be needed three vendor-prefixed declarations to say something a single
+   span says outright, and fell back to invisible where they were unsupported. */
+.not-found-code {
+  font-size: 5.5rem;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-navy);
+  line-height: 1;
+  letter-spacing: -2px;
+  margin: 0;
+}
+
+.not-found-code-accent {
+  color: var(--color-red);
+}
+
+.not-found-title {
+  font-size: 1.6rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  margin: 18px 0 0;
+}
+
+.not-found-desc {
+  font-size: 1rem;
+  color: rgba(var(--color-navy-rgb), 0.65);
+  line-height: 1.7;
+  margin: 12px 0 0;
+}
+
+.not-found-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 28px;
+}
+
+.not-found-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 12px 26px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-family-base);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-base), color var(--transition-base),
+              border-color var(--transition-base), transform var(--transition-base);
+}
+
+.not-found-info {
+  font-size: 0.85rem;
+  color: rgba(var(--color-navy-rgb), 0.7);
+  margin: 32px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.1);
+  width: 100%;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.not-found-btn--primary:hover {
+  background: var(--color-red-dark);
+  transform: translateY(-2px);
+}
+
+.not-found-btn--outline:hover {
+  background: var(--color-navy);
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+.not-found-btn--primary {
+  background: var(--color-red);
+  color: white;
+}
+
+.not-found-btn--outline {
+  background: transparent;
+  color: var(--color-navy);
+  border-color: rgba(var(--color-navy-rgb), 0.35);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 560px) {
+  .not-found {
+      padding: 48px 20px;
+    }
+
+  .not-found-code {
+      font-size: 4.2rem;
+    }
+
+  .not-found-title {
+      font-size: 1.35rem;
+    }
+
+  .not-found-actions .not-found-btn {
+      width: 100%;
+      justify-content: center;
+    }
+}
+
+/* ---- Reduced motion ------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .not-found-btn:hover {
+      transform: none;
+    }
+}

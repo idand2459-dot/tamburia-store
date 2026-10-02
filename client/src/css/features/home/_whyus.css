@@ -1,0 +1,248 @@
+/* ==========================================================
+   Why us — the four points, the shop photograph and the quote
+
+   Rendered by WhyUs.js. Not to be confused with .why-us-grid,
+   which belongs to the about page and now lives in _about.css.
+
+   The second light section, and the deeper of the two blush
+   tones: the categories section above it is --color-blush, this
+   one is --color-blush-deep. That half-step is the whole seam.
+   Two light sections that touch get no hairline — the red-to-
+   purple line is reserved for a dark/light boundary, and drawn
+   on the dark side of it — so the ::after that used to sit on
+   this section's top edge is gone, along with the purple glow
+   on ::before and the positioning that only existed to stack
+   content over it.
+
+   Layout, desktop: the text and the four points share the start
+   column (the right one, in RTL) and the photograph is a framed
+   panel in the end column — beside the words, never behind
+   them. The quote runs full width underneath. Below 900px the
+   three stack, with the photograph between the text and the
+   points and cropped to 4:3, because a 4:5 portrait at phone
+   width pushes everything after it off the screen.
+
+   Art-directed in both themes, like every other section of the
+   home page, so there is no prefers-color-scheme block here.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.whyus-section {
+  background-color: var(--color-blush-deep);
+  padding: 100px 40px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.whyus-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Every cell is placed explicitly rather than left to auto-placement: the
+   media panel spans both rows of the start column, and one explicitly placed
+   item is enough to make the auto-placed ones hard to reason about. */
+.whyus-content {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 40px 56px;
+  align-items: start;
+}
+
+/* Text column
+   -------------------------------------------------------------------------- */
+
+.whyus-text {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.whyus-title {
+  font-size: 2.4rem;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-navy);
+  line-height: 1.3;
+  margin-bottom: 20px;
+}
+
+/* the same device as .hero-accent — the second line of the title in red. No
+   text-shadow: that glow is what makes red carry on navy, and on blush it is
+   a pink smear behind the letters. */
+.whyus-title-accent {
+  color: var(--color-red);
+}
+
+.whyus-desc {
+  font-size: var(--font-size-body);
+  color: rgba(var(--color-navy-rgb), 0.72);
+  line-height: 1.8;
+  margin-bottom: 14px;
+}
+
+/* Photo panel
+   -------------------------------------------------------------------------- */
+
+/* Sized to the image, then centred against the two rows beside it. */
+.whyus-media {
+  position: relative;
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+}
+
+/* The red accent on the panel: a bar lying along its bottom edge, inset past
+   the corner radius at both ends so it reads as a line under the photograph
+   rather than as a border that failed to go all the way round. */
+.whyus-media::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 24px;
+  right: 24px;
+  height: 4px;
+  background: var(--color-red);
+  border-radius: 4px 4px 0 0;
+}
+
+.whyus-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 24px;
+  box-shadow: 0 24px 48px rgba(var(--color-navy-rgb), 0.18);
+}
+
+/* Point cards
+   -------------------------------------------------------------------------- */
+
+/* 2x2 rather than the single column this was: the points are short, and four
+   of them stacked made the text column twice the height of the panel. */
+.whyus-points {
+  grid-column: 1;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* The categories cards' white, one notch quieter: these are not links, so no
+   lift, no red, and a hairline instead of a shadow — see the state below. */
+.whyus-point {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  transition: border-color 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.whyus-point-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+}
+
+.whyus-point h3 {
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  margin-bottom: 4px;
+}
+
+.whyus-point p {
+  font-size: 0.85rem;
+  color: rgba(var(--color-navy-rgb), 0.65);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Quote
+   -------------------------------------------------------------------------- */
+
+.whyus-quote {
+  margin-top: 48px;
+  padding-top: 36px;
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.1);
+  text-align: center;
+}
+
+/* block, not the inline default a Lucide svg comes with: margin-bottom on an
+   inline box does not move the line below it. */
+.whyus-quote-mark {
+  display: block;
+  margin: 0 auto 14px;
+  color: var(--color-red);
+}
+
+/* Not italic: an oblique synthesised from a Hebrew face slants letterforms that
+   were never drawn to slant, and at this size it is the first thing you see. */
+.whyus-quote p {
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--color-navy);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+/* Purple, and only the border — red and a lift mean "this is clickable", and a
+   point card is not. */
+.whyus-point:hover {
+  border-color: rgba(var(--color-purple-rgb), 0.35);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* One column from here down, and the photograph moves between the text and
+   the points: it belongs to the words above it, and a 4:5 portrait at full
+   phone width would otherwise be a screenful on its own before the points
+   appear. The crop to 4:3 is what keeps it to a band. */
+@media (max-width: 900px) {
+  .whyus-section {
+      padding: 64px 24px;
+    }
+
+  .whyus-content {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+  .whyus-media {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+  .whyus-points {
+      grid-column: 1;
+      grid-row: 3;
+    }
+
+  .whyus-photo {
+      aspect-ratio: 4 / 3;
+    }
+
+  .whyus-title {
+      font-size: 1.8rem;
+    }
+
+  .whyus-quote p {
+      font-size: 1.05rem;
+    }
+}
+
+@media (max-width: 560px) {
+  .whyus-points {
+      grid-template-columns: 1fr;
+    }
+}

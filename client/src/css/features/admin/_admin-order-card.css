@@ -1,0 +1,395 @@
+/* ==========================================================
+   Admin order card — one order in the orders tab
+
+   Built so an order can be handled without opening it:
+   everything needed to decide is in the collapsed head, and the
+   two buttons under it are the whole interaction — the order's
+   next step, and the customer's phone. The expanded body is for
+   reading detail and for fixing a mistake, which is why the
+   status select and delete sit down there, far from the two.
+
+   Split out of features/admin/_admin-orders.css, which keeps the tab's
+   filter row. Replaces the table-based card that was there; gone
+   with it: .order-items-table, .order-details-grid,
+   .order-totals, .order-detail-item, .order-status-badge,
+   .order-card-right / -left, .order-expand-btn,
+   .order-delivery-badge, .order-total-badge, .status-buttons,
+   .status-btn.
+   ========================================================== */
+
+.order-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* The head is one big button. Three lines, each with the thing you look for at
+   the start and the thing you compare at the end. */
+.order-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 18px 20px 14px;
+  border: none;
+  background: none;
+  font-family: var(--font-family-base);
+  text-align: start;
+  cursor: pointer;
+}
+
+.order-card-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.order-card-line--meta {
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.order-card-number {
+  flex: 1;
+  font-size: 1.35rem;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-navy);
+  letter-spacing: -0.01em;
+}
+
+.order-card-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+}
+
+.order-card-chevron {
+  flex-shrink: 0;
+  color: var(--color-text-faint);
+  transition: transform var(--transition-base);
+}
+
+.order-card-name {
+  flex: 1;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.order-card-total {
+  font-size: 1.3rem;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-navy);
+  white-space: nowrap;
+}
+
+.order-card-phone {
+  font-size: var(--font-size-body);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.order-card-method {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--font-size-body);
+  color: var(--color-text-muted);
+}
+
+.order-card-age {
+  margin-inline-start: auto;
+  font-size: var(--font-size-small);
+  color: var(--color-text-subtle);
+}
+
+/* The two buttons. Both 52px, because this is the row a thumb aims at. */
+.order-card-actions {
+  display: flex;
+  gap: 10px;
+  padding: 0 20px 18px;
+}
+
+.order-next-btn {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 14px;
+  background: var(--color-red);
+  color: white;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.order-call-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 22px;
+  border: 2px solid var(--color-navy);
+  border-radius: 14px;
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.order-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px 20px;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.order-items {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.order-item {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border-soft);
+  font-size: var(--font-size-body);
+}
+
+.order-item-name {
+  flex: 1;
+  color: var(--color-text);
+}
+
+.order-item-options {
+  display: block;
+  font-size: var(--font-size-small);
+  color: var(--color-text-subtle);
+}
+
+.order-item-qty {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.order-item-price {
+  min-width: 68px;
+  text-align: end;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+}
+
+.order-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 0;
+}
+
+.order-fact dt {
+  margin-bottom: 2px;
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  color: var(--color-text-subtle);
+}
+
+.order-fact dd {
+  margin: 0;
+  font-size: var(--font-size-body);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+/* Correcting a mistake, kept away from the actions above so the two are never
+   taken for each other. A native select on purpose: it is the control his phone
+   already knows how to open. */
+.order-card-fix {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.order-status-fix {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  color: var(--color-text-subtle);
+}
+
+.order-status-fix select {
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+}
+
+.order-delete-btn {
+  min-height: 48px;
+  padding: 0 8px;
+  border: none;
+  background: none;
+  color: var(--color-text-subtle);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.order-next-btn:hover { background: var(--color-red-dark); }
+
+.order-call-btn:hover {
+  background: var(--color-navy);
+  color: white;
+}
+
+.order-delete-btn:hover { color: var(--color-red); }
+
+.order-card.is-open .order-card-chevron { transform: rotate(180deg); }
+
+.order-card-head:focus-visible,
+.order-next-btn:focus-visible,
+.order-call-btn:focus-visible,
+.order-delete-btn:focus-visible,
+.order-status-fix select:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: -3px;
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+.order-fact--wide { grid-column: 1 / -1; }
+
+/* An unhandled order: a red bar down its leading edge and the blush tint over
+   the card, so it stays visible in the list until someone has touched it. */
+.order-card.is-new { background: var(--color-blush); }
+
+.order-card.is-new::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 5px;
+  background: var(--color-red);
+}
+
+/* The five statuses, in the brand colours the customer's own order card uses in
+   features/cart/_order-history-card.css, where the set is explained: purple, navy,
+   red, blue, green, from new to done. */
+.order-card-status--new {
+  background: rgba(var(--color-purple-rgb), 0.1);
+  color: var(--color-purple);
+}
+
+.order-card-status--processing {
+  background: rgba(var(--color-navy-rgb), 0.08);
+  color: var(--color-navy);
+}
+
+.order-card-status--ready_for_pickup {
+  background: rgba(var(--color-red-rgb), 0.12);
+  color: var(--color-red-dark);
+}
+
+.order-card-status--shipped {
+  background: rgba(var(--color-blue-rgb), 0.12);
+  color: var(--color-blue);
+}
+
+.order-card-status--completed {
+  background: rgba(var(--color-green-rgb), 0.12);
+  color: var(--color-green);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* lg — the phone: the two buttons stack, each full width. */
+@media (max-width: 900px) {
+  .order-card-actions { flex-direction: column; }
+
+  .order-facts { grid-template-columns: 1fr; }
+}
+
+/* sm — the number and the total keep their size; the name gives way first. */
+@media (max-width: 560px) {
+  .order-card-head { padding: 16px 16px 12px; }
+
+  .order-card-actions { padding: 0 16px 16px; }
+
+  .order-card-body { padding: 16px; }
+
+  .order-card-name { font-size: var(--font-size-body); }
+
+  .order-card-fix {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ---- Dark mode ----------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .order-card,
+  .order-call-btn,
+  .order-status-fix select {
+    background: var(--color-navy);
+    border-color: var(--color-surface-dark);
+    color: var(--color-text-dark);
+  }
+
+  .order-card-number,
+  .order-card-name,
+  .order-card-total,
+  .order-item-name,
+  .order-item-price,
+  .order-fact dd {
+    color: var(--color-text-dark);
+  }
+
+  .order-card.is-new { background: var(--color-bg-dark); }
+
+  .order-card-body { border-top-color: var(--color-surface-dark); }
+
+  .order-item { border-bottom-color: var(--color-surface-dark); }
+
+  /* navy on navy is invisible, so the handled state borrows white here */
+  .order-card-status--processing {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-text-dark);
+  }
+}

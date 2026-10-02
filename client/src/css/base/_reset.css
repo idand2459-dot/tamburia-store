@@ -8,17 +8,55 @@
   box-sizing: border-box;
 }
 
+/* ==========================================================================
+   iOS Safari: the rotation bug
+
+   Rotating to landscape and back used to leave the whole page zoomed out and
+   pushed to one side with a blank strip beside it, until a refresh. Safari
+   measures the document while it is landscape-wide, and if anything sticks out
+   past the viewport it keeps that width when the phone comes back to portrait.
+
+   The cause was fixed at its source (the nav drawer waited off-screen at
+   right: -280px; see layout/_nav-drawer.css). These two declarations are the
+   net under it, so one stray wide element cannot do it again.
+
+   overflow-x: clip and NOT hidden. `hidden` makes the element a scroll
+   container, which silently kills position: sticky inside it — the navbar, the
+   category filter rail and the product page's sticky column all depend on it.
+   `clip` cuts the overflow without creating a scroll container.
+
+   text-size-adjust stops Safari inflating body text on rotation, which is the
+   other half of what made the page look rescaled afterwards. The unprefixed
+   property is in the spec but Safari still reads the -webkit- one, so both. */
+html,
 body {
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #f8f8f6;
-  direction: rtl;
-  color: #1a1a2e;
+  overflow-x: clip;
 }
 
-@media (prefers-color-scheme: dark) {
-  /* רקע כללי */
-  body {
-      background-color: #0f0f1a;
-      color: #e0e0e0;
-    }
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
+
+/* אייקוני Lucide הם <svg> inline, ולכן הם יושבים על קו הבסיס ונראים
+   נמוכים מדי ליד טקסט. היישור והיציבות כאן הם ברירת המחדל לכולם —
+   רכיב שצריך אחרת דוחה אותה בקובץ שלו, שנטען אחרי הקובץ הזה. */
+svg.lucide {
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: var(--color-bg);
+  direction: rtl;
+  color: var(--color-text);
+}
+
+/* No dark-mode rule on body any more. The storefront is art-directed light —
+   the home page never followed the system theme — but this rule turned the page
+   backdrop dark under every section that assumed blush, and left their navy
+   headings and breadcrumbs on near-black (1.1:1). The admin, which does follow
+   the theme, now sets its own text colour (.admin, features/admin/_admin-layout.css);
+   it already painted its own backdrop. Components that paint their own dark
+   surface in dark mode (the search popup, the review forms) still do. */

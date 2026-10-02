@@ -1,0 +1,177 @@
+/* ==========================================================
+   Product buy bar — the phone's fixed "add to cart" strip
+
+   New in this step, and only on a phone: the details card is a
+   long scroll there — pickers, description, trust row, then
+   reviews — and the one button the page exists for was somewhere
+   above the fold. ProductPage watches the real button with an
+   IntersectionObserver and shows this strip whenever it is off
+   screen; both press the same handler with the same quantity, so
+   there is no second source of truth.
+
+   It has to share the bottom of the screen with the floating
+   WhatsApp button and the scroll-to-top button, so while the
+   strip is up those two are lifted clear of it rather than
+   hidden — the WhatsApp button is how half the shop's customers
+   ask a question, and it should not disappear on the one page
+   where they are deciding. ProductBuyBar.js puts .has-buy-bar on
+   <body> while it is mounted, and both lifts live in the one md
+   block below, so nothing moves on a desk where the strip never
+   shows. (The paint-calculator button is not in this picture:
+   StoreLayout renders it on the home page only.)
+
+   z-index 95 is under both of those (97 and 99) and over the page. The whole
+   floating group used to be in the 990s, which put it above every drawer and
+   backdrop on the site; components/_buttons.css records why it came down.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+/* display: none is the default and the md block below is what turns it on: the
+   strip is a phone control, and on a desk the real buy row is always a short
+   scroll away. */
+.product-buy-bar {
+  display: none;
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 95;
+  align-items: center;
+  gap: 12px;
+  /* the bar spans the screen, so it takes the side insets as well as the bottom
+     one; the fallbacks matter because env() with no fallback invalidates the
+     whole calc() where the variable is unknown */
+  padding: 10px 16px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--color-surface);
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.1);
+  box-shadow: 0 -4px 20px rgba(var(--color-navy-rgb), 0.1);
+  animation: buy-bar-in 0.2s ease;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.product-buy-bar-price {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 1.25rem;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-navy);
+}
+
+/* "מחיר בחנות", the same state the details card shows. Smaller, because it
+   is words where the bar expects a figure. */
+.product-buy-bar-price.is-no-price {
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-bold);
+  color: rgba(var(--color-navy-rgb), 0.65);
+}
+
+/* "× 3", when more than one is being added. Small on purpose: the price is what
+   the eye is looking for here. */
+.product-buy-bar-qty {
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  color: rgba(var(--color-navy-rgb), 0.7);
+}
+
+.product-buy-bar-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  height: 46px;
+  border: none;
+  border-radius: 14px;
+  background: var(--color-red);
+  color: white;
+  font-family: var(--font-family-base);
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+/* ---- States ------------------------------------------------------------- */
+
+/* The call link, in place of the add button. Deliberately a second copy of
+   .product-buy-call from features/product/_product-buy.css rather than a shared
+   class: the strip is its own component and already keeps its own copy of the
+   add button, at its own 46px. */
+.product-buy-bar-call {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--color-navy);
+  color: white;
+  font-family: var(--font-family-base);
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+}
+
+.product-buy-bar-add:hover:not(:disabled):not(.is-added) {
+  background: var(--color-red-dark);
+}
+
+.product-buy-bar-add.is-added {
+  background: var(--color-green);
+}
+
+.product-buy-bar-add:disabled {
+  background: rgba(var(--color-navy-rgb), 0.12);
+  color: rgba(var(--color-navy-rgb), 0.4);
+  cursor: not-allowed;
+}
+
+.product-buy-bar-add:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+/* ---- Animations --------------------------------------------------------- */
+
+@keyframes buy-bar-in {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* ---- Responsive --------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .product-buy-bar {
+      display: flex;
+    }
+
+  /* The height the two floating buttons and the page bottom are lifted by.
+     Declared on the body class rather than on the strip, because the rules
+     that read it sit on other elements. */
+  body.has-buy-bar {
+      --buy-bar-height: 66px;
+      padding-bottom: calc(var(--buy-bar-height) + env(safe-area-inset-bottom, 0px));
+    }
+
+  body.has-buy-bar .whatsapp-float {
+      bottom: calc(var(--buy-bar-height) + env(safe-area-inset-bottom, 0px) + 16px);
+    }
+
+  body.has-buy-bar .scroll-to-top {
+      bottom: calc(var(--buy-bar-height) + env(safe-area-inset-bottom, 0px) + 86px);
+    }
+}
+
+/* ---- Reduced motion ----------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .product-buy-bar {
+      animation: none;
+    }
+}

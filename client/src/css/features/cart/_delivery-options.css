@@ -1,0 +1,164 @@
+/* ==========================================================
+   Delivery options — the shipping method picker in the cart step
+
+   Whether the chosen area is actually served is checked in the
+   details form, so .checkout-ok and .checkout-error live in
+   _checkout-form.css with the rest of that step.
+
+   Two selectable cards over a real radio group. The inputs are
+   hidden from sight but not from the keyboard, so arrow keys,
+   the required-ness of the choice and the group's name all come
+   from the browser rather than from our code — the two cards
+   used to be divs with onClick and no keyboard path at all.
+
+   The focus ring is drawn on .delivery-option-ring, a stretched
+   layer inside the label, because a hidden input cannot draw a
+   ring around its own label without :has(). The product card
+   stretches a layer for the same reason.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+/* A fieldset, reset: the browser's own border and padding are from another
+   decade and the legend below is positioned as a plain heading. */
+.delivery-options {
+  border: none;
+  margin: 0;
+  padding: 18px 20px 20px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.delivery-options-title {
+  padding: 0;
+  margin-bottom: 10px;
+  color: var(--color-navy);
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-extrabold);
+}
+
+.delivery-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.delivery-option {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1.5px solid rgba(var(--color-navy-rgb), 0.12);
+  border-radius: 14px;
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+/* Off the screen, still in the tab order. Not display: none — that would take
+   the radios out of the group and out of the keyboard. */
+.delivery-option-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  margin: 0;
+}
+
+.delivery-option-ring {
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 14px;
+  pointer-events: none;
+}
+
+.delivery-option-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: rgba(var(--color-navy-rgb), 0.06);
+  color: var(--color-navy);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.delivery-option-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.delivery-option-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.delivery-option-name {
+  color: var(--color-navy);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.delivery-option-price {
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--color-navy-rgb), 0.07);
+  color: var(--color-navy);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.delivery-option-desc {
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.delivery-option:hover {
+  border-color: rgba(var(--color-navy-rgb), 0.3);
+}
+
+.delivery-option-input:focus-visible ~ .delivery-option-ring {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+/* The chosen card: red border, a red tint behind it, and the icon tile filled
+   red — one selection, marked three ways, because on a phone this is the
+   difference between free and twenty shekels. */
+.delivery-option.is-selected {
+  border-color: var(--color-red);
+  background: rgba(var(--color-red-rgb), 0.05);
+}
+
+.delivery-option.is-selected .delivery-option-icon {
+  background: var(--color-red);
+  color: white;
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+/* Purple, the secondary accent: red is spoken for by the selected state. */
+.delivery-option-price--free {
+  background: rgba(var(--color-purple-rgb), 0.1);
+  color: var(--color-purple);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 560px) {
+  .delivery-options { padding: 16px; }
+
+  .delivery-option { padding: 12px; }
+}

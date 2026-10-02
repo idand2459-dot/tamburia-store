@@ -15,8 +15,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import Admin from '../pages/admin/Admin';
 import AdminLogin from '../pages/AdminLogin';
-
-const TABS = ['stats', 'orders', 'products', 'add', 'import', 'reviews'];
+import { ADMIN_TAB_IDS } from '../pages/admin/adminConstants';
 
 /** מציג את אזור הניהול למי שמחובר, ומסך התחברות לכל השאר. */
 function AdminRoute() {
@@ -39,7 +38,9 @@ function AdminRoute() {
     navigate('/');
   }
 
-  if (!TABS.includes(tab)) return <Navigate to="/admin/stats" replace />;
+  /* ברירת המחדל היא הזמנות ולא סטטיסטיקות: זה מה שפותחים את המסך
+     בשבילו, וסיכום המספרים הוא מה שמסתכלים עליו פעם ביום. */
+  if (!ADMIN_TAB_IDS.includes(tab)) return <Navigate to="/admin/orders" replace />;
 
   // בזמן הבדיקה לא מציגים כלום — לא את המסך ולא את הטופס — כדי
   // שלא תהבהב התחברות למי שכבר מחובר.
@@ -50,7 +51,7 @@ function AdminRoute() {
   return (
     <Admin
       tab={tab}
-      onTabChange={(next) => navigate(`/admin/${next}`)}
+      onTabChange={(next, search = '') => navigate(`/admin/${next}${search}`)}
       onBack={handleLogout}
       onExpired={() => setAuth('out')}
     />

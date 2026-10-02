@@ -1,0 +1,197 @@
+/* ==========================================================
+   Project calculator items — the matched parts list and the
+   estimate footer under it
+
+   .found and .missing are the two states of a row: a part the
+   shop stocks, and one it does not. Found rows carry a red
+   check and a navy price; missing rows are dimmed and their
+   price is the purple "ask in the shop". The green that used to
+   mark found rows is gone — green was not in this palette, and
+   a found part is not a success message.
+
+   These sit inside the panel, which is a white card on the
+   blush section, so every colour here is a navy tint rather
+   than the white tint it was while the section was dark.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.proj-items { margin-bottom: 24px; }
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.proj-items-title {
+  font-size: 0.8rem;
+  font-weight: var(--font-weight-bold);
+  color: rgba(var(--color-navy-rgb), 0.7);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.proj-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  animation: proj-fade-up 0.32s ease both;
+}
+
+.proj-item-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  flex-shrink: 0;
+}
+
+.proj-item-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.proj-item-name {
+  font-size: 0.92rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.proj-item-sku {
+  font-size: 0.78rem;
+  color: rgba(var(--color-navy-rgb), 0.7);
+}
+
+.proj-item-price {
+  font-size: 0.92rem;
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────── */
+
+.proj-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-top: 20px;
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.1);
+}
+
+.proj-estimate {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.proj-estimate-label {
+  font-size: 0.8rem;
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.proj-estimate-right {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.proj-estimate-total {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--color-navy);
+  line-height: 1;
+}
+
+.proj-estimate-plus {
+  font-size: 1.4rem;
+  font-weight: var(--font-weight-extrabold);
+  color: rgba(var(--color-navy-rgb), 0.7);
+}
+
+/* not italic: a synthesised Hebrew oblique slants letterforms that were never
+   drawn to slant — the same call made on the WhyUs quote */
+.proj-estimate-note {
+  font-size: 0.8rem;
+  color: rgba(var(--color-navy-rgb), 0.7);
+}
+
+.proj-add-btn {
+  padding: 14px 28px;
+  background: var(--color-red);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--transition-base), transform var(--transition-base),
+    box-shadow var(--transition-base);
+  white-space: nowrap;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.proj-item:last-child { border-bottom: none; }
+
+/* A drop shadow rather than the glow the dark version had: a glow needs
+   something dark behind it, and the panel under this button is white. */
+.proj-add-btn:hover:not(.disabled):not(.added) {
+  background: var(--color-red-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(var(--color-red-rgb), 0.35);
+}
+
+.proj-add-btn.added {
+  background: var(--color-green-bright);
+  box-shadow: 0 10px 24px rgba(var(--color-green-bright-rgb), 0.3);
+  transform: translateY(-1px);
+}
+
+.proj-add-btn.disabled {
+  background: rgba(var(--color-navy-rgb), 0.12);
+  color: rgba(var(--color-navy-rgb), 0.7);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+.proj-item.found .proj-item-dot { color: var(--color-red); }
+
+.proj-item.missing .proj-item-dot { color: rgba(var(--color-navy-rgb), 0.3); }
+
+.proj-item.found .proj-item-name { color: var(--color-navy); }
+
+.proj-item.missing .proj-item-name { color: rgba(var(--color-navy-rgb), 0.7); }
+
+.proj-item.found .proj-item-price { color: var(--color-navy); }
+
+/* purple, the colour this palette gives to "not a price, a next step" — at
+   full strength, since --color-purple-soft is the dark-surface version */
+.proj-item.missing .proj-item-price {
+  color: var(--color-purple);
+  font-weight: 500;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* 640px, matching the rest of the section — see the note in
+   _project-calculator.css. */
+@media (max-width: 640px) {
+  .proj-footer   { flex-direction: column; align-items: stretch; }
+
+  .proj-add-btn  { text-align: center; }
+
+  .proj-estimate-total { font-size: 1.6rem; }
+}

@@ -1,0 +1,151 @@
+/* ==========================================================
+   Admin orders — the orders tab's own furniture: the filter row
+   and the list it fills
+
+   One card is features/admin/_admin-order-card.css; this file owns
+   nothing inside a card. The customer-facing screens are
+   different components again: features/cart/_order-success.css is the
+   cart's confirmation step and features/cart/_order-history.css is
+   the lookup page.
+
+   Replaces the stat row and the pill filter that were here.
+   Gone with them: .orders-stats, .orders-stat-card, .stat-number
+   (the stats tab has its own copy), .orders-new-badge (now
+   .admin-tab-badge in _admin-layout.css) and .export-orders-btn.
+   ========================================================== */
+
+.admin-orders {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.orders-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.orders-chips {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.orders-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+/* The count of orders behind each chip. It is what makes the row worth
+   reading — how many are waiting, not just which filters exist. */
+.orders-chip-count {
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--color-navy-rgb), 0.07);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+}
+
+.orders-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.orders-chip:hover,
+.orders-export-btn:hover {
+  border-color: var(--color-navy);
+  color: var(--color-navy);
+}
+
+.orders-chip.is-active {
+  border-color: var(--color-navy);
+  background: var(--color-navy);
+  color: white;
+}
+
+.orders-chip.is-active .orders-chip-count {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.orders-chip:focus-visible,
+.orders-export-btn:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: -3px;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* lg — the phone: one sideways-scrolling row of chips rather than four wrapped
+   lines, and the export button drops below it. */
+@media (max-width: 900px) {
+  .orders-filter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  /* bleeds to both edges so the row reads as scrollable, while the first chip
+     still lines up with the cards below it */
+  .orders-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: -16px;
+    padding: 2px 16px;
+  }
+
+  .orders-chips::-webkit-scrollbar { display: none; }
+
+  .orders-export-btn { align-self: flex-start; }
+}
+
+/* ---- Dark mode ----------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .orders-chip,
+  .orders-export-btn {
+    background: var(--color-navy);
+    border-color: var(--color-surface-dark);
+    color: var(--color-text-dark);
+  }
+}

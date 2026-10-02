@@ -1,0 +1,389 @@
+/* ==========================================================
+   Category banner — the photo band at the top of /category/:slug
+
+   What used to be here was a flat gradient per category, and
+   features/_category-themes.css painted the whole page in that
+   colour below it. Both are gone: a category's atmosphere is one
+   photograph, and the shopping area under it is the same light
+   blush every time — the products carry the colour.
+
+   Always dark whatever the system theme, exactly like the Hero:
+   every colour here is fixed, and there is no dark-mode block.
+
+   Two looks, same height, so a category that gets a photograph
+   later does not move the page:
+     --photo  the photograph, a right-hand gradient over it, and
+              a bottom fade into the page
+     --plain  navy, one red glow and a large faint icon on the
+              left, and a red→purple hairline at the bottom
+
+   The layer order, bottom to top:
+     1. background            the flat fill under everything
+     2. .category-banner-photo / -watermark
+     3. ::before              the readability gradient / the glow
+     4. .category-banner-inner  the text
+     5. ::after               the fade into the page below (photo only)
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.category-banner {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  height: clamp(320px, 42vh, 440px);
+  background-color: var(--color-navy-950);
+  color: white;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* object-position: left — the photographs are composed with their subject on
+   the left and a calm area on the right, which is where the title goes.
+
+   opacity: 0 until CategoryBanner puts .is-loaded on it; until then what shows
+   is the flat fill above. */
+.category-banner-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: left center;
+  opacity: 0;
+  /* the photographs come out of the pipeline a touch flat, and behind the
+     layers below they went further that way. A small lift here is worth more
+     than a weaker overlay: it works on the subject, not on the text area. */
+  filter: saturate(1.08) contrast(1.05);
+  pointer-events: none;
+}
+
+.category-banner-photo.is-loaded {
+  animation: category-banner-in 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* The fallback's watermark: the category icon, large and faint, on the side the
+   photograph's subject would have been. Clipped by the banner's overflow on
+   purpose — a mark, not an illustration. */
+.category-banner-watermark {
+  position: absolute;
+  top: 50%;
+  left: 6%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.06);
+  line-height: 0;
+  pointer-events: none;
+}
+
+/* The readability layer. On the photo version it is a gradient from the RTL
+   start (the right) so the title sits on something dark while the subject on
+   the left stays at full strength. On the plain version the same pseudo-element
+   carries the red glow instead. */
+.category-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Only as deep as the text. This used to reach 70% across at 0.35 in the
+   middle, and a cold navy that thin over a warm photograph does not read as
+   shade — it reads as haze over the whole frame. Now it is strong where the
+   title sits and gone by the halfway mark, and the text-shadow further down
+   pays for the strength that came off. */
+.category-banner--photo::before {
+  background: linear-gradient(to left,
+    rgba(var(--color-navy-950-rgb), 0.62) 0%,
+    rgba(var(--color-navy-950-rgb), 0.3) 28%,
+    transparent 48%);
+}
+
+.category-banner--plain::before {
+  background: radial-gradient(ellipse 55% 75% at 12% 50%,
+    rgba(var(--color-red-rgb), 0.22),
+    transparent 70%);
+}
+
+/* The melt: the banner's last band fades into the page background, so the
+   category's atmosphere runs into the top of the shopping area instead of
+   ending on a line. Photo only — the plain version ends on its hairline
+   instead, and the two cannot both own the bottom edge.
+
+   44px, and transparent for the first third of it. At 90px with a fade that
+   started immediately, the blush was sitting over the bottom quarter of a
+   440px banner — from far enough back the photograph looked washed out rather
+   than melted. The band is half as tall and the ramp inside it about a third
+   as long, so what the eye gets is an edge that dissolves, not a veil.
+   The phone keeps its own, softer melt below. */
+.category-banner--photo::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  z-index: 2;
+  background: linear-gradient(to bottom, transparent 0%, transparent 28%, var(--color-bg) 100%);
+  pointer-events: none;
+}
+
+/* The fallback's bottom edge: the brand's two-colour hairline, painted as the
+   block's own background-image rather than as a border, because a border cannot
+   carry a gradient. background-color stays where the block declares it — these
+   are longhands, so nothing here resets it. */
+.category-banner--plain {
+  background-image: linear-gradient(to left, var(--color-red), var(--color-purple));
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: 100% 2px;
+}
+
+.category-banner-inner {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 24px 56px;
+  text-align: start;
+}
+
+.category-banner-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 18px;
+}
+
+.category-banner-crumbs a {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.category-banner-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  /* white glass rather than a red tile: the photograph behind it already
+     carries the colour, and a red square on top of it read as a second
+     subject */
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: white;
+  margin-bottom: 14px;
+}
+
+.category-banner-title {
+  font-size: 2.6rem;
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.15;
+  color: white;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.35);
+  margin-bottom: 8px;
+}
+
+.category-banner-desc {
+  font-size: 1rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 520px;
+  margin-bottom: 16px;
+}
+
+.category-banner-count {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.category-banner-crumbs a:hover {
+  color: white;
+  text-decoration: underline;
+}
+
+.category-banner-crumbs a:focus-visible {
+  outline: 2px solid var(--color-purple-soft);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ---- Animations ---------------------------------------------------------- */
+
+/* One settle on load, never again — the same curve and travel as the Hero's. */
+@keyframes category-banner-in {
+  from { opacity: 0; transform: scale(1.04); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* The one min-width block in a file that is otherwise written phone-last, and
+   it is one on purpose. Everything in it either has to stay off the phone or
+   cannot be kept off it any other way:
+
+   - the text-shadows pay for the lighter readability layer above, and the
+     phone's layer was not lightened, so it does not need them;
+   - the per-category exception outweighs `.category-banner--photo::before` on
+     specificity, so from the base level it would win inside the phone's block
+     too and undo the bottom-up gradient there. */
+@media (min-width: 769px) {
+  /* A tight shadow for the edge of the letter and a wide one for the halo
+     around it. The pair is what lets the navy behind the title stop at 0.62
+     instead of 0.72 and still read as deliberate shade. */
+  .category-banner-title {
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45),
+                   0 2px 18px rgba(var(--color-navy-950-rgb), 0.55);
+    }
+
+  /* The description needs it more than the title does: it is 1rem, it is not
+     bold, and being the widest line it reaches furthest left, to where the
+     gradient has already run out. */
+  .category-banner-desc {
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5),
+                   0 1px 10px rgba(var(--color-navy-950-rgb), 0.45);
+    }
+
+  /* The two photographs the lighter layer is not enough for. Both have a
+     bright tiled wall on the title's side: under plumbing's title nearly half
+     the pixels are above 180 luminance, where most of the set sits around a
+     third. Measured at 1920 against the gradient above, white fell to 3.43:1
+     on plumbing's title and 3.72:1 on bathroom's, and bathroom's description —
+     1rem, so it owes 4.5 and not 3 — to 4.46:1.
+
+     Each gets a deeper ramp, below, and they are not quite the same one.
+     Bathroom's is here: it brings its title to 5.35:1 and its description to
+     6.22:1, worst pixel 4.62, at 1920 and better at 1366. Every other banner
+     keeps the light layer. Kitchen is the next closest and stays on it by
+     choice — its title clears the 3:1 that 2.6rem bold owes, and its
+     description is at 4.50:1.
+     Garden was the one to suspect and it turned out to be among the darkest of
+     the set on that side — it needs nothing.
+
+     Garden was the one to suspect and it turned out to be among the darkest of
+     the set on that side — it needs nothing. */
+  .category-banner--photo[data-category='bathroom']::before {
+      background: linear-gradient(to left,
+        rgba(var(--color-navy-950-rgb), 0.74) 0%,
+        rgba(var(--color-navy-950-rgb), 0.42) 30%,
+        transparent 52%);
+    }
+
+  /* Plumbing needs a little more again, and only in the middle. Its
+     description was the longest string of the twelve and reached further left
+     than any other line, to where even this deeper layer has thinned out; it
+     has been shortened in CategoryBanner.js, which took its worst pixel from
+     3.06:1 to 3.18:1 — better, and still short of the 4.5 a 1rem line owes.
+
+     So the ramp holds 0.46 out to 38% instead of thinning to 0.42 by 30%. The
+     ends are deliberately the ones above: it starts at the same 0.74 and is
+     still gone by 52%, so it covers no more of the photograph than bathroom's
+     does — it just does not give up in the middle, which is exactly where that
+     line sits. Worst pixel 4.94:1 on the description and 5.30:1 on the title
+     at 1920, 5.28:1 and better at 1366. */
+  .category-banner--photo[data-category='plumbing']::before {
+      background: linear-gradient(to left,
+        rgba(var(--color-navy-950-rgb), 0.74) 0%,
+        rgba(var(--color-navy-950-rgb), 0.46) 38%,
+        transparent 52%);
+    }
+}
+
+/* On a phone there is no room for a subject on one side and a title on the
+   other, so the composition turns vertical: the frame is centred, the
+   readability gradient comes from the bottom, and the content sits on it. */
+@media (max-width: 768px) {
+  .category-banner {
+      height: 260px;
+      align-items: flex-end;
+    }
+
+  .category-banner-photo {
+      object-position: center;
+    }
+
+  .category-banner--photo::before {
+      background: linear-gradient(to top,
+        rgba(var(--color-navy-950-rgb), 0.82) 0%,
+        rgba(var(--color-navy-950-rgb), 0.4) 45%,
+        transparent 80%);
+    }
+
+  /* 260px of banner cannot give up 44 sharp pixels the way 440 can, and the
+     content sits on the bottom edge here: the phone keeps the taller, evenly
+     soft melt the desktop one used to be. */
+  .category-banner--photo::after {
+      height: 60px;
+      background: linear-gradient(to bottom, transparent, var(--color-bg));
+    }
+
+  .category-banner-watermark {
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+  .category-banner-inner {
+      padding: 16px 16px 40px;
+    }
+
+  .category-banner-crumbs {
+      margin-bottom: 12px;
+    }
+
+  .category-banner-icon {
+      width: 40px;
+      height: 40px;
+      margin-bottom: 10px;
+    }
+
+  .category-banner-title {
+      font-size: 1.75rem;
+    }
+
+  .category-banner-desc {
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+    }
+}
+
+@media (max-width: 430px) {
+  .category-banner-title {
+      font-size: 1.5rem;
+    }
+
+  /* the count pill says the same thing the toolbar below it does, and at this
+     width the title and the description need the room more */
+  .category-banner-desc {
+      display: none;
+    }
+}
+
+/* ---- Reduced motion ------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .category-banner-photo.is-loaded {
+      animation: none;
+    }
+
+  /* with the animation off, the base opacity: 0 would hide the photograph for
+     good — this is what keeps "no motion" from meaning "no image" */
+  .category-banner-photo {
+      opacity: 1;
+    }
+}

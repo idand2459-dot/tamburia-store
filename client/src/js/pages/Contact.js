@@ -1,67 +1,117 @@
+/**
+ * עמוד צור קשר — שלושת כרטיסי המידע ומפה מוטמעת מתחתם.
+ */
+import { MapPin, Phone, Clock, ArrowLeft } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
+import { usePageTitle } from '../hooks/usePageTitle';
+import {
+  ADDRESS, PHONES, HOURS, hoursRangePadded, todayRow,
+} from '../utils/storeInfo';
+
 /** מציג את עמוד יצירת הקשר. */
 function Contact() {
+  usePageTitle('צור קשר');
+
+  /* נקרא פעם אחת לכל רינדור ולא לכל שורה: שלוש הקריאות היו יכולות
+     ליפול משני צדי חצות ולסמן שני ימים. */
+  const today = todayRow();
+
   return (
     <div className="page-container">
-      <div className="contact-hero">
-        <h1>צור קשר</h1>
-        <p>נשמח לשמוע ממך ולעזור בכל שאלה</p>
-      </div>
- 
-      <div className="contact-cards">
- 
-        <div className="contact-card">
-          <div className="contact-icon">📍</div>
-          <h2>כתובת</h2>
-          <p>בר כוכבא 52</p>
-          <p>פתח תקווה</p>
-          <a
-            href="https://maps.google.com/?q=בר+כוכבא+52+פתח+תקווה"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="contact-link-btn"
-          >
-            פתח במפות ←
-          </a>
+      <PageHeader
+        pill="צור קשר"
+        title="נשמח לשמוע"
+        accent="ממך"
+        subtitle="נשמח לשמוע ממך ולעזור בכל שאלה"
+      />
+
+      <div className="contact-layout">
+
+        <div className="contact-cards">
+
+          {/* כתובת */}
+          <section className="contact-card">
+            <span className="contact-card-icon"><MapPin size={22} strokeWidth={1.75} aria-hidden="true" /></span>
+            <h2 className="contact-card-title">כתובת</h2>
+            <p className="contact-card-text">{ADDRESS.street}<br />{ADDRESS.city}</p>
+            {/* mt:auto ב-CSS דוחף את הכפתור לתחתית הכרטיס, כדי ששלושת
+                הכרטיסים בשורה ייגמרו באותו גובה גם כששניים מהם ארוכים
+                יותר ממנו. */}
+            <a
+              href={ADDRESS.mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="contact-cta"
+            >
+              פתח במפות <ArrowLeft size={16} aria-hidden="true" />
+            </a>
+          </section>
+
+          {/* טלפונים */}
+          <section className="contact-card">
+            <span className="contact-card-icon"><Phone size={22} strokeWidth={1.75} aria-hidden="true" /></span>
+            <h2 className="contact-card-title">טלפונים</h2>
+            <ul className="contact-phones">
+              {[PHONES.store, PHONES.mobile].map((phone) => (
+                <li key={phone.tel}>
+                  <a href={`tel:${phone.tel}`} className="contact-phone">
+                    <span className="contact-phone-label">{phone.label}</span>
+                    <span className="contact-phone-number">{phone.display}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {/* שעות */}
+          <section className="contact-card">
+            <span className="contact-card-icon"><Clock size={22} strokeWidth={1.75} aria-hidden="true" /></span>
+            <h2 className="contact-card-title">שעות פעילות</h2>
+            <HoursTable today={today} />
+          </section>
+
         </div>
- 
-        <div className="contact-card">
-          <div className="contact-icon">📞</div>
-          <h2>טלפונים</h2>
-          <div className="phone-list">
-            <div className="phone-item">
-              <span className="phone-label">טלפון חנות</span>
-              <a href="tel:039315750" className="phone-number">03-9315750</a>
-            </div>
-            <div className="phone-divider" />
-            <div className="phone-item">
-              <span className="phone-label">פלאפון אישי</span>
-              <a href="tel:0506735040" className="phone-number">050-6735040</a>
-            </div>
-          </div>
+
+        {/* המפה. title ולא alt — iframe נקרא לפי ה-title שלו, וזה מה
+            שקורא מסך ישמיע במקום כתובת גוגל. */}
+        <div className="contact-map">
+          <iframe
+            src={ADDRESS.mapsEmbedUrl}
+            title={`מפה: טכניק טמבור, ${ADDRESS.street} ${ADDRESS.city}`}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
         </div>
- 
-        <div className="contact-card">
-          <div className="contact-icon">🕐</div>
-          <h2>שעות פעילות</h2>
-          <div className="contact-hours">
-            <div className="contact-hours-row">
-              <span>א׳ – ה׳</span>
-              <span>07:00 – 20:00</span>
-            </div>
-            <div className="contact-hours-row">
-              <span>ו׳</span>
-              <span>07:00 – 15:00</span>
-            </div>
-            <div className="contact-hours-row closed">
-              <span>שבת</span>
-              <span>סגור</span>
-            </div>
-          </div>
-        </div>
- 
+
       </div>
     </div>
   );
 }
- 
+
+/**
+ * טבלת השעות. יושבת כאן ולא בקובץ משלה כי עמוד האודות הוא הצרכן
+ * השני והאחרון שלה, והיא קצרה מדי בשביל מודול.
+ */
+export function HoursTable({ today = todayRow() }) {
+  return (
+    <div className="hours-table">
+      {HOURS.map((row) => {
+        const isToday = row === today;
+        return (
+          <div
+            key={row.id}
+            className={`hours-row${row.closed ? ' is-closed' : ''}${isToday ? ' is-today' : ''}`}
+          >
+            <span className="hours-day">
+              {row.spaced}
+              {isToday && <span className="hours-today-mark">היום</span>}
+            </span>
+            <span className="hours-time">{hoursRangePadded(row)}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default Contact;

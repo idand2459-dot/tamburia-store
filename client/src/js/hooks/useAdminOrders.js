@@ -12,17 +12,35 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { CATEGORIES, STATUS_CONFIG, formatDate } from '../pages/admin/adminConstants';
 import { useWebSocket } from './useWebSocket';
 import { errorMessageFrom, NETWORK_ERROR } from '../utils/apiErrors';
+import { sumPrices } from '../utils/pricing';
 
 // הסקר הוא מסלול חלופי בלבד מאז שיש WebSocket: הודעה על הזמנה חדשה
 // מגיעה תוך פחות משנייה, והסקר נשאר רק למקרה שהחיבור למטה.
 const POLL_MS = 120000;
 
-/** מנהל את ההזמנות, את זיהוי החדשות ואת חישובי הסטטיסטיקות. */
-export function useAdminOrders(api) {
+/**
+ * מנהל את ההזמנות, את זיהוי החדשות ואת חישובי הסטטיסטיקות.
+ *
+ * onNewOrder נקרא בשני המקומות שבהם מתגלית הזמנה חדשה — הודעת
+ * ה-WebSocket והסקר החלופי — ליד הקונפטי. ההוק אינו יודע מה עושים
+ * בהתראה, ולכן הצליל אינו כאן אלא ב-useNewOrderChime שהמסך מרכיב.
+ */
+export function useAdminOrders(api, { onNewOrder } = {}) {
   const [orders, setOrders] = useState([]);
   const [showConfetti, setShowConfetti] = useState(false);
   const [ordersError, setOrdersError] = useState('');
   const prevOrdersCount = useRef(null);
+
+  // דרך ref, כדי שפונקציה חדשה בכל רינדור לא תרשום מחדש את מאזין
+  // ה-WebSocket ולא תאפס את שעון הסקר.
+  const onNewOrderRef = useRef(onNewOrder);
+  onNewOrderRef.current = onNewOrder;
+
+  /** מודיע על הזמנה חדשה: קונפטי, ומה שהמסך ביקש להוסיף. */
+  const announceNewOrder = useCallback(() => {
+    setShowConfetti(true);
+    onNewOrderRef.current?.();
+  }, []);
 
   /**
    * שולף את ההזמנות. שלושת הקוראים צריכים אותו שליפה אבל התייחסות
@@ -45,13 +63,13 @@ export function useAdminOrders(api) {
     }
 
     if (detectNew && prevOrdersCount.current !== null && arr.length > prevOrdersCount.current) {
-      setShowConfetti(true);
+      announceNewOrder();
     }
     if (prevOrdersCount.current === null || detectNew || markSeen) {
       prevOrdersCount.current = arr.length;
     }
     setOrders(arr);
-  }, [api]);
+  }, [api, announceNewOrder]);
 
   /** טוען את ההזמנות מחדש, בלי לגעת בספירה שנראתה לאחרונה. */
   const fetchOrders = useCallback(() => loadOrders(), [loadOrders]);
@@ -63,7 +81,7 @@ export function useAdminOrders(api) {
   // order:created אומר.
   useWebSocket({
     'order:created': () => {
-      setShowConfetti(true);
+      announceNewOrder();
       loadOrders({ markSeen: true });
     },
   });
@@ -108,21 +126,32 @@ export function useAdminOrders(api) {
     }
   }, [api, fetchOrders]);
 
-  /** מחשב את נתוני לשונית הסטטיסטיקות. */
-  const getStats = useCallback((products) => {
+  /**
+   * מחשב את נתוני לשונית הסטטיסטיקות.
+   *
+   * since הוא נקודת ההתחלה של הסיכומים (useStatsBaseline): הזמנות
+   * שקדמו לה יוצאות מהחישוב. הסינון נעשה פעם אחת בראש, ולכן כל מה
+   * שמתחתיו — החלונות של היום, השבוע והחודש, הגרף והקטגוריות — מכבד
+   * אותו בלי להזכיר אותו. outOfStock אינו מסונן: הוא נגזר מהמוצרים
+   * ולא מההזמנות, ולמוצר שאזל אין תאריך שאפשר לספור ממנו.
+   */
+  const getStats = useCallback((products, since = null) => {
+    const from = since ? new Date(since) : null;
+    const counted = from ? orders.filter(o => new Date(o.created_at) >= from) : orders;
+
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekStart = new Date(todayStart); weekStart.setDate(weekStart.getDate() - 7);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const todayOrders = orders.filter(o => new Date(o.created_at) >= todayStart);
-    const weekOrders = orders.filter(o => new Date(o.created_at) >= weekStart);
-    const monthOrders = orders.filter(o => new Date(o.created_at) >= monthStart);
+    const todayOrders = counted.filter(o => new Date(o.created_at) >= todayStart);
+    const weekOrders = counted.filter(o => new Date(o.created_at) >= weekStart);
+    const monthOrders = counted.filter(o => new Date(o.created_at) >= monthStart);
 
-    const revenueToday = todayOrders.reduce((s, o) => s + o.total, 0);
-    const revenueWeek = weekOrders.reduce((s, o) => s + o.total, 0);
-    const revenueMonth = monthOrders.reduce((s, o) => s + o.total, 0);
-    const revenueTotal = orders.reduce((s, o) => s + o.total, 0);
+    const revenueToday = sumPrices(todayOrders.map(o => o.total));
+    const revenueWeek = sumPrices(weekOrders.map(o => o.total));
+    const revenueMonth = sumPrices(monthOrders.map(o => o.total));
+    const revenueTotal = sumPrices(counted.map(o => o.total));
 
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(todayStart);
@@ -132,7 +161,7 @@ export function useAdminOrders(api) {
 
     const dailyOrders = last7Days.map(day => {
       const nextDay = new Date(day); nextDay.setDate(nextDay.getDate() + 1);
-      const count = orders.filter(o => {
+      const count = counted.filter(o => {
         const d = new Date(o.created_at);
         return d >= day && d < nextDay;
       }).length;
@@ -140,7 +169,7 @@ export function useAdminOrders(api) {
     });
 
     const catCount = {};
-    orders.forEach(o => {
+    counted.forEach(o => {
       (Array.isArray(o.items) ? o.items : []).forEach(item => {
         const p = products.find(p => p.id === item.id);
         if (p?.category) catCount[p.category] = (catCount[p.category] || 0) + item.quantity;
@@ -152,7 +181,9 @@ export function useAdminOrders(api) {
 
     const outOfStock = products.filter(p => p.in_stock === false);
 
-    return { todayOrders, weekOrders, monthOrders, revenueToday, revenueWeek, revenueMonth, revenueTotal, dailyOrders, topCategories, outOfStock };
+    // totalOrders ולא orders.length בלשונית: אחרי איפוס המספר הגדול
+    // והסיכום שלידו חייבים לספר את אותו סיפור.
+    return { todayOrders, weekOrders, monthOrders, revenueToday, revenueWeek, revenueMonth, revenueTotal, dailyOrders, topCategories, outOfStock, totalOrders: counted.length };
   }, [orders]);
 
   /** מייצא את ההזמנות לקובץ CSV. */

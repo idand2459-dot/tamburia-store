@@ -1,0 +1,103 @@
+/* ==========================================================
+   Page header — the dark band that opens every content page
+
+   Rendered by components/PageHeader.js for about, contact and
+   returns. It replaces .about-hero, .contact-hero and
+   .returns-hero, which were three copies of the same navy
+   gradient differing only in the selector.
+
+   It is the same world as the home page's Hero without the
+   photograph: --color-navy-950, one soft purple glow, and the
+   red-to-purple hairline that the redesign draws on the dark
+   side of every dark/light seam. Below it the page falls
+   straight onto --color-bg, the blush.
+
+   Always dark, whatever the system theme — like the Hero, and
+   for the same reason: it is art-directed, not themed. There is
+   no prefers-color-scheme block here.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.page-header {
+  position: relative;
+  background: var(--color-navy-950);
+  padding: 72px 24px 64px;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* The glow. Static — nothing on a content page should be moving behind the
+   title — and anchored to the top edge so the band reads as lit from above. */
+.page-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 50% 70% at 50% 0%,
+    rgba(var(--color-purple-rgb), 0.18),
+    transparent 70%);
+  pointer-events: none;
+}
+
+/* The seam. Red at the start edge fading into purple, drawn on the dark side
+   of the boundary, exactly as the home page's dark sections do it. */
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to left,
+    var(--color-red),
+    var(--color-purple));
+  pointer-events: none;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* Above both pseudo-elements. */
+.page-header-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.page-header-title {
+  font-size: 2.6rem;
+  font-weight: var(--font-weight-extrabold);
+  color: white;
+  line-height: 1.2;
+  margin: 0;
+}
+
+/* Same device as .hero-accent: the second half of the title in red, with the
+   glow that is what makes red carry on navy. */
+.page-header-accent {
+  color: var(--color-red);
+  text-shadow: 0 0 40px rgba(var(--color-red-rgb), 0.35);
+}
+
+.page-header-sub {
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.7;
+  margin: 14px 0 0;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .page-header {
+      padding: 48px 20px 44px;
+    }
+
+  .page-header-title {
+      font-size: 1.9rem;
+    }
+
+  .page-header-sub {
+      font-size: 0.98rem;
+    }
+}

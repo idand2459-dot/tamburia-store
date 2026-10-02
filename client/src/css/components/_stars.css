@@ -1,0 +1,80 @@
+/* ==========================================================
+   Stars — the rating row, filled or interactive
+
+   In components/ because three unrelated places render it:
+   Stars.js on a product, ReviewsCarousel.js in the site-wide
+   carousel, and ReviewsTab.js in the admin. .interactive is the
+   form's clickable variant.
+
+   Colour: a filled star is --color-red, matching the rating star
+   in the hero's stat row. It used to be #f4c430, the one amber in
+   the whole interface and the only colour on the page that came
+   from no token.
+
+   An empty star has to read as empty against whatever is behind
+   it, so the empty colour is a custom property with the light
+   value as its default and any section that needs a different
+   one sets it on .stars rather than restating the rules:
+
+     .reviews-section .stars { --star-empty: rgba(var(--color-navy-rgb), 0.15); }
+
+   That one line lives in features/home/_reviews.css, because which
+   surface a section paints is the section's business. It looks
+   like the default because it is one — the home page is
+   art-directed and does not follow the system theme, so that
+   line is what stops the dark-mode block below from repainting
+   stars that sit on a white card inside a blush band. The block
+   itself is still right for the pages that really do follow the
+   system: the product page, the review form and the admin's
+   moderation list.
+
+   How the product review block spaces its own stars is that
+   block's business too, so `.product-review-top .stars` lives in
+   features/product/_product-reviews.css.
+   ========================================================== */
+
+.stars {
+  display: flex;
+  gap: 2px;
+  --star-empty: rgba(var(--color-navy-rgb), 0.15);
+}
+
+/* ---- Elements -------------------------------------------------------------- */
+
+.star {
+  font-size: 1.2rem;
+  color: var(--star-empty);
+  transition: color 0.1s, transform 0.1s;
+  line-height: 1;
+}
+
+/* ---- States ---------------------------------------------------------------- */
+
+.star.interactive:hover { transform: scale(1.2); color: var(--color-red); }
+.star.interactive:focus-visible { outline: 2px solid var(--color-purple); outline-offset: 1px; border-radius: 4px; }
+
+/* ---- Variants -------------------------------------------------------------- */
+
+.star.filled { color: var(--color-red); }
+
+/* A <button> since the accessibility pass, so the reset comes first. An empty
+   star in the picker is a control, not decoration, and has to be seen at 3:1
+   (WCAG 1.4.11) — the 0.15 tint of a read-only row is not enough there. */
+.star.interactive {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 2px;
+  font: inherit;
+}
+.star.interactive:not(.filled) { color: rgba(var(--color-navy-rgb), 0.55); }
+
+/* ---- Dark mode ------------------------------------------------------------- */
+
+/* The light-surface default flips: the cards these rows sit on are navy here,
+   and a navy tint on navy is not an empty star, it is no star. The carousel
+   needs no entry — its section is dark in both themes and sets the property
+   itself. */
+@media (prefers-color-scheme: dark) {
+  .stars { --star-empty: rgba(255, 255, 255, 0.2); }
+}

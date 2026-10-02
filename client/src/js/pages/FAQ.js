@@ -2,6 +2,8 @@
  * עמוד שאלות נפוצות עם תשובות מתקפלות.
  */
 import { useState } from 'react';
+import { MessageCircle, Phone, Plus } from 'lucide-react';
+import { ADDRESS, PHONES, whatsappUrl, hoursSummary } from '../utils/storeInfo';
 
 const FAQS = [
   {
@@ -10,11 +12,11 @@ const FAQS = [
   },
   {
     q: 'באילו אזורים אתם מספקים משלוח?',
-    a: 'אנחנו מספקים משלוח לפתח תקווה, גני תקווה וקריית אונו בלבד — בעלות של ₪20. ללקוחות מחוץ לאזורים אלה ניתן לאסוף מהחנות בבר כוכבא 52, פתח תקווה.'
+    a: `אנחנו מספקים משלוח לפתח תקווה, גני תקווה וקריית אונו בלבד — בעלות של ₪20. ללקוחות מחוץ לאזורים אלה ניתן לאסוף מהחנות ב${ADDRESS.full}.`
   },
   {
     q: 'כמה זמן לוקח המשלוח?',
-    a: 'משלוח מגיע עד 2 ימי עסקים. איסוף עצמי זמין באותו יום בשעות הפעילות: א׳-ה׳ 7:00-20:00, ו׳ 7:00-15:00.'
+    a: `משלוח מגיע עד 2 ימי עסקים. איסוף עצמי זמין באותו יום בשעות הפעילות: ${hoursSummary(', ')}.`
   },
   {
     q: 'איך אני משלם?',
@@ -26,11 +28,11 @@ const FAQS = [
   },
   {
     q: 'האם יש לכם חנות פיזית?',
-    a: 'כן! אנחנו פועלים מאז 1991. החנות נמצאת ברחוב בר כוכבא 52, פתח תקווה. מוזמנים לבקר אותנו ולקבל ייעוץ אישי מאנרי.'
+    a: `כן! אנחנו פועלים מאז 1991. החנות נמצאת ברחוב ${ADDRESS.full}. מוזמנים לבקר אותנו ולקבל ייעוץ אישי מאנרי.`
   },
   {
     q: 'איך יוצרים קשר?',
-    a: 'ניתן להתקשר ל-03-9315750 או 050-6735040, לשלוח וואטסאפ, או להגיע לחנות. אנחנו זמינים א׳-ה׳ 7:00-20:00, ו׳ 7:00-15:00.'
+    a: `ניתן להתקשר ל-${PHONES.store.display} או ${PHONES.mobile.display}, לשלוח וואטסאפ, או להגיע לחנות. אנחנו זמינים ${hoursSummary(', ')}.`
   },
   {
     q: 'האם המחירים כוללים מע"מ?',
@@ -51,32 +53,51 @@ function FAQ() {
     <section className="faq-section">
       <div className="faq-content">
         <div className="faq-header">
-          <span className="faq-tag">שאלות נפוצות</span>
-          <h2 className="faq-title">יש לכם שאלות? יש לנו תשובות 💬</h2>
+          <span className="section-pill section-pill--light">שאלות נפוצות</span>
+          <h2 className="faq-title">יש לכם שאלות? יש לנו תשובות</h2>
           <p className="faq-subtitle">כל מה שרציתם לדעת על טכניק טמבור</p>
         </div>
 
         <div className="faq-list">
-          {FAQS.map((faq, i) => (
-            <div key={i} className={`faq-item ${openIndex === i ? 'open' : ''}`}>
-              <button className="faq-question" onClick={() => toggle(i)}>
-                <span>{faq.q}</span>
-                <span className="faq-arrow">{openIndex === i ? '−' : '+'}</span>
-              </button>
-              {openIndex === i && (
-                <div className="faq-answer">
-                  <p>{faq.a}</p>
+          {FAQS.map((faq, i) => {
+            const open = openIndex === i;
+            return (
+              <div key={i} className={`faq-item ${open ? 'open' : ''}`}>
+                <button
+                  className="faq-question"
+                  onClick={() => toggle(i)}
+                  aria-expanded={open}
+                  aria-controls={`faq-answer-${i}`}
+                  id={`faq-question-${i}`}
+                >
+                  <span>{faq.q}</span>
+                  {/* אייקון אחד לשני המצבים: ה-CSS מסובב אותו 45° ל-× כשהשורה
+                      פתוחה. החלפת אייקון באייקון הייתה מבטלת את המעבר. */}
+                  <span className="faq-arrow"><Plus size={16} aria-hidden="true" /></span>
+                </button>
+                {/* התשובה נשארת ב-DOM גם כשהשורה סגורה: אנימציית הגובה
+                    ב-CSS צריכה שני מצבים של אותו אלמנט, ואלמנט שנולד עכשיו
+                    קופץ לגובהו בלי מעבר. */}
+                <div
+                  className="faq-answer-wrap"
+                  id={`faq-answer-${i}`}
+                  role="region"
+                  aria-labelledby={`faq-question-${i}`}
+                >
+                  <div className="faq-answer">
+                    <p>{faq.a}</p>
+                  </div>
                 </div>
-              )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
         <div className="faq-contact">
           <p>לא מצאתם תשובה? אנחנו כאן בשבילכם</p>
           <div className="faq-contact-btns">
-            <a href="tel:039315750" className="faq-btn">📞 03-9315750</a>
-            <a href="https://wa.me/972506735040" target="_blank" rel="noopener noreferrer" className="faq-btn whatsapp">💬 וואטסאפ</a>
+            <a href={`tel:${PHONES.store.tel}`} className="faq-btn"><Phone size={18} aria-hidden="true" /> {PHONES.store.display}</a>
+            <a href={whatsappUrl()} target="_blank" rel="noopener noreferrer" className="faq-btn whatsapp"><MessageCircle size={18} aria-hidden="true" /> וואטסאפ</a>
           </div>
         </div>
       </div>

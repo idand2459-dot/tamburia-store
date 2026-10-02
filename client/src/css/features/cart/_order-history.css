@@ -1,0 +1,221 @@
+/* ==========================================================
+   Order history — the lookup form, the empty result and the
+   contact block
+
+   Rendered by OrderHistory.js inside the shared drawer, so the
+   overlay, the panel and the header are components/_drawer.css
+   and nothing about the chrome is in this file.
+
+   One result card is features/cart/_order-history-card.css: the two
+   together passed the 400-line ceiling, and the card is the half
+   with a state of its own (open / closed) while this half is the
+   frame around it.
+
+   Gone with the redesign: .order-history-form and
+   .order-history-input-wrap (the search is one flex row now),
+   .order-history-empty's span / p / small, and the whole
+   prefers-color-scheme block — this panel is white in both
+   themes, like the rest of the redesign.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.order-history {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 20px 20px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* a <label> now (it names the phone field), so block is no longer implied */
+.order-history-desc {
+  display: block;
+  color: rgba(var(--color-navy-rgb), 0.65);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Search
+   -------------------------------------------------------------------------- */
+
+.order-history-search {
+  display: flex;
+  gap: 8px;
+}
+
+.order-history-input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.15);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-navy);
+  font-family: var(--font-family-base);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.order-history-input::placeholder {
+  color: rgba(var(--color-navy-rgb), 0.65);
+}
+
+.order-history-search-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  height: 48px;
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-red);
+  color: white;
+  font-family: var(--font-family-base);
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+/* Empty result
+   -------------------------------------------------------------------------- */
+
+.order-history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 12px;
+}
+
+.order-history-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(var(--color-navy-rgb), 0.06);
+  color: rgba(var(--color-navy-rgb), 0.7);
+  margin-bottom: 14px;
+}
+
+.order-history-empty-title {
+  color: var(--color-navy);
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 6px;
+}
+
+.order-history-empty-text {
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.order-history-empty-text a {
+  color: var(--color-red);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Contact
+   -------------------------------------------------------------------------- */
+
+.order-history-contact {
+  padding-top: 18px;
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.1);
+  text-align: center;
+}
+
+.order-history-contact p {
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-size: 0.85rem;
+  margin: 0 0 12px;
+}
+
+.order-history-contact-btns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.order-history-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  color: white;
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 600;
+  transition: background var(--transition-fast);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.order-history-input:focus {
+  border-color: rgba(var(--color-purple-rgb), 0.5);
+}
+
+.order-history-search-btn:hover:not(:disabled) {
+  background: var(--color-red-dark);
+}
+
+.order-history-search-btn:disabled {
+  background: rgba(var(--color-navy-rgb), 0.12);
+  color: rgba(var(--color-navy-rgb), 0.4);
+  cursor: not-allowed;
+}
+
+.order-history-btn--primary:hover {
+  background: var(--color-red-dark);
+}
+
+.order-history-btn--whatsapp:hover {
+  background: var(--color-whatsapp-dark);
+}
+
+.order-history-input:focus-visible,
+.order-history-search-btn:focus-visible,
+.order-history-btn:focus-visible,
+.order-history-empty-text a:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+.order-history-btn--primary {
+  background: var(--color-red);
+}
+
+/* WhatsApp green, on purpose: it is the one colour on the site that is not
+   ours to restyle — people look for it. */
+.order-history-btn--whatsapp {
+  background: var(--color-whatsapp);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 560px) {
+  .order-history { padding: 16px; }
+
+  /* The icon and the label do not fit beside a 48px input at 390px. */
+  .order-history-search-btn { padding: 0 14px; }
+
+  .order-history-contact-btns { flex-direction: column; }
+
+  .order-history-btn { justify-content: center; }
+}

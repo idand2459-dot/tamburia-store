@@ -6,6 +6,7 @@
  * הן אינן תלויות בעגלה הנוכחית ואפשר לקרוא להן בבטחה מכל מקום.
  */
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { sumPrices, lineTotal } from '../utils/pricing';
 
 const STORAGE_KEY = 'tamburia-cart';
 const DELIVERY_FEE = 20;
@@ -23,22 +24,29 @@ export function useCart() {
 
   const [deliveryMethod, setDeliveryMethod] = useState(null);
 
-  const subtotal = cart.reduce((sum, i) => sum + i.price * (i.quantity || 1), 0);
+  // באגורות: 3 × 12.90 הוא 38.70 ולא 38.699999999999996
+  const subtotal = sumPrices(cart.map(i => lineTotal(i.price, i.quantity || 1)));
   const deliveryFee = deliveryMethod === 'delivery' ? DELIVERY_FEE : 0;
-  const total = subtotal + deliveryFee;
+  const total = sumPrices([subtotal, deliveryFee]);
   const cartCount = cart.reduce((sum, i) => sum + (i.quantity || 1), 0);
 
-  /** מוסיף מוצר לעגלה, או מגדיל את כמותו אם כבר קיים. */
-  const addToCart = useCallback((product) => {
+  /**
+   * מוסיף מוצר לעגלה, או מגדיל את כמותו אם כבר קיים.
+   *
+   * quantity הוא ברירת מחדל ולא פרמטר חובה, כי רוב הקוראים — כל
+   * כרטיס מוצר ברשת — מוסיפים פריט אחד ואינם מעבירים אותו. עמוד
+   * המוצר, שיש בו בורר כמות, מעביר את מה שנבחר בו.
+   */
+  const addToCart = useCallback((product, quantity = 1) => {
     setCart((prev) => {
       const same = (i) => i.id === product.id
         && i.selectedColor === product.selectedColor
         && i.selectedSize === product.selectedSize;
 
       if (prev.some(same)) {
-        return prev.map((i) => (same(i) ? { ...i, quantity: (i.quantity || 1) + 1 } : i));
+        return prev.map((i) => (same(i) ? { ...i, quantity: (i.quantity || 1) + quantity } : i));
       }
-      return [...prev, { ...product, quantity: 1 }];
+      return [...prev, { ...product, quantity }];
     });
   }, []);
 
