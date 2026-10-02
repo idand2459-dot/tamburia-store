@@ -6,12 +6,15 @@
  * { sent, reason? } ואינו זורק, ולכן הזמנה נשמרת גם כשהמייל לא יצא.
  */
 const Order = require('../models/order.model');
+const { priceOrder } = require('./pricing.service');
 const mailer = require('./email');
 const { broadcast } = require('./realtime');
 const {
   assertDeliveryCityAllowed, assertDeliveryAddressPresent,
+  assertStatusFitsDeliveryMethod,
 } = require('../validators/order.validator');
 const { badRequest, notFound } = require('../utils/AppError');
+const { toAgorot, fromAgorot } = require('../utils/money');
 
 /** שולף הזמנה או זורק 404. משמש כל פעולה שדורשת הזמנה קיימת. */
 async function requireOrder(id) {
@@ -54,7 +57,9 @@ async function findOrdersByPhone(rawPhone) {
  * חלק מ-Promise.all של המיילים — שידור אינו אמור לעכב תשובה ללקוח.
  */
 async function createOrder(data) {
-  const order = await Order.create(data);
+  // המחירים והסכומים נקבעים מהקטלוג ולא ממה שהגיע בבקשה, וזה נעשה
+  // לפני הכתיבה: הזמנה שנדחתה על מחיר לא נשמרת ולא שולחת מייל.
+  const order = await Order.create(await priceOrder(data));
 
   broadcast('order:created', { id: order.id, total: order.total });
 
@@ -82,6 +87,10 @@ async function updateOrder(id, data) {
   assertDeliveryAddressPresent(method, address);
   assertDeliveryCityAllowed(method, address);
 
+  // מאותה סיבה: עדכון יכול להחליף את אופן הקבלה, את הסטטוס, או את
+  // שניהם, ורק כאן ידוע מה יהיה הזיווג אחרי הכתיבה.
+  if (data.status) assertStatusFitsDeliveryMethod(data.status, method);
+
   const order = await Order.update(id, data);
 
   if (data.status && data.status !== existing.status) {
@@ -92,12 +101,15 @@ async function updateOrder(id, data) {
 }
 
 /**
- * משנה סטטוס הזמנה ומעדכן את הלקוח.
+ * משנה סטטוס הזמנה ומעדכן את הלקוח. סטטוס שאינו מתאים לאופן הקבלה
+ * של ההזמנה נדחה ב-400 לפני שנכתב דבר.
  * כשהסטטוס נשלח שוב באותו ערך הכתיבה מתבצעת כרגיל, אבל המייל
  * נחסם — אחרת לחיצה כפולה במסך הניהול הייתה שולחת ללקוח כפילות.
  */
 async function updateOrderStatus(id, status) {
   const existing = await requireOrder(id);
+  assertStatusFitsDeliveryMethod(status, existing.delivery_method);
+
   const order = await Order.update(id, { status });
 
   // TODO: replace with project logger
@@ -125,7 +137,7 @@ async function getStats() {
     byStatus,
     totals: {
       orders: byStatus.reduce((sum, row) => sum + row.orders, 0),
-      revenue: byStatus.reduce((sum, row) => sum + row.revenue, 0),
+      revenue: fromAgorot(byStatus.reduce((sum, row) => sum + toAgorot(row.revenue), 0)),
     },
   };
 }

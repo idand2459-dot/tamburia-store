@@ -1,0 +1,266 @@
+/* ==========================================================
+   Order history card — one past order, collapsed or expanded
+
+   Split out of features/cart/_order-history.css, which is the search
+   form and the empty result around it; the two together were over
+   the 400-line ceiling. No selector appears in both files, so the
+   import order between them is the reading order rather than a
+   cascade constraint.
+
+   The status pills are why this half changed colour. Their four
+   colours used to be hexes inside OrderHistory.js — a blue and an
+   amber that appear nowhere else on the site, sitting beside the
+   brand's red and purple. They are tokens now, one class per
+   status, and the component carries only the label and the icon.
+
+   Gone with the redesign: .order-history-table (a three-column
+   table with a header row, inside a 440px panel),
+   .order-history-card-header / -right / -left,
+   .order-history-date, .order-history-items-count and
+   .order-history-totals. The chevron stopped borrowing the
+   admin's .order-expand-btn — it was a span pretending to be a
+   button — because the whole head of the card is one
+   <button aria-expanded> now. The admin's own card has since
+   followed, and that class is gone from the stylesheet.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+/* overflow: hidden is what the collapsed body's height is clipped against as
+   well as what keeps it inside the corners. */
+.order-history-card {
+  overflow: hidden;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.1);
+  border-radius: 14px;
+  background: var(--color-surface);
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+  transition: border-color var(--transition-fast);
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.order-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.order-history-count {
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.order-history-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 14px;
+  border: none;
+  background: none;
+  font-family: var(--font-family-base);
+  text-align: start;
+  cursor: pointer;
+}
+
+.order-history-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.order-history-id {
+  color: var(--color-navy);
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+}
+
+.order-history-meta {
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-size: 0.76rem;
+}
+
+.order-history-card-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.order-history-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.order-history-total {
+  color: var(--color-navy);
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+}
+
+.order-history-chevron {
+  flex-shrink: 0;
+  color: rgba(var(--color-navy-rgb), 0.4);
+  transition: transform var(--transition-base);
+}
+
+/* The FAQ accordion's height animation: a grid whose single row goes 0fr → 1fr
+   animates to the content's own height, which is the one thing a height
+   transition cannot do without a hard-coded pixel value. overflow: hidden on
+   the child is what lets the row reach 0 at all. */
+.order-history-body-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--transition-base);
+}
+
+.order-history-body {
+  overflow: hidden;
+}
+
+/* The padding sits on each of the three blocks below rather than on the clipped
+   child above them, so a collapsed card really is zero tall. */
+.order-history-delivery {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 12px 14px 10px;
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.order-history-delivery .lucide {
+  flex-shrink: 0;
+}
+
+/* Rows, not a table: three header cells in a 440px panel wrapped every product
+   name onto four lines. */
+.order-history-items {
+  list-style: none;
+  margin: 0;
+  padding: 0 14px;
+}
+
+.order-history-items li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 0;
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.06);
+  font-size: 0.82rem;
+}
+
+.order-history-item-name {
+  flex: 1;
+  min-width: 0;
+  color: var(--color-navy);
+}
+
+.order-history-item-qty {
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-variant-numeric: tabular-nums;
+}
+
+.order-history-item-price {
+  color: var(--color-navy);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.order-history-sums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 14px 13px;
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-size: 0.8rem;
+}
+
+.order-history-sums strong {
+  color: var(--color-navy);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.order-history-card:hover {
+  border-color: rgba(var(--color-navy-rgb), 0.2);
+}
+
+/* Inset, because the button fills the card's own corners. */
+.order-history-toggle:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: -3px;
+  border-radius: 14px;
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+/* The five statuses, in brand colours: purple for a new order, navy while it is
+   being handled, red once it is waiting in the shop, blue once it is on the
+   road, green when it is done — the one place green is allowed, because done is
+   exactly what it means.
+   Red moved from shipped to ready-for-pickup when that status arrived: the
+   order sitting on the counter is the one that needs someone to come, so it
+   gets the loud colour. Shipped took blue, the brand's secondary accent, rather
+   than a second navy that would have read as processing. */
+.order-history-status--new {
+  background: rgba(var(--color-purple-rgb), 0.1);
+  color: var(--color-purple);
+}
+
+.order-history-status--processing {
+  background: rgba(var(--color-navy-rgb), 0.08);
+  color: var(--color-navy);
+}
+
+.order-history-status--ready_for_pickup {
+  background: rgba(var(--color-red-rgb), 0.12);
+  color: var(--color-red-dark);
+}
+
+.order-history-status--shipped {
+  background: rgba(var(--color-blue-rgb), 0.12);
+  color: var(--color-blue);
+}
+
+.order-history-status--completed {
+  background: rgba(var(--color-green-rgb), 0.12);
+  color: var(--color-green);
+}
+
+.order-history-card.is-open {
+  border-color: rgba(var(--color-navy-rgb), 0.22);
+}
+
+.order-history-card.is-open .order-history-body-wrap {
+  grid-template-rows: 1fr;
+}
+
+.order-history-card.is-open .order-history-chevron {
+  transform: rotate(180deg);
+}
+
+/* ---- Reduced motion ------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .order-history-body-wrap,
+  .order-history-chevron {
+      transition: none;
+    }
+}

@@ -1,0 +1,300 @@
+/* ==========================================================
+   Paint calculator — the input side: wall dimensions, openings
+   and the number of coats
+
+   Beside it: _paint-calc-section.css is the dark band, its
+   background photograph and the header, _paint-pigment.css the
+   colour picker, _paint-calc-results.css the output panel, and
+   _paint-calc-btn.css the floating button that opens it all.
+
+   Every surface here is dark glass over a photograph, so the
+   fills are darker than the section, not lighter: the 0.07
+   white film these cards had went a translucent grey over the
+   paint items and stopped separating from them.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.paint-calc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* the WhyUs point cards glass, one step more opaque: a form has to stay
+   legible over whatever the photograph is doing behind it */
+.paint-calc-card {
+  background: rgba(var(--color-navy-900-rgb), 0.7);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 22px 24px;
+}
+
+.paint-calc-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: white;
+  margin-bottom: 16px;
+}
+
+/* קירות */
+.paint-walls-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.paint-wall-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.paint-wall-label {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.72);
+  min-width: 42px;
+}
+
+.paint-wall-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+/* The group carries the border and the focus ring, not the input inside it:
+   the input is borderless and outline: none so the unit label can sit flush
+   against it inside one rounded box. */
+.paint-input-group {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  overflow: hidden;
+  flex: 1;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.paint-input-group input {
+  background: none;
+  border: none;
+  outline: none;
+  padding: 10px 12px;
+  font-size: var(--font-size-body);
+  color: white;
+  font-family: var(--font-family-base);
+  width: 100%;
+  direction: ltr;
+  text-align: center;
+}
+
+.paint-input-group input::placeholder { color: rgba(255, 255, 255, 0.65); }
+
+.paint-unit {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.62);
+  padding: 0 10px 0 4px;
+  white-space: nowrap;
+}
+
+.paint-wall-x { color: rgba(255, 255, 255, 0.4); font-size: var(--font-size-body); }
+
+.paint-remove-btn {
+  background: rgba(var(--color-red-rgb), 0.16);
+  border: 1px solid rgba(var(--color-red-rgb), 0.3);
+  color: var(--color-red-soft);
+  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--transition-base), border-color var(--transition-base);
+}
+
+.paint-add-wall-btn {
+  background: none;
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  color: rgba(255, 255, 255, 0.72);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  transition: border-color var(--transition-base), color var(--transition-base);
+  width: 100%;
+}
+
+/* חלונות ודלתות */
+.paint-openings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.paint-opening-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.82);
+  flex-wrap: wrap;
+}
+
+.paint-opening-row > span:first-child { flex: 1; min-width: 120px; }
+
+.paint-counter {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.paint-counter button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  font-family: monospace;
+}
+
+.paint-counter span {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: white;
+  min-width: 32px;
+  text-align: center;
+}
+
+.paint-opening-note { font-size: 0.8rem; color: rgba(255, 255, 255, 0.62); }
+
+/* ציפויים */
+.paint-coats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.paint-coat-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 12px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: background var(--transition-base), border-color var(--transition-base),
+    color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.paint-coat-btn span {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+/* כפתור חישוב */
+.paint-calc-btn {
+  padding: 16px;
+  background: var(--color-red);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  font-family: var(--font-family-base);
+  transition: background var(--transition-base), transform var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+/* purple, the ring the navbar focuses with, so a keyboard user meets one focus
+   colour across the site */
+.paint-input-group:focus-within {
+  border-color: rgba(var(--color-purple-rgb), 0.5);
+  box-shadow: 0 0 0 3px rgba(var(--color-purple-rgb), 0.18);
+}
+
+.paint-remove-btn:hover {
+  background: rgba(var(--color-red-rgb), 0.3);
+  border-color: rgba(var(--color-red-rgb), 0.55);
+}
+
+.paint-add-wall-btn:hover { border-color: white; color: white; }
+
+.paint-counter button:hover { background: rgba(255, 255, 255, 0.1); }
+
+.paint-coat-btn:hover:not(.active) {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+/* the navbar cart glow, on every red call to action in this section */
+.paint-calc-btn:hover:not(.disabled) {
+  background: var(--color-red-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 0 22px rgba(var(--color-red-rgb), 0.45);
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+/* Selected, not filled: a solid red block competed with the red CTA below it.
+   A red border plus a tint plus a small glow says the same thing quietly, and
+   reads the same way a selected swatch and a selected shade chip do. */
+.paint-coat-btn.active {
+  background: rgba(var(--color-red-rgb), 0.14);
+  border-color: var(--color-red);
+  color: white;
+  box-shadow: 0 0 18px rgba(var(--color-red-rgb), 0.25);
+}
+
+.paint-coat-btn.active span { color: rgba(255, 255, 255, 0.72); }
+
+/* A switched-off red button, not a grey ghost of one: the 0.1 white fill this
+   had all but vanished against the card behind it, so nothing on screen said
+   the button was there, waiting for a wall measurement. */
+.paint-calc-btn.disabled {
+  background: rgba(var(--color-red-rgb), 0.12);
+  border: 1px solid rgba(var(--color-red-rgb), 0.3);
+  color: rgba(255, 255, 255, 0.55);
+  cursor: not-allowed;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* 600px, matching the rest of the section — see the note in
+   _paint-calc-section.css. */
+@media (max-width: 600px) {
+  .paint-coats {
+      flex-direction: column;
+    }
+}

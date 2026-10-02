@@ -1,0 +1,47 @@
+/* ==========================================================
+   Section pill — the small label above a section's title
+
+   One class for what used to be five near-identical copies of
+   the same twelve declarations: .category-tag, .whyus-tag,
+   .calc-tag, .proj-tag and .faq-tag. Every one of them on the
+   home page is the same purple pill — red is reserved for the
+   title accent, the CTAs and the card hovers — so the only
+   difference between the five was the selector.
+
+   The base rule is the dark-surface pill: a purple film and a
+   light purple text colour, which only read as a pill over navy.
+   The home page now alternates dark and light sections, so
+   .section-pill--light is the same pill re-mixed for blush —
+   thinner film, thinner border, and the full-strength purple for
+   the text, because purple-soft on blush is barely there.
+
+   inline-flex rather than inline-block: two of the five carry a
+   Lucide icon ahead of the words (the project calculator's crown,
+   and any that follow), and the gap below is what spaces it. With
+   text alone it behaves exactly as inline-block did.
+   ========================================================== */
+
+.section-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(var(--color-purple-rgb), 0.18);
+  border: 1px solid rgba(var(--color-purple-rgb), 0.35);
+  color: var(--color-purple-soft);
+  padding: 6px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 18px;
+}
+
+/* ---- Variants ------------------------------------------------------------- */
+
+/* On a light (blush) section. Same geometry, only the three colours change. */
+.section-pill--light {
+  background: rgba(var(--color-purple-rgb), 0.1);
+  border-color: rgba(var(--color-purple-rgb), 0.2);
+  /* deep, not the full-strength purple: on this film that was 4.0–4.5:1 */
+  color: var(--color-purple-deep);
+}

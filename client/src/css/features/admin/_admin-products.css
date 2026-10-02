@@ -1,0 +1,566 @@
+/* ==========================================================
+   Admin products — one product in the products tab, and the
+   list or grid it sits in
+
+   Same markup in both layouts: a grid of cards on a wide screen,
+   a list of rows on a phone. The switch is grid-template-areas
+   and nothing else, so AdminProductCard has one tree to maintain
+   rather than two.
+
+   Replaces the card that was here; gone with it:
+   .admin-products-grid, .admin-product-card,
+   .admin-product-no-img, .admin-product-title,
+   .admin-product-actions' .edit-btn / .delete-btn pair (now
+   .admin-edit-btn / .admin-delete-btn, with no element selector
+   above them), .admin-price, .admin-stock-badge (rendered
+   nowhere) and .stock-toggle-btn, whose job the real switch in
+   _admin-switch.css now does — that control is shared with the
+   product form, so it is not in this file.
+   ========================================================== */
+
+.admin-products {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.admin-product-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 16px;
+}
+
+/* A card: image on top, then the text, then stock and the actions. */
+.admin-product {
+  position: relative;
+  display: grid;
+  grid-template-areas:
+    'well'
+    'body'
+    'stock'
+    'actions'
+    'notice';
+  border-radius: 16px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow var(--transition-base);
+}
+
+.admin-product-well {
+  grid-area: well;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 150px;
+  background: var(--color-image-well);
+}
+
+.admin-product-well img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* The category's icon, not the first letter of the name: a huge letter read as
+   content rather than as "no photo yet" — the same call as the product card. */
+.admin-product-fallback {
+  display: flex;
+  color: var(--color-text-faint);
+}
+
+.admin-product-body {
+  grid-area: body;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px 16px 10px;
+}
+
+.admin-product-name {
+  margin: 0;
+  font-size: var(--font-size-h3);
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.35;
+}
+
+.admin-product-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: var(--font-size-small);
+  color: var(--color-text-subtle);
+}
+
+/* Quick subcategory assignment, on a product the shop's sidebar cannot filter
+   to. A native select: on a phone it opens the system picker, which is the
+   fastest way through 33 adhesives one after another. Amber edge, the same
+   "needs attention, does not block" voice as the warning in the form. */
+.admin-sub-assign {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.admin-sub-assign select {
+  max-width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1.5px solid rgba(214, 140, 0, 0.55);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-small);
+  cursor: pointer;
+}
+
+.admin-sub-assign select:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: 1px;
+}
+
+.admin-sub-assign select:disabled { opacity: 0.6; cursor: default; }
+
+.admin-sub-assign-error {
+  color: var(--color-red);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  .admin-sub-assign select {
+    background: var(--color-surface-dark);
+    color: var(--color-text-dark);
+  }
+}
+
+/* The badge on a product with no price. Loud on purpose: in a list of hundreds
+   this is the thing to find, and the only other way to find it is to read every
+   price. Red and filled, the same red as the chip that filters for it in
+   features/admin/_admin-filters.css. */
+.admin-product-flag {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-red);
+  color: white;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-extrabold);
+}
+
+/* Hidden from the shop. Grey and not red, matching its chip: the product is
+   fine, it is simply not on the shelf. */
+.admin-product-flag--hidden {
+  gap: 4px;
+  background: rgba(var(--color-navy-rgb), 0.1);
+  color: var(--color-text-subtle);
+}
+
+/* The price, as a button: touching it is what opens the editor. It looks like a
+   price and not like a button, with the pencil as the only hint — the price is
+   the thing being read here far more often than it is changed. */
+.admin-price-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 48px;
+  padding: 0 10px;
+  margin-inline-start: -10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--color-navy);
+  font-family: var(--font-family-base);
+  font-size: 1.3rem;
+  font-weight: var(--font-weight-extrabold);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.admin-price-btn svg { color: var(--color-text-faint); }
+
+.admin-price-variants {
+  font-size: var(--font-size-small);
+  font-weight: 600;
+  color: var(--color-text-subtle);
+}
+
+.admin-price-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-price-currency {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+}
+
+.admin-price-input {
+  width: 92px;
+  min-height: 48px;
+  padding: 0 10px;
+  border: 2px solid var(--color-purple);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+  outline: none;
+}
+
+/* ערך שאינו מחיר (למשל 12.999): השמירה לא נשלחת, והמסגרת אומרת למה. */
+.admin-price-input[aria-invalid="true"] {
+  border-color: var(--color-red);
+}
+
+.admin-price-save,
+.admin-price-cancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.admin-price-save {
+  background: var(--color-green);
+  color: white;
+}
+
+.admin-price-cancel {
+  background: var(--color-border-soft);
+  color: var(--color-text-muted);
+}
+
+/* The "saved" flash after an inline price change. */
+.admin-product-saved {
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-green);
+}
+
+.admin-product-stock {
+  grid-area: stock;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px 14px;
+}
+
+.admin-stock-label {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.admin-product-actions {
+  grid-area: actions;
+  display: flex;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.admin-edit-btn,
+.admin-hide-btn,
+.admin-delete-btn {
+  flex: 1;
+  min-height: 48px;
+  border: none;
+  background: none;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.admin-edit-btn {
+  border-inline-end: 1px solid var(--color-border-soft);
+  color: var(--color-navy);
+}
+
+/* Between edit and delete: this is the safe way out of "I do not want this
+   product in the shop", and it should be the one the thumb lands on. */
+.admin-hide-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-inline-end: 1px solid var(--color-border-soft);
+  color: var(--color-navy);
+}
+
+.admin-delete-btn { color: var(--color-text-subtle); }
+
+/* The delete confirmation, and whatever the server answered, inside the card —
+   next to the button that was pressed. Not window.confirm: a browser that blocks
+   dialogs returns false from it without showing anything, and the click did
+   nothing at all. Not the banner at the top of the list either: by the time
+   someone deletes, they have usually scrolled away from it. */
+.admin-product-notice {
+  grid-area: notice;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--color-border-soft);
+  background: rgba(var(--color-navy-rgb), 0.04);
+}
+
+.admin-product-notice.is-problem {
+  background: rgba(var(--color-red-rgb), 0.08);
+}
+
+.admin-product-notice-text {
+  margin: 0;
+  color: var(--color-text);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.admin-product-notice-note {
+  align-self: center;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-small);
+}
+
+.admin-product-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-notice-danger,
+.admin-notice-primary,
+.admin-notice-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-notice-danger {
+  border: none;
+  background: var(--color-red);
+  color: white;
+}
+
+.admin-notice-primary {
+  border: none;
+  background: var(--color-navy);
+  color: white;
+}
+
+.admin-notice-cancel {
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-navy);
+}
+
+.admin-notice-danger:disabled,
+.admin-notice-primary:disabled,
+.admin-notice-cancel:disabled,
+.admin-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.admin-product:hover { box-shadow: var(--shadow-md); }
+
+.admin-price-btn:hover { background: rgba(var(--color-navy-rgb), 0.05); }
+
+.admin-price-save:hover { background: var(--color-green-dark); }
+
+.admin-price-cancel:hover { background: var(--color-border); }
+
+.admin-price-save:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.admin-edit-btn:hover {
+  background: var(--color-navy);
+  color: white;
+}
+
+.admin-hide-btn:hover {
+  background: rgba(var(--color-navy-rgb), 0.08);
+}
+
+.admin-notice-danger:hover:not(:disabled) { background: var(--color-red-dark); }
+
+.admin-delete-btn:hover:not(:disabled) {
+  background: var(--color-red);
+  color: white;
+}
+
+.admin-price-btn:focus-visible,
+.admin-price-save:focus-visible,
+.admin-price-cancel:focus-visible,
+.admin-edit-btn:focus-visible,
+.admin-hide-btn:focus-visible,
+.admin-delete-btn:focus-visible,
+.admin-notice-danger:focus-visible,
+.admin-notice-primary:focus-visible,
+.admin-notice-cancel:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: -3px;
+}
+
+/* A row that has just been saved, marked for as long as the word shows. */
+.admin-product.is-saved {
+  box-shadow: 0 0 0 2px var(--color-green), var(--shadow-sm);
+}
+
+/* A red edge down the start side, so the row is findable while scrolling past
+   without stopping to read the badge. A pseudo-element and not a border: a border
+   would move the grid, and this card is laid out to the pixel on a phone. */
+.admin-product.is-unpriced::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  border-start-start-radius: 16px;
+  border-end-start-radius: 16px;
+  background: var(--color-red);
+}
+
+/* Hidden from the shop: the same start-side edge as the unpriced row, in grey,
+   so both are findable while scrolling without stopping to read the badge. The
+   thumbnail dims — that is what "not on the shelf" looks like everywhere else
+   on the site — while the text stays fully readable, because this row exists to
+   be found and put back. */
+.admin-product.is-hidden::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  border-start-start-radius: 16px;
+  border-end-start-radius: 16px;
+  background: rgba(var(--color-navy-rgb), 0.45);
+}
+
+.admin-product.is-hidden .admin-product-well {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* lg — the phone: one row per product. The thumbnail, the text and the stock
+   switch share the first line and the two actions sit under them, so the whole
+   product fits on a line and a bit without anything shrinking below 48px. */
+@media (max-width: 900px) {
+  .admin-product-list {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .admin-product {
+    grid-template-columns: 76px 1fr auto;
+    grid-template-areas:
+      'well body stock'
+      'well actions actions'
+      'notice notice notice';
+    align-items: center;
+  }
+
+  .admin-product-well {
+    height: 100%;
+    min-height: 76px;
+  }
+
+  .admin-product-body { padding: 12px 12px 8px; }
+
+  .admin-product-name { font-size: var(--font-size-body); }
+
+  .admin-product-stock {
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px 0;
+  }
+
+  .admin-product-stock .admin-stock-label { font-size: var(--font-size-small); }
+
+  .admin-product-actions {
+    border-top: none;
+    padding: 0 12px 10px;
+    gap: 8px;
+  }
+
+  .admin-edit-btn,
+  .admin-delete-btn {
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+}
+
+/* xs — the price editor's buttons would push the input out of the row. */
+@media (max-width: 430px) {
+  .admin-price-edit { flex-wrap: wrap; }
+}
+
+/* ---- Dark mode ----------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .admin-product,
+  .admin-price-input {
+    background: var(--color-navy);
+    color: var(--color-text-dark);
+  }
+
+  .admin-product-name,
+  .admin-price-btn,
+  .admin-price-currency { color: var(--color-text-dark); }
+
+  .admin-product-well { background: var(--color-bg-dark); }
+
+  .admin-product-actions,
+  .admin-edit-btn { border-color: var(--color-surface-dark); }
+
+  .admin-edit-btn { color: var(--color-text-dark); }
+
+  .admin-price-cancel {
+    background: var(--color-surface-dark);
+    color: var(--color-text-faint);
+  }
+
+  .admin-product-notice { border-color: var(--color-surface-dark); }
+
+  .admin-product-notice-text { color: var(--color-text-dark); }
+
+  /* navy on a navy card would disappear */
+  .admin-notice-primary { background: var(--color-purple); }
+
+  .admin-notice-cancel {
+    border-color: var(--color-surface-dark);
+    background: var(--color-surface-dark);
+    color: var(--color-text-dark);
+  }
+}

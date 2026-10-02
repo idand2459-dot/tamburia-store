@@ -2,20 +2,23 @@
    Layout containers and shared page wrappers
    ========================================================================== */
 
-/* Main content column, shared by every page */
-main {
-  max-width: 1200px;
-  margin: 40px auto;
-  padding: 0 20px;
-}
+/* There is no bare `main` rule any more. <main> is now the one landmark
+   StoreLayout wraps around every page, so an element rule here would be a
+   1200px column around the full-bleed home page. The two pages that used to be
+   <main> themselves (.category-page, .product-page) overrode all three of its
+   declarations anyway. */
 
 /* ===== PAGES SHARED ===== */
 .page-container {
   min-height: calc(100vh - 64px);
-  background: #f8f8f6;
+  background: var(--color-bg);
 }
 
-@media (prefers-color-scheme: dark) {
-  /* דפי about/contact/returns */
-  .page-container { background: #0f0f1a; }
+
+/* The wrappers StoreLayout puts around the page so it can make it inert while
+   a drawer or the menu is open. display: contents — they exist for the
+   accessibility tree only, and must not become a box the navbar's sticky
+   positioning or any full-bleed band is measured against. */
+.store-frame {
+  display: contents;
 }

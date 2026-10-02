@@ -1,0 +1,323 @@
+/* ==========================================================
+   Product card — one product, wherever products are listed
+
+   White on the blush page background, the same surface the home
+   page's category cards use: a 1px navy tint, a 1px shadow, and
+   the depth kept for the hover lift.
+
+   What this replaces was built for a page that no longer exists:
+   a saturated tile per category behind every photograph, a
+   5.5rem Hebrew letter where a photograph was missing, a
+   full-width dark "הוסף לעגלה" button in every card, and a
+   dark-mode block — all of it either fighting the products or
+   repainted per category by the deleted _category-themes.css.
+   The card is quiet now: a neutral well for the photograph, and
+   one red square for the only action that matters.
+
+   The whole card is a link, but the only element that is one is
+   the name: .product-card-link::after is stretched over the card.
+   That gives it one tab stop instead of a div wearing
+   role="link", and makes middle-click and "open in new tab"
+   work. The two buttons sit above that layer (z-index 2) so it
+   does not swallow them.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+/* flex column so .product-card-foot can be pushed to the bottom: without it,
+   a card whose product has no SKU carried its price row a line higher than
+   its neighbour's. position: relative is the stretched link's container. */
+.product-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+  padding: var(--spacing-sm);
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* The image well. Square whatever the photograph's own ratio is, so every
+   card in a row is the same height before its text is counted. */
+.product-card-window {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-md);
+  background: var(--color-image-well);
+  overflow: hidden;
+}
+
+/* cover, edge to edge: the photographs are square and carry their own
+   background and margin, so an inset only shrank them inside a grey frame. */
+.product-card-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.2s, filter 0.2s;
+}
+
+/* No photograph, or one that failed to load: the category's own icon, at the
+   weight of a watermark. */
+.product-card-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(var(--color-navy-rgb), 0.25);
+}
+
+/* Both marks float in the well's top corners, above the image and the stretched
+   link. left/right rather than the logical properties: these are corners of a
+   picture, not ends of a line. */
+.product-card-wish {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: 0 1px 4px rgba(var(--color-navy-rgb), 0.15);
+  color: var(--color-navy);
+  cursor: pointer;
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.product-card-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--color-navy-950-rgb), 0.78);
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.product-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 10px 6px 6px;
+}
+
+/* Purple, the secondary accent: red is spoken for by the price and the cart
+   button. Rendered even when empty — see ProductCard.js — so it holds its line. */
+.product-card-sub {
+  color: var(--color-purple);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  min-height: 1.1em;
+}
+
+/* Exactly two lines, always: the clamp hides the overflow, and the fixed height
+   keeps a one-line name from pulling its price row above its neighbours'. */
+.product-card-name {
+  color: var(--color-navy);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  height: 2.7em;
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.product-card-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The stretched link. Everything on the card that is not one of the two
+   buttons opens the product through this. */
+.product-card-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: var(--radius-lg);
+}
+
+.product-card-sku {
+  color: var(--color-text-faint);
+  font-size: 0.7rem;
+  margin-top: 4px;
+}
+
+/* margin-top: auto is the whole reason the card is a flex column. */
+.product-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+/* Navy, not red. Red here was the loudest thing in a grid of forty cards, and
+   it left nothing to make the one button stand out with. */
+.product-card-price {
+  color: var(--color-navy);
+  font-size: 1.15rem;
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.2;
+}
+
+/* "מחיר בחנות" — a product whose price is 0 in the database, which means
+   nobody has typed one in yet. Quieter and smaller than a figure: it is a state,
+   not an amount, and it should not look like a bargain. The cart button beside it
+   is disabled (utils/pricing.js decides which products these are). */
+.product-card-price.is-no-price {
+  font-size: 0.85rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-subtle);
+}
+
+.product-card-variants {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--color-text-subtle);
+}
+
+.product-card-cart {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-red);
+  color: white;
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.product-card-wish:hover,
+.product-card-wish.is-active {
+  color: var(--color-red);
+}
+
+.product-card-cart:hover:not(:disabled) {
+  background: var(--color-red-dark);
+}
+
+/* The confirmation after adding: green for a moment, then back. No alert and no
+   navigation — the navbar's cart badge is where the count lives. */
+.product-card-cart.is-added {
+  background: var(--color-green);
+}
+
+.product-card-cart:disabled {
+  background: rgba(var(--color-navy-rgb), 0.12);
+  color: rgba(var(--color-navy-rgb), 0.35);
+  cursor: not-allowed;
+}
+
+/* The ring goes on the stretched layer, so it draws around the whole card
+   rather than around two lines of text — no :has() needed. */
+.product-card-link:focus-visible {
+  outline: none;
+}
+
+.product-card-link:focus-visible::after,
+.product-card-wish:focus-visible,
+.product-card-cart:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+/* Out of stock. The photograph stays visible — the product is still worth
+   recognising — but plainly not on today's shelf. */
+.product-card--out .product-card-image {
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
+/* No longer in the catalogue. Only ever reached from a saved list — the
+   wishlist or "recently viewed" — where the card is a stale snapshot. It
+   is dimmed further than out of stock, because it will not come back on
+   its own. */
+.product-card--unavailable .product-card-image,
+.product-card--unavailable .product-card-fallback {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+.product-card--unavailable .product-card-name,
+.product-card--unavailable .product-card-price {
+  color: rgba(var(--color-navy-rgb), 0.7);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* Two cards to a phone row is tight, so the type steps down with it. */
+@media (max-width: 560px) {
+  .product-card { padding: 6px; }
+
+  .product-card-body { padding: 8px 4px 4px; }
+
+  .product-card-sub { font-size: 0.7rem; }
+
+  .product-card-name { font-size: 0.85rem; }
+
+  .product-card-price { font-size: 1rem; }
+
+  .product-card-cart { width: 36px; height: 36px; }
+}
+
+/* ---- Hover (fine pointers only) ------------------------------------------ */
+
+/* On a touch screen :hover sticks after a tap, so lift and zoom are mouse-only. */
+@media (hover: hover) and (pointer: fine) {
+  .product-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 28px rgba(var(--color-navy-rgb), 0.12);
+    }
+
+  .product-card:hover .product-card-image {
+      transform: scale(1.04);
+    }
+
+  .product-card-wish:hover {
+      transform: scale(1.08);
+    }
+}
+
+/* ---- Reduced motion ------------------------------------------------------ */
+
+/* The shadow still deepens — the "this is the one under the cursor" signal —
+   but nothing moves and nothing scales. */
+@media (prefers-reduced-motion: reduce) {
+  .product-card:hover,
+  .product-card:hover .product-card-image,
+  .product-card-wish:hover {
+      transform: none;
+    }
+}

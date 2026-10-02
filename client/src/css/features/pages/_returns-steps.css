@@ -1,0 +1,208 @@
+/* ==========================================================
+   Returns page — the "how" half: refund options, the numbered
+   steps and the contact block at the bottom
+
+   Split out of features/pages/_returns.css when that file passed the
+   300-line target. That file owns the page's frame — the
+   container, the white cards, the policy lists and the two
+   legal notes — and this one owns the three blocks that sit
+   inside those cards and explain what to actually do. No
+   selector appears in both.
+   ========================================================== */
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* Refund options
+   -------------------------------------------------------------------------- */
+
+.refund-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.refund-option {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px;
+  background: var(--color-blush);
+  border-radius: var(--radius-md);
+}
+
+.refund-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+}
+
+.refund-option strong {
+  display: block;
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  margin-bottom: 4px;
+}
+
+.refund-option p {
+  font-size: 0.94rem;
+  color: rgba(var(--color-navy-rgb), 0.7);
+  line-height: 1.75;
+  margin: 0;
+}
+
+.refund-note {
+  font-size: 0.84rem;
+  color: rgba(var(--color-navy-rgb), 0.7);
+  margin: 0;
+}
+
+/* Steps
+   -------------------------------------------------------------------------- */
+
+.returns-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.returns-step {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 20px;
+}
+
+/* The thread between the circles. Drawn from each step's own circle down to
+   the next one, so it stops of its own accord on the last step — nothing has
+   to know how many steps there are. */
+.returns-step::before {
+  content: '';
+  position: absolute;
+  top: 34px;
+  bottom: 0;
+  inset-inline-start: 15px;
+  width: 2px;
+  background: rgba(var(--color-navy-rgb), 0.1);
+}
+
+.returns-step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-red);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-bold);
+}
+
+.returns-step p {
+  font-size: 0.98rem;
+  color: rgba(var(--color-navy-rgb), 0.75);
+  line-height: 1.8;
+  margin: 4px 0 0;
+}
+
+/* nowrap so a phone number never breaks across two lines mid-digits */
+.returns-step a {
+  color: var(--color-red);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Contact block
+   -------------------------------------------------------------------------- */
+
+.returns-contact {
+  text-align: center;
+}
+
+.returns-contact .returns-card-icon {
+  margin-inline: auto;
+}
+
+.returns-contact-btns {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+/* Both numbers are red CTAs: neither one is the fallback. */
+.returns-phone-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 46px;
+  padding: 12px 28px;
+  background: var(--color-red);
+  color: white;
+  border-radius: var(--radius-pill);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  direction: ltr;
+  transition: background var(--transition-base), transform var(--transition-base);
+}
+
+.returns-hours {
+  font-size: 0.88rem;
+  color: rgba(var(--color-navy-rgb), 0.7);
+  margin: 18px 0 0;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+/* The last step has no next circle to reach. */
+.returns-step:last-child::before {
+  display: none;
+}
+
+.returns-step:last-child {
+  padding-bottom: 0;
+}
+
+.returns-step a:hover {
+  text-decoration: underline;
+}
+
+.returns-phone-btn:hover {
+  background: var(--color-red-dark);
+  transform: translateY(-2px);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* Full-width buttons rather than two half-width ones side by side: at this
+   width the pair wraps anyway, and a wrapped pill that is only as wide as its
+   label looks like a mistake. */
+@media (max-width: 768px) {
+  .returns-contact-btns .returns-phone-btn {
+      width: 100%;
+      justify-content: center;
+    }
+}
+
+/* ---- Reduced motion ------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .returns-phone-btn:hover {
+      transform: none;
+    }
+}

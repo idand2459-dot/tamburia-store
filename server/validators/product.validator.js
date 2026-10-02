@@ -3,10 +3,12 @@
  * כך שהמודל מקבל רק שדות מוכרים בערכים תקינים.
  */
 const { badRequest } = require('../utils/AppError');
+const { parsePrice } = require('../utils/money');
 
 const WRITABLE = [
   'name', 'price', 'image_url', 'images', 'colors', 'sizes',
   'category', 'subcategory', 'sku', 'description', 'in_stock', 'variants',
+  'image_illustrative', 'active',
 ];
 
 const MAX = { name: 255, image_url: 500, category: 100, subcategory: 100, sku: 100 };
@@ -29,27 +31,86 @@ function asStringArray(value, field) {
     .filter(Boolean);
 }
 
-/** מוודא שהערך מספר אי-שלילי ומעגל אותו לשלם. */
-function asNonNegativeInt(value, field) {
-  const num = Number(value);
-  if (!Number.isFinite(num) || num < 0) {
-    throw badRequest(`השדה ${field} חייב להיות מספר אי-שלילי`);
-  }
-  return Math.round(num);
+/* גוון תקין: #rrggbb, או ריק כשאין גוון למוצר הזה. שלוש ספרות (#fff)
+   אינן מתקבלות בכוונה — <input type="color"> מחזיר תמיד שש, וצורה אחת
+   פירושה שאין מה לנרמל לפני השוואה. */
+const HEX = /^#[0-9a-f]{6}$/i;
+
+/**
+ * מאמת רשימת צבעים ומחזיר אותה כאובייקטים { name, hex }.
+ *
+ * מחרוזת מתקבלת כשם בלי גוון, וזו אינה נדיבות אלא תאימות לאחור: ייבוא
+ * ה-CSV שולח שמות מופרדים בפסיק, וכך גם כל לקוח ישן. הצורה שנשמרת
+ * במסד היא תמיד האובייקט.
+ *
+ * צבע בלי שם נופל, ולא נדחה: זו בדיוק ההתנהגות של asStringArray
+ * שקדמה כאן, ושורה ריקה בטופס אינה שגיאה אלא שורה שעוד לא מולאה.
+ */
+function asColors(value) {
+  if (!Array.isArray(value)) throw badRequest('השדה colors חייב להיות מערך');
+
+  return value.map((item, i) => {
+    if (typeof item === 'string') return { name: item.trim(), hex: '' };
+    if (!item || typeof item !== 'object') {
+      throw badRequest(`colors[${i}] חייב להיות טקסט או אובייקט`);
+    }
+
+    const name = String(item.name ?? '').trim();
+    const hex = String(item.hex ?? '').trim().toLowerCase();
+    if (hex && !HEX.test(hex)) {
+      throw badRequest(`colors[${i}].hex חייב להיות בפורמט #rrggbb`);
+    }
+    return { name, hex };
+  }).filter((color) => color.name);
 }
 
-/** מאמת רשימת וריאנטים ומחזיר אותם עם תווית ומחיר בלבד. */
+/**
+ * מאמת את מחיר המוצר: גדול מאפס, עם עד שתי ספרות אחרי הנקודה.
+ *
+ * 0 מתקבל, ואינו מחיר אלא "המחיר עוד לא הוקלד" — זה מה שהחנות מציגה
+ * כ"מחיר בחנות" ושבב "ללא מחיר" באדמין מונה. כל ערך אחר מתחת ל-0.01
+ * נדחה.
+ *
+ * עד כאן המחיר עוגל כאן לשלם (Math.round), כך ש-12.90 נשמר 13 בלי
+ * שגיאה ובלי שאיש ידע. עכשיו ערך עם יותר משתי ספרות נדחה ולא מעוגל:
+ * עיגול שקט של מחיר הוא בדיוק התקלה שנסגרת כאן.
+ */
+function asProductPrice(value) {
+  const price = parsePrice(value, { allowZero: true });
+  if (price === null) {
+    throw badRequest('המחיר חייב להיות מספר גדול מאפס עם עד שתי ספרות אחרי הנקודה (למשל 12.90), או 0 למוצר בלי מחיר');
+  }
+  return price;
+}
+
+/**
+ * מאמת רשימת גרסאות ומחזיר אותן עם תווית ומחיר בלבד.
+ *
+ * מחיר גדול מאפס, ולא רק אי-שלילי: המחיר של מוצר עם גרסאות נגזר מהן
+ * (resolvePrice), וגרסה ב-0 הייתה גוררת את כל המוצר ל"ללא מחיר"
+ * ומוציאה אותו מהמכירה. מי שאין לו מחיר לגודל מסוים לא יוסיף אותו.
+ *
+ * ותוויות ייחודיות, כי התווית היא המפתח: services/pricing.service
+ * מוצא לפיה את מחיר הגרסה שנבחרה, ושתי "5 ליטר" באותו מוצר פירושן
+ * שהמחיר שייגבה הוא של הראשונה — לא משנה במה הלקוח בחר.
+ */
 function asVariants(value) {
   if (!Array.isArray(value)) throw badRequest('השדה variants חייב להיות מערך');
+
+  const seen = new Set();
   return value.map((variant, i) => {
     if (!variant || typeof variant !== 'object') {
       throw badRequest(`variants[${i}] חייב להיות אובייקט`);
     }
     const label = String(variant.label ?? '').trim();
     if (!label) throw badRequest(`variants[${i}].label חסר`);
-    const price = Number(variant.price);
-    if (!Number.isFinite(price) || price < 0) {
-      throw badRequest(`variants[${i}].price חייב להיות מספר אי-שלילי`);
+
+    if (seen.has(label)) throw badRequest(`הגודל "${label}" מופיע יותר מפעם אחת`);
+    seen.add(label);
+
+    const price = parsePrice(variant.price);
+    if (price === null) {
+      throw badRequest(`המחיר של "${label}" חייב להיות מספר גדול מאפס עם עד שתי ספרות אחרי הנקודה`);
     }
     return { label, price };
   });
@@ -62,7 +123,7 @@ function parseField(field, value) {
       return asTrimmedString(value, 'name', { maxLength: MAX.name });
 
     case 'price':
-      return asNonNegativeInt(value, 'price');
+      return asProductPrice(value);
 
     case 'image_url':
       return value == null ? '' : asTrimmedString(value, 'image_url', { maxLength: MAX.image_url });
@@ -83,13 +144,22 @@ function parseField(field, value) {
       return Array.isArray(value) ? value : [];
 
     case 'colors':
-      return value == null ? [] : asStringArray(value, 'colors');
+      return value == null ? [] : asColors(value);
 
     case 'sizes':
       return value == null ? [] : asStringArray(value, 'sizes');
 
+    /* שניהם ברירת מחדל true, ומאותה סיבה: מוצר חדש הוא מוצר שנמכר.
+       ההבדל ביניהם הוא מה הם אומרים — in_stock הוא "אזל כרגע" ומוצג
+       ללקוח, active הוא "אינו בקטלוג" ומעלים את המוצר לגמרי. */
     case 'in_stock':
+    case 'active':
       return value !== false;
+
+    /* ברירת המחדל הפוכה מזו של in_stock: מוצר נחשב במלאי אלא אם נאמר
+       אחרת, ותמונה נחשבת אמיתית אלא אם סומן שהיא להמחשה. */
+    case 'image_illustrative':
+      return value === true;
 
     case 'variants':
       return value == null ? [] : asVariants(value);
@@ -162,6 +232,36 @@ function parseListQuery(query = {}) {
       throw badRequest('in_stock חייב להיות true או false');
     }
     options.inStock = value === 'true';
+  }
+
+  /* שלושה ערכים: true (גלויים), false (מוסתרים בלבד) ו-all (הכול).
+     all הוא היחיד שמחזיר מוצרים מוסתרים, והוא נשמר כאן כ-undefined —
+     כלומר "בלי סינון" — כדי שהמודל לא יצטרך להכיר ערך שלישי.
+
+     מה שנשלח כאן קובע רק לאדמין. הקונטרולר דורס אותו ב-true לכל פונה
+     אחר, כי מוצר מוסתר אינו עניין של בקשה אלא של מי שואל. */
+  if (query.active !== undefined) {
+    const value = String(query.active).toLowerCase();
+    if (!['true', 'false', 'all'].includes(value)) {
+      throw badRequest('active חייב להיות true, false או all');
+    }
+    if (value !== 'all') options.active = value === 'true';
+    options.activeRequested = value;
+  }
+
+  /* רשימת מזהים: מה שהמועדפים, הנצפים לאחרונה והעגלה שואלים כדי
+     לדעת מה מתוך מה ששמור אצלם עדיין בקטלוג. בקשה אחת במקום אחת
+     לכל פריט, ותשובה שמדלגת ממילא על מה שהוסתר. */
+  if (query.ids !== undefined) {
+    const parts = String(query.ids).split(',').map((part) => part.trim()).filter(Boolean);
+    if (parts.length > 100) throw badRequest('ids מוגבל ל-100 מזהים');
+
+    const ids = parts.map((part) => {
+      const id = Number(part);
+      if (!Number.isInteger(id) || id < 1) throw badRequest(`ids מכיל מזהה לא תקין: "${part}"`);
+      return id;
+    });
+    options.ids = [...new Set(ids)];
   }
 
   if (query.limit !== undefined) {

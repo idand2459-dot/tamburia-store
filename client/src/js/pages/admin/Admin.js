@@ -1,5 +1,5 @@
 /**
- * מסך הניהול: סרגל הלשוניות, ומעליו הלשונית הפעילה.
+ * מסך הניהול: הכותרת, הניווט, ומתחתיהם הלשונית הפעילה.
  *
  * הלשונית הפעילה נשלטת מבחוץ, לפי הכתובת (/admin/:tab), כדי שלכל
  * לשונית תהיה כתובת אמיתית. setActiveTab למטה מנווט במקום לעדכן
@@ -7,14 +7,23 @@
  *
  * הנתונים עצמם יושבים בשלושה הוקים (מוצרים, הזמנות, חוות דעת), וכולם
  * מקבלים את אותו עוטף fetch שמחזיר למסך ההתחברות כשההתחברות פגה.
- * כאן נשאר רק מה ששייך למסך כולו: הסרגל, הקונפטי, ו-editingProduct —
- * המוצר הנערך, שלשונית המוצרים מסמנת ולשונית הטופס קוראת.
+ * כאן נשאר רק מה ששייך למסך כולו: הכותרת, הניווט, ההתראה על הזמנה
+ * חדשה, ו-editingProduct — המוצר הנערך, שלשונית המוצרים מסמנת ולשונית
+ * הטופס קוראת.
+ *
+ * ההתראה על הזמנה חדשה היא קונפטי וצליל. הקונפטי מגיע מ-useAdminOrders,
+ * שיודע מתי נכנסה הזמנה; הצליל מורכב כאן ונמסר לו כ-onNewOrder, מפני
+ * שהמתג שמכבה אותו יושב בכותרת הזו.
  */
 import { useState, useRef, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Volume2, VolumeX } from 'lucide-react';
 import Confetti from '../../components/Confetti';
 import { useAdminProducts } from '../../hooks/useAdminProducts';
 import { useAdminOrders } from '../../hooks/useAdminOrders';
 import { useAdminReviews } from '../../hooks/useAdminReviews';
+import { useNewOrderChime } from '../../hooks/useNewOrderChime';
+import AdminTabs from './AdminTabs';
 import StatsTab from './StatsTab';
 import OrdersTab from './OrdersTab';
 import ProductsTab from './ProductsTab';
@@ -23,7 +32,7 @@ import ImportTab from './ImportTab';
 import ReviewsTab from './ReviewsTab';
 
 /** מציג את מסך הניהול על כל לשוניותיו. */
-function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
+function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
   const expiredRef = useRef(onExpired);
   expiredRef.current = onExpired;
 
@@ -37,63 +46,103 @@ function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
   const activeTab = tab;
   const setActiveTab = onTabChange;
 
+  /* הסינון של רשימת המוצרים יושב בכתובת שלה (?category=…&q=…), והטופס
+     נמצא בכתובת אחרת. כדי שחזרה לרשימה — משמירה, מביטול או מהלשונית —
+     תחזיר את אותו סינון, זוכרים כאן את ה-query האחרון שהרשימה הוצגה בו. */
+  const location = useLocation();
+  const listSearchRef = useRef('');
+  if (activeTab === 'products') listSearchRef.current = location.search;
+
+  /* המוצר שהטופס נסגר עליו, כדי שהרשימה תגלול אליו ולא תיפתח בראשה. */
+  const [scrollToId, setScrollToId] = useState(null);
+  const clearScrollTo = useCallback(() => setScrollToId(null), []);
+
   const {
-    products, createProduct, updateProduct, deleteProduct, toggleStock, uploadingImages, productsError,
+    products, productsLoaded, createProduct, updateProduct, deleteProduct, toggleStock, toggleActive, updatePrice, updateSubcategory,
+    uploadingImages, productsError,
     csvPreview, csvErrors, importing, importResult,
     downloadTemplate, handleCsvFile, handleImport, resetCsv, clearImportResult,
   } = useAdminProducts(api);
 
+  const { soundOn, toggleSound, playChime } = useNewOrderChime();
+
   const {
     orders, handleStatusChange, handleDeleteOrder, exportOrdersToExcel, getStats, ordersError,
     showConfetti, dismissConfetti,
-  } = useAdminOrders(api);
+  } = useAdminOrders(api, { onNewOrder: playChime });
 
   const { reviews, approveReview, deleteReview, reviewsError } = useAdminReviews(api);
 
-  const [editingProduct, setEditingProduct] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+
+  /* המוצר הנערך נגזר מהרשימה ואינו עותק שנשמר בלחיצה על "ערוך".
+     כך "הסתר מהחנות" שבטופס, ששולח מיד ומרענן את הרשימה, מחליף גם
+     את התווית של הכפתור עצמו — עותק היה נשאר על הערך הישן. */
+  const editingProduct = editingId === null
+    ? null
+    : products.find((p) => p.id === editingId) || null;
 
   const newOrdersCount = orders.filter(o => o.status === 'new').length;
   const pendingReviewsCount = reviews.filter(r => !r.approved).length;
 
   /** פותח את הטופס לעריכת מוצר קיים. */
   function startEdit(product) {
-    setEditingProduct(product);
+    setEditingId(product.id);
     setActiveTab('add');
   }
 
-  /** חוזר לרשימת המוצרים ומסיים את מצב העריכה. */
+  /** חוזר לרשימת המוצרים, באותו סינון ועל המוצר שנערך, ומסיים את מצב העריכה. */
   function finishForm() {
-    setEditingProduct(null);
-    setActiveTab('products');
+    setScrollToId(editingId);
+    setEditingId(null);
+    setActiveTab('products', listSearchRef.current);
+  }
+
+  /**
+   * מעבר לשונית. שני האיפוסים נעשים כאן ולא ברכיב הניווט, שאינו מכיר
+   * את הנתונים: חזרה לרשימת המוצרים מסיימת עריכה, וכניסה לייבוא מנקה
+   * קובץ שנשאר מפעם קודמת.
+   */
+  function handleTabChange(next) {
+    if (next === 'products') setEditingId(null);
+    if (next === 'import') resetCsv();
+    setActiveTab(next, next === 'products' ? listSearchRef.current : '');
   }
 
   return (
     <div className="admin">
       {showConfetti && <Confetti onDone={dismissConfetti} />}
-      <div className="admin-header">
-        <button className="back-btn" onClick={onBack}>← חזור לחנות</button>
-        <h1>ניהול טכניק טמבור</h1>
-        <span className="admin-count">{products.length} מוצרים</span>
-      </div>
 
-      <div className="admin-tabs">
-        <button className={`admin-tab ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>📊 סטטיסטיקות</button>
-        <button className={`admin-tab ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')}>
-          📋 הזמנות {newOrdersCount > 0 && <span className="orders-new-badge">{newOrdersCount}</span>}
+      <header className="admin-header">
+        <h1 className="admin-title">ניהול טכניק טמבור</h1>
+        <span className="admin-count">{products.length} מוצרים</span>
+
+        <button
+          type="button"
+          className={`admin-sound-btn ${soundOn ? 'is-on' : ''}`}
+          onClick={toggleSound}
+          aria-pressed={soundOn}
+          title={soundOn ? 'צליל הזמנה חדשה מופעל — לחץ להשתקה' : 'צליל הזמנה חדשה מושתק — לחץ להפעלה'}>
+          {soundOn
+            ? <Volume2 size={22} aria-hidden="true" />
+            : <VolumeX size={22} aria-hidden="true" />}
+          <span className="admin-sound-label">{soundOn ? 'צליל פועל' : 'מושתק'}</span>
         </button>
-        <button className={`admin-tab ${activeTab === 'products' ? 'active' : ''}`} onClick={() => { setActiveTab('products'); setEditingProduct(null); }}>📦 מוצרים</button>
-        <button className={`admin-tab ${activeTab === 'add' ? 'active' : ''}`} onClick={() => setActiveTab('add')}>
-          {editingProduct ? '✏️ עריכה' : '➕ הוסף מוצר'}
-        </button>
-        <button className={`admin-tab ${activeTab === 'import' ? 'active' : ''}`} onClick={() => { setActiveTab('import'); resetCsv(); }}>📥 ייבוא CSV</button>
-        <button className={`admin-tab ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
-          ⭐ ביקורות {pendingReviewsCount > 0 && <span className="orders-new-badge">{pendingReviewsCount}</span>}
-        </button>
-      </div>
+
+        <button type="button" className="admin-back-link" onClick={onBack}>חזור לחנות</button>
+      </header>
+
+      <AdminTabs
+        activeTab={activeTab}
+        onSelect={handleTabChange}
+        badges={{ orders: newOrdersCount, reviews: pendingReviewsCount }}
+        editing={Boolean(editingProduct)}
+        onBack={onBack}
+      />
 
       {activeTab === 'stats' && (
         <StatsTab
-          orders={orders}
+          api={api}
           products={products}
           getStats={getStats}
           onToggleStock={toggleStock}
@@ -114,10 +163,16 @@ function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
       {activeTab === 'products' && (
         <ProductsTab
           products={products}
+          productsLoaded={productsLoaded}
           onEdit={startEdit}
           onDelete={deleteProduct}
           onToggleStock={toggleStock}
+          onToggleActive={toggleActive}
+          onUpdatePrice={updatePrice}
+          onUpdateSubcategory={updateSubcategory}
           productsError={productsError}
+          scrollToId={scrollToId}
+          onScrolled={clearScrollTo}
         />
       )}
 
@@ -126,6 +181,7 @@ function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
           editingProduct={editingProduct}
           onCreate={createProduct}
           onUpdate={updateProduct}
+          onToggleActive={toggleActive}
           uploadingImages={uploadingImages}
           onDone={finishForm}
           productsError={productsError}
@@ -141,7 +197,7 @@ function Admin({ onBack, onExpired, tab = 'stats', onTabChange }) {
           onDownloadTemplate={downloadTemplate}
           onCsvFile={handleCsvFile}
           onImport={handleImport}
-          onViewProducts={() => { setActiveTab('products'); clearImportResult(); }}
+          onViewProducts={() => { handleTabChange('products'); clearImportResult(); }}
         />
       )}
 

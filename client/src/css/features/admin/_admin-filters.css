@@ -1,0 +1,180 @@
+/* ==========================================================
+   Admin filters — the search field and the category chips over
+   the product list
+
+   The shop's own search field is layout/_nav-search.css and the
+   category page's filters are features/category/_category-filters.css;
+   this one is the admin's.
+
+   Both controls are 48px or taller, because the panel is worked
+   from a phone. Renamed from .admin-search-bar / .admin-cat-btn
+   with the redesign, and .admin-results-info went with them —
+   the product count is in the chips now, and the reviews tab has
+   .admin-tab-summary in _admin-layout.css.
+   ========================================================== */
+
+.admin-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.admin-search-input {
+  width: 100%;
+  min-height: 52px;
+  /* the inline padding leaves room for the icon inside the field at the start
+     and the clear button at the end */
+  padding: 0 52px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-h3);
+  direction: rtl;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.admin-search-icon {
+  position: absolute;
+  inset-inline-start: 18px;
+  color: var(--color-text-faint);
+  pointer-events: none;
+}
+
+.admin-search-clear {
+  position: absolute;
+  inset-inline-end: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--color-text-faint);
+  cursor: pointer;
+}
+
+.admin-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+/* The one chip in the row that is not a category: the products whose price in the
+   database is 0, which the shop cannot sell. Red, like every other "you cannot buy
+   this" mark on the site, and outlined rather than filled while it is idle so it
+   reads as a chip first and a warning second. */
+.admin-cat--alert {
+  border-color: rgba(var(--color-red-rgb), 0.5);
+  color: var(--color-red);
+}
+
+/* "Hidden" — products taken out of the shop. Grey rather than red: nothing is
+   wrong with them, they are simply not on the shelf, and the chip should not
+   compete with the unpriced one for attention. */
+.admin-cat--muted {
+  border-color: rgba(var(--color-navy-rgb), 0.35);
+  color: var(--color-text-subtle);
+}
+
+.admin-cat-count {
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--color-navy-rgb), 0.07);
+  color: inherit;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.admin-search-input:focus { border-color: var(--color-navy); }
+
+.admin-search-clear:hover { color: var(--color-red); }
+
+.admin-cat:hover {
+  border-color: var(--color-navy);
+  color: var(--color-navy);
+}
+
+.admin-cat.is-active {
+  border-color: var(--color-navy);
+  background: var(--color-navy);
+  color: white;
+}
+
+.admin-cat--alert.is-active {
+  border-color: var(--color-red);
+  background: var(--color-red);
+  color: white;
+}
+
+.admin-cat--muted.is-active {
+  border-color: var(--color-navy);
+  background: var(--color-navy);
+  color: white;
+}
+
+.admin-cat.is-active .admin-cat-count {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.admin-search-input:focus-visible,
+.admin-search-clear:focus-visible,
+.admin-cat:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: -3px;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* lg — the phone: one sideways-scrolling row of categories instead of a block
+   of wrapped chips that would push the list itself off the screen. */
+@media (max-width: 900px) {
+  .admin-cats {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-inline: -16px;
+    padding: 2px 16px;
+  }
+
+  .admin-cats::-webkit-scrollbar { display: none; }
+}
+
+/* ---- Dark mode ----------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  .admin-search-input,
+  .admin-cat {
+    background: var(--color-navy);
+    border-color: var(--color-surface-dark);
+    color: var(--color-text-dark);
+  }
+
+  .admin-cat:hover { border-color: var(--color-blue); }
+}

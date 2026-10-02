@@ -1,0 +1,68 @@
+/* ==========================================================
+   Product trust row — the three promises under "add to cart"
+
+   New in this step. The page used to end its buying column at the
+   button: nothing said how the product would arrive, what it
+   costs to deliver, or that it can come back. These are the three
+   questions a hardware shop gets asked before a first order, so
+   they are answered where the decision is made rather than three
+   pages away.
+
+   Red-tinted tiles, because they carry the same icons the rest of
+   the site uses for the same three ideas (see
+   utils/categoryIcons.js on why an idea keeps its icon).
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.product-trust {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  padding-top: 16px;
+  list-style: none;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.product-trust li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--font-size-small);
+  line-height: 1.45;
+  color: rgba(var(--color-navy-rgb), 0.7);
+}
+
+.product-trust-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+}
+
+.product-trust a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--color-navy-rgb), 0.3);
+  text-underline-offset: 2px;
+  transition: color var(--transition-fast);
+}
+
+/* ---- States ------------------------------------------------------------- */
+
+.product-trust a:hover {
+  color: var(--color-red);
+}
+
+.product-trust a:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

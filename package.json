@@ -9,8 +9,17 @@
     "build:client": "npm run build --prefix client",
     "dev:client": "npm start --prefix client",
     "test": "node test/run-all.js",
+    "test:client": "npm test --prefix client -- --watchAll=false --ci",
     "seed:demo": "node scripts/seed-demo.js",
-    "seed:demo:clear": "node scripts/seed-demo.js --clear"
+    "seed:demo:clear": "node scripts/seed-demo.js --clear",
+    "images:categories": "node scripts/images-categories.js",
+    "products:list": "node scripts/products-list.js",
+    "images:products": "node scripts/images-products.js",
+    "products:hide-unphotographed": "node scripts/products-hide-unphotographed.js",
+    "products:new-template": "node scripts/products-new-template.js",
+    "products:import-new": "node scripts/products-import-new.js",
+    "images:square-uploads": "node scripts/images-square-uploads.js",
+    "a11y": "node scripts/a11y-audit.js"
   },
   "repository": {
     "type": "git",
@@ -31,6 +40,13 @@
     "multer": "^2.1.1",
     "nodemailer": "^8.0.3",
     "pg": "^8.20.0",
+    "sharp": "^0.35.4",
     "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@imgly/background-removal-node": "^1.4.5",
+    "axe-core": "^4.13.0",
+    "exceljs": "^4.4.0",
+    "puppeteer-core": "^25.12.0"
   }
 }

@@ -1,0 +1,97 @@
+/* ==========================================================
+   Hours table — the opening hours, on any white card
+
+   Rendered by the HoursTable component in pages/Contact.js and
+   reused by pages/About.js, which used to carry a second copy
+   of the same three rules in features/pages/_about.css.
+
+   Three rows, one per line of storeInfo.js's HOURS. The row
+   that matches today is marked .is-today and lifted out of the
+   list with a blush fill and a red bar on its start edge, so
+   the answer to "are they open now" is the thing the eye lands
+   on. Saturday is .is-closed and says so in red.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.hours-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.hours-row {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(var(--color-navy-rgb), 0.06);
+  font-size: 0.95rem;
+}
+
+.hours-day {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-weight: 500;
+}
+
+/* The little "today" chip beside the day name. Purple, because red on this
+   page belongs to the CTAs and to Saturday's "closed". */
+.hours-today-mark {
+  background: rgba(var(--color-purple-rgb), 0.12);
+  color: var(--color-purple-deep);
+  border-radius: var(--radius-pill);
+  padding: 2px 9px;
+  font-size: 0.68rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.3px;
+}
+
+.hours-time {
+  color: var(--color-navy);
+  font-weight: 600;
+  /* tabular figures so the three times line up on the colon */
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.hours-row:last-child {
+  border-bottom: none;
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+.hours-row.is-today {
+  background: var(--color-blush-deep);
+}
+
+/* The bar on the start (right) edge. Inset by nothing at either end: the row
+   is a band, not a card, so the mark runs its full height. */
+.hours-row.is-today::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--color-red);
+}
+
+.hours-row.is-today .hours-day,
+.hours-row.is-today .hours-time {
+  color: var(--color-navy);
+  font-weight: var(--font-weight-bold);
+}
+
+.hours-row.is-closed .hours-time {
+  color: var(--color-red);
+}

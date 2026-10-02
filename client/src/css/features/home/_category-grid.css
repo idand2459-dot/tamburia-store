@@ -1,0 +1,230 @@
+/* ==========================================================
+   Category grid — the light categories section on the home page
+
+   Not the category *page* — that is CategoryView, whose own
+   atmosphere is now one photograph in features/category/_category-banner.css.
+   This is the first light section on the home page: the Hero and
+   the features strip above it are one dark block, and this is
+   where the page opens up. --color-blush, a very light tint of
+   the brand red — warm, not cream and not white.
+
+   It was dark glass on --color-navy-950 with two radial glows
+   behind it. All of that is gone: the glows, the image layer
+   they were waiting for, the blur, and the positioning that
+   existed only to stack content over them. What sits on blush is
+   a plain white card, and white cards want crisp borders and a
+   shallow shadow rather than glass.
+
+   Art-directed in both themes, like every other section of the
+   home page, so there is no prefers-color-scheme block here.
+
+   The categories.js `color` field is deliberately unused here:
+   twelve different pastel fills fought the section either way.
+   Nothing reads it any more — the category page used to paint
+   itself with it, and no longer does.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.category-section {
+  background-color: var(--color-blush);
+  padding: 96px 20px 110px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.category-section-inner {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+}
+
+.category-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+/* No underline rule under this h2 any more: the pill above it already marks
+   the section, and a red bar plus a red accent word was one accent too many. */
+.category-title {
+  font-size: 2.2rem;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-navy);
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+
+/* the same device as .hero-accent — one word of the title in red */
+.category-title span {
+  color: var(--color-red);
+}
+
+.category-subtitle {
+  font-size: var(--font-size-body);
+  color: rgba(var(--color-navy-rgb), 0.65);
+  line-height: 1.6;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+/* White, and the only thing holding its edge is a 1px navy tint plus a 1px
+   shadow — on a surface this light, anything heavier reads as a box drawn
+   around the card rather than as the card itself. The lift on hover is where
+   the depth lives.
+
+   Cards stretch to the row's height (grid items default to stretch) and the
+   arrow is positioned against that stretched box, so every arrow in a row sits
+   on the same line however many lines the hint above it took. position:
+   relative is what makes that box the arrow's container.
+
+   padding-bottom is the arrow's corner, reserved: 20px below it, its own 18px,
+   and 16px of clearance so the hint never touches it. */
+.category-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+  padding: var(--spacing-lg) var(--spacing-lg) 54px;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* A red film and the full-strength --color-red, not the lightened
+   --color-red-soft: that one exists so small strokes survive a dark surface,
+   and on white it washes out. */
+.category-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+  transition:
+    background 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    color 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.category-name {
+  color: var(--color-navy);
+  font-size: 1.05rem;
+  font-weight: var(--font-weight-bold);
+  margin-top: var(--spacing-md);
+}
+
+.category-sub-hint {
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin-top: 6px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+/* Out of flow, in the bottom-left corner. In flow it followed the hint, so a
+   card whose hint wrapped to a second line carried its arrow a line lower than
+   its neighbours; against the card box it lands in the same place every time.
+   left, not inset-inline-end: the corner is the same one in any direction, and
+   the icon pointing into it is an ArrowLeft. */
+.category-arrow {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  color: rgba(var(--color-navy-rgb), 0.35);
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    color 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+/* Hover and keyboard focus get the same treatment. The lift is a transform,
+   and it survives the reveal because .reveal.is-visible fills `backwards`,
+   not `forwards` — see components/_reveal.css.
+
+   The red glow this had on the dark section becomes an ordinary drop shadow:
+   a glow needs something dark to glow against, and on blush it only muddied
+   the space under the card. */
+.category-card:hover,
+.category-card:focus-visible {
+  transform: translateY(-4px);
+  border-color: rgba(var(--color-red-rgb), 0.35);
+  box-shadow: 0 14px 30px rgba(var(--color-navy-rgb), 0.12);
+}
+
+/* the navbar's ring, at full strength: --color-purple-soft is the dark-surface
+   version of it and disappears on white. */
+.category-card:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+.category-card:hover .category-icon,
+.category-card:focus-visible .category-icon {
+  background: var(--color-red);
+  color: white;
+}
+
+.category-card:hover .category-arrow,
+.category-card:focus-visible .category-arrow {
+  color: var(--color-red);
+  transform: translateX(-4px);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 1200px) {
+  .categories-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+  .category-section {
+      padding: 64px 16px 72px;
+    }
+
+  .category-title {
+      font-size: 1.8rem;
+    }
+
+  .categories-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+  .category-card {
+      padding: var(--spacing-md) var(--spacing-md) 54px;
+    }
+}
+
+/* ---- Reduced motion ------------------------------------------------------ */
+
+/* Colour and shadow still change — they carry the "this is the one under the
+   cursor" signal — but nothing moves. */
+@media (prefers-reduced-motion: reduce) {
+  .category-card:hover,
+  .category-card:focus-visible {
+      transform: none;
+    }
+
+  .category-card:hover .category-arrow,
+  .category-card:focus-visible .category-arrow {
+      transform: none;
+    }
+}

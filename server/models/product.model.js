@@ -2,14 +2,15 @@
  * גישה לטבלת products: שליפה מסוננת, ספירה, יצירה, עדכון ומחיקה.
  * זהו המקום היחיד בדומיין המוצרים שכותב SQL.
  */
-const { query } = require('../config/db');
+const { query, withTransaction } = require('../config/db');
 
 const COLUMNS = `
   id, name, price, stock, image_url, images, colors, sizes,
-  category, subcategory, sku, description, in_stock, variants
+  category, subcategory, sku, description, in_stock, variants,
+  image_illustrative, active
 `;
 
-const JSON_COLUMNS = new Set(['images', 'variants']);
+const JSON_COLUMNS = new Set(['images', 'variants', 'colors']);
 
 /** ממיר ערך לפורמט שמתאים לעמודה, כולל JSON למקום שצריך. */
 function toDbValue(column, value) {
@@ -18,11 +19,24 @@ function toDbValue(column, value) {
 
 /** מחזיר מוצרים לפי הסינון, המיון והדפדוף שהתבקשו. */
 async function list(options = {}) {
-  const { category, subcategory, inStock, search, sort = 'id', order = 'ASC', limit, offset } = options;
+  const {
+    category, subcategory, inStock, active, ids, search,
+    sort = 'id', order = 'ASC', limit, offset,
+  } = options;
 
   const conditions = [];
   const params = [];
 
+  if (active !== undefined) {
+    params.push(active);
+    conditions.push(`active = $${params.length}`);
+  }
+  if (Array.isArray(ids)) {
+    // רשימה ריקה היא תשובה ריקה, ולא "בלי סינון": מי שביקש מזהים
+    // מסוימים ולא נקב באף אחד לא ביקש את כל הקטלוג.
+    params.push(ids);
+    conditions.push(`id = ANY($${params.length}::int[])`);
+  }
   if (category) {
     params.push(category);
     conditions.push(`category = $${params.length}`);
@@ -59,10 +73,12 @@ async function list(options = {}) {
 
 /** סופר מוצרים לפי אותם תנאי סינון, לצורך דפדוף. */
 async function count(options = {}) {
-  const { category, subcategory, inStock, search } = options;
+  const { category, subcategory, inStock, active, ids, search } = options;
   const conditions = [];
   const params = [];
 
+  if (active !== undefined) { params.push(active); conditions.push(`active = $${params.length}`); }
+  if (Array.isArray(ids)) { params.push(ids); conditions.push(`id = ANY($${params.length}::int[])`); }
   if (category) { params.push(category); conditions.push(`category = $${params.length}`); }
   if (subcategory) { params.push(subcategory); conditions.push(`subcategory = $${params.length}`); }
   if (inStock !== undefined) { params.push(inStock); conditions.push(`COALESCE(in_stock, true) = $${params.length}`); }
@@ -80,6 +96,22 @@ async function count(options = {}) {
 async function findById(id) {
   const { rows } = await query(`SELECT ${COLUMNS} FROM products WHERE id = $1`, [id]);
   return rows[0] || null;
+}
+
+/**
+ * מחזיר מחיר וגרסאות עבור רשימת מזהים, בשאילתה אחת.
+ *
+ * זה כל מה שבדיקת המחיר שלפני יצירת הזמנה צריכה, ולכן לא findById
+ * בלופ: עגלה של עשרה פריטים הייתה עשר שאילתות. מזהה שאינו קיים פשוט
+ * לא יחזור, וזו גם התשובה על "האם המוצר הזה עוד קיים".
+ */
+async function findPricesByIds(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) return [];
+  const { rows } = await query(
+    'SELECT id, name, price, variants, active FROM products WHERE id = ANY($1::int[])',
+    [ids]
+  );
+  return rows;
 }
 
 /** יוצר מוצר חדש ומחזיר אותו כפי שנשמר. */
@@ -121,16 +153,78 @@ async function remove(id) {
   return rows[0] || null;
 }
 
-/** מחזיר את הקטגוריות ותתי-הקטגוריות הקיימות בפועל, עם ספירה. */
-async function listCategories() {
+/**
+ * מוחק מוצר יחד עם הביקורות שלו — אלא אם יש לו הזמנות.
+ *
+ * הזמנה מחזיקה את הפריטים כצילום ב-orders.items (JSONB), בלי מפתח זר,
+ * ולכן המסד עצמו לא היה עוצר מחיקה של מוצר שנמכר: ההזמנה הייתה נשארת
+ * עם מזהה שאינו מוביל לשום דבר. הבדיקה כאן, באותה טרנזקציה עם המחיקה
+ * ועם נעילה על שורת המוצר, היא שעוצרת.
+ *
+ * הביקורות נמחקות במפורש ולא רק דרך ה-ON DELETE CASCADE שבמסד: כך
+ * המספר חוזר לקורא, וההתנהגות אינה תלויה בכך שה-CASCADE הוגדר בכל
+ * סביבה.
+ *
+ * מחזיר { product: null } כשהמוצר אינו קיים; { product, orders } כשיש
+ * לו הזמנות ולא נמחק דבר; ו-{ product, orders: 0, reviews } אחרי מחיקה.
+ */
+async function removeUnlessOrdered(id) {
+  return withTransaction(async (client) => {
+    const { rows: [product] } = await client.query(
+      `SELECT ${COLUMNS} FROM products WHERE id = $1 FOR UPDATE`, [id]
+    );
+    if (!product) return { product: null };
+
+    const { rows: [{ total: orders }] } = await client.query(
+      'SELECT COUNT(*)::int AS total FROM orders WHERE items @> $1::jsonb',
+      [JSON.stringify([{ id }])]
+    );
+    if (orders > 0) return { product, orders };
+
+    const { rowCount: reviews } = await client.query('DELETE FROM reviews WHERE product_id = $1', [id]);
+    await client.query('DELETE FROM products WHERE id = $1', [id]);
+    return { product, orders: 0, reviews };
+  });
+}
+
+/**
+ * מתוך רשימת כתובות תמונה, מחזיר את אלה שאף מוצר אינו מפנה אליהן —
+ * לא כתמונה ראשית ולא ברשימת התמונות. שם הקובץ נגזר מהתוכן, ולכן
+ * אותה תמונה יכולה לשמש כמה מוצרים, ואסור למחוק אותה עם הראשון.
+ */
+async function findUnreferencedImages(urls) {
+  if (urls.length === 0) return [];
+  const { rows } = await query(
+    `SELECT u.url
+     FROM unnest($1::text[]) AS u(url)
+     WHERE NOT EXISTS (
+       SELECT 1 FROM products p
+       WHERE p.image_url = u.url OR p.images @> jsonb_build_array(u.url)
+     )`,
+    [urls]
+  );
+  return rows.map((row) => row.url);
+}
+
+/**
+ * מחזיר את הקטגוריות ותתי-הקטגוריות הקיימות בפועל, עם ספירה.
+ *
+ * activeOnly הוא מה שהחנות שואלת: הספירה שמוצגת ללקוח היא של מה
+ * שאפשר לקנות. מסך הניהול שואל בלי הסינון, כדי לראות גם קטגוריה
+ * שכל המוצרים בה מוסתרים.
+ */
+async function listCategories({ activeOnly = false } = {}) {
   const { rows } = await query(`
     SELECT category, subcategory, COUNT(*)::int AS product_count
     FROM products
-    WHERE category IS NOT NULL
+    WHERE category IS NOT NULL ${activeOnly ? 'AND active' : ''}
     GROUP BY category, subcategory
     ORDER BY category, subcategory NULLS FIRST
   `);
   return rows;
 }
 
-module.exports = { list, count, findById, create, update, remove, listCategories };
+module.exports = {
+  list, count, findById, findPricesByIds, create, update, remove, listCategories,
+  removeUnlessOrdered, findUnreferencedImages,
+};

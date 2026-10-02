@@ -18,7 +18,7 @@ const { spawn } = require('child_process');
 
 // unit-order-service רץ ראשון: הוא אינו נוגע ברשת או במסד, ולכן
 // נותן את סימן הכישלון המהיר ביותר אם משהו בסיסי שבור.
-const SUITES = ['unit-order-service', 'smoke-static', 'smoke-orders', 'smoke-reviews', 'smoke-pigments', 'smoke-auth'];
+const SUITES = ['unit-order-service', 'unit-money', 'unit-originals', 'smoke-static', 'smoke-orders', 'smoke-products', 'smoke-settings', 'smoke-reviews', 'smoke-pigments', 'smoke-auth'];
 
 /** מריץ חבילה אחת כתהליך נפרד ומחזיר את קוד היציאה. */
 function runSuite(name, baseUrl) {

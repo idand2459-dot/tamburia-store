@@ -2,6 +2,7 @@
  * כפתור צף לחזרה לראש העמוד.
  */
 import { useState, useEffect } from 'react';
+import { ArrowUp } from 'lucide-react';
 
 /** מציג את כפתור החזרה לראש העמוד. */
 function ScrollToTop() {
@@ -24,8 +25,8 @@ function ScrollToTop() {
   if (!visible) return null;
 
   return (
-    <button className="scroll-to-top" onClick={scrollUp} title="חזור למעלה">
-      ↑
+    <button className="scroll-to-top" onClick={scrollUp} title="חזור למעלה" aria-label="חזור למעלה">
+      <ArrowUp size={20} aria-hidden="true" />
     </button>
   );
 }

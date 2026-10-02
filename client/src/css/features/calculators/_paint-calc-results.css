@@ -1,0 +1,225 @@
+/* ==========================================================
+   Paint calculator results — the output panel, its tip, and the
+   two calls to action underneath it
+
+   This panel used to be a white card dropped into a dark
+   section — the one bright rectangle on the page. It is dark
+   glass now, a shade lighter than the form cards above it so
+   the answer still separates from the question, with the
+   section hairline repeated along its top edge.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.paint-results {
+  position: relative;
+  background: rgba(var(--color-navy-900-rgb), 0.78);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+  animation: fade-in 0.3s ease;
+}
+
+/* the section hairline again, this time inside the panel and clipped to its
+   rounded top by the overflow: hidden above */
+.paint-results::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(var(--color-red-rgb), 0.6),
+    rgba(var(--color-purple-rgb), 0.6),
+    transparent);
+  pointer-events: none;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.paint-results-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.paint-results-header span {
+  display: flex;
+  color: var(--color-red-soft);
+}
+
+.paint-results-header h3 {
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-bold);
+  color: white;
+  margin: 0;
+}
+
+.paint-results-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.paint-result-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.paint-result-icon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--color-red-soft);
+}
+
+.paint-result-value {
+  font-size: 1.35rem;
+  font-weight: var(--font-weight-extrabold);
+  color: white;
+  line-height: 1.2;
+}
+
+.paint-result-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+  margin-top: 2px;
+}
+
+.paint-result-sub {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.62);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* ── Preview bar ──────────────────────────────────────────────────────────── */
+
+/* No background here on purpose: PaintCalculator.js sets it inline to the
+   mixed paint colour, which is the whole point of the bar. */
+.paint-result-preview-bar {
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+  font-size: var(--font-size-body);
+  transition: background 0.5s ease;
+}
+
+/* ── Bundle button ────────────────────────────────────────────────────────── */
+
+/* Was a teal gradient, which belonged to no part of this palette. Red, like
+   every other primary action in the section; the added state stays green
+   because green there means "done", not "brand". */
+.paint-bundle-btn {
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: none;
+  background: var(--color-red);
+  color: white;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: background var(--transition-base), transform var(--transition-base),
+    box-shadow var(--transition-base);
+  font-family: var(--font-family-base);
+  direction: rtl;
+}
+
+/* ── Tip row ──────────────────────────────────────────────────────────────── */
+
+/* The amber box this used to be was the last light surface in the section and
+   read as a warning, which it is not — it is advice. A quiet glass row with a
+   purple icon carries it without shouting. */
+.paint-results-tip {
+  display: flex;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.6;
+}
+
+.paint-results-tip span {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--color-purple-soft);
+}
+
+.paint-results-tip strong { color: white; }
+
+/* ── Phone CTA ────────────────────────────────────────────────────────────── */
+
+/* Outlined rather than filled: the navy fill it had is now within a few
+   percent of the panel behind it, so the button had all but vanished. */
+.paint-results-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: white;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-family-base);
+  transition: background var(--transition-base), border-color var(--transition-base);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.paint-bundle-btn:hover:not(:disabled) {
+  background: var(--color-red-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 0 22px rgba(var(--color-red-rgb), 0.45);
+}
+
+.paint-results-cta:hover {
+  background: rgba(var(--color-red-rgb), 0.14);
+  border-color: rgba(var(--color-red-rgb), 0.6);
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+.paint-bundle-btn.added {
+  background: var(--color-green-bright);
+  box-shadow: 0 0 22px rgba(var(--color-green-bright-rgb), 0.35);
+  cursor: default;
+}
+
+/* the paint-volume tile, the one number most people came for */
+.paint-result-item.accent {
+  background: rgba(var(--color-red-rgb), 0.12);
+  border-color: rgba(var(--color-red-rgb), 0.3);
+}
+
+.paint-result-item.accent .paint-result-value { color: var(--color-red-soft); }
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* 600px, matching the rest of the section — see the note in
+   _paint-calc-section.css. */
+@media (max-width: 600px) {
+  .paint-results-grid {
+      grid-template-columns: 1fr;
+    }
+}

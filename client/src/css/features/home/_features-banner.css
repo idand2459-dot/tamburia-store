@@ -1,0 +1,154 @@
+/* ==========================================================
+   Features banner — the four-up strip of selling points
+
+   Rendered by FeaturesBanner.js, directly under the Hero. Same
+   --color-navy-950, no glow, no cards and no hover state
+   anywhere in this file: the strip is the Hero's base, not a
+   section of its own. Delivery area, same-day pickup, 30 years
+   and technical advice are what a visitor wants in the first
+   seconds, which is why the strip sits here rather than further
+   down the page.
+
+   One hairline, along the bottom edge only. The top edge is
+   inside a continuous dark block — the Hero's bottom fade lands
+   on this exact colour — so a seam there would draw a line
+   across nothing. The bottom edge is where the dark block meets
+   the first light section, and that is what the hairline marks.
+
+   What went: the light band it used to sit on, the white-card
+   look, the 3px red border-top, the drop shadow, the per-item
+   light borders and the whole dark-mode block that repainted
+   them. The strip is dark in both themes now, so nothing is
+   left to override.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.features-strip {
+  background-color: var(--color-navy-950);
+  padding: 40px 24px;
+  position: relative;
+}
+
+/* The seam with the first light section below: the shared hairline of every
+   dark/light boundary on the page — lit in the middle, faded out at both ends,
+   and always drawn on the dark side of the edge. A dark surface dissolving into
+   a near-white one over a gradient just turns grey, so the edge itself is hard
+   and this 1px is the only thing on it. */
+.features-strip::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(var(--color-red-rgb), 0.6),
+    rgba(var(--color-purple-rgb), 0.6),
+    transparent);
+  pointer-events: none;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.features-banner {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+}
+
+/* position: relative is for the divider below, which hangs off the item's
+   inline-end edge. */
+.feature-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 24px;
+}
+
+/* The divider between two items, built the way .hero-stat-div is: a gradient
+   that fades out at both ends rather than a hairline that stops dead. It is a
+   pseudo-element instead of an element of its own so the four items stay a
+   plain map in the JSX. left, not inset-inline-end: in RTL the inline-end edge
+   is the left one, and writing the physical side keeps this readable next to
+   the :last-child that switches it off. */
+.feature-item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 44px;
+  background: linear-gradient(to bottom,
+    transparent,
+    rgba(255, 255, 255, 0.12),
+    transparent);
+}
+
+.feature-item:last-child::after {
+  content: none;
+}
+
+/* Outlined, not filled: the WhyUs point tiles are the filled ones, and this
+   strip stays a step quieter than the section above it. */
+.feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(var(--color-red-rgb), 0.35);
+  color: var(--color-red-soft);
+}
+
+.feature-text h3 {
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-bold);
+  color: white;
+  margin-bottom: 4px;
+}
+
+.feature-text p {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .features-banner {
+      grid-template-columns: repeat(2, 1fr);
+      row-gap: var(--spacing-lg);
+    }
+
+  /* Two columns make the dividers a grid of lines rather than a row of
+     separators, so they come off entirely and the row gap does the work. */
+  .feature-item::after {
+      content: none;
+    }
+}
+
+@media (max-width: 560px) {
+  .features-strip {
+      padding: 28px 20px;
+    }
+
+  .features-banner {
+      grid-template-columns: 1fr;
+      row-gap: 18px;
+    }
+
+  /* A single column is a list, and a list reads from its inline-start edge —
+     so the items lose the side padding that was centring them in a cell. */
+  .feature-item {
+      padding: 0;
+    }
+}

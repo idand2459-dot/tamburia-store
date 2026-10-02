@@ -2,14 +2,20 @@
    Typography — fonts and headings
    ========================================================================== */
 
-main h2 {
+/* was `main h2`, back when the category page was the only <main> whose h2s it
+   reached. Now that every page sits inside one <main>, the class keeps it to
+   the same elements. */
+.category-page h2 {
   font-size: 1.5rem;
   margin-bottom: 24px;
-  border-bottom: 2px solid #1a1a2e;
+  border-bottom: 2px solid var(--color-navy);
   padding-bottom: 8px;
 }
 
-/* ===== פונט עברי Heebo ===== */
+/* ===== פונט עברי Heebo =====
+   !important because css/index.css also sets a font-family on body, at the same
+   specificity, and it is imported from index.js rather than from app.css — so
+   which of the two lands later in the bundle is not this file's decision. */
 body {
   font-family: 'Heebo', 'Segoe UI', sans-serif !important;
 }

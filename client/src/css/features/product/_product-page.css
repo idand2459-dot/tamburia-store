@@ -1,0 +1,86 @@
+/* ==========================================================
+   Product page — the frame the product's two columns sit in
+
+   No banner above it, unlike a category page: the customer came
+   for this product, so the page opens straight on it and the only
+   chrome above the columns is the trail
+   (features/product/_breadcrumb.css).
+
+   This file owns the page, the two columns and the card the
+   details sit in — nothing that is written inside that card. Its
+   contents are features/product/_product-detail.css, the pickers under
+   them features/product/_product-options.css, the buy row
+   features/product/_product-buy.css and the promises below it
+   features/product/_product-trust.css; the image column is
+   features/product/_product-gallery.css.
+
+   What the block below replaces: a 1000px page opened by a dark
+   navy "חזרה למוצרים" pill, with the details as a bare column of
+   text on the page background rather than on a card.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.product-page {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* minmax(0, 1fr) twice rather than 1fr 1fr: a long product name with no break
+   opportunity would otherwise set its column's minimum width and push the
+   gallery out of the grid. align-items: start is what gives the details card
+   room to be sticky — stretched to the row's height (the grid default) it
+   would have nothing to travel in. */
+.product-page-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+}
+
+/* The details card. Sticky against the navbar's 68px plus air, like the
+   category page's sidebar — and, like any sticky grid item, it can only travel
+   as far as its own grid area, so it holds still beside a gallery taller than
+   itself and simply scrolls with the page when it is the taller of the two. */
+.product-page-details {
+  position: sticky;
+  top: 84px;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---- Responsive --------------------------------------------------------- */
+
+/* One column, gallery first — which is also its order in the DOM, so nothing
+   has to be reordered. The card stops being sticky: on a phone it is the whole
+   screen and has nothing to stay visible beside. */
+@media (max-width: 900px) {
+  .product-page-content {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 24px;
+    }
+
+  .product-page-details {
+      position: static;
+    }
+}
+
+@media (max-width: 768px) {
+  .product-page {
+      padding: 20px 16px 56px;
+    }
+
+  .product-page-details {
+      padding: 20px;
+      gap: 16px;
+    }
+}

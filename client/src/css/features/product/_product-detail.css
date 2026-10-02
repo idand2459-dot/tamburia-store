@@ -1,0 +1,222 @@
+/* ==========================================================
+   Product detail — what the white card beside the gallery says
+
+   The card itself (and the page's two columns) is
+   features/product/_product-page.css. This file is its contents, top to
+   bottom: the category, the name with the share button beside it,
+   the SKU, the rating, the price with its stock pill and the
+   description. The pickers under them are
+   features/product/_product-options.css, the buy row is
+   features/product/_product-buy.css and the three promises below it are
+   features/product/_product-trust.css.
+
+   Colours: the price is navy, not red, for the same reason the
+   product card's is — red belongs to the one button that matters.
+   The category label is purple, the secondary accent, exactly as
+   the subcategory line on the card.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+/* The heading group: four lines that belong closer together than the card's
+   own 16px rhythm, so they sit in a group with a tighter one. */
+.product-detail-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.product-detail-category {
+  width: fit-content;
+  color: var(--color-purple);
+  font-size: var(--font-size-small);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+/* The share button sits at the end of this row rather than beside "add to
+   cart": sharing is not one of this page's two actions, it is a footnote to the
+   name. align-items: flex-start keeps it on the name's first line when the name
+   wraps to two. */
+.product-detail-name-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.product-detail-name {
+  font-size: 1.9rem;
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.25;
+  color: var(--color-navy);
+}
+
+/* What used to be a full-width green WhatsApp button under "add to cart",
+   competing with it for the same glance. */
+.product-detail-share {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.15);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-navy);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.product-detail-sku {
+  font-size: var(--font-size-xs);
+  color: rgba(var(--color-navy-rgb), 0.7);
+}
+
+/* A button, because it does something: it takes you down to the reviews it is
+   summarising. */
+.product-detail-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin-top: 2px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--font-family-base);
+  cursor: pointer;
+}
+
+/* The stars sit on a white card here, so the empty ones take the light default
+   in both themes — see the note in components/_stars.css. */
+.product-detail-rating .stars {
+  --star-empty: rgba(var(--color-navy-rgb), 0.15);
+}
+
+.product-detail-rating .star {
+  font-size: 1rem;
+}
+
+.product-detail-rating-avg {
+  font-size: 0.95rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+}
+
+.product-detail-rating-count {
+  font-size: var(--font-size-small);
+  color: rgba(var(--color-navy-rgb), 0.7);
+}
+
+.product-detail-pricing {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.product-detail-price {
+  font-size: 2.2rem;
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1.1;
+  color: var(--color-navy);
+}
+
+/* "מחיר בחנות" — the price in the database is 0. Much smaller than the
+   2.2rem figure it replaces: at that size a few words read as a headline, and
+   this is an apology, not the product's name. The buy row shows the shop's
+   number in place of "add to cart". */
+.product-detail-price.is-no-price {
+  font-size: 1.3rem;
+  color: rgba(var(--color-navy-rgb), 0.65);
+}
+
+/* "(בחר גרסה)" — a product whose price depends on a variant nobody has picked
+   yet. */
+.product-detail-price-note {
+  font-size: var(--font-size-small);
+  font-weight: 400;
+  color: rgba(var(--color-navy-rgb), 0.7);
+}
+
+.product-detail-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-small);
+  font-weight: 600;
+}
+
+.product-detail-description {
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  padding-top: 16px;
+}
+
+.product-detail-description h2 {
+  margin-bottom: 8px;
+  font-size: 1rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+}
+
+/* pre-line: descriptions are typed in the admin form with line breaks, and
+   collapsing them ran every paragraph together. */
+.product-detail-description p {
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: rgba(var(--color-navy-rgb), 0.7);
+  white-space: pre-line;
+}
+
+/* ---- States ------------------------------------------------------------- */
+
+.product-detail-category:hover,
+.product-detail-rating:hover .product-detail-rating-count {
+  color: var(--color-red);
+}
+
+.product-detail-share:hover {
+  border-color: var(--color-red);
+  color: var(--color-red);
+}
+
+.product-detail-category:focus-visible,
+.product-detail-rating:focus-visible,
+.product-detail-share:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---- Variants ----------------------------------------------------------- */
+
+/* On the shelf: navy on a navy tint, quiet. Not green — green on this page is
+   the confirmation that something went into the cart, and it should mean only
+   that. */
+.product-detail-stock--in {
+  background: rgba(var(--color-navy-rgb), 0.06);
+  color: var(--color-navy);
+}
+
+.product-detail-stock--out {
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red-dark);
+}
+
+/* ---- Responsive --------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .product-detail-name {
+      font-size: 1.5rem;
+    }
+
+  .product-detail-price {
+      font-size: 1.9rem;
+    }
+}

@@ -1,0 +1,173 @@
+/* ==========================================================
+   About page — the story card, the four points and the hours
+
+   The page's dark header is not here: it is the shared
+   components/_page-header.css, which replaced this file's
+   .about-hero along with the contact and returns twins. The
+   opening hours are not here either: they are the shared
+   components/_hours-table.css, which the contact page renders
+   too.
+
+   NOTE on the names. .why-us-* in this file and .whyus-* on the
+   home page are two different components and always were — the
+   restructure documented the distinction rather than merging
+   them. They now look alike, because both are the light card
+   language, but the home page's set sits in a grid beside a
+   photograph and this one does not, so a shared partial would
+   be two components wearing one name.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.about-sections {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 56px 24px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* Cards — the story and the hours
+   -------------------------------------------------------------------------- */
+
+.about-card {
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 32px;
+}
+
+.about-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+  margin-bottom: 16px;
+}
+
+.about-card-title {
+  font-size: 1.4rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  margin: 0 0 16px;
+}
+
+/* The story is the one block of running prose on the page, so it gets the
+   measure and the leading that go with reading rather than scanning: about
+   65 characters a line, and 1.9. */
+.about-story {
+  max-width: 720px;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.about-story p {
+  font-size: 1.05rem;
+  color: rgba(var(--color-navy-rgb), 0.75);
+  line-height: 1.9;
+  margin: 0 0 16px;
+}
+
+.about-story p:last-child {
+  margin-bottom: 0;
+}
+
+/* Points
+   -------------------------------------------------------------------------- */
+
+.about-points-head {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.about-points-title {
+  font-size: 1.9rem;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-navy);
+  line-height: 1.3;
+  margin: 0;
+}
+
+/* the red half of the title, as on every other section heading in the
+   redesign. No text-shadow — that glow is for red on navy. */
+.about-points-accent {
+  color: var(--color-red);
+}
+
+.why-us-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.why-us-item {
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+  transition: border-color var(--transition-base);
+}
+
+.why-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+  margin-bottom: 14px;
+}
+
+.why-us-item h3 {
+  font-size: 1.05rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
+  margin: 0 0 6px;
+}
+
+.why-us-item p {
+  font-size: 0.92rem;
+  color: rgba(var(--color-navy-rgb), 0.65);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+/* Purple and border only, exactly as the home page's point cards: these are
+   not links, and red plus a lift would say they were. */
+.why-us-item:hover {
+  border-color: rgba(var(--color-purple-rgb), 0.35);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .about-sections {
+      padding: 40px 20px 64px;
+      gap: 36px;
+    }
+
+  .about-card {
+      padding: 24px;
+    }
+
+  .about-points-title {
+      font-size: 1.55rem;
+    }
+
+  .why-us-grid {
+      grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,258 @@
+/* ==========================================================
+   Wishlist — the saved products, inside the shared drawer
+
+   .product-wishlist-btn used to sit at the bottom of this file:
+   the heart beside "add to cart" on the product page, parked here
+   because it writes to the same list. That button is now
+   features/product/_product-buy.css's .product-buy-wish. The panel, the
+   overlay and the header are components/_drawer.css. What is left
+   is the list.
+
+   The rows are the cart's rows — the same 64px image well, the
+   same hairlines, the same muted Trash2 that goes red — because
+   they are the same kind of thing in the same panel. What they
+   add is that the whole row is a link: .wishlist-row-link::after
+   is stretched over it, exactly as the product card does, so
+   there is one tab stop per row instead of two divs with onClick,
+   and middle-click works. The remove button sits above that layer
+   so it does not navigate.
+
+   Gone with the redesign: .wishlist-count,
+   .wishlist-item and its -img / -info / -name / -price / -stock
+   children, .wishlist-remove-btn, the .wishlist-empty span / p /
+   small, and the prefers-color-scheme block.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.wishlist-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* position: relative is the stretched link's container. */
+.wishlist-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(var(--color-navy-rgb), 0.07);
+  transition: background var(--transition-fast);
+}
+
+.wishlist-row:last-child {
+  border-bottom: none;
+}
+
+.wishlist-row-well {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  background: var(--color-image-well);
+  overflow: hidden;
+}
+
+.wishlist-row-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.wishlist-row-fallback {
+  display: flex;
+  color: rgba(var(--color-navy-rgb), 0.28);
+}
+
+.wishlist-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.wishlist-row-name {
+  color: var(--color-navy);
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.wishlist-row-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The stretched link. Everything on the row that is not the remove button opens
+   the product through this. */
+.wishlist-row-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.wishlist-row-price {
+  color: var(--color-navy);
+  font-size: 1rem;
+  font-weight: var(--font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* "מחיר בחנות" — the price in the database is 0. Quieter and smaller than a
+   figure, as on the product card. There is no add-to-cart button in this list, so
+   the label is the whole change here. */
+.wishlist-row-price.is-no-price {
+  font-size: 0.8rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-subtle);
+}
+
+.wishlist-row-stock {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+/* z-index 2 keeps it above the stretched link, so removing does not navigate. */
+.wishlist-row-remove {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  color: rgba(var(--color-navy-rgb), 0.6);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+/* Empty state
+   -------------------------------------------------------------------------- */
+
+.wishlist-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 64px 28px;
+}
+
+.wishlist-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(var(--color-red-rgb), 0.08);
+  color: rgba(var(--color-red-rgb), 0.55);
+  margin-bottom: 18px;
+}
+
+.wishlist-empty-title {
+  color: var(--color-navy);
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-extrabold);
+  margin: 0 0 6px;
+}
+
+.wishlist-empty-text {
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0 0 22px;
+  max-width: 24em;
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.wishlist-row:hover {
+  background: rgba(var(--color-navy-rgb), 0.02);
+}
+
+.wishlist-row-remove:hover {
+  background: rgba(var(--color-red-rgb), 0.08);
+  color: var(--color-red);
+}
+
+/* The ring goes on the stretched layer, so it draws around the whole row rather
+   than around two lines of text — the same trick as the product card. */
+.wishlist-row-link:focus-visible {
+  outline: none;
+}
+
+.wishlist-row-link:focus-visible::after,
+.wishlist-row-remove:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: -2px;
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+/* Green for in stock — the only green on this panel, and it is the "yes, it is
+   there" that green means everywhere else on the site. */
+.wishlist-row-stock.is-in {
+  background: rgba(var(--color-green-rgb), 0.1);
+  color: var(--color-green);
+}
+
+.wishlist-row-stock.is-out {
+  background: rgba(var(--color-navy-rgb), 0.07);
+  color: rgba(var(--color-navy-rgb), 0.7);
+}
+
+/* Hidden from the catalogue since it was saved. Red rather than grey: this
+   is not "back next week" like an empty shelf. */
+.wishlist-row-stock.is-unavailable {
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+}
+
+.wishlist-row.is-unavailable .wishlist-row-well {
+  opacity: 0.45;
+  filter: grayscale(1);
+}
+
+.wishlist-row.is-unavailable .wishlist-row-name,
+.wishlist-row.is-unavailable .wishlist-row-price {
+  color: rgba(var(--color-navy-rgb), 0.7);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 560px) {
+  .wishlist-row {
+      gap: 10px;
+      padding: 12px 16px;
+    }
+
+  .wishlist-row-well { width: 56px; height: 56px; }
+
+  .wishlist-empty { padding: 48px 20px; }
+}

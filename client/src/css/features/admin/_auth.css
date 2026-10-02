@@ -1,0 +1,112 @@
+/* ==========================================================================
+   Authentication — admin login
+   ========================================================================== */
+
+/* ===== ADMIN LOGIN ===== */
+/* background-color and background-image rather than the `background` shorthand:
+   the gradient covers the viewport, but a short viewport with a tall login box
+   scrolls past it, and what showed through was the page background — blush,
+   since the storefront went warm. The admin is a work tool and keeps the
+   neutral slate, here and in _admin-layout.css. */
+.admin-login-page {
+  min-height: 100vh;
+  background-color: var(--color-bg-admin);
+  background-image: linear-gradient(135deg, var(--color-navy) 0%, var(--color-navy-deep) 60%, #0f3460 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.admin-login-box {
+  background: white;
+  border-radius: 24px;
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.admin-login-icon {
+  font-size: 2.8rem;
+  margin-bottom: 16px;
+}
+
+.admin-login-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.admin-login-sub {
+  font-size: 0.9rem;
+  color: var(--color-text-faint);
+  margin-bottom: 32px;
+}
+
+.admin-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-login-input {
+  padding: 14px 18px;
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  direction: rtl;
+  outline: none;
+  transition: border-color 0.2s;
+  text-align: center;
+  letter-spacing: 4px;
+}
+
+.admin-login-input:focus {
+  border-color: var(--color-navy);
+}
+
+.admin-login-input.error {
+  border-color: var(--color-red);
+  background: var(--color-error-bg);
+}
+
+.admin-login-error {
+  font-size: 0.85rem;
+  color: var(--color-red);
+  margin: 0;
+}
+
+.admin-login-btn {
+  padding: 14px;
+  background: var(--color-navy);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  transition: background 0.2s;
+  margin-top: 4px;
+}
+
+.admin-login-btn:hover {
+  background: var(--color-red);
+}
+
+/* אנימציית רעידה */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  60% { transform: translateX(-8px); }
+  80% { transform: translateX(8px); }
+}
+
+.shake {
+  animation: shake 0.4s ease;
+}

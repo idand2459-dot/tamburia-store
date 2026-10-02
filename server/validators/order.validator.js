@@ -1,14 +1,42 @@
 /**
  * מאמת ומנרמל את גוף הבקשה ואת פרמטרי החיפוש של דומיין ההזמנות.
- * הסכומים מחושבים כאן מתוך הפריטים ולא נלקחים מגוף הבקשה, כדי
- * שבקשה לא תוכל לקבוע לעצמה מחיר.
+ *
+ * מה שנעשה כאן הוא צורה בלבד: שדה שנשלח הוא מהסוג הנכון, באורך
+ * הנכון, מתוך הרשימה הנכונה. המחירים והסכומים אינם נקבעים כאן.
+ *
+ * הם היו. parseCreate חיבר subtotal ו-total מתוך המחירים שהגיעו בגוף
+ * הבקשה, וההערה הזו הבטיחה ש"בקשה לא תוכל לקבוע לעצמה מחיר" — אבל
+ * המחיר של כל פריט *כן* הגיע מהבקשה, וכל מה שנבדק בו הוא שהוא מספר
+ * אי-שלילי. חיבור נאמן של מספרים שהלקוח בחר אינו הגנה.
+ *
+ * עכשיו המחירים נשלפים מהמסד ב-services/pricing.service.js, והמחיר
+ * שמגיע בבקשה נשמר כאן רק כדי שיהיה מה להשוות אליו שם. אותה סיבה
+ * בדיוק היא שבגללה asItems שומרת את תווית הגרסה: בלעדיה אין לשרת
+ * דרך לדעת איזו גרסה נבחרה, ולכן אין לו ממה לגזור את מחירה.
  */
-const config = require('../config/env');
 const { badRequest } = require('../utils/AppError');
+const { parsePrice } = require('../utils/money');
 
-const STATUSES = ['new', 'processing', 'shipped', 'completed'];
+const STATUSES = ['new', 'processing', 'ready_for_pickup', 'shipped', 'completed'];
 
 const DELIVERY_METHODS = ['pickup', 'delivery'];
+
+/**
+ * הסטטוסים שאינם מתאימים לכל אופן קבלה.
+ *
+ * 'ready_for_pickup' ו-'shipped' מתארים כל אחד מסלול אחר: הזמנת משלוח
+ * לא מחכה לאיסוף בחנות, והזמנת איסוף עצמי לא יוצאת לדרך. השאר —
+ * new, processing, completed — משותפים לשניהם ואינם מופיעים כאן.
+ */
+const STATUS_ONLY_FOR_METHOD = {
+  ready_for_pickup: 'pickup',
+  shipped: 'delivery',
+};
+
+const STATUS_METHOD_ERRORS = {
+  ready_for_pickup: 'הסטטוס "מוכנה לאיסוף" מתאים להזמנת איסוף עצמי בלבד',
+  shipped: 'הסטטוס "נשלחה" מתאים להזמנת משלוח בלבד',
+};
 
 /**
  * הערים שאליהן מבצעים משלוח.
@@ -58,6 +86,32 @@ function assertDeliveryCityAllowed(delivery_method, delivery_address) {
   if (!delivery_address) return;
   if (checkAllowedCity(delivery_address)) return;
   throw badRequest(DELIVERY_AREA_ERROR);
+}
+
+/**
+ * זורק 400 כשהסטטוס אינו מתאים לאופן הקבלה של ההזמנה.
+ *
+ * אותו עיקרון של כלל אזור החלוקה: הקליינט כבר מציע רק את הסטטוסים
+ * המתאימים, אבל בקשה ישירה ל-API עוקפת אותו, ואז הזמנת איסוף עצמי
+ * הייתה מסומנת "נשלחה" והלקוח היה מקבל מייל על חבילה שבדרך.
+ *
+ * הבדיקה כאן היא על המצב שאחרי המיזוג, ולכן היא נקראת מהשירות ולא
+ * מ-parseUpdate: עדכון שמשנה רק את הסטטוס אינו יודע לבדו מה אופן
+ * הקבלה של ההזמנה הקיימת.
+ */
+function assertStatusFitsDeliveryMethod(status, delivery_method) {
+  const required = STATUS_ONLY_FOR_METHOD[status];
+  if (!required) return;
+  if (delivery_method === required) return;
+  throw badRequest(STATUS_METHOD_ERRORS[status]);
+}
+
+/** מחזיר את הסטטוסים החוקיים לאופן קבלה נתון, בסדר ההתקדמות. */
+function statusesForMethod(delivery_method) {
+  return STATUSES.filter((status) => {
+    const required = STATUS_ONLY_FOR_METHOD[status];
+    return !required || required === delivery_method;
+  });
 }
 
 const EDITABLE = [
@@ -137,9 +191,13 @@ function asItems(value) {
     const name = String(item.name ?? '').trim();
     if (!name) throw badRequest(`items[${i}].name חסר`);
 
-    const price = Number(item.price);
-    if (!Number.isFinite(price) || price < 0) {
-      throw badRequest(`items[${i}].price חייב להיות מספר אי-שלילי`);
+    // המחיר שהלקוח ראה על המסך. הוא אינו נכנס להזמנה כמו שהוא —
+    // pricing.service משווה אותו למחיר שבמסד ודוחה הזמנה שהם נפרדו בה.
+    // לא מעוגל: עיגול כאן היה הופך 12.90 ל-13 והשוואה למסד הייתה
+    // נכשלת ב-409 על מחיר שלא השתנה.
+    const price = parsePrice(item.price, { allowZero: true });
+    if (price === null) {
+      throw badRequest(`items[${i}].price חייב להיות מספר אי-שלילי עם עד שתי ספרות אחרי הנקודה`);
     }
 
     const quantity = Number(item.quantity ?? 1);
@@ -152,15 +210,24 @@ function asItems(value) {
     return {
       id: Number.isInteger(id) && id > 0 ? id : null,
       name,
-      price: Math.round(price),
+      price,
       quantity,
+      // תווית הגרסה נשמרת מכאן ואילך. עד עכשיו היא נזרקה, כך שהזמנה
+      // של מוצר עם גרסאות לא תיעדה איזו גרסה נמכרה — ולשרת גם לא
+      // הייתה דרך לתמחר אותה.
+      selectedVariant: item.selectedVariant ? String(item.selectedVariant).trim() : null,
       selectedColor: item.selectedColor ? String(item.selectedColor).trim() : null,
       selectedSize: item.selectedSize ? String(item.selectedSize).trim() : null,
     };
   });
 }
 
-/** מאמת גוף בקשה ליצירת הזמנה ומחשב את הסכומים בשרת. */
+/**
+ * מאמת גוף בקשה ליצירת הזמנה.
+ *
+ * בלי סכומים: subtotal, delivery_fee ו-total נקבעים ב-pricing.service
+ * אחרי שהמחירים נשלפו מהמסד, כי אין דרך לחשב אותם נכון לפני כן.
+ */
 function parseCreate(body = {}) {
   const delivery_method = asDeliveryMethod(body.delivery_method);
   const items = asItems(body.items);
@@ -175,9 +242,6 @@ function parseCreate(body = {}) {
   const customer_name = asTrimmedString(body.customer_name ?? '', 'customer_name', { maxLength: MAX.customer_name });
   if (!customer_name) throw badRequest('חסר שם לקוח');
 
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const delivery_fee = delivery_method === 'delivery' ? config.orders.deliveryFee : 0;
-
   return {
     customer_name,
     customer_phone: asPhone(body.customer_phone),
@@ -186,9 +250,6 @@ function parseCreate(body = {}) {
     delivery_address,
     notes: body.notes == null ? null : (asTrimmedString(body.notes, 'notes') || null),
     items,
-    subtotal,
-    delivery_fee,
-    total: subtotal + delivery_fee,
     status: 'new',
   };
 }
@@ -298,5 +359,6 @@ function parseListQuery(query = {}) {
 module.exports = {
   parseCreate, parseUpdate, parseStatus, parseListQuery,
   assertDeliveryCityAllowed, assertDeliveryAddressPresent,
+  assertStatusFitsDeliveryMethod, statusesForMethod,
   STATUSES, DELIVERY_METHODS, EDITABLE, SORTABLE, ALLOWED_CITIES,
 };

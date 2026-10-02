@@ -2,6 +2,7 @@
  * מסך הכניסה לניהול. הסיסמה נבדקת בשרת ולא בקליינט.
  */
 import { useState } from 'react';
+import { Lock } from 'lucide-react';
 
 /** מציג את טופס הכניסה ושולח את הסיסמה לשרת. */
 function AdminLogin({ onLogin }) {
@@ -48,7 +49,7 @@ function AdminLogin({ onLogin }) {
   return (
     <div className="admin-login-page">
       <div className={`admin-login-box ${shaking ? 'shake' : ''}`}>
-        <div className="admin-login-icon">🔐</div>
+        <div className="admin-login-icon"><Lock size={32} aria-hidden="true" /></div>
         <h1 className="admin-login-title">כניסה לניהול</h1>
         <p className="admin-login-sub">טכניק טמבור</p>
 

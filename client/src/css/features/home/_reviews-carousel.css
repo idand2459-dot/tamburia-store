@@ -1,0 +1,229 @@
+/* ==========================================================
+   Reviews carousel — the rotating card, its byline, the arrows
+   and the dots
+
+   Split out of features/home/_reviews.css when the two together passed
+   the 300-line target. That file owns the light band this sits on
+   and the header above it; nothing is declared in both.
+
+   ReviewsCarousel.js still shows exactly one review at a time and
+   still rotates every 4s — none of that logic moved, and neither
+   did the one-cell grid track, the cross-fade or the labelled
+   arrows and dots. What changed here is only colour: the card,
+   the arrows and the dots follow the section from navy to blush.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.reviews-carousel {
+  position: relative;
+  padding: 0 52px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* One grid cell that every card shares (grid-area on the cards below), so the
+   track is as tall as the tallest review and no taller — and it never changes
+   height as the carousel rotates, which is the only reason a fixed height was
+   there. The old 180px was both a magic number and, under a one-line review,
+   mostly empty card. No min-height is needed: with all five cards in one cell,
+   the tallest sets the height and nothing below the section can shift. */
+.reviews-track {
+  display: grid;
+  grid-template-areas: 'card';
+}
+
+/* The same white card as the categories and project tiles: a navy-tint
+   hairline and a 1px shadow, no blur. */
+.review-card {
+  grid-area: card;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+  border-radius: 18px;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.review-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* The byline — avatar, name, date — is rendered from two places: this card and
+   the product page's review list. Both are white cards now, but the product
+   page follows the system theme and this section does not, so the three rules
+   below still carry the shape only and each surface declares its own text
+   colour: the two .reviews-section rules underneath, and
+   `.product-review-top .reviewer-name` / `.review-date` in
+   features/product/_product-reviews.css. The avatar's gradient is not split that way —
+   red→purple is legible on both, so there is one of it. */
+.reviewer-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-red), var(--color-purple));
+  color: white;
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.reviewer-name {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+}
+
+.review-date {
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+.reviews-section .reviewer-name { color: var(--color-navy); }
+
+.reviews-section .review-date { color: rgba(var(--color-navy-rgb), 0.7); }
+
+.review-card-stars { margin-right: auto; }
+
+/* block, not the inline default a Lucide svg comes with: margin on an inline
+   box would not move the paragraph below it. Same device as .whyus-quote-mark. */
+.review-quote-mark {
+  display: block;
+  color: var(--color-red);
+}
+
+/* Not italic: an oblique synthesised from a Hebrew face slants letterforms that
+   were never drawn to slant. This was italic, which made the one block of
+   running text in the section the hardest thing in it to read. */
+.review-text {
+  font-size: var(--font-size-body);
+  color: rgba(var(--color-navy-rgb), 0.82);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* Arrows and dots
+   -------------------------------------------------------------------------- */
+
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.12);
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+  color: var(--color-navy);
+  cursor: pointer;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 20px;
+}
+
+/* Pause / play for the automatic rotation (WCAG 2.2.2), at the start of the
+   dots row: the control that stops the movement sits with the controls that
+   show where it is. */
+.carousel-pause {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-inline-end: 6px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.5);
+  background: var(--color-surface);
+  color: var(--color-navy);
+  cursor: pointer;
+  padding: 0;
+}
+
+.carousel-pause:hover { background: var(--color-blush-deep); }
+
+.carousel-pause:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+/* width, not transform: scale, is what the active dot animates below: a 20px
+   pill beside 8px circles reads as a position on a line, and scaling a circle
+   only makes a bigger circle. */
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  /* 0.5, not 0.22: a dot is a control and has to be seen at 3:1 (WCAG 1.4.11) */
+  background: rgba(var(--color-navy-rgb), 0.5);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: width var(--transition-base), background var(--transition-base);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.carousel-arrow:hover {
+  border-color: var(--color-red);
+  box-shadow: 0 6px 16px rgba(var(--color-red-rgb), 0.18);
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+/* The cross-fade, and the only card that takes pointer events. The .prev, .next
+   and .hidden classes the JSX also sets need no rules of their own any more:
+   every card that is not the active one is simply the base state above. */
+.review-card.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.carousel-arrow-right { right: 4px; }
+
+.carousel-arrow-left { left: 4px; }
+
+.carousel-dot.active {
+  width: 20px;
+  background: var(--color-red);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+/* The 600px block that used to be here is gone with the fixed track height it
+   existed to raise; _review-form.css's own 600px block, which was tuned
+   alongside it, stands on its own now. */
+@media (max-width: 768px) {
+  /* The arrows come out of the gutter and overlap the card's corners: 52px of
+     padding each side of a 390px screen leaves the card too narrow to read. */
+  .reviews-carousel { padding: 0; }
+
+  .carousel-arrow-right { right: -4px; }
+
+  .carousel-arrow-left { left: -4px; }
+}
+
+/* ---- Reduced motion ------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .review-card { transition: none; }
+}

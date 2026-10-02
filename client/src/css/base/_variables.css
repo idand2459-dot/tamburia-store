@@ -8,23 +8,84 @@
    ~600 colour declarations is a behaviour-changing edit, not a file split, so
    it belongs in its own pass. Migrate a component's literals to these tokens
    when you next touch that component.
+
+   BREAKPOINTS. Custom properties cannot be used inside @media, so the five
+   breakpoints in CONVENTIONS.md are a convention rather than a token. They are
+   written out here so there is one place to read them off:
+
+     xl  (max-width: 1200px)
+     lg  (max-width: 900px)
+     md  (max-width: 768px)
+     sm  (max-width: 560px)
+     xs  (max-width: 430px)
    ========================================================================== */
 
 :root {
   /* Brand */
   --color-navy: #1a1a2e;          /* primary surface: header, navbar, headings */
   --color-navy-deep: #16213e;     /* header gradient end */
-  --color-red: #e63946;           /* primary accent: CTAs, badges, active state */
+  /* --color-red was #e63946 until the accessibility pass: white on it, and it on
+     white or blush, measured 3.7–4.2:1, under the 4.5:1 WCAG AA asks of text.
+     This is the same red one step deeper — 5.2:1 on white, 4.6:1 on blush and
+     on the pink active-state tint. */
+  --color-red: #cf2c3a;           /* primary accent: CTAs, badges, active state */
   --color-red-dark: #c1121f;      /* accent hover / pressed */
   --color-blue: #457b9d;          /* secondary accent */
   --color-green: #2d6a4f;         /* success, in-stock */
   --color-green-dark: #1b4332;
-  --color-whatsapp: #25d366;
+  /* not WhatsApp's own #25d366: white text on that is 2:1. Every WhatsApp button
+     here carries a white label, so the green is deepened until it reads (5:1). */
+  --color-whatsapp: #1a7f45;
+  --color-whatsapp-dark: #14663a;  /* the WhatsApp buttons' hover */
+  /* an accent used on a single button in the calculators. It is here because it
+     is used with an alpha and rule 5 wants a triple for that; the darker stop it
+     sits beside in that gradient is still a literal. */
+  --color-green-bright: #16a34a;
 
-  /* Light theme surfaces */
-  --color-bg: #f8f8f6;            /* page background */
+  /* Brand colours as RGB triples, for the cases that need an alpha:
+     rgba(var(--color-red-rgb), 0.15). A hex token cannot take an alpha without
+     color-mix(), so a colour used transparently carries a triple as well, and
+     the two always describe the same colour — change one, change the other.
+     Plain white and black are exempt: they are not brand colours, they never
+     change, and rgba(255, 255, 255, 0.1) reads better than the token form. */
+  --color-navy-rgb: 26, 26, 46;           /* --color-navy      #1a1a2e */
+  --color-navy-900-rgb: 15, 23, 42;       /* --color-navy-900  #0f172a */
+  --color-navy-950-rgb: 7, 11, 20;        /* --color-navy-950  #070b14 */
+  --color-ink-rgb: 4, 6, 12;              /* --color-ink       #04060c */
+  --color-red-rgb: 207, 44, 58;           /* --color-red       #cf2c3a */
+  --color-blue-rgb: 69, 123, 157;         /* --color-blue      #457b9d */
+  --color-purple-rgb: 124, 58, 237;       /* --color-purple    #7c3aed */
+  --color-green-rgb: 45, 106, 79;         /* --color-green     #2d6a4f */
+  --color-whatsapp-rgb: 26, 127, 69;      /* --color-whatsapp  #1a7f45 */
+  --color-green-bright-rgb: 22, 163, 74;  /* --color-green-bright #16a34a */
+  --color-blush-rgb: 251, 241, 242;       /* --color-blush      #fbf1f2 */
+  --color-blush-deep-rgb: 246, 231, 234;  /* --color-blush-deep #f6e7ea */
+
+  /* Light theme surfaces.
+     --color-bg is the backdrop *behind* content and must stay in the brand
+     family — never cream, never white. It is now the blush below: a very light
+     tint of the brand red, so a storefront page reads as warm rather than as
+     office grey. --color-surface is what sits *on* it (cards, inputs, tables,
+     modal panels) and does stay white.
+
+     The blush pair are the home page's two light surfaces. Adjacent light
+     sections alternate between them, and the half-step between the two is the
+     only thing separating them — there is no hairline on a light/light seam.
+
+     --color-bg-admin is the one page that opts out: the admin panel is a work
+     tool, not the shop, so it keeps the neutral cool slate --color-bg used to
+     be. It is applied in features/admin/_admin-layout.css and features/admin/_auth.css,
+     because body still paints --color-bg under everything. */
+  --color-blush: #fbf1f2;         /* main light surface */
+  --color-blush-deep: #f6e7ea;    /* a half-step deeper, for the neighbour */
+  --color-bg: var(--color-blush);  /* page background */
+  --color-bg-admin: #eceef5;      /* admin only: neutral cool slate */
   --color-surface: #ffffff;
   --color-surface-alt: #f5f5f5;
+  /* the well a product photograph sits in on a white card. Neutral on purpose:
+     it is a frame around someone else's colours, and a blush tint of it put a
+     second warm surface inside a card that is already warm. */
+  --color-image-well: #f4f4f5;
   --color-border: #e0e0e0;
   --color-border-soft: #f0f0f0;
 
@@ -37,8 +98,11 @@
   /* Text */
   --color-text: #1a1a2e;
   --color-text-muted: #555555;
-  --color-text-subtle: #888888;
-  --color-text-faint: #aaaaaa;
+  /* subtle and faint are still text, so both clear 4.5:1 on white; they were
+     #888 and #aaa (3.5:1 and 2.3:1). For a mark that is not text, use a border
+     token instead. */
+  --color-text-subtle: #666666;
+  --color-text-faint: #707070;
 
   /* Feedback tints */
   --color-error-bg: #fff5f5;
@@ -70,4 +134,33 @@
   /* Layout */
   --content-max-width: 1200px;
   --font-family-base: 'Heebo', 'Segoe UI', sans-serif;
+
+  /* New palette — redesign */
+  --color-navy-900: #0f172a;
+  --color-navy-950: #070b14;
+  /* one step deeper than navy-950, for the footer alone: it is the last band on
+     the page and has to read as the floor under the dark sections above it, not
+     as another one of them. */
+  --color-ink: #04060c;
+  --color-purple: #7c3aed;
+  --color-purple-soft: #a78bfa;
+  /* purple as text on its own pale tint (the light section pill): --color-purple
+     there is 4.0–4.5:1, this is 5:1 and up */
+  --color-purple-deep: #6d28d9;
+  /* red lightened for icons and small marks on a dark surface:
+     --color-red itself goes muddy below ~20px of stroke */
+  --color-red-soft: #ff6b75;
+  --color-glow-red: rgba(207, 44, 58, 0.15);
+  --color-glow-purple: rgba(124, 58, 237, 0.12);
+
+  /* Typography scale */
+  --font-size-hero: 3.2rem;
+  --font-size-h1: 2.2rem;
+  --font-size-h2: 1.5rem;
+  --font-size-h3: 1.1rem;
+  --font-size-body: 1rem;
+  --font-size-small: 0.85rem;
+  --font-size-xs: 0.75rem;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
 }

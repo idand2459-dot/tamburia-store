@@ -1,5 +1,11 @@
 /* ==========================================================================
    Modals, dialogs and overlay backdrops
+
+   What is left here is the nav drawer's backdrop and the global search popup.
+   The cart, order-history and wishlist panels used to be here as well — three
+   copies of one overlay, one 380-420px white panel, one sticky header and one
+   .cart-close-btn they all shared. They are components/_drawer.css now, and
+   every rule of theirs is gone from this file.
    ========================================================================== */
 
 /* Overlay */
@@ -8,68 +14,6 @@
   inset: 0;
   background: rgba(0,0,0,0.5);
   z-index: 200;
-}
-
-/* ===== CART MODAL ===== */
-.cart-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  z-index: 400;
-}
-
-.cart-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 380px;
-  height: 100vh;
-  background: white;
-  z-index: 500;
-  display: flex;
-  flex-direction: column;
-  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
-  overflow-y: auto;
-}
-
-.cart-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid #f0f0f0;
-  position: sticky;
-  top: 0;
-  background: white;
-  z-index: 1;
-}
-
-.cart-modal-header h3 {
-  font-size: 1.2rem;
-  color: #1a1a2e;
-  font-weight: 700;
-}
-
-.cart-close-btn {
-  background: none;
-  border: none;
-  font-size: 1.1rem;
-  color: #999;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-}
-
-.cart-close-btn:hover {
-  background: #f0f0f0;
-  color: #333;
-}
-
-/* Responsive */
-@media (max-width: 480px) {
-  .cart-modal {
-      width: 100vw;
-    }
 }
 
 .search-overlay {
@@ -97,7 +41,7 @@
   display: flex;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border-soft);
   gap: 12px;
 }
 
@@ -113,18 +57,18 @@
   font-size: 1.1rem;
   font-family: 'Segoe UI', sans-serif;
   direction: rtl;
-  color: #1a1a2e;
+  color: var(--color-text);
   background: transparent;
 }
 
 .search-popup-input::placeholder {
-  color: #aaa;
+  color: var(--color-text-faint);
 }
 
 .search-popup-close {
   background: none;
   border: none;
-  color: #aaa;
+  color: var(--color-text-faint);
   font-size: 1rem;
   cursor: pointer;
   padding: 4px 8px;
@@ -133,84 +77,21 @@
 }
 
 .search-popup-close:hover {
-  background: #f0f0f0;
+  background: var(--color-border-soft);
   color: #333;
 }
 
+/* ---- Dark mode ---------------------------------------------------------- */
+
 @media (prefers-color-scheme: dark) {
-  /* עגלה */
-  .cart-modal {
-      background: #1a1a2e;
-      color: #e0e0e0;
+  .search-popup { background: var(--color-navy); }
+
+  .search-popup-input-wrap {
+      border-bottom-color: var(--color-surface-dark);
+      background: var(--color-navy);
     }
 
-  .cart-modal-header {
-      border-bottom-color: #2d2d4e;
-      background: #1a1a2e;
-    }
+  .search-popup-input { color: var(--color-border); background: transparent; }
 
-  .cart-modal-header h3 { color: #e0e0e0; }
-
-  /* חיפוש גלובלי */
-  .search-popup { background: #1a1a2e; }
-
-  .search-popup-input-wrap { border-bottom-color: #2d2d4e; background: #1a1a2e; }
-
-  .search-popup-input { color: #e0e0e0; background: transparent; }
-
-  .search-popup-input::placeholder { color: #555; }
-}
-
-/* ===== ORDER HISTORY ===== */
-.order-history-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  z-index: 400;
-}
-
-.order-history-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 420px;
-  height: 100vh;
-  background: white;
-  z-index: 500;
-  display: flex;
-  flex-direction: column;
-  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
-  overflow-y: auto;
-}
-
-@media (max-width: 480px) {
-  .order-history-modal { width: 100vw; }
-}
-
-@media (prefers-color-scheme: dark) {
-  .order-history-modal { background: #1a1a2e; }
-}
-
-/* ===== WISHLIST ===== */
-.wishlist-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.45);
-  z-index: 400;
-}
-
-.wishlist-modal {
-  position: fixed; top: 0; left: 0;
-  width: 380px; height: 100vh;
-  background: white; z-index: 500;
-  display: flex; flex-direction: column;
-  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
-  overflow-y: auto;
-}
-
-@media (max-width: 480px) {
-  .wishlist-modal { width: 100vw; }
-}
-
-@media (prefers-color-scheme: dark) {
-  .wishlist-modal { background: #1a1a2e; }
+  .search-popup-input::placeholder { color: var(--color-text-muted); }
 }

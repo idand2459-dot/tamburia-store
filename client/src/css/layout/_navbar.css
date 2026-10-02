@@ -1,0 +1,377 @@
+/* ==========================================================
+   Navbar — the sticky top bar: brand, links, icon buttons, cart
+
+   Always dark, like the Hero: the colours are fixed and there
+   is no prefers-color-scheme override for .navbar.
+
+   The rest of the navbar system lives beside this file —
+   layout/_nav-search.css   the search results dropdown
+   layout/_nav-drawer.css   the mobile side drawer
+   components/_modals.css   .nav-overlay, the drawer's backdrop
+
+   The old `header { ... }` block that used to sit here is gone.
+   <header> appears exactly once in the app and it is .navbar,
+   and nothing rendered .header-logo / .header-buttons /
+   .cart-badge / .admin-btn any more. It was not harmless dead
+   code: its mobile query set flex-direction: column on the
+   element, which .navbar never overrode, so the navbar stacked
+   into a column inside a 64px-tall box on phones.
+   ========================================================== */
+
+.navbar {
+  /* Nearly opaque, matching the ticker's navy below it, so the two read as one
+     dark unit. It cannot be lighter than that: the navbar sits at the very top
+     of the document, so at scroll 0 there is no Hero behind it to darken the
+     glass — only the page's own slate background, which showed through as grey.
+     The blur still does its job once content scrolls underneath. */
+  background: rgba(var(--color-navy-950-rgb), 0.94);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  backdrop-filter: saturate(160%) blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: white;
+  /* max() and not a plain sum: in landscape on a notched iPhone the side inset
+     is ~50px and has to win, in portrait it is 0 and the design padding does.
+     Physical left/right because that is what the insets are. */
+  padding: 0;
+  padding-left: max(24px, env(safe-area-inset-left, 0px));
+  padding-right: max(24px, env(safe-area-inset-right, 0px));
+  height: 68px;
+  /* Three columns, and the brand sits in the middle one as a real grid item.
+
+     It used to be position: absolute with left: 50%, which takes no space — so
+     it could paint straight over the icon row beside it, and did: at iPhone
+     landscape width (844px) the text links are shown, the left group reaches
+     past the centre, and the heart and "ההזמנות שלי" disappeared behind
+     "טכניק טמבור". Two extra breakpoints existed only to manage that collision.
+
+     1fr auto 1fr keeps the brand optically centred whenever the two side groups
+     are a similar width, and — unlike absolute centring — guarantees that
+     nothing can ever sit on top of it.
+
+     No min-width: 0 on the middle column: the brand is nowrap, so leaving the
+     grid item at its default min-width: auto means the column can never be
+     squeezed below it. If a side group ever outgrew its share, the brand would
+     move off centre rather than be clipped or covered — and the width
+     breakpoints below are set so that it does not come to that. */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: background 0.25s, box-shadow 0.25s;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+/* flex-end / center / flex-start rather than physical sides: the file is read in
+   an RTL document, where the inline start of .navbar-right is the right edge and
+   the inline end of .navbar-left is the left one. */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.navbar-center {
+  display: flex;
+  justify-content: center;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* One rule, no !important: the two extra .navbar-brand blocks that used to sit
+   at the bottom of this file (and needed !important to beat this one) are
+   folded in here. */
+.navbar-brand {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  white-space: nowrap;
+}
+
+.navbar-brand span {
+  color: white;
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+/* the wrench is the accent — the only red in the brand */
+.navbar-brand .lucide {
+  color: var(--color-red);
+  filter: drop-shadow(0 0 8px rgba(var(--color-red-rgb), 0.45));
+}
+
+.navbar-link {
+  position: relative;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.95rem;
+  padding: 8px 6px;
+  cursor: pointer;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s;
+}
+
+/* the indicator: grows from the centre outwards, so it reads as the link
+   claiming the space under itself rather than sliding in from one side */
+.navbar-link::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--color-red), var(--color-purple));
+  transform: scaleX(0);
+  transition: transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* One icon button for the whole navbar. This replaces four near-identical
+   blocks (.navbar-search-btn, .navbar-home-btn, .navbar-wishlist-btn and
+   .navbar-paint-calc-btn, the last of which no JSX ever used). */
+.navbar-icon-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* wishlist count, the same idea as the cart badge but pinned to the corner of
+   the icon box since there is no pill to sit inside */
+.navbar-wishlist-count {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--color-red);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: badge-pop 0.3s ease;
+}
+
+/* The one strong CTA up here, and the only red surface in the navbar. */
+.navbar-cart-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  background: var(--color-red);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 1rem;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+/* inverted against the pill: white circle, red number */
+.navbar-cart-badge {
+  background: white;
+  color: var(--color-red);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: badge-pop 0.3s ease;
+}
+
+/* Hamburger — same 40x40 box as .navbar-icon-btn so the row lines up */
+.hamburger-btn {
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: background 0.2s;
+}
+
+.hamburger-btn span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+
+/* ---- States ------------------------------------------------------------- */
+
+/* Navbar.js adds this past 8px of scroll: the glass firms up and gains a
+   shadow, so the bar separates from the content sliding under it. It has to be
+   *more* opaque than the base state, not less — at 0.92 against a 0.94 base the
+   only thing scrolling did was add the shadow. */
+.navbar.scrolled {
+  background: rgba(var(--color-navy-950-rgb), 0.98);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* One focus ring for the whole navbar system, drawer included, which is why the
+   drawer's two selectors are here rather than in _nav-drawer.css: one ring, one
+   rule. It stays ahead of the :hover rules below, as it was before the split. */
+.navbar-link:focus-visible,
+.navbar-icon-btn:focus-visible,
+.navbar-cart-btn:focus-visible,
+.navbar-brand:focus-visible,
+.hamburger-btn:focus-visible,
+.nav-drawer-item:focus-visible,
+.nav-close-btn:focus-visible {
+  outline: 2px solid var(--color-purple-soft);
+  outline-offset: 2px;
+}
+
+.navbar-link:hover,
+.navbar-link:focus-visible,
+.navbar-link.active {
+  color: white;
+}
+
+.navbar-link:hover::after,
+.navbar-link:focus-visible::after,
+.navbar-link.active::after {
+  transform: scaleX(1);
+}
+
+.navbar-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.navbar-cart-btn:hover {
+  background: var(--color-red-dark);
+  box-shadow: 0 0 22px rgba(var(--color-red-rgb), 0.45);
+}
+
+.hamburger-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.hamburger-btn:hover span {
+  background: white;
+}
+
+/* ---- Animations --------------------------------------------------------- */
+
+@keyframes badge-pop {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* ---- Responsive --------------------------------------------------------- */
+
+/* xl — the three page links are the first thing to go, and they go early.
+   Keeping them to 768px meant they were still on screen in iPhone landscape
+   (844px), where they pushed the left group across the centre. They are in the
+   drawer at every width, so nothing becomes unreachable. */
+@media (max-width: 1200px) {
+  .navbar-link--page {
+      display: none;
+    }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+      height: 60px;
+      padding: 0;
+      padding-left: max(12px, env(safe-area-inset-left, 0px));
+      padding-right: max(12px, env(safe-area-inset-right, 0px));
+      /* explicit: the deleted `header { flex-direction: column }` rule used to
+         leak into the navbar here and stack it */
+      flex-direction: row;
+      flex-wrap: nowrap;
+    }
+
+  .navbar-left {
+      gap: 2px;
+    }
+
+  /* The three page links are already gone by here (the xl block above). This is
+     the one that keeps "ההזמנות שלי" as far down as it fits; below this width
+     the drawer is where it lives. */
+  .navbar-link--orders {
+      display: none;
+    }
+
+  .navbar-brand,
+  .navbar-brand span {
+      font-size: 1.15rem;
+    }
+}
+
+/* Under ~430px the three columns genuinely run out of room: both side groups
+   plus the brand come to more than the width, and grid would let them overflow.
+   This is a fitting problem, not the overlap one — the 560px block that used to
+   sit here was purely about the collision and went with the absolute centring.
+   The home button goes first, because the brand already navigates home, and the
+   brand drops a step. At 360px that leaves roughly 127px of brand inside 256px
+   of free space. */
+@media (max-width: 430px) {
+  .navbar-brand,
+  .navbar-brand span {
+      font-size: 1.05rem;
+    }
+
+  .navbar-home-btn {
+      display: none;
+    }
+}
+
+/* A phone held sideways: 390–430px of height for the whole page. Not a width
+   breakpoint, because the same 844px width on a tablet has plenty of height and
+   wants the full bar. Every fixed row up here is costing content, so the navbar
+   gives back 4px and the ticker below it goes away entirely
+   (layout/_ticker.css). The floating buttons shrink in their own partials. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .navbar {
+      height: 56px;
+    }
+}

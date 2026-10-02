@@ -2,14 +2,19 @@
  * מחשבון הפרויקט: ממיר סוג עבודה לרשימת המוצרים הדרושה.
  */
 import { useState, useEffect, useRef } from 'react';
+import {
+  ShowerHead, Lock, Sprout, Wrench, Crown, Check, Circle, ShoppingCart,
+  ListChecks,
+} from 'lucide-react';
+import { hasPrice, formatPrice, sumPrices } from '../../utils/pricing';
+import { getProducts } from '../../services/productService';
 
 /* ─── Project definitions ──────────────────────────────────────────────── */
 const PROJECTS = [
   {
     id: 'bathroom',
-    icon: '🚿',
+    Icon: ShowerHead,
     name: 'שיפוץ שירותים',
-    color: '#457b9d',
     inputs: [],
     getItems: () => [
       { name: 'סיליקון ואיטום',          category: 'adhesives', subcategory: 'sealants'         },
@@ -22,9 +27,8 @@ const PROJECTS = [
   },
   {
     id: 'cylinder',
-    icon: '🚪',
+    Icon: Lock,
     name: 'החלפת צילינדר',
-    color: '#6c757d',
     inputs: [
       {
         id: 'lockType', label: 'סוג מנעול', type: 'select', default: 'standard',
@@ -50,9 +54,8 @@ const PROJECTS = [
   },
   {
     id: 'garden',
-    icon: '🌿',
+    Icon: Sprout,
     name: 'סידור גינה',
-    color: '#52b788',
     inputs: [
       {
         id: 'size', label: 'גודל גינה', type: 'select', default: 'small',
@@ -82,9 +85,8 @@ const PROJECTS = [
   },
   {
     id: 'plumbing',
-    icon: '🔧',
+    Icon: Wrench,
     name: 'תיקון אינסטלציה',
-    color: '#0077b6',
     inputs: [],
     getItems: () => [
       { name: 'ברזי הזנה',         category: 'plumbing',  subcategory: 'feed_valves'         },
@@ -107,9 +109,8 @@ function ProjectCalculator({ addBundleToCart }) {
 
   /* fetch products once */
   useEffect(() => {
-    fetch('/api/products')
-      .then(r => r.json())
-      .then(data => setAllProducts(Array.isArray(data) ? data : []))
+    getProducts()
+      .then(({ products }) => setAllProducts(products))
       .catch(() => {});
   }, []);
 
@@ -144,10 +145,23 @@ function ProjectCalculator({ addBundleToCart }) {
     setBundleAdded(false);
   }
 
-  /* match each item to a real product */
+  /**
+   * מתאים לפריט ברשימה מוצר אמיתי — הזול שבמלאי.
+   *
+   * hasPrice אינו סינון של מידה טובה אלא התנאי לכך שהבחירה
+   * בזול תהיה הגיונית: ל-124 מוצרים במסד אין מחיר, כלומר 0,
+   * ולכן כל צירוף קטגוריה+תת-קטגוריה שיש בו אחד מהם היה מחזיר
+   * דווקא אותו. זה בדיוק הבאג שמתואר ב-PaintCalculator, שלשם כך
+   * עבר למזהים קבועים.
+   *
+   * פריט שלא נמצא לו מוצר מתומחר מוצג "שאל בחנות" ואינו נכנס
+   * לחבילה, בדיוק כמו פריט שאין לו מוצר בכלל — והשרת בלאו הכי
+   * דוחה הזמנה שיש בה פריט בלי מחיר.
+   */
   function findProduct(category, subcategory) {
     const matches = allProducts.filter(
-      p => p.category === category && p.subcategory === subcategory && p.in_stock !== false
+      p => p.category === category && p.subcategory === subcategory
+        && p.in_stock !== false && hasPrice(p)
     );
     if (matches.length === 0) return null;
     return matches.reduce((a, b) => (a.price <= b.price ? a : b));
@@ -156,7 +170,7 @@ function ProjectCalculator({ addBundleToCart }) {
   const rawItems     = project ? project.getItems(inputs) : [];
   const resolvedItems = rawItems.map(item => ({ ...item, found: findProduct(item.category, item.subcategory) }));
   const foundItems    = resolvedItems.filter(i => i.found);
-  const totalEstimate = foundItems.reduce((s, i) => s + i.found.price, 0);
+  const totalEstimate = sumPrices(foundItems.map(i => i.found.price));
   const hasUnknown    = resolvedItems.some(i => !i.found);
 
   /** מוסיף לעגלה את כל המוצרים שהמחשבון המליץ עליהם. */
@@ -173,8 +187,8 @@ function ProjectCalculator({ addBundleToCart }) {
 
         {/* ── Header ── */}
         <div className="proj-header">
-          <span className="proj-tag">✦ כלי תכנון</span>
-          <h2 className="proj-title">לא יודעים מה לקנות? 🛠️</h2>
+          <span className="section-pill section-pill--light"><Crown size={14} aria-hidden="true" /> כלי תכנון</span>
+          <h2 className="proj-title">לא יודעים מה לקנות? <ListChecks size={24} aria-hidden="true" /></h2>
           <p className="proj-subtitle">בחרו פרויקט — נכין לכם רשימת קניות מלאה</p>
         </div>
 
@@ -184,12 +198,12 @@ function ProjectCalculator({ addBundleToCart }) {
             <button
               key={proj.id}
               className={`proj-card ${selectedId === proj.id ? 'selected' : ''}`}
-              style={{ '--proj-color': proj.color, animationDelay: `${i * 0.09}s` }}
+              style={{ animationDelay: `${i * 0.09}s` }}
               onClick={() => selectProject(proj.id)}
             >
-              <span className="proj-card-icon">{proj.icon}</span>
+              <span className="proj-card-icon"><proj.Icon size={26} strokeWidth={1.75} aria-hidden="true" /></span>
               <span className="proj-card-name">{proj.name}</span>
-              {selectedId === proj.id && <span className="proj-card-check">✓</span>}
+              {selectedId === proj.id && <span className="proj-card-check"><Check size={16} aria-hidden="true" /></span>}
             </button>
           ))}
         </div>
@@ -203,10 +217,15 @@ function ProjectCalculator({ addBundleToCart }) {
               <div className="proj-inputs-row">
                 {project.inputs.map(inp => (
                   <div key={inp.id} className="proj-input-group">
-                    <label className="proj-input-label">{inp.label}</label>
+                    {/* תווית אמיתית לבחירה ולמספר; לסטפר, שהוא שני כפתורים
+                        ולא שדה, התווית היא שם הקבוצה */}
+                    {inp.type === 'stepper'
+                      ? <span className="proj-input-label" id={`proj-${inp.id}-label`}>{inp.label}</span>
+                      : <label className="proj-input-label" htmlFor={`proj-${inp.id}`}>{inp.label}</label>}
 
                     {inp.type === 'select' && (
                       <select
+                        id={`proj-${inp.id}`}
                         className="proj-select"
                         value={inputs[inp.id] ?? inp.default}
                         onChange={e => setInput(inp.id, e.target.value)}
@@ -218,6 +237,7 @@ function ProjectCalculator({ addBundleToCart }) {
                     {inp.type === 'number' && (
                       <div className="proj-number-wrap">
                         <input
+                          id={`proj-${inp.id}`}
                           type="number"
                           className="proj-number-input"
                           value={inputs[inp.id] ?? inp.default}
@@ -229,13 +249,13 @@ function ProjectCalculator({ addBundleToCart }) {
                     )}
 
                     {inp.type === 'stepper' && (
-                      <div className="proj-stepper">
-                        <button type="button"
+                      <div className="proj-stepper" role="group" aria-labelledby={`proj-${inp.id}-label`}>
+                        <button type="button" aria-label={`הפחת: ${inp.label}`}
                           onClick={() => setInput(inp.id, Math.max(inp.min, (inputs[inp.id] ?? inp.default) - 1))}>−</button>
-                        <span className="proj-stepper-val">
+                        <span className="proj-stepper-val" aria-live="polite">
                           {inputs[inp.id] ?? inp.default}{inp.unit ? ` ${inp.unit}` : ''}
                         </span>
-                        <button type="button"
+                        <button type="button" aria-label={`הוסף: ${inp.label}`}
                           onClick={() => setInput(inp.id, Math.min(inp.max, (inputs[inp.id] ?? inp.default) + 1))}>+</button>
                       </div>
                     )}
@@ -253,7 +273,7 @@ function ProjectCalculator({ addBundleToCart }) {
                   className={`proj-item ${item.found ? 'found' : 'missing'}`}
                   style={{ animationDelay: `${i * 0.06}s` }}
                 >
-                  <span className="proj-item-dot">{item.found ? '✓' : '○'}</span>
+                  <span className="proj-item-dot">{item.found ? <Check size={14} aria-hidden="true" /> : <Circle size={14} aria-hidden="true" />}</span>
                   <div className="proj-item-body">
                     <span className="proj-item-name">
                       {item.found ? item.found.name : item.name}
@@ -263,7 +283,7 @@ function ProjectCalculator({ addBundleToCart }) {
                     )}
                   </div>
                   <span className="proj-item-price">
-                    {item.found ? `₪${item.found.price}` : 'שאל בחנות'}
+                    {item.found ? formatPrice(item.found.price) : 'שאל בחנות'}
                   </span>
                 </div>
               ))}
@@ -274,7 +294,7 @@ function ProjectCalculator({ addBundleToCart }) {
               <div className="proj-estimate">
                 <span className="proj-estimate-label">הערכת עלות</span>
                 <div className="proj-estimate-right">
-                  <span className="proj-estimate-total">₪{totalEstimate.toLocaleString()}</span>
+                  <span className="proj-estimate-total">₪{totalEstimate.toLocaleString(undefined, { minimumFractionDigits: Number.isInteger(totalEstimate) ? 0 : 2, maximumFractionDigits: 2 })}</span>
                   {hasUnknown && <span className="proj-estimate-plus">+</span>}
                   {hasUnknown && (
                     <span className="proj-estimate-note">+ פריטים לשאול בחנות</span>
@@ -287,8 +307,8 @@ function ProjectCalculator({ addBundleToCart }) {
                 onClick={handleAddAll}
               >
                 {bundleAdded
-                  ? '✓ נוסף לעגלה!'
-                  : `🛒 הוסף הכל לעגלה (${foundItems.length} פריטים)`}
+                  ? <><Check size={18} aria-hidden="true" /> נוסף לעגלה!</>
+                  : <><ShoppingCart size={18} aria-hidden="true" /> הוסף הכל לעגלה ({foundItems.length} פריטים)</>}
               </button>
             </div>
           </div>

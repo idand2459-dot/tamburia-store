@@ -1,0 +1,264 @@
+/* ==========================================================
+   FAQ — the accordion and the contact card under it
+
+   The last light section before the footer: --color-blush, with
+   the reviews section's --color-blush-deep above it and the
+   footer's near-black below. The half-step above is the whole
+   seam on that side, so the ::after this section used to carry
+   on its top edge is gone, along with the red glow on ::before
+   and the stacking context the two needed. The edge below is a
+   light/dark one and is marked from the footer's side.
+
+   The red pill this page used to own is gone: every section label
+   on the page is the shared components/_section-pill.css now.
+
+   Art-directed in both themes, like the rest of the home page,
+   so there is no prefers-color-scheme block at the bottom of
+   this file.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.faq-section {
+  background-color: var(--color-blush);
+  padding: 90px 40px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.faq-content {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.faq-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+/* No trailing icon after the words any more: no other section title on the page
+   carries one, and this one had a speech bubble that repeated what the pill
+   above it already said. */
+.faq-title {
+  font-size: 2.2rem;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-navy);
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+
+.faq-subtitle {
+  font-size: var(--font-size-body);
+  color: rgba(var(--color-navy-rgb), 0.65);
+}
+
+/* Accordion
+   -------------------------------------------------------------------------- */
+
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 40px;
+}
+
+/* White, and position: relative for the open row's bar below. overflow:
+   hidden is what the collapsed answer's height is clipped against as well as
+   what keeps the bar inside the corners. */
+.faq-item {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+  border-radius: 14px;
+  transition: border-color var(--transition-base);
+}
+
+/* The open row's marker: a bar along the inline-start edge, which in RTL is the
+   right one. Inset 8px top and bottom so it stays clear of the 14px corners,
+   and its own pill radius so the ends are not cut squares. */
+.faq-item::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  right: 0;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--color-red);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  pointer-events: none;
+}
+
+.faq-question {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--color-navy);
+  font-family: var(--font-family-base);
+  text-align: right;
+}
+
+/* A 28px circle round one Plus, which the open state rotates into an ×. It was
+   a bare + / − character swapped in the JSX, and a character swap cannot be
+   animated. */
+.faq-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(var(--color-red-rgb), 0.1);
+  color: var(--color-red);
+  transition: transform var(--transition-base);
+}
+
+/* The height animation. A grid whose single row goes 0fr → 1fr animates to the
+   content's own height, which is the one thing a height transition cannot do
+   without a hard-coded pixel value. overflow: hidden on the child below is what
+   lets the row reach 0 at all: without it the item's min-content height is the
+   row's floor. */
+.faq-answer-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--transition-base);
+}
+
+.faq-answer { overflow: hidden; }
+
+.faq-answer p {
+  padding: 0 22px 18px;
+  font-size: 0.95rem;
+  color: rgba(var(--color-navy-rgb), 0.75);
+  line-height: 1.8;
+  margin: 0;
+}
+
+/* Contact card
+   -------------------------------------------------------------------------- */
+
+.faq-contact {
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid rgba(var(--color-navy-rgb), 0.08);
+  box-shadow: 0 1px 2px rgba(var(--color-navy-rgb), 0.04);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+}
+
+.faq-contact p {
+  font-size: var(--font-size-body);
+  color: var(--color-navy);
+  margin-bottom: 16px;
+}
+
+.faq-contact-btns {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* The phone button is the red CTA; .whatsapp below overrides the colour and
+   nothing else, so both buttons share this height and radius. */
+.faq-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  background: var(--color-red);
+  color: white;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: var(--font-family-base);
+  transition: background var(--transition-base), box-shadow var(--transition-base);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.faq-item:hover {
+  border-color: rgba(var(--color-navy-rgb), 0.18);
+}
+
+/* the navbar's ring at full strength: --color-purple-soft is the dark-surface
+   version of it and disappears on white */
+.faq-question:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: -4px;
+  border-radius: 14px;
+}
+
+/* A drop shadow rather than the glow these had: a glow needs something dark
+   behind it, and the card under both buttons is white. */
+.faq-btn:hover {
+  background: var(--color-red-dark);
+  box-shadow: 0 10px 24px rgba(var(--color-red-rgb), 0.3);
+}
+
+/* WhatsApp green, on purpose: it is the one colour on the page that is not ours
+   to restyle — people look for it. */
+.faq-btn.whatsapp:hover {
+  background: var(--color-whatsapp-dark);
+  box-shadow: 0 10px 24px rgba(var(--color-whatsapp-rgb), 0.3);
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+.faq-item.open {
+  border-color: rgba(var(--color-red-rgb), 0.45);
+}
+
+.faq-item.open::before { opacity: 1; }
+
+.faq-item.open .faq-arrow {
+  transform: rotate(45deg);
+}
+
+.faq-item.open .faq-answer-wrap {
+  grid-template-rows: 1fr;
+}
+
+.faq-btn.whatsapp {
+  background: var(--color-whatsapp);
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 560px) {
+  .faq-section { padding: 64px 20px; }
+
+  .faq-title { font-size: 1.7rem; }
+
+  .faq-question { padding: 16px 18px; }
+
+  .faq-answer p { padding: 0 18px 16px; }
+
+  /* One under the other: side by side at this width each button is narrower
+     than its own label. */
+  .faq-contact-btns { flex-direction: column; }
+}
+
+/* ---- Reduced motion ------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  .faq-item::before,
+  .faq-arrow,
+  .faq-answer-wrap {
+    transition: none;
+  }
+}

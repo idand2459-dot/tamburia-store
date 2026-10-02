@@ -157,7 +157,8 @@ async function importProducts(csvFile) {
   for (const row of rows) {
     const sku         = row['SKU']?.trim()             || null;
     const name        = row['Name']?.trim()            || '';
-    const price       = Math.round(parseFloat(row['Price'])) || 0;
+    // לאגורה ולא לשקל: Math.round כאן הפך 8.90 ל-9 ו-327.50 ל-328
+    const price       = Math.round(parseFloat(row['Price']) * 100) / 100 || 0;
     const category    = row['Category']?.trim()        || '';
     const subcategory = row['Subcategory']?.trim()     || null;
     const descRaw     = row['Description']?.trim()     || '';

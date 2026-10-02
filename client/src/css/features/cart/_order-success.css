@@ -1,0 +1,221 @@
+/* ==========================================================
+   Order success — the confirmation step after an order is placed
+
+   The last of the three cart steps, rendered by
+   OrderSuccessView.js inside the shared drawer.
+
+   The green circle at the top is the one deliberate exception to
+   the brand palette on this screen, and it is the same exception
+   the product card's added state makes: green means the thing
+   happened. Everything else is navy, with red on the one contact
+   button that is a call, and WhatsApp's own green on the button
+   people look for by colour.
+
+   Every selector the old screen used is gone: .order-success's
+   own h3/p rules, .success-icon, .success-order-num,
+   .success-details, .success-message, .success-contact,
+   .success-contact-btns and .success-contact-btn — including the
+   half of the file that was labelled "מסך הצלחה משופר".
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.order-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 20px 28px;
+}
+
+/* ---- Elements ------------------------------------------------------------ */
+
+.order-success-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: rgba(var(--color-green-rgb), 0.12);
+  color: var(--color-green);
+  margin-bottom: 18px;
+}
+
+.order-success-title {
+  color: var(--color-navy);
+  font-size: 1.35rem;
+  font-weight: var(--font-weight-extrabold);
+  margin: 0;
+}
+
+/* The one number the customer will be asked for on the phone, so it is the
+   biggest thing on the screen after the check. */
+.order-success-id {
+  color: var(--color-navy);
+  font-size: 2rem;
+  font-weight: var(--font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  margin: 4px 0 22px;
+}
+
+.order-success-details {
+  width: 100%;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.1);
+  border-radius: 14px;
+  text-align: start;
+}
+
+.order-success-details > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.order-success-details > div + div {
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.07);
+}
+
+.order-success-details dt {
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-size: 0.85rem;
+}
+
+.order-success-details dd {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: end;
+}
+
+.order-success-total {
+  font-size: 1.05rem;
+  font-weight: var(--font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* What happens next. Three short lines at most, each one something the system
+   actually did — see the component's own note. */
+.order-success-next {
+  list-style: none;
+  width: 100%;
+  margin: 18px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: start;
+}
+
+.order-success-next li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: rgba(var(--color-navy-rgb), 0.75);
+  font-size: 0.87rem;
+  line-height: 1.5;
+}
+
+.order-success-next .lucide {
+  flex-shrink: 0;
+  margin-top: 0.1em;
+  color: var(--color-purple);
+}
+
+.order-success-contact {
+  width: 100%;
+  margin: 24px 0 22px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(var(--color-navy-rgb), 0.1);
+}
+
+.order-success-contact p {
+  color: rgba(var(--color-navy-rgb), 0.7);
+  font-size: 0.85rem;
+  margin: 0 0 12px;
+}
+
+.order-success-btns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* The default is the navy outline; the two variants below repaint it. */
+.order-success-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border: 1px solid rgba(var(--color-navy-rgb), 0.25);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-navy);
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 600;
+  transition: background var(--transition-fast), color var(--transition-fast),
+              border-color var(--transition-fast);
+}
+
+/* ---- States -------------------------------------------------------------- */
+
+.order-success-btn:hover {
+  background: var(--color-navy);
+  border-color: var(--color-navy);
+  color: white;
+}
+
+.order-success-btn--primary:hover {
+  background: var(--color-red-dark);
+  border-color: var(--color-red-dark);
+}
+
+.order-success-btn--whatsapp:hover {
+  background: var(--color-whatsapp-dark);
+  border-color: var(--color-whatsapp-dark);
+}
+
+.order-success-btn:focus-visible {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}
+
+/* ---- Variants ------------------------------------------------------------ */
+
+.order-success-btn--primary {
+  background: var(--color-red);
+  border-color: var(--color-red);
+  color: white;
+}
+
+/* WhatsApp green, on purpose: it is the one colour on the site that is not
+   ours to restyle — people look for it. */
+.order-success-btn--whatsapp {
+  background: var(--color-whatsapp);
+  border-color: var(--color-whatsapp);
+  color: white;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 560px) {
+  .order-success { padding: 26px 16px 24px; }
+
+  .order-success-mark { width: 66px; height: 66px; }
+
+  .order-success-id { font-size: 1.75rem; }
+
+  /* Three pills side by side do not fit at 390px, and each one is narrower
+     than its own label when they try. */
+  .order-success-btns { flex-direction: column; }
+
+  .order-success-btn { justify-content: center; }
+}
