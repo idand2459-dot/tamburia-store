@@ -7,6 +7,11 @@ import { useEffect, useRef } from 'react';
 function Confetti({ onDone }) {
   const canvasRef = useRef(null);
 
+  // האנימציה רצה פעם אחת, מהעלייה. onDone נקרא דרך ref כדי שקורא שמעביר
+  // פונקציה חדשה בכל רינדור לא יפעיל אותה מחדש — ועדיין תיקרא העדכנית.
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -54,7 +59,7 @@ function Confetti({ onDone }) {
         frame = requestAnimationFrame(draw);
       } else {
         cancelAnimationFrame(frame);
-        if (onDone) onDone();
+        onDoneRef.current?.();
       }
     }
 

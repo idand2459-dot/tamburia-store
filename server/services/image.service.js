@@ -170,5 +170,5 @@ async function processAndSave(buffer, dir) {
 }
 
 module.exports = {
-  processAndSave, processImage, contentName, isHeic, heicError, MAX_EDGE, WEBP_QUALITY,
+  processAndSave, processImage, contentName, heicError, WEBP_QUALITY,
 };

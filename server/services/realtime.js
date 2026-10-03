@@ -82,4 +82,4 @@ function broadcast(eventType, payload) {
   }
 }
 
-module.exports = { attachRealtime, broadcast, WS_PATH };
+module.exports = { attachRealtime, broadcast };

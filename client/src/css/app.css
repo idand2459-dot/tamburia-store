@@ -16,9 +16,8 @@
 
 /* 2. Layout */
 @import './layout/_grid.css';
-/* The navbar system, in the order the rules had inside the old _header.css:
-   the shared focus ring lives in _navbar.css and has to stay ahead of the
-   drawer's own :hover rules. */
+/* The navbar system. The shared focus ring lives in _navbar.css and has to
+   stay ahead of the drawer's own :hover rules. */
 @import './layout/_navbar.css';
 @import './layout/_nav-search.css';
 @import './layout/_nav-drawer.css';
@@ -136,21 +135,17 @@
    .hero-cta--ghost and .hero-cta set the same properties at the same
    specificity, and the shared entry animation is declared in _hero.css */
 @import './features/home/_hero-cta.css';
-/* the photo band at the top of a category page. Where features/_category-themes.css
-   used to be: that file painted every category page in one saturated colour and
-   is gone — a category's atmosphere is now this banner alone. */
+/* the photo band at the top of a category page — a category's whole
+   atmosphere; the shopping area below it is the same for every category */
 @import './features/category/_category-banner.css';
-/* The shopping area below that banner, outermost first. Together they replace
-   features/_products-toolbar.css (a row of sort buttons and a count) and
-   features/_product-search.css (the full-width pill input), both deleted.
-   No selector appears in more than one of the three. */
+/* The shopping area below that banner, outermost first. No selector appears
+   in more than one of the three. */
 @import './features/category/_category-layout.css';
 @import './features/category/_category-filters.css';
 @import './features/category/_category-toolbar.css';
 @import './features/home/_features-banner.css';
 @import './features/home/_whyus.css';
-/* One partial per static page, in the order their rules had inside the old
-   _pages.css. The three heroes' shared h1 rule is split per page. */
+/* One partial per static page; each page's hero carries its own h1 rule. */
 @import './features/pages/_about.css';
 @import './features/pages/_contact.css';
 @import './features/pages/_returns.css';

@@ -36,7 +36,7 @@ function productBody(fields, imageUrls) {
 }
 
 /** מפרק טקסט CSV לשורות מוצרים ומאתר שגיאות. */
-export function parseCSV(text) {
+function parseCSV(text) {
   const lines = text.trim().split('\n'); if (lines.length < 2) return { rows: [], errors: ['קובץ ריק'] };
   const errors = [], rows = [];
   for (let i = 1; i < lines.length; i++) {
@@ -59,7 +59,7 @@ export function parseCSV(text) {
 }
 
 /** מוריד קובץ CSV לדוגמה לייבוא מוצרים. */
-export function downloadTemplate() {
+function downloadTemplate() {
   const csv = ['name,price,in_stock,sku,category,colors,description', 'מברשת צבע 3 אינץ\',25,true,TT-001,painting,"לבן,שחור",מברשת איכותית'].join('\n');
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);

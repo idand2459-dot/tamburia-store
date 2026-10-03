@@ -51,6 +51,8 @@ body {
   background-color: var(--color-bg);
   direction: rtl;
   color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* No dark-mode rule on body any more. The storefront is art-directed light —

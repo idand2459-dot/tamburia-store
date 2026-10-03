@@ -36,6 +36,5 @@ router.put('/:id', requireAdmin, idParam, controller.update);
 router.delete('/:id', requireAdmin, idParam, controller.remove);
 
 router.put('/:id/status', requireAdmin, idParam, controller.updateStatus);
-router.patch('/:id/status', requireAdmin, idParam, controller.updateStatus);
 
 module.exports = router;

@@ -2,12 +2,9 @@
    Category toolbar — the row above a category's product grid
 
    The result count on the start side, the search field and the
-   sort <select> on the end side. It replaces what used to be
-   three files' worth of chrome: features/_products-toolbar.css's
-   row of sort buttons and its count, and
-   features/_product-search.css's full-width pill input. Five
-   sort options as five buttons took a whole line of the page to
-   say what a 150px select says.
+   sort <select> on the end side. Sorting is a select rather than
+   a row of buttons: five options fit in 150px instead of a whole
+   line of the page.
 
    Both controls are white on the blush page background, like
    every other surface here, and both take the purple focus ring

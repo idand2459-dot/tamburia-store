@@ -57,4 +57,4 @@ function parseValue(key, body = {}) {
   return VALUE_PARSERS[key](body.value);
 }
 
-module.exports = { resolveKey, parseValue, KEY_BY_PATH };
+module.exports = { resolveKey, parseValue };
