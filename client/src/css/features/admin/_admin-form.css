@@ -198,13 +198,6 @@
 
 .admin-form-warning .lucide { flex-shrink: 0; margin-top: 2px; }
 
-@media (prefers-color-scheme: dark) {
-  .admin-form-warning {
-    background: rgba(255, 190, 70, 0.14);
-    color: #ffd58a;
-  }
-}
-
 .admin-form-buttons {
   display: flex;
   gap: 12px;
@@ -372,6 +365,11 @@
 /* ---- Dark mode ----------------------------------------------------------- */
 
 @media (prefers-color-scheme: dark) {
+  .admin-form-warning {
+    background: rgba(255, 190, 70, 0.14);
+    color: #ffd58a;
+  }
+
   .admin-form,
   .admin-form-buttons { background: var(--color-navy); }
 
