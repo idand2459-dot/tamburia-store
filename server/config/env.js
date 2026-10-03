@@ -43,10 +43,19 @@ function number(key, fallback, { allowZero = false } = {}) {
 }
 
 const nodeEnv = process.env.NODE_ENV || 'development';
+const isProduction = nodeEnv === 'production';
+
+// בלי מייל פעיל אין צורך בחשבון Gmail: שכפול חדש עולה עם
+// MAIL_ENABLED=false ובלי MAIL_USER / MAIL_PASS. כשהמייל פעיל הם חובה.
+const mailEnabled = process.env.MAIL_ENABLED !== 'false';
+const mailCredential = (key) => (mailEnabled ? required(key) : process.env[key] || '');
+
+/** האורך המינימלי של סיסמת האדמין בייצור. */
+const MIN_ADMIN_PASSWORD = 12;
 
 const config = {
   nodeEnv,
-  isProduction: nodeEnv === 'production',
+  isProduction,
   port: number('PORT', 3000),
 
   db: {
@@ -59,11 +68,11 @@ const config = {
   },
 
   mail: {
-    user: required('MAIL_USER'),
-    pass: required('MAIL_PASS'),
+    user: mailCredential('MAIL_USER'),
+    pass: mailCredential('MAIL_PASS'),
     to: process.env.MAIL_TO || process.env.MAIL_USER,
     from: `"טכניק טמבור 🔧" <${process.env.MAIL_USER}>`,
-    enabled: process.env.MAIL_ENABLED !== 'false',
+    enabled: mailEnabled,
   },
 
   adminUrl: process.env.ADMIN_URL || 'http://localhost:3001/admin',
@@ -104,13 +113,23 @@ if (missing.length > 0) {
   );
 }
 
-if (!process.env.SESSION_SECRET) {
-  if (config.isProduction) {
-    throw new Error(
+// בייצור השרת מסרב לעלות עם הגדרות אבטחה חלשות, במקום לעלות ולהיות פרוץ.
+// ההודעות נוקבות בשם המשתנה בלבד: ערך של סוד לעולם אינו מודפס.
+if (isProduction) {
+  const problems = [];
+  if (!process.env.SESSION_SECRET) {
+    problems.push(
       'חסר SESSION_SECRET. צור אחד עם:\n' +
       '  node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
     );
   }
+  if (config.auth.password.length < MIN_ADMIN_PASSWORD) {
+    problems.push(`ADMIN_PASSWORD קצרה מדי: בייצור נדרשים לפחות ${MIN_ADMIN_PASSWORD} תווים.`);
+  }
+  if (problems.length > 0) throw new Error(problems.join('\n'));
+}
+
+if (!process.env.SESSION_SECRET) {
   console.warn('⚠ אין SESSION_SECRET — נוצר אחד זמני. התחברות לאדמין לא תשרוד הפעלה מחדש.');
 }
 
