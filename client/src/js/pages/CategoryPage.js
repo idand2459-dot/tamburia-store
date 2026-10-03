@@ -19,6 +19,7 @@ import CategoryToolbar from '../features/catalog/CategoryToolbar';
 import NotFoundPage from './NotFoundPage';
 import ProductList from '../components/ProductList';
 import { PHONES } from '../utils/storeInfo';
+import { sortByPrice } from '../utils/pricing';
 import { useStore } from '../context/storeContext';
 import { getProducts, isAbortError } from '../services/productService';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -121,8 +122,8 @@ function CategoryPage() {
 
   const sorted = (() => {
     switch (sortBy) {
-      case 'price-asc':  return [...filtered].sort((a, b) => a.price - b.price);
-      case 'price-desc': return [...filtered].sort((a, b) => b.price - a.price);
+      case 'price-asc':  return sortByPrice(filtered, 'asc');
+      case 'price-desc': return sortByPrice(filtered, 'desc');
       case 'name':       return [...filtered].sort((a, b) => a.name.localeCompare(b.name, 'he'));
       case 'instock':    return [...filtered].sort((a, b) => (b.in_stock !== false ? 1 : 0) - (a.in_stock !== false ? 1 : 0));
       default:           return filtered;

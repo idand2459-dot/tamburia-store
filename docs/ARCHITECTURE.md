@@ -157,7 +157,7 @@ checks, and must report zero findings. The statement is at `/accessibility`.
   contract of every endpoint, including server-side totals, guarded routes, cache and
   security headers, and SPA-fallback boundaries.
 
-`npm run test:client` runs 67 Jest tests in 9 suites (services, cart, pricing, drawer focus,
+`npm run test:client` runs 71 Jest tests in 9 suites (services, cart, pricing, drawer focus,
 category filters, product-page races, the admin products tab). `npm run a11y` is the
 accessibility gate (it serves `client/build`, so build first).
 

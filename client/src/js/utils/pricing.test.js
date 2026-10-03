@@ -9,7 +9,7 @@
  */
 import {
   orderablePrice, hasPrice, priceLabel, selectedPrice, NO_PRICE_LABEL,
-  formatPrice, formatAmount, parsePriceInput, toAgorot, lineTotal, sumPrices,
+  formatPrice, formatAmount, parsePriceInput, toAgorot, lineTotal, sumPrices, sortByPrice,
 } from './pricing';
 
 test('מחיר חיובי הוא מחיר', () => {
@@ -97,4 +97,35 @@ test('חשבון באגורות: 12.9 ו-12.90 זהים, 3 × 12.9 הוא 38.7',
   expect(lineTotal(12.9, 3)).toBe(38.7);
   expect(sumPrices([0.1, 0.2])).toBe(0.3);
   expect(sumPrices([38.7, 20])).toBe(58.7);
+});
+
+describe('sortByPrice — מוצרים בלי מחיר תמיד בסוף', () => {
+  const PRODUCTS = [
+    { id: 1, price: 0 },
+    { id: 2, price: 30 },
+    { id: 3, price: null },
+    { id: 4, price: 12.9 },
+    { id: 5, price: 0, variants: [{ label: 'גדול', price: 50 }, { label: 'קטן', price: 20 }] },
+    { id: 6, price: 99 },
+  ];
+  const ids = (list) => list.map((p) => p.id);
+
+  test('מנמוך לגבוה: המתומחרים עולים, ואחריהם אלה שבלי מחיר', () => {
+    expect(ids(sortByPrice(PRODUCTS, 'asc'))).toEqual([4, 5, 2, 6, 1, 3]);
+  });
+
+  test('מגבוה לנמוך: המתומחרים יורדים, ועדיין אלה שבלי מחיר בסוף', () => {
+    expect(ids(sortByPrice(PRODUCTS, 'desc'))).toEqual([6, 2, 5, 4, 1, 3]);
+  });
+
+  test('מוצר עם גרסאות ממוין לפי הגרסה הזולה המתומחרת — המחיר שבכרטיס', () => {
+    const sorted = sortByPrice([{ id: 'a', price: 25 }, PRODUCTS[4]], 'asc');
+    expect(ids(sorted)).toEqual([5, 'a']);
+  });
+
+  test('אינו משנה את המערך שקיבל', () => {
+    const copy = [...PRODUCTS];
+    sortByPrice(PRODUCTS, 'desc');
+    expect(PRODUCTS).toEqual(copy);
+  });
 });

@@ -297,7 +297,7 @@ written up in [docs/a11y-audit.md](docs/a11y-audit.md); the public statement is 
 
 ```bash
 npm test               # server: 15 suites, 646 checks
-npm run test:client    # client: 9 suites, 67 tests
+npm run test:client    # client: 9 suites, 71 tests
 npm run a11y           # accessibility: serves client/build, so run npm run build:client first
 ```
 
@@ -464,8 +464,7 @@ Known gaps, in rough order of how much they matter:
 1. **Not every product has a photograph yet.** About a third of the active catalogue has
    real photos from the shoot; the rest show their category icon.
 2. **Unpriced products.** About 90 active products have no price yet. They show
-   **"מחיר בחנות"** and cannot be added to the cart, but they still sort first under
-   "price, low to high".
+   **"מחיר בחנות"**, cannot be added to the cart, and sort last in both price orders.
 3. **The `kitchen` category is defined but has no active products.** It appears on the home
    page and leads to an empty category page.
 4. **Rate limiting is in-process.** Counters live in the Node process's memory, which is

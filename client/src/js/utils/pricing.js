@@ -100,6 +100,23 @@ export function orderablePrice(product) {
   return asPrice(product?.price);
 }
 
+/**
+ * ממיין מוצרים לפי המחיר שמוצג בכרטיס, 'asc' או 'desc'. מחזיר עותק.
+ *
+ * מוצר בלי מחיר הולך תמיד לסוף, בשני הכיוונים: מחיר 0 אינו "הכי זול",
+ * הוא "מחיר בחנות", ולמעלה ברשימה הוא דחק את המוצרים שאפשר לקנות.
+ * המיון יציב, כך שבין מוצרים בלי מחיר נשמר הסדר שהגיעו בו.
+ */
+export function sortByPrice(products, direction = 'asc') {
+  const sign = direction === 'desc' ? -1 : 1;
+  return [...products].sort((a, b) => {
+    const pa = orderablePrice(a);
+    const pb = orderablePrice(b);
+    if (pa === null || pb === null) return (pa === null) - (pb === null);
+    return sign * (pa - pb);
+  });
+}
+
 /** האם אפשר להזמין את המוצר, כלומר יש לו מחיר. */
 export function hasPrice(product) {
   return orderablePrice(product) !== null;
