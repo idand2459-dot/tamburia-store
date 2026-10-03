@@ -96,6 +96,6 @@ ${inner}
 }
 
 module.exports = {
-  escapeHtml, deliveryText, itemLabel, itemsRows,
+  escapeHtml, deliveryText, itemsRows,
   itemsTableHead, summaryRows, header, footer, layout,
 };

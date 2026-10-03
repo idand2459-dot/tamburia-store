@@ -1,11 +1,9 @@
 /* ==========================================================
    Category banner — the photo band at the top of /category/:slug
 
-   What used to be here was a flat gradient per category, and
-   features/_category-themes.css painted the whole page in that
-   colour below it. Both are gone: a category's atmosphere is one
-   photograph, and the shopping area under it is the same light
-   blush every time — the products carry the colour.
+   A category's atmosphere is this one photograph. The shopping
+   area under it is the same light blush every time — the
+   products carry the colour.
 
    Always dark whatever the system theme, exactly like the Hero:
    every colour here is fixed, and there is no dark-mode block.

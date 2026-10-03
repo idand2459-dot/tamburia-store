@@ -357,8 +357,6 @@ function parseListQuery(query = {}) {
 }
 
 module.exports = {
-  parseCreate, parseUpdate, parseStatus, parseListQuery,
-  assertDeliveryCityAllowed, assertDeliveryAddressPresent,
-  assertStatusFitsDeliveryMethod, statusesForMethod,
-  STATUSES, DELIVERY_METHODS, EDITABLE, SORTABLE, ALLOWED_CITIES,
+  parseCreate, parseUpdate, parseStatus, parseListQuery, assertDeliveryCityAllowed,
+  assertDeliveryAddressPresent, assertStatusFitsDeliveryMethod, EDITABLE, SORTABLE,
 };

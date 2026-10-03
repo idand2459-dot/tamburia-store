@@ -11,10 +11,11 @@ import {
   ClipboardList, Search, Inbox, Settings, PackageCheck, Truck, CheckCircle,
   Store, ChevronDown, Phone, MessageCircle,
 } from 'lucide-react';
-import Drawer from '../components/Drawer';
-import { Spinner } from '../components/LoadingStates';
-import { PHONES, whatsappUrl } from '../utils/storeInfo';
-import { formatPrice, lineTotal } from '../utils/pricing';
+import Drawer from '../../components/Drawer';
+import { Spinner } from '../../components/LoadingStates';
+import { PHONES, whatsappUrl } from '../../utils/storeInfo';
+import { formatPrice, lineTotal } from '../../utils/pricing';
+import { getOrdersByPhone } from '../../services/orderService';
 
 const STATUS_CONFIG = {
   new: { label: 'התקבלה', Icon: Inbox },
@@ -39,10 +40,11 @@ function OrderHistory({ onClose }) {
     setLoading(true);
     setSearched(false);
     try {
-      const res = await fetch(`/api/orders/by-phone/${phone.replace(/\D/g, '')}`);
-      const data = await res.json();
-      setOrders(data);
+      const data = await getOrdersByPhone(phone);
+      setOrders(Array.isArray(data) ? data : []);
     } catch {
+      // שגיאה מכל סוג — גם הגבלת הקצב — מציגה "לא נמצאו הזמנות", ולא
+      // מנסה לצייר את גוף השגיאה כאילו היה רשימת הזמנות.
       setOrders([]);
     }
     setLoading(false);

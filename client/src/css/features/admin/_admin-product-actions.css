@@ -1,0 +1,193 @@
+/* ==========================================================
+   Admin product actions — the row under each product in the
+   products tab (edit, hide/show, delete) and the confirmation
+   that opens inside the card when delete is pressed
+
+   Split out of _admin-products.css at the 400-line ceiling and
+   imported right after it. Nothing here shares a selector with
+   that file, so the order between the two decides nothing.
+   ========================================================== */
+
+.admin-product-actions {
+  grid-area: actions;
+  display: flex;
+  border-top: 1px solid var(--color-border-soft);
+}
+
+.admin-edit-btn,
+.admin-hide-btn,
+.admin-delete-btn {
+  flex: 1;
+  min-height: 48px;
+  border: none;
+  background: none;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.admin-edit-btn {
+  border-inline-end: 1px solid var(--color-border-soft);
+  color: var(--color-navy);
+}
+
+/* Between edit and delete: this is the safe way out of "I do not want this
+   product in the shop", and it should be the one the thumb lands on. */
+.admin-hide-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-inline-end: 1px solid var(--color-border-soft);
+  color: var(--color-navy);
+}
+
+.admin-delete-btn { color: var(--color-text-subtle); }
+
+/* The delete confirmation, and whatever the server answered, inside the card —
+   next to the button that was pressed. Not window.confirm: a browser that blocks
+   dialogs returns false from it without showing anything, and the click did
+   nothing at all. Not the banner at the top of the list either: by the time
+   someone deletes, they have usually scrolled away from it. */
+.admin-product-notice {
+  grid-area: notice;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--color-border-soft);
+  background: rgba(var(--color-navy-rgb), 0.04);
+}
+
+.admin-product-notice.is-problem {
+  background: rgba(var(--color-red-rgb), 0.08);
+}
+
+.admin-product-notice-text {
+  margin: 0;
+  color: var(--color-text);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.admin-product-notice-note {
+  align-self: center;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-small);
+}
+
+.admin-product-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-notice-danger,
+.admin-notice-primary,
+.admin-notice-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-notice-danger {
+  border: none;
+  background: var(--color-red);
+  color: white;
+}
+
+.admin-notice-primary {
+  border: none;
+  background: var(--color-navy);
+  color: white;
+}
+
+.admin-notice-cancel {
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-navy);
+}
+
+.admin-notice-danger:disabled,
+.admin-notice-primary:disabled,
+.admin-notice-cancel:disabled,
+.admin-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.admin-edit-btn:hover {
+  background: var(--color-navy);
+  color: white;
+}
+
+.admin-hide-btn:hover {
+  background: rgba(var(--color-navy-rgb), 0.08);
+}
+
+.admin-notice-danger:hover:not(:disabled) { background: var(--color-red-dark); }
+
+.admin-delete-btn:hover:not(:disabled) {
+  background: var(--color-red);
+  color: white;
+}
+
+.admin-edit-btn:focus-visible,
+.admin-hide-btn:focus-visible,
+.admin-delete-btn:focus-visible,
+.admin-notice-danger:focus-visible,
+.admin-notice-primary:focus-visible,
+.admin-notice-cancel:focus-visible {
+  outline: 3px solid var(--color-purple);
+  outline-offset: -3px;
+}
+
+/* ---- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 900px) {
+
+  .admin-product-actions {
+    border-top: none;
+    padding: 0 12px 10px;
+    gap: 8px;
+  }
+
+  .admin-edit-btn,
+  .admin-delete-btn {
+    border: 1.5px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+}
+
+/* ---- Dark mode ----------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+
+  .admin-product-actions,
+  .admin-edit-btn { border-color: var(--color-surface-dark); }
+
+  .admin-edit-btn { color: var(--color-text-dark); }
+
+  .admin-product-notice { border-color: var(--color-surface-dark); }
+
+  .admin-product-notice-text { color: var(--color-text-dark); }
+
+  /* navy on a navy card would disappear */
+  .admin-notice-primary { background: var(--color-purple); }
+
+  .admin-notice-cancel {
+    border-color: var(--color-surface-dark);
+    background: var(--color-surface-dark);
+    color: var(--color-text-dark);
+  }
+}

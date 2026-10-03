@@ -18,11 +18,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Trash2, Check, X } from 'lucide-react';
-import Drawer from '../components/Drawer';
-import CATEGORY_ICONS from '../utils/categoryIcons';
-import { getWishlist, toggleWishlist } from '../utils/wishlistUtils';
-import { useAvailability } from '../hooks/useAvailability';
-import { orderablePrice, NO_PRICE_LABEL, UNAVAILABLE_LABEL, formatPrice } from '../utils/pricing';
+import Drawer from '../../components/Drawer';
+import CATEGORY_ICONS from '../../utils/categoryIcons';
+import { getWishlist, toggleWishlist } from '../../utils/wishlistUtils';
+import { useAvailability } from '../../hooks/useAvailability';
+import { orderablePrice, NO_PRICE_LABEL, UNAVAILABLE_LABEL, formatPrice } from '../../utils/pricing';
 
 /** מציג את חלון המועדפים. */
 function Wishlist({ onClose }) {

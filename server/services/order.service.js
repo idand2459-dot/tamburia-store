@@ -8,7 +8,7 @@
 const Order = require('../models/order.model');
 const { priceOrder } = require('./pricing.service');
 const mailer = require('./email');
-const { broadcast } = require('./realtime');
+const { broadcast } = require('./realtime.service');
 const {
   assertDeliveryCityAllowed, assertDeliveryAddressPresent,
   assertStatusFitsDeliveryMethod,
@@ -112,7 +112,6 @@ async function updateOrderStatus(id, status) {
 
   const order = await Order.update(id, { status });
 
-  // TODO: replace with project logger
   console.log(`סטטוס הזמנה #${order.id}: ${existing.status} → ${status}`);
 
   const mail = status === existing.status

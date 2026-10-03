@@ -9,15 +9,22 @@
  * pages/admin/Admin.js) שמזהה 401 ומחזיר את המנהל למסך ההתחברות,
  * וזו התנהגות שאין לה מקום בחזית: לקורא אנונימי אין לאן לחזור.
  */
-import { errorMessageFrom, NETWORK_ERROR } from '../utils/apiErrors';
+import { errorFrom, NETWORK_ERROR } from '../utils/apiErrors';
 
-/** שגיאה שהשרת החזיר, עם קוד הסטטוס שלה. */
+/** שגיאה שהשרת החזיר, עם קוד הסטטוס שלה ומה שצירף ב-details. */
 export class ApiError extends Error {
-  constructor(message, status) {
+  constructor(message, status, details) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.details = details;
   }
+}
+
+/** ApiError מתשובה שנכשלה; fallback כשהשרת לא הסביר. */
+async function apiErrorFrom(res, fallback) {
+  const { message, details } = await errorFrom(res, fallback);
+  return new ApiError(message, res.status, details);
 }
 
 /** האם השגיאה היא 404 — משאב שאינו קיים, להבדיל מתקלה. */
@@ -65,18 +72,18 @@ export function messageFor(error) {
 }
 
 /** שולף JSON, וזורק ApiError עם הודעת השרת כשהתשובה אינה תקינה. */
-export async function getJson(url, { signal } = {}) {
+export async function getJson(url, { signal, fallback } = {}) {
   const res = await fetch(url, { signal });
 
   if (!res.ok) {
-    throw new ApiError(await errorMessageFrom(res), res.status);
+    throw await apiErrorFrom(res, fallback);
   }
 
   return res.json();
 }
 
 /** שולח JSON, וזורק ApiError עם הודעת השרת כשהתשובה אינה תקינה. */
-export async function postJson(url, body, { signal } = {}) {
+export async function postJson(url, body, { signal, fallback } = {}) {
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -85,7 +92,7 @@ export async function postJson(url, body, { signal } = {}) {
   });
 
   if (!res.ok) {
-    throw new ApiError(await errorMessageFrom(res), res.status);
+    throw await apiErrorFrom(res, fallback);
   }
 
   return res.json();

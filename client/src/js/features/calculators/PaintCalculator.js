@@ -9,6 +9,7 @@ import {
 import paintCalcBg from '../../../assets/images/sections/paint-calc-bg-1672.webp';
 import { PHONES } from '../../utils/storeInfo';
 import { getProduct } from '../../services/productService';
+import { getPigmentFormulas } from '../../services/pigmentService';
 import { formatPrice, lineTotal, sumPrices } from '../../utils/pricing';
 
 const SHADE_CONFIG = {
@@ -72,14 +73,14 @@ function PaintCalculator({ addBundleToCart }) {
   const [bundleProducts, setBundleProducts] = useState({});
 
   useEffect(() => {
-    fetch('/api/pigment-formulas')
-      .then(r => r.json())
-      .then(data => {
-        const arr = Array.isArray(data) ? data : [];
-        setFormulas(arr);
-        if (arr.length > 0) setSelectedColor(arr[0].color_code);
+    const controller = new AbortController();
+    getPigmentFormulas({ signal: controller.signal })
+      .then(list => {
+        setFormulas(list);
+        if (list.length > 0) setSelectedColor(list[0].color_code);
       })
-      .catch(() => {});
+      .catch(() => {}); // ביטול בלבד — כל כישלון אחר כבר חזר כמערך ריק
+    return () => controller.abort();
   }, []);
 
   // מושכים את מוצרי החבילה עצמם, כדי שהמחיר והמזהה שייכנסו לעגלה

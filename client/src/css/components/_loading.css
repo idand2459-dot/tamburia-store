@@ -125,19 +125,6 @@
   border-left-color: rgba(var(--color-green-rgb), 0.2);
 }
 
-/* Loading overlay לדף שלם */
-.page-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  gap: 16px;
-  color: var(--color-text-faint);
-  font-size: 0.95rem;
-  font-family: 'Segoe UI', sans-serif;
-}
-
 @media (prefers-color-scheme: dark) {
   /* skeleton */
   .skeleton {

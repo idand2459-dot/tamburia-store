@@ -12,7 +12,7 @@
  */
 const { WebSocketServer, WebSocket } = require('ws');
 const config = require('../config/env');
-const { verifyToken, readCookie } = require('./auth');
+const { verifyToken, readCookie } = require('./auth.service');
 
 const WS_PATH = '/ws';
 
@@ -82,4 +82,4 @@ function broadcast(eventType, payload) {
   }
 }
 
-module.exports = { attachRealtime, broadcast, WS_PATH };
+module.exports = { attachRealtime, broadcast };

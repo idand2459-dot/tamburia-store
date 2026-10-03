@@ -16,9 +16,10 @@ process.env.LOGIN_WINDOW_MS = '2000';
 const path = require('path');
 const { spawn } = require('child_process');
 
-// unit-order-service רץ ראשון: הוא אינו נוגע ברשת או במסד, ולכן
-// נותן את סימן הכישלון המהיר ביותר אם משהו בסיסי שבור.
-const SUITES = ['unit-order-service', 'unit-money', 'unit-originals', 'smoke-static', 'smoke-orders', 'smoke-products', 'smoke-settings', 'smoke-reviews', 'smoke-pigments', 'smoke-auth'];
+// בדיקות ה-unit רצות ראשונות: הן אינן נוגעות ברשת או במסד, ולכן נותנות
+// את סימן הכישלון המהיר ביותר אם משהו בסיסי שבור — ובראשן השמירה
+// שאף סוד לא נכנס לגיט.
+const SUITES = ['unit-repo-hygiene', 'unit-config', 'unit-order-service', 'unit-product-service', 'unit-review-service', 'unit-money', 'unit-originals', 'smoke-fresh-db', 'smoke-static', 'smoke-orders', 'smoke-products', 'smoke-settings', 'smoke-reviews', 'smoke-pigments', 'smoke-auth'];
 
 /** מריץ חבילה אחת כתהליך נפרד ומחזיר את קוד היציאה. */
 function runSuite(name, baseUrl) {

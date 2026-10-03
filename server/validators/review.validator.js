@@ -172,6 +172,5 @@ function parseListQuery(query = {}, { allowApproved = false } = {}) {
 }
 
 module.exports = {
-  parseCreate, parseUpdate, parseApprove, parseListQuery,
-  TYPES, EDITABLE, SORTABLE,
+  parseCreate, parseUpdate, parseApprove, parseListQuery, EDITABLE, SORTABLE,
 };

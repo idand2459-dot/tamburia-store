@@ -296,4 +296,4 @@ function parseListQuery(query = {}) {
   return options;
 }
 
-module.exports = { parseCreate, parseUpdate, parseListQuery, WRITABLE, SORTABLE };
+module.exports = { parseCreate, parseUpdate, parseListQuery, SORTABLE };

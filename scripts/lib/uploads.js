@@ -65,4 +65,4 @@ function uploadName(id, index, contents) {
   return `product-${slot}-${hash}.webp`;
 }
 
-module.exports = { UPLOADS_DIR, urlToPath, fileExists, pathToUrl, uploadName };
+module.exports = { UPLOADS_DIR, fileExists, pathToUrl, uploadName };

@@ -85,9 +85,8 @@
   gap: 8px;
 }
 
-/* One rule, no !important: the two extra .navbar-brand blocks that used to sit
-   at the bottom of this file (and needed !important to beat this one) are
-   folded in here. */
+/* The one .navbar-brand rule — keep it single, so nothing needs !important
+   to beat it. */
 .navbar-brand {
   background: none;
   border: none;

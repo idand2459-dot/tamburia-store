@@ -16,6 +16,7 @@ import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import Admin from '../pages/admin/Admin';
 import AdminLogin from '../pages/AdminLogin';
 import { ADMIN_TAB_IDS } from '../pages/admin/adminConstants';
+import { isLoggedIn, logout } from '../services/authService';
 
 /** מציג את אזור הניהול למי שמחובר, ומסך התחברות לכל השאר. */
 function AdminRoute() {
@@ -25,15 +26,13 @@ function AdminRoute() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/auth/me')
-      .then((res) => { if (!cancelled) setAuth(res.ok ? 'in' : 'out'); })
-      .catch(() => { if (!cancelled) setAuth('out'); });
+    isLoggedIn().then((ok) => { if (!cancelled) setAuth(ok ? 'in' : 'out'); });
     return () => { cancelled = true; };
   }, []);
 
   /** מנתק ומחזיר לחנות. */
   async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    await logout();
     setAuth('out');
     navigate('/');
   }

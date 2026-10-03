@@ -3,6 +3,7 @@
  */
 import { useState } from 'react';
 import { Lock } from 'lucide-react';
+import { login, ApiError } from '../services/authService';
 
 /** מציג את טופס הכניסה ושולח את הסיסמה לשרת. */
 function AdminLogin({ onLogin }) {
@@ -26,21 +27,10 @@ function AdminLogin({ onLogin }) {
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      });
-
-      if (res.ok) {
-        onLogin();
-        return;
-      }
-
-      const body = await res.json().catch(() => ({}));
-      fail(body.error || 'סיסמה שגויה — נסה שוב');
-    } catch {
-      fail('אין חיבור לשרת — נסה שוב');
+      await login(password);
+      onLogin();
+    } catch (error) {
+      fail(error instanceof ApiError ? error.message : 'אין חיבור לשרת — נסה שוב');
     } finally {
       setSubmitting(false);
     }

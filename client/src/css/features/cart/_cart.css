@@ -4,7 +4,7 @@
 
    The shipping picker is _delivery-options.css and the details
    form is _checkout-form.css; all three are steps of the same
-   flow, rendered by components/cart/ inside the shared
+   flow, rendered by js/features/cart/ inside the shared
    components/_drawer.css panel.
 
    .cart-cta is here rather than in components/_buttons.css

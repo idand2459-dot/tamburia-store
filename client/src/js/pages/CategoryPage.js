@@ -1,69 +1,203 @@
 /**
- * מקטע הקטגוריות בדף הבית: רשת כרטיסי הקטגוריות.
+ * עמוד קטגוריה: /category/:slug
  *
- * למרות השם, זה לא עמוד הקטגוריה (זה CategoryView) — זה המקטע שמופיע
- * בדף הבית מתחת ל-Hero, ולכן המחלקות נקראות category-section.
+ * ה-slug הוא מזהה הקטגוריה מ-categories.js. slug שאינו מוכר מוצג
+ * כ-404 ולא כעמוד ריק. תת-הקטגוריה נשמרת ב-query (?sub=), כך שגם
+ * סינון אפשר לשתף בקישור; החיפוש והמיון נשארו מצב מקומי, כי הם
+ * משתנים בכל הקלדה והיו מציפים את היסטוריית הדפדפן.
+ *
+ * מבנה העמוד: באנר תצלום למעלה, ומתחתיו אזור קנייה בהיר — סרגל סינון
+ * בצד ההתחלה (צ'יפים בטלפון), שורת כלים ורשת המוצרים.
  */
+import { useState, useEffect, useMemo } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { PackageSearch, X, Phone } from 'lucide-react';
 import categories from '../features/catalog/categories';
-import CATEGORY_ICONS from '../utils/categoryIcons';
-import Reveal, { stagger } from '../components/Reveal';
-import { ArrowLeft } from 'lucide-react';
+import CategoryBanner from '../features/catalog/CategoryBanner';
+import CategoryFilters from '../features/catalog/CategoryFilters';
+import CategoryToolbar from '../features/catalog/CategoryToolbar';
+import NotFoundPage from './NotFoundPage';
+import ProductList from '../components/ProductList';
+import { PHONES } from '../utils/storeInfo';
+import { useStore } from '../context/storeContext';
+import { getProducts, isAbortError } from '../services/productService';
+import { usePageTitle } from '../hooks/usePageTitle';
 
-/** מציג את כל הקטגוריות ככרטיסים לבנים על מקטע בהיר. */
-function CategoryPage({ onSelectCategory }) {
+const SORT_OPTIONS = [
+  { value: 'default', label: 'ברירת מחדל' },
+  { value: 'price-asc', label: 'מחיר ↑' },
+  { value: 'price-desc', label: 'מחיר ↓' },
+  { value: 'name', label: 'א-ב' },
+  { value: 'instock', label: 'במלאי קודם' },
+];
+
+/** מציג את מוצרי הקטגוריה, עם חיפוש, מיון וסינון תת-קטגוריה. */
+function CategoryPage() {
+  const { slug } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { addToCart, wishlistIds, toggleCardWishlist } = useStore();
+
+  const category = categories.find((c) => c.id === slug);
+  // קטגוריה שלא קיימת מוצגת כ-404, ושם הכותרת צריכה להגיד את זה:
+  // האפקט של ההורה רץ אחרי זה של NotFoundPage, וידרוס אותו.
+  usePageTitle(category ? category.name : 'העמוד לא נמצא');
+  const selectedSubcategory = searchParams.get('sub');
+
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('default');
+
+  useEffect(() => {
+    if (!category) return;
+    const controller = new AbortController();
+
+    setLoading(true);
+    setSearchQuery('');
+    setSortBy('default');
+
+    // הסינון לפי קטגוריה נעשה בשרת ולא כאן. בלי limit במכוון — העמוד
+    // הזה מציג את כל מוצרי הקטגוריה ולא תצוגה מקוצרת שלהם.
+    // החיפוש והמיון שלמטה נשארים בצד הלקוח: הם פועלים על הקבוצה
+    // הקטנה שכבר נשלפה, וזה שימוש לגיטימי בסינון מקומי.
+    getProducts({ category: category.id, signal: controller.signal })
+      .then(({ products: list }) => {
+        setProducts(list);
+        setLoading(false);
+      })
+      // ביטול אינו כישלון: המעבר לקטגוריה אחרת כבר הדליק טעינה
+      // מחדש, וכיבוי שלה כאן היה מציג רשת ריקה עד שהבקשה החדשה תחזור.
+      .catch((err) => { if (!isAbortError(err)) setLoading(false); });
+
+    return () => controller.abort();
+  }, [category]);
+
+  // מספר המוצרים בכל תת-קטגוריה, מתוך מה שנשלף. מחושב פעם אחת לכל
+  // שליפה ולא בכל הקלדה בחיפוש.
+  const subcategoryCounts = useMemo(() => {
+    const counts = {};
+    products.forEach((p) => {
+      if (p.subcategory) counts[p.subcategory] = (counts[p.subcategory] || 0) + 1;
+    });
+    return counts;
+  }, [products]);
+
+  /* ?sub= שמצביע על תת-קטגוריה בלי מוצרים — שאינה מוצגת בסרגל, ואולי
+     כבר לא קיימת — חוזר בשקט ל"הכל" (replace, לא עוד כניסה ב"חזור").
+     רק אחרי הטעינה: לפניה כל תת-קטגוריה נראית ריקה. */
+  const subIsEmpty = Boolean(selectedSubcategory) && !loading && !subcategoryCounts[selectedSubcategory];
+  useEffect(() => {
+    if (!subIsEmpty) return;
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('sub');
+      return next;
+    }, { replace: true });
+  }, [subIsEmpty, setSearchParams]);
+
+  if (!category) return <NotFoundPage />;
+
+  /** מחליף תת-קטגוריה, ומחליף את רשומת ההיסטוריה כדי לא להציף אותה. */
+  function selectSubcategory(id) {
+    const next = new URLSearchParams(searchParams);
+    if (id) next.set('sub', id);
+    else next.delete('sub');
+    setSearchParams(next, { replace: true });
+  }
+
+  const activeSubcategory = subIsEmpty ? null : selectedSubcategory;
+
+  const filtered = products
+    .filter((p) => !activeSubcategory || p.subcategory === activeSubcategory)
+    .filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  const hasFilters = Boolean(searchQuery || activeSubcategory);
+
+  /** מנקה את החיפוש ואת הסינון, מהמצב הריק. */
+  function clearFilters() {
+    setSearchQuery('');
+    selectSubcategory(null);
+  }
+
+  const sorted = (() => {
+    switch (sortBy) {
+      case 'price-asc':  return [...filtered].sort((a, b) => a.price - b.price);
+      case 'price-desc': return [...filtered].sort((a, b) => b.price - a.price);
+      case 'name':       return [...filtered].sort((a, b) => a.name.localeCompare(b.name, 'he'));
+      case 'instock':    return [...filtered].sort((a, b) => (b.in_stock !== false ? 1 : 0) - (a.in_stock !== false ? 1 : 0));
+      default:           return filtered;
+    }
+  })();
+
   return (
-    <section className="category-section">
-      <div className="category-section-inner">
-        <Reveal as="div" variant="up" className="category-header">
-          <span className="section-pill section-pill--light">קטגוריות</span>
-          <h2 className="category-title">מה אתם <span>מחפשים?</span></h2>
-          <p className="category-subtitle">
-            {categories.length} קטגוריות · מאות מוצרים לבית ולעבודה
-          </p>
-        </Reveal>
+    <>
+      <CategoryBanner category={category} productCount={loading ? null : products.length} />
 
-        <div className="categories-grid">
-          {categories.map((category, i) => {
-            const Icon = CATEGORY_ICONS[category.id];
-            const open = () => onSelectCategory(category);
-            /* div עם role="link" לא מקבל הפעלה מהמקלדת בחינם, ולכן Enter
-               ו-Space מטופלים כאן במפורש. */
-            const onKeyDown = (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                open();
-              }
-            };
-            return (
-              /* הכרטיס עצמו הוא אלמנט החשיפה ולא div סביבו — wrapper היה הופך
-                 להיות פריט הרשת ושובר את המידות של הכרטיס. */
-              <Reveal
-                as="div"
-                variant="tilt"
-                delay={stagger(i)}
-                key={category.id}
-                className="category-card"
-                role="link"
-                tabIndex={0}
-                onClick={open}
-                onKeyDown={onKeyDown}
-              >
-                <span className="category-icon">
-                  {Icon && <Icon size={28} strokeWidth={1.75} aria-hidden="true" />}
-                </span>
-                <span className="category-name">{category.name}</span>
-                {category.subcategories?.length > 0 && (
-                  <span className="category-sub-hint">
-                    {category.subcategories.slice(0, 3).map(s => s.name).join(' · ')}
+      <div className="category-page">
+        <div className="category-layout">
+          {category.subcategories?.length > 0 && (
+            <CategoryFilters
+              subcategories={category.subcategories}
+              counts={subcategoryCounts}
+              total={products.length}
+              selected={activeSubcategory}
+              onSelect={selectSubcategory}
+            />
+          )}
+
+          <div className="category-main">
+            <CategoryToolbar
+              count={sorted.length}
+              loading={loading}
+              searchQuery={searchQuery}
+              onSearch={setSearchQuery}
+              sortBy={sortBy}
+              onSort={setSortBy}
+              sortOptions={SORT_OPTIONS}
+            />
+
+            {/* כותרת לקורא המסך: כרטיסי המוצר הם h3, ובטלפון כותרת תתי-
+                הקטגוריות מוסתרת — בלי זו הם היו יושבים ישר מתחת ל-h1. */}
+            <h2 className="visually-hidden">מוצרים</h2>
+
+            <ProductList
+              products={sorted}
+              loading={loading}
+              categoryIdFor={() => category.id}
+              onAddToCart={addToCart}
+              wishlistIds={wishlistIds}
+              onToggleWishlist={toggleCardWishlist}
+              reveal
+              emptyState={(
+                <div className="product-grid-empty">
+                  <span className="product-grid-empty-icon">
+                    <PackageSearch size={30} strokeWidth={1.5} aria-hidden="true" />
                   </span>
-                )}
-                <ArrowLeft className="category-arrow" size={18} aria-hidden="true" />
-              </Reveal>
-            );
-          })}
+                  <h2>לא נמצאו מוצרים</h2>
+                  <p>
+                    {hasFilters
+                      ? 'אף מוצר בקטגוריה הזו לא מתאים לחיפוש ולסינון הנוכחיים.'
+                      : 'הקטגוריה הזו עדיין מתמלאת. בחנות יש הרבה יותר ממה שהאתר מספיק להציג.'}
+                  </p>
+                  <div className="product-grid-empty-actions">
+                    {/* מוצג רק כשיש מה לנקות: בקטגוריה ריקה באמת הכפתור הזה
+                        לא היה משנה כלום */}
+                    {hasFilters && (
+                      <button type="button" onClick={clearFilters}>
+                        <X size={15} aria-hidden="true" /> נקה חיפוש וסינון
+                      </button>
+                    )}
+                    <a href={`tel:${PHONES.store.tel}`}>
+                      <Phone size={15} aria-hidden="true" /> להתייעצות: {PHONES.store.display}
+                    </a>
+                  </div>
+                </div>
+              )}
+            />
+          </div>
         </div>
       </div>
-    </section>
+    </>
   );
 }
 

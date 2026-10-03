@@ -5,13 +5,13 @@
 import { useState, useEffect, useRef, Fragment } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Crown, Star, ArrowDown, PaintRoller } from 'lucide-react';
-import CategoryPage from './CategoryPage';
-import WhyUs from '../components/WhyUs';
-import PaintCalculator from '../features/calculator/PaintCalculator';
-import ProjectCalculator from '../features/calculator/ProjectCalculator';
-import FeaturesBanner from '../components/FeaturesBanner';
+import CategoryGrid from '../features/home/CategoryGrid';
+import WhyUs from '../features/home/WhyUs';
+import PaintCalculator from '../features/calculators/PaintCalculator';
+import ProjectCalculator from '../features/calculators/ProjectCalculator';
+import FeaturesBanner from '../features/home/FeaturesBanner';
 import ReviewsCarousel from '../features/catalog/ReviewsCarousel';
-import FAQ from './FAQ';
+import FAQ from '../features/home/FAQ';
 import Reveal from '../components/Reveal';
 import { useStore } from '../context/storeContext';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -164,7 +164,7 @@ function HomePage() {
           שלה: אזור החלוקה, איסוף באותו יום, 30 שנה וייעוץ מקצועי הם מה
           שמבקר רוצה לדעת בשניות הראשונות. */}
       <Reveal variant="up"><FeaturesBanner /></Reveal>
-      <CategoryPage onSelectCategory={(category) => navigate(`/category/${category.id}`)} />
+      <CategoryGrid onSelectCategory={(category) => navigate(`/category/${category.id}`)} />
       <WhyUs />
       <Reveal variant="up"><PaintCalculator addBundleToCart={addBundleToCart} /></Reveal>
       {/* ProjectCalculator מחשיף את עצמו ב-IntersectionObserver משלו — עטיפה

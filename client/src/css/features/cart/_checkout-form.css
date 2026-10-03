@@ -6,13 +6,9 @@
    .cart-cta from _cart.css, in the drawer's sticky foot, so
    there is no button of its own here.
 
-   Everything in this file is new prefixing: .order-form and its
-   .order-field / .order-back-btn / .order-summary-mini children
-   are gone, and so is .input-error — the one selector on the
-   site that needed two !important declarations to beat the field
-   styling above it. The invalid address field is
-   .checkout-field input.is-invalid now — a second class on the
-   same element, which wins on specificity alone.
+   The invalid address field is .checkout-field input.is-invalid —
+   a second class on the same element, which beats the field
+   styling on specificity alone, with no !important.
    ========================================================== */
 
 /* ---- Block --------------------------------------------------------------- */

@@ -11,24 +11,37 @@
  * והביקורת נעלמה בלי שאיש ידע. createReview זורקת, ושני הטפסים
  * מציגים את ההודעה ונשארים פתוחים עם מה שהלקוח כתב.
  */
-import { buildUrl, postJson } from './http';
+import { ApiError, buildUrl, getJson, postJson } from './http';
 
 /**
  * GET /api/reviews — חוות דעת, על החנות או על מוצר.
  *
- * תשובה שאינה מערך מוחזרת כמערך ריק ולא מגיעה לרכיב: שני הקוראים
- * מריצים map על מה שחוזר, ואין להם מצב שגיאה משלהם.
+ * תשובה שאינה מערך, או שגיאה מהשרת, מוחזרת כמערך ריק ולא מגיעה לרכיב:
+ * שני הקוראים מריצים map על מה שחוזר, ואין להם מצב שגיאה משלהם. תקלת
+ * רשת וביטול עדיין נזרקים, והקוראים מטפלים בהם ב-catch.
  */
 export async function getReviews({ type, productId, signal } = {}) {
-  const res = await fetch(buildUrl('/api/reviews', { type, product_id: productId }), { signal });
-  const data = await res.json();
-  return Array.isArray(data) ? data : [];
+  try {
+    const data = await getJson(buildUrl('/api/reviews', { type, product_id: productId }), { signal });
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    if (error instanceof ApiError) return [];
+    throw error;
+  }
 }
 
-/** GET /api/reviews/stats — ממוצע הדירוג ומספר חוות הדעת. */
+/**
+ * GET /api/reviews/stats — ממוצע הדירוג ומספר חוות הדעת.
+ *
+ * שגיאה מהשרת מחזירה null: הכרזה מציגה דירוג רק כשיש total חיובי.
+ */
 export async function getReviewStats({ signal } = {}) {
-  const res = await fetch('/api/reviews/stats', { signal });
-  return res.json();
+  try {
+    return await getJson('/api/reviews/stats', { signal });
+  } catch (error) {
+    if (error instanceof ApiError) return null;
+    throw error;
+  }
 }
 
 /**
