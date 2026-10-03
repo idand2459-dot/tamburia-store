@@ -18,7 +18,6 @@
     "products:hide-unphotographed": "node scripts/products-hide-unphotographed.js",
     "products:new-template": "node scripts/products-new-template.js",
     "products:import-new": "node scripts/products-import-new.js",
-    "images:square-uploads": "node scripts/images-square-uploads.js",
     "a11y": "node scripts/a11y-audit.js"
   },
   "repository": {
