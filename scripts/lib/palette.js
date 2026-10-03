@@ -88,4 +88,4 @@ function parseColors(raw) {
     .map((name) => ({ name, hex: hexFor(name) }));
 }
 
-module.exports = { load, parseColors, SOURCE };
+module.exports = { load, hexFor, parseColors, SOURCE };
