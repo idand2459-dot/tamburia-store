@@ -8,7 +8,7 @@
 const Order = require('../models/order.model');
 const { priceOrder } = require('./pricing.service');
 const mailer = require('./email');
-const { broadcast } = require('./realtime');
+const { broadcast } = require('./realtime.service');
 const {
   assertDeliveryCityAllowed, assertDeliveryAddressPresent,
   assertStatusFitsDeliveryMethod,

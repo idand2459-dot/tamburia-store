@@ -1,6 +1,17 @@
 /**
- * כללי המוצר שדורשים יותר מהבקשה עצמה: מחיקה (הזמנות, ביקורות,
- * תמונות) ותת-קטגוריה (מול הקטגוריה של המוצר הקיים).
+ * כללי המוצר: מי רואה מוצר מוסתר, מחיקה (הזמנות, ביקורות, תמונות),
+ * ותת-קטגוריה (מול הקטגוריה של המוצר הקיים).
+ *
+ * מוצר מוסתר (active = false) הוא מוצר שאינו על המדף. עבור הלקוח הוא
+ * פשוט אינו קיים: לא ברשימה, לא בחיפוש, ובעמוד שלו 404. ההחלטה תלויה
+ * במי שואל, ולכן הקונטרולר מעביר לכאן isAdmin (מ-markAdmin) והכלל
+ * עצמו יושב כאן.
+ *
+ * לאדמין זו אינה הרשאה אלא בקשה: גם הוא מקבל מוצרים גלויים בלבד אלא
+ * אם ביקש ?active=all או ?active=false במפורש. אחרת, אדמין עם חיבור
+ * פתוח שגולש בחנות היה רואה בה מוצרים שהוא בעצמו הסתיר. היוצא מן הכלל
+ * הוא מוצר בודד: טופס העריכה טוען לפי id, ובלי החריג הזה לא היה אפשר
+ * להחזיר מוצר מוסתר לחנות.
  *
  * מחיקת מוצר: מה מותר למחוק, ומה נמחק איתו.
  *
@@ -23,6 +34,46 @@ const { notFound, conflict, badRequest } = require('../utils/AppError');
 const { load: loadCategories, isSubcategoryOf } = require('../utils/categories');
 
 const HAS_ORDERS_MESSAGE = 'למוצר יש הזמנות, ולכן אי אפשר למחוק אותו. אפשר להסתיר אותו מהחנות';
+
+// ───────────────────────────── קריאה ─────────────────────────────
+
+/**
+ * מחזיר { products, total }; total רק כשהתבקש דפדוף.
+ *
+ * activeRequested הוא מה שנשלח ב-?active, ו-active הוא מה שהמודל יסנן
+ * לפיו. הראשון לא נכנס למודל: הוא נועד רק להכרעה כאן.
+ */
+async function listProducts({ activeRequested, ...options }, { isAdmin = false } = {}) {
+  const filters = { ...options };
+  if (!isAdmin || activeRequested === undefined) filters.active = true;
+
+  const products = await Product.list(filters);
+  const paged = filters.limit !== undefined || filters.offset !== undefined;
+  const total = paged ? await Product.count(filters) : undefined;
+  return { products, total };
+}
+
+/**
+ * מוצר בודד, או 404. אותה 404 בדיוק למוצר שאינו קיים ולמוצר מוסתר
+ * שאדמין לא ביקש: הבחנה ביניהן הייתה מספרת אילו מזהים קיימים במסד.
+ */
+async function getProduct(id, { isAdmin = false } = {}) {
+  const product = await Product.findById(id);
+  if (!product || (!product.active && !isAdmin)) {
+    throw notFound(`מוצר ${id} לא נמצא`);
+  }
+  return product;
+}
+
+/**
+ * הקטגוריות הקיימות וכמות המוצרים בכל אחת — הגלויים בלבד, לכל מי
+ * ששואל: הספירה מתארת מה יש בחנות. מסך הניהול סופר בעצמו מהרשימה.
+ */
+function listCategories() {
+  return Product.listCategories({ activeOnly: true });
+}
+
+// ───────────────────────────── מחיקה ─────────────────────────────
 
 /** כתובות התמונה של המוצר שיושבות ב-/uploads, בלי כפילויות. */
 function uploadedImagesOf(product) {
@@ -130,15 +181,23 @@ async function createProduct(data) {
   return Product.create(checkNewSubcategory(data));
 }
 
-/** מעדכן מוצר אחרי בדיקת תת-הקטגוריה מול הקיים. */
+/** מעדכן מוצר אחרי בדיקת תת-הקטגוריה מול הקיים, או 404. */
 async function updateProduct(id, data) {
   const touchesCategory = ['subcategory', 'category']
     .some((field) => Object.prototype.hasOwnProperty.call(data, field));
-  if (!touchesCategory) return Product.update(id, data);
 
-  const existing = await Product.findById(id);
-  if (!existing) return null;
-  return Product.update(id, checkSubcategoryUpdate(data, existing));
+  let product;
+  if (!touchesCategory) {
+    product = await Product.update(id, data);
+  } else {
+    const existing = await Product.findById(id);
+    product = existing ? await Product.update(id, checkSubcategoryUpdate(data, existing)) : null;
+  }
+
+  if (!product) throw notFound(`מוצר ${id} לא נמצא`);
+  return product;
 }
 
-module.exports = { removeProduct, createProduct, updateProduct };
+module.exports = {
+  listProducts, getProduct, listCategories, createProduct, updateProduct, removeProduct,
+};
