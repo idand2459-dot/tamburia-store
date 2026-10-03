@@ -3,7 +3,7 @@
  * הציבוריים שמראים לאדמין יותר ממה שהם מראים ללקוח.
  */
 const config = require('../config/env');
-const { verifyToken, readCookie } = require('../services/auth');
+const { verifyToken, readCookie } = require('../services/auth.service');
 const { AppError } = require('../utils/AppError');
 
 /** מאמת את עוגיית ההתחברות, ומחזיר 401 אם אינה תקפה. */

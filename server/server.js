@@ -6,7 +6,7 @@ const config = require('./config/env');
 const db = require('./config/db');
 const { runMigrations } = require('./db/migrate');
 const { createApp } = require('./app');
-const { attachRealtime } = require('./services/realtime');
+const { attachRealtime } = require('./services/realtime.service');
 
 /** מעלה את השרת לפי הסדר: מסד, מיגרציות, ואז קבלת בקשות. */
 async function start() {
