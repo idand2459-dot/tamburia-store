@@ -16,8 +16,8 @@ import { useCheckoutForm } from './hooks/useCheckoutForm';
 import { useAvailability } from './hooks/useAvailability';
 import StoreLayout from './StoreLayout';
 import HomePage from './pages/HomePage';
-import CategoryView from './features/catalog/CategoryView';
-import ProductView from './features/catalog/ProductView';
+import CategoryPage from './pages/CategoryPage';
+import ProductPage from './pages/ProductPage';
 import AdminRoute from './routes/AdminRoute';
 import NotFoundPage from './pages/NotFoundPage';
 import About from './pages/About';
@@ -53,8 +53,8 @@ function App() {
       <Routes>
         <Route element={<StoreLayout />}>
           <Route index element={<HomePage />} />
-          <Route path="category/:slug" element={<CategoryView />} />
-          <Route path="product/:id" element={<ProductView />} />
+          <Route path="category/:slug" element={<CategoryPage />} />
+          <Route path="product/:id" element={<ProductPage />} />
           <Route path="about" element={<About />} />
           <Route path="contact" element={<Contact />} />
           <Route path="returns" element={<Returns />} />

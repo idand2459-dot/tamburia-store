@@ -1,306 +1,71 @@
 /**
- * עמוד המוצר: מרכיב את הגלריה, הבוררים, חוות הדעת והמוצרים הדומים.
+ * עמוד מוצר: /product/:id
  *
- * כאן נשאר רק מה שיותר מחלק אחד צריך: הגרסה, הצבע והמידה שנבחרו
- * (כי מהם מורכב הפריט שנכנס לעגלה), הכמות — שגם שורת הקנייה וגם הפס
- * הצף בטלפון מוסיפים לפיה — מצב ההוספה והמועדפים, השליפות, והאיפוס
- * במעבר בין מוצרים. כל חלק שמחזיק state שרק הוא צריך — התמונה
- * המוצגת בגלריה, מצב טופס הביקורת — מחזיק אותו בעצמו.
+ * זה המסך שהופך קישור ישיר לאפשרי. קודם המוצר הועבר כאובייקט
+ * מהרשימה, ולכן פתיחת הכתובת ישירות לא הייתה יכולה לעבוד. כאן
+ * המוצר נטען לפי המזהה מ-GET /api/products/:id, כך ש-/product/123
+ * עובד גם בטאב חדש, גם ברענון וגם בשיתוף הקישור.
  *
- * הבדיקה שלפני ההוספה לעגלה לא פותחת יותר alert של הדפדפן: היא
- * מסמנת איזה בורר חסר (missing) ומעבירה אליו את המיקוד, והבורר עצמו
- * מציג את השורה האדומה.
+ * אין כאן יותר פונקציית "חזור": כפתור החזרה הכבד שמעל המוצר הוחלף
+ * בשביל ניווט, וחוליית הקטגוריה שבו היא בדיוק מה שאותה פונקציה
+ * עשתה בקישור ישיר — /category/:id. מחוות ה"חזור" של הדפדפן עובדת
+ * כתמיד, היא לא הייתה שלנו מלכתחילה. גם המעבר למוצר אחר אינו עובר
+ * יותר כאן: הכרטיסים שבתחתית העמוד הם קישורים אמיתיים.
  */
-import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { Check, Share2 } from 'lucide-react';
-import { toggleWishlist, isInWishlist } from '../utils/wishlistUtils';
-import categories from '../features/catalog/categories';
-import ProductBreadcrumb from '../features/catalog/product-page/ProductBreadcrumb';
-import ProductGallery from '../features/catalog/product-page/ProductGallery';
-import ProductVariantSelector from '../features/catalog/product-page/ProductVariantSelector';
-import ProductBuyRow from '../features/catalog/product-page/ProductBuyRow';
-import ProductTrustRow from '../features/catalog/product-page/ProductTrustRow';
-import ProductBuyBar from '../features/catalog/product-page/ProductBuyBar';
-import ProductReviewsSection from '../features/catalog/product-page/ProductReviewsSection';
-import RelatedProducts from '../features/catalog/product-page/RelatedProducts';
-import Stars from '../features/catalog/product-page/Stars';
-import { averageRating } from '../utils/rating';
-import { selectedPrice, NO_PRICE_LABEL, formatPrice } from '../utils/pricing';
-import { getProducts, isAbortError } from '../services/productService';
-import { getReviews } from '../services/reviewService';
-import { usePageTitle } from '../hooks/usePageTitle';
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import ProductDetails from '../features/catalog/product-page/ProductDetails';
+import NotFoundPage from './NotFoundPage';
+import { ProductCardSkeleton } from '../components/LoadingStates';
+import { useStore } from '../context/storeContext';
+import { getProduct, isAbortError } from '../services/productService';
 
-const MAX_RECENT = 6;
-const MAX_RELATED = 4;
+/** טוען את המוצר לפי המזהה שבכתובת ומציג אותו. */
+function ProductPage() {
+  const { id } = useParams();
+  const { addToCart } = useStore();
 
-/* כמה זמן הכפתור מראה "נוסף לעגלה". מספיק כדי להיראות, קצר מכדי
-   להיראות כמו מצב תקוע — בערך כמו כרטיס המוצר ברשת. */
-const ADDED_MS = 1500;
+  const [product, setProduct] = useState(null);
+  const [status, setStatus] = useState('loading'); // loading | ready | missing
 
-/** קורא את רשימת המוצרים שנצפו לאחרונה. */
-function getRecentlyViewed() {
-  try { return JSON.parse(localStorage.getItem('tamburia-recent')) || []; }
-  catch { return []; }
-}
-
-/** מוסיף מוצר לראש רשימת הנצפים לאחרונה. */
-function addToRecentlyViewed(product) {
-  const recent = getRecentlyViewed().filter(p => p.id !== product.id);
-  const updated = [{ id: product.id, name: product.name, price: product.price, image_url: product.image_url, in_stock: product.in_stock, category: product.category }, ...recent].slice(0, MAX_RECENT);
-  localStorage.setItem('tamburia-recent', JSON.stringify(updated));
-}
-
-/**
- * מדווח כשהאלמנט שב-ref יצא מהמסך.
- *
- * זה מה שמחליט אם הפס הצף בטלפון מוצג. בדפדפן בלי IntersectionObserver
- * התשובה נשארת "בתוך המסך", כלומר הפס פשוט לא יופיע — כפתור ההוספה
- * האמיתי תמיד שם, וה-CSS מציג את הפס רק בטלפון בכל מקרה.
- */
-function useOutOfView(ref, resetKey) {
-  const [outOfView, setOutOfView] = useState(false);
-
-  useEffect(() => {
-    setOutOfView(false);
-    const element = ref.current;
-    if (!element || typeof IntersectionObserver !== 'function') return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setOutOfView(!entry.isIntersecting),
-    );
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [ref, resetKey]);
-
-  return outOfView;
-}
-
-/** מציג את עמוד המוצר. */
-function ProductPage({ product, onAddToCart }) {
-  usePageTitle(product.name);
-  const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
-  const [selectedColor, setSelectedColor] = useState(null);
-  const [selectedSize, setSelectedSize] = useState(null);
-  const [selectedVariant, setSelectedVariant] = useState(hasVariants ? product.variants[0] : null);
-  const [quantity, setQuantity] = useState(1);
-  const [missing, setMissing] = useState(null);
-  const [relatedProducts, setRelatedProducts] = useState([]);
-  const [addedToCart, setAddedToCart] = useState(false);
-  const [reviews, setReviews] = useState([]);
-  const [recentlyViewed, setRecentlyViewed] = useState([]);
-  const [inWishlist, setInWishlist] = useState(false);
-
-  const addBtnRef = useRef(null);
-  const reviewsRef = useRef(null);
-  const variantRef = useRef(null);
-  const colorRef = useRef(null);
-  const sizeRef = useRef(null);
-  const addedTimer = useRef(null);
-
-  const inStock = product.in_stock !== false;
-  const category = categories.find(c => c.id === product.category);
-  // null כשהמחיר במסד הוא 0, ואז אין מה להוסיף לעגלה אלא להתקשר
-  // ולשאול. הכלל ב-utils/pricing.js, והשרת אוכף אותו שוב ביצירת ההזמנה.
-  const price = selectedPrice(product, selectedVariant);
-  const showBuyBar = useOutOfView(addBtnRef, product.id);
-
-  useEffect(() => () => clearTimeout(addedTimer.current), []);
-
-  /*
-   * המעבר בין שני מוצרים הוא מרוץ בין שתי שליפות, וכאן הוא נסגר משני
-   * צדדיו. AbortController מבטל את הבקשות של המוצר הקודם, כדי שתשובה
-   * איטית שלו לא תדרוס את הנוכחי — הקישורים בתחתית העמוד מחליפים מוצר
-   * בלי לפרק את הרכיב, ולכן זה אינו מקרה קצה אלא הניווט הרגיל כאן.
-   * הריקון שלמטה סוגר את הצד השני של אותו חור: בלעדיו העמוד היה מציג
-   * את הביקורות ואת המוצרים הקשורים של המוצר הקודם, מה-state, כל עוד
-   * הבקשות החדשות בדרך.
-   */
   useEffect(() => {
     const controller = new AbortController();
+    setStatus('loading');
+    setProduct(null);
 
-    setSelectedColor(null); setSelectedSize(null); setAddedToCart(false);
-    setQuantity(1); setMissing(null);
-    setSelectedVariant(hasVariants ? product.variants[0] : null);
-    setRelatedProducts([]); setReviews([]);
-
-    addToRecentlyViewed(product);
-    setRecentlyViewed(getRecentlyViewed().filter(p => p.id !== product.id));
-    setInWishlist(isInWishlist(product.id));
-
-    // הסינון לפי קטגוריה נעשה בשרת ולא כאן. קודם נשלף כל הקטלוג רק
-    // כדי למצוא ארבעה מוצרים — חמישה מבוקשים כדי שאפשר יהיה להוציא את
-    // המוצר הנוכחי ועדיין להישאר עם ארבעה. שתי צורות התשובה של השרת
-    // כבר אינן עניינו של העמוד הזה — productService מנרמל אותן.
-    getProducts({ category: product.category, limit: MAX_RELATED + 1, signal: controller.signal })
-      .then(({ products: list }) => {
-        setRelatedProducts(list.filter(p => p.id !== product.id).slice(0, MAX_RELATED));
-      })
-      // שליפה שנכשלה מסתירה את המקטע. ביטול אינו כישלון, והרשימה
-      // ממילא כבר רוקנה — שם הבעלות עברה לבקשה של המוצר החדש.
-      .catch((err) => { if (!isAbortError(err)) setRelatedProducts([]); });
-
-    getReviews({ type: 'product', productId: product.id, signal: controller.signal })
-      .then(setReviews).catch(() => {});
-
-    return () => controller.abort();
-    // רק מעבר למוצר אחר מאפס את הבחירות ומושך מחדש. אותו מוצר שחזר כאובייקט
-    // חדש (רענון ברקע) אסור שימחק ללקוח צבע ומידה שכבר בחר.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [product.id]);
-
-  /** מחזיר את שם הבורר הראשון שחסרה בו בחירה, או null. */
-  function firstMissingChoice() {
-    if (hasVariants && !selectedVariant) return 'variant';
-    if (product.colors && product.colors.length > 0 && !selectedColor) return 'color';
-    if (product.sizes && product.sizes.length > 0 && !selectedSize) return 'size';
-    return null;
-  }
-
-  /** מוסיף את המוצר לעגלה לאחר בחירת הגרסה, הצבע והמידה. */
-  function handleAddToCart() {
-    if (price === null) return;
-
-    const missingChoice = firstMissingChoice();
-    if (missingChoice) {
-      setMissing(missingChoice);
-      const focusTarget = { variant: variantRef, color: colorRef, size: sizeRef }[missingChoice];
-      focusTarget.current?.focus();
-      return;
+    // מזהה שאינו מספר חוסך פנייה לשרת.
+    if (!/^\d+$/.test(id)) {
+      setStatus('missing');
+      return undefined;
     }
 
-    const variantLabel = selectedVariant ? selectedVariant.label : null;
-    onAddToCart({ ...product, price, selectedColor, selectedSize, selectedVariant: variantLabel }, quantity);
-    setAddedToCart(true);
-    clearTimeout(addedTimer.current);
-    addedTimer.current = setTimeout(() => setAddedToCart(false), ADDED_MS);
-  }
+    getProduct(id, { signal: controller.signal })
+      .then((data) => {
+        setProduct(data);
+        setStatus('ready');
+      })
+      // כל כישלון שאינו ביטול מוביל לאותו מסך: 404 מהשרת, תקלה בו
+      // או רשת שנפלה. isNotFound קיים בשירות למי שיצטרך להפריד,
+      // אבל כאן אין לקורא מה לעשות עם ההבדל.
+      .catch((err) => { if (!isAbortError(err)) setStatus('missing'); });
 
-  /** משתף את המוצר בוואטסאפ. */
-  function handleShare() {
-    const url = window.location.href;
-    // מוצר בלי מחיר לא משתתף עם ₪0 בוואטסאפ
-    const priceText = price === null ? NO_PRICE_LABEL : formatPrice(price);
-    const text = `היי! ראיתי את המוצר הזה בטכניק טמבור ונראה לי מעניין 🔧\n*${product.name}* — ${priceText}\n${url}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-  }
+    return () => controller.abort();
+  }, [id]);
 
-  /** גולל לחוות הדעת, מסיכום הדירוג שליד שם המוצר. */
-  function scrollToReviews() {
-    reviewsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  if (status === 'missing') return <NotFoundPage />;
 
-  const avgRating = averageRating(reviews);
-
-  return (
-    <div className="product-page">
-      <ProductBreadcrumb categoryId={product.category} productName={product.name} />
-
-      <div className="product-page-content">
-        <ProductGallery product={product} />
-
-        {/* Details */}
-        <div className="product-page-details">
-          <div className="product-detail-head">
-            {category && (
-              <Link className="product-detail-category" to={`/category/${category.id}`}>
-                {category.name}
-              </Link>
-            )}
-
-            <div className="product-detail-name-row">
-              <h1 className="product-detail-name">{product.name}</h1>
-              <button
-                type="button"
-                className="product-detail-share"
-                onClick={handleShare}
-                aria-label="שיתוף בוואטסאפ">
-                <Share2 size={18} aria-hidden="true" />
-              </button>
-            </div>
-
-            {product.sku && <p className="product-detail-sku">מק"ט: {product.sku}</p>}
-
-            {avgRating && (
-              <button type="button" className="product-detail-rating" onClick={scrollToReviews}>
-                <Stars rating={Math.round(avgRating)} />
-                <span className="product-detail-rating-avg">{avgRating}</span>
-                <span className="product-detail-rating-count">({reviews.length} ביקורות)</span>
-              </button>
-            )}
-          </div>
-
-          <div className="product-detail-pricing">
-            <span className={`product-detail-price ${price === null ? 'is-no-price' : ''}`}>
-              {price === null ? NO_PRICE_LABEL : formatPrice(price)}
-            </span>
-            {hasVariants && !selectedVariant && (
-              <span className="product-detail-price-note">בחר גרסה</span>
-            )}
-            <span className={`product-detail-stock ${inStock ? 'product-detail-stock--in' : 'product-detail-stock--out'}`}>
-              {inStock
-                ? <><Check size={14} aria-hidden="true" /> יש במלאי</>
-                : 'אזל מהמלאי'}
-            </span>
-          </div>
-
-          <ProductVariantSelector
-            product={product}
-            hasVariants={hasVariants}
-            selectedVariant={selectedVariant}
-            onSelectVariant={v => { setSelectedVariant(v); setMissing(null); }}
-            selectedColor={selectedColor}
-            onSelectColor={c => { setSelectedColor(c); setMissing(null); }}
-            selectedSize={selectedSize}
-            onSelectSize={s => { setSelectedSize(s); setMissing(null); }}
-            missing={missing}
-            variantRef={variantRef}
-            colorRef={colorRef}
-            sizeRef={sizeRef}>
-            {product.description && (
-              <div className="product-detail-description">
-                <h2>תיאור המוצר</h2>
-                <p>{product.description}</p>
-              </div>
-            )}
-          </ProductVariantSelector>
-
-          <ProductBuyRow
-            quantity={quantity}
-            onQuantity={setQuantity}
-            inStock={inStock}
-            hasPrice={price !== null}
-            added={addedToCart}
-            onAdd={handleAddToCart}
-            addRef={addBtnRef}
-            productName={product.name}
-            inWishlist={inWishlist}
-            onToggleWishlist={() => setInWishlist(toggleWishlist(product))}
-          />
-
-          <ProductTrustRow />
+  if (status === 'loading') {
+    return (
+      <div className="product-page">
+        {/* אותה רשת שהקטגוריה משתמשת בה, כי אותו שלד יושב בה. */}
+        <div className="product-grid">
+          {Array(4).fill(0).map((_, i) => <ProductCardSkeleton key={i} />)}
         </div>
       </div>
+    );
+  }
 
-      <ProductReviewsSection ref={reviewsRef} productId={product.id} reviews={reviews} />
-
-      <RelatedProducts
-        recentlyViewed={recentlyViewed}
-        relatedProducts={relatedProducts}
-        categoryId={product.category}
-      />
-
-      {showBuyBar && (
-        <ProductBuyBar
-          price={price}
-          quantity={quantity}
-          inStock={inStock}
-          added={addedToCart}
-          onAdd={handleAddToCart}
-        />
-      )}
-    </div>
-  );
+  return <ProductDetails product={product} onAddToCart={addToCart} />;
 }
 
 export default ProductPage;

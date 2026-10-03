@@ -10,12 +10,12 @@
 import '@testing-library/jest-dom';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
-import CategoryView from './CategoryView';
-import { StoreContext } from '../../context/storeContext';
+import CategoryPage from './CategoryPage';
+import { StoreContext } from '../context/storeContext';
 
 /* הבאנר טוען את תמונות הקטגוריות דרך require.context של webpack, שאין
    ב-Jest. הוא לא חלק ממה שנבדק כאן. */
-jest.mock('./CategoryBanner', () => () => null);
+jest.mock('../features/catalog/CategoryBanner', () => () => null);
 
 const STORE = { addToCart: () => {}, wishlistIds: [], toggleCardWishlist: () => {} };
 
@@ -38,7 +38,7 @@ function renderAt(url) {
     <MemoryRouter initialEntries={[url]}>
       <StoreContext.Provider value={STORE}>
         <Routes>
-          <Route path="/category/:slug" element={<><CategoryView /><LocationProbe /></>} />
+          <Route path="/category/:slug" element={<><CategoryPage /><LocationProbe /></>} />
         </Routes>
       </StoreContext.Provider>
     </MemoryRouter>,

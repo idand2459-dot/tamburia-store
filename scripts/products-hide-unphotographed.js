@@ -33,7 +33,7 @@ const OUT_DIR = path.join(ROOT, 'design-assets');
  * המוצרים שמחשבון הצבע מוסיף לעגלה, לפי מזהה.
  *
  * תמונת מראה של BUNDLE_PRODUCT_IDS ב-
- * client/src/js/features/calculator/PaintCalculator.js. המחשבון שולף
+ * client/src/js/features/calculators/PaintCalculator.js. המחשבון שולף
  * אותם לפי id, ומוצר מוסתר יחזיר לו 404 — הוא יציג "שווה לשאול
  * בחנות" במקום להיתקע, אבל החבילה שהוא ממליץ עליה תתרוקן.
  *

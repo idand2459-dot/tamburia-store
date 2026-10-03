@@ -3,7 +3,7 @@
  */
 import { useState } from 'react';
 import { MessageCircle, Phone, Plus } from 'lucide-react';
-import { ADDRESS, PHONES, whatsappUrl, hoursSummary } from '../utils/storeInfo';
+import { ADDRESS, PHONES, whatsappUrl, hoursSummary } from '../../utils/storeInfo';
 
 const FAQS = [
   {
