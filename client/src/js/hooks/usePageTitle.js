@@ -10,10 +10,10 @@ import { useEffect } from 'react';
 const SITE_NAME = 'טכניק טמבור';
 // הכותרת של דף הבית, כפי שהיא ב-index.html — שם היא נבחרה בשביל
 // מנועי החיפוש, ואין סיבה שהניווט באתר ישנה אותה.
-export const HOME_TITLE = 'טכניק טמבור | חנות כלי עבודה וחומרי בניין פתח תקווה';
+const HOME_TITLE = 'טכניק טמבור | חנות כלי עבודה וחומרי בניין פתח תקווה';
 
 /** מחזיר את הכותרת המלאה לעמוד, או את כותרת הבית כשאין שם. */
-export function fullTitle(title) {
+function fullTitle(title) {
   return title ? `${title} | ${SITE_NAME}` : HOME_TITLE;
 }
 

@@ -2,8 +2,7 @@
    Hero
 
    The Hero carries its own background image, overlays, entry animations and
-   breakpoints. It was split out of the old _home.css, whose remaining sections
-   are now features/home/_features-banner.css and features/home/_whyus.css.
+   breakpoints. Its button row is in _hero-cta.css.
    ========================================================================== */
 
 /* Hero

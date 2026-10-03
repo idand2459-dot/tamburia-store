@@ -46,4 +46,4 @@ function securityHeaders(req, res, next) {
   next();
 }
 
-module.exports = { securityHeaders, CSP };
+module.exports = { securityHeaders };

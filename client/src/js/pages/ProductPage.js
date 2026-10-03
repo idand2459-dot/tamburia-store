@@ -144,6 +144,9 @@ function ProductPage({ product, onAddToCart }) {
       .then(setReviews).catch(() => {});
 
     return () => controller.abort();
+    // רק מעבר למוצר אחר מאפס את הבחירות ומושך מחדש. אותו מוצר שחזר כאובייקט
+    // חדש (רענון ברקע) אסור שימחק ללקוח צבע ומידה שכבר בחר.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
   /** מחזיר את שם הבורר הראשון שחסרה בו בחירה, או null. */

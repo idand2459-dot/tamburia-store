@@ -141,4 +141,4 @@ async function updateProduct(id, data) {
   return Product.update(id, checkSubcategoryUpdate(data, existing));
 }
 
-module.exports = { removeProduct, createProduct, updateProduct, HAS_ORDERS_MESSAGE };
+module.exports = { removeProduct, createProduct, updateProduct };

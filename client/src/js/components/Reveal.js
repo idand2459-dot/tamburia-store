@@ -6,7 +6,7 @@
  * בכרטיסים כותבים <Reveal as="div" className="category-card"> ולא
  * <Reveal><div className="category-card">.
  */
-import useReveal from '../hooks/useReveal';
+import { useReveal } from '../hooks/useReveal';
 
 /**
  * השהיה מדורגת לפי מקום הפריט ברשימה.

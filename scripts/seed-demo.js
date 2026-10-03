@@ -527,5 +527,3 @@ if (require.main === module) {
     db.close().finally(() => process.exit(1));
   });
 }
-
-module.exports = { DEMO_PHONES, DEMO_REVIEWS, seedAll, clearAll };

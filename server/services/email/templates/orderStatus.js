@@ -64,4 +64,4 @@ ${header(`${cfg.emoji} עדכון הזמנה #${order.id}`)}
 ${footer('טכניק טמבור • בר כוכבא 52, פתח תקווה')}`);
 }
 
-module.exports = { STATUS_LABELS, hasEmail, subject, html };
+module.exports = { hasEmail, subject, html };

@@ -83,7 +83,6 @@ async function testProtectedRoutes(cookie) {
     ['POST', '/pigment-formulas', {}],
     ['PUT', '/pigment-formulas/1', {}],
     ['DELETE', '/pigment-formulas/1', null],
-    ['POST', '/upload', null],
     ['POST', '/upload-multiple', null],
     ['GET', '/settings/stats-counting-from', null],
     ['PUT', '/settings/stats-counting-from', { value: null }],

@@ -165,6 +165,5 @@ function parseListQuery(query = {}) {
 }
 
 module.exports = {
-  parseCreate, parseUpdate, parseListQuery, asColorCode,
-  ML_FIELDS, EDITABLE, SORTABLE,
+  parseCreate, parseUpdate, parseListQuery, asColorCode, EDITABLE, SORTABLE,
 };

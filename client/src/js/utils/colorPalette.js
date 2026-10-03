@@ -57,7 +57,7 @@ export const FALLBACK_HEX = '#888888';
  * מקבל גם מחרוזת, כי תשובה שנשמרה ב-cache של הדפדפן מלפני המיגרציה
  * עדיין מחזיקה שמות בלבד, ואין סיבה שהטופס ייפול עליה.
  */
-export function asColor(value) {
+function asColor(value) {
   if (typeof value === 'string') return { name: value, hex: '' };
   return { name: value?.name ?? '', hex: value?.hex ?? '' };
 }
