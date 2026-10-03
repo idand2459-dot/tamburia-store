@@ -18,15 +18,24 @@ const GENERIC = 'הפעולה נכשלה. אפשר לנסות שוב.';
  */
 export const NETWORK_ERROR = 'לא הצלחנו להגיע לשרת. בדקו את החיבור ונסו שוב.';
 
-/** מחזיר את הודעת השגיאה מגוף התשובה, או הודעת גיבוי. */
-export async function errorMessageFrom(res, fallback = GENERIC) {
+/**
+ * מחזיר { message, details } מגוף התשובה: הודעת השרת או הודעת הגיבוי,
+ * ו-details כשהשרת צירף אותם (למשל המחירים העדכניים ב-409 של הזמנה).
+ */
+export async function errorFrom(res, fallback = GENERIC) {
   try {
     const body = await res.json();
-    if (body && typeof body.error === 'string' && body.error.trim()) {
-      return body.error;
-    }
+    const message = body && typeof body.error === 'string' && body.error.trim()
+      ? body.error
+      : fallback;
+    return { message, details: body?.details };
   } catch {
     // התשובה אינה JSON — אין מה לחלץ, נופלים להודעה הכללית.
+    return { message: fallback, details: undefined };
   }
-  return fallback;
+}
+
+/** מחזיר את הודעת השגיאה מגוף התשובה, או הודעת גיבוי. */
+export async function errorMessageFrom(res, fallback = GENERIC) {
+  return (await errorFrom(res, fallback)).message;
 }
