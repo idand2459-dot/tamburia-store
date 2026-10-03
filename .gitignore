@@ -1,8 +1,22 @@
 node_modules
 
-# סודות — לא נכנס לגיט
+# סודות — לא נכנס לגיט. רק .env.example (placeholders בלבד) נמצא במעקב,
+# ו-test/unit-repo-hygiene.js נכשל אם .env נכנס בטעות.
 .env
 .env.local
+.env.*.local
+
+# קבצי מערכת, עורכים וכלים מקומיים
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.claude/
+
+# לוגים ודוחות כיסוי
+*.log
+npm-debug.log*
+coverage/
 
 # תמונות שהועלו דרך האדמין — תוכן של הרצה, לא של הקוד.
 # uploads/* ולא uploads/, כדי שהתיקייה עצמה לא תוחרג ו-.gitkeep

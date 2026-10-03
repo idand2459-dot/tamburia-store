@@ -75,7 +75,7 @@ const config = {
     enabled: mailEnabled,
   },
 
-  adminUrl: process.env.ADMIN_URL || 'http://localhost:3001/admin',
+  adminUrl: process.env.ADMIN_URL || 'http://localhost:3000/admin',
 
   orders: {
     deliveryFee: number('DELIVERY_FEE', 20, { allowZero: true }),
