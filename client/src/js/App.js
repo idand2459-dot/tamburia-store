@@ -5,8 +5,13 @@
  * העגלה לא מתאפסת כשעוברים מקטגוריה למוצר. כל תחום מנוהל בהוק נפרד
  * תחת hooks/, וכאן הם מחוברים לאובייקט אחד שעובר ב-StoreContext.
  * צורת האובייקט הזה היא החוזה מול כל המסכים, ואסור לה להשתנות.
+ *
+ * מסך הניהול נטען בעצלתיים (React.lazy): הקוד שלו — הלשוניות, ההוקים
+ * שלהן והקונפטי — יושב ב-chunk נפרד שהדפדפן מוריד רק כשנכנסים ל-/admin.
+ * לקוח בחנות לא מוריד אותו בכלל. ה-CSS של הניהול נשאר בקובץ הראשי: סדר
+ * ה-imports ב-css/app.css הוא ה-cascade, והוצאת חלק ממנו הייתה משנה אותו.
  */
-import { useState, useMemo } from 'react';
+import { lazy, Suspense, useState, useMemo } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import '../css/app.css';
 import { StoreContext } from './context/storeContext';
@@ -18,12 +23,22 @@ import StoreLayout from './StoreLayout';
 import HomePage from './pages/HomePage';
 import CategoryPage from './pages/CategoryPage';
 import ProductPage from './pages/ProductPage';
-import AdminRoute from './routes/AdminRoute';
 import NotFoundPage from './pages/NotFoundPage';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Returns from './pages/Returns';
 import Accessibility from './pages/Accessibility';
+
+const AdminRoute = lazy(() => import('./routes/AdminRoute'));
+
+/**
+ * מה שמוצג בזמן שקוד הניהול יורד: אותו רקע ריק ש-AdminRoute מציג בזמן
+ * בדיקת ההתחברות, כדי שלא יהבהב מסך אחר בדרך. role=status מודיע לקורא
+ * מסך שמשהו נטען.
+ */
+const adminLoading = (
+  <div className="admin-login-page" role="status" aria-label="טוען את מסך הניהול" />
+);
 
 /** מציג את האפליקציה ומנהל את המצב המשותף לכל המסכים. */
 function App() {
@@ -70,7 +85,10 @@ function App() {
         </Route>
 
         <Route path="/admin" element={<Navigate to="/admin/orders" replace />} />
-        <Route path="/admin/:tab" element={<AdminRoute />} />
+        <Route
+          path="/admin/:tab"
+          element={<Suspense fallback={adminLoading}><AdminRoute /></Suspense>}
+        />
       </Routes>
     </StoreContext.Provider>
   );
