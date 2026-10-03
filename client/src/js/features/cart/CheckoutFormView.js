@@ -15,7 +15,7 @@
  * המסך מקריא את התווית ואת ההודעה יחד, דרך aria-describedby.
  */
 import { Ban, Check, AlertTriangle, AlertCircle, CheckCircle } from 'lucide-react';
-import { Spinner } from '../LoadingStates';
+import { Spinner } from '../../components/LoadingStates';
 import { useStore } from '../../context/storeContext';
 import { formatPrice } from '../../utils/pricing';
 

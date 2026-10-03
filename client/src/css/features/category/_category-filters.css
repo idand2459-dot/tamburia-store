@@ -10,7 +10,7 @@
    bottom is what turns the column into a row.
 
    The active item is a link to a URL (?sub=…), not local state:
-   CategoryView keeps it in the query so a filtered view can be
+   CategoryPage keeps it in the query so a filtered view can be
    shared. aria-current on the active button is what says so.
    ========================================================== */
 

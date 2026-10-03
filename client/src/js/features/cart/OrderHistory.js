@@ -11,11 +11,11 @@ import {
   ClipboardList, Search, Inbox, Settings, PackageCheck, Truck, CheckCircle,
   Store, ChevronDown, Phone, MessageCircle,
 } from 'lucide-react';
-import Drawer from '../components/Drawer';
-import { Spinner } from '../components/LoadingStates';
-import { PHONES, whatsappUrl } from '../utils/storeInfo';
-import { formatPrice, lineTotal } from '../utils/pricing';
-import { getOrdersByPhone } from '../services/orderService';
+import Drawer from '../../components/Drawer';
+import { Spinner } from '../../components/LoadingStates';
+import { PHONES, whatsappUrl } from '../../utils/storeInfo';
+import { formatPrice, lineTotal } from '../../utils/pricing';
+import { getOrdersByPhone } from '../../services/orderService';
 
 const STATUS_CONFIG = {
   new: { label: 'התקבלה', Icon: Inbox },

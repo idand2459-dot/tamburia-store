@@ -12,7 +12,7 @@
 import { useState } from 'react';
 import { ShoppingCart, ClipboardList, CheckCircle } from 'lucide-react';
 import { useStore } from '../../context/storeContext';
-import Drawer from '../Drawer';
+import Drawer from '../../components/Drawer';
 import CartStepView, { CartStepFooter } from './CartStepView';
 import CheckoutFormView, { CheckoutFormFooter } from './CheckoutFormView';
 import OrderSuccessView from './OrderSuccessView';

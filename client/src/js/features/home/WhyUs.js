@@ -1,7 +1,7 @@
 import { Trophy, Handshake, Headset, Banknote, Quote } from 'lucide-react';
-import Reveal, { stagger } from './Reveal';
-import whyusPhoto600 from '../../assets/images/sections/whyus-photo-600.webp';
-import whyusPhoto1000 from '../../assets/images/sections/whyus-photo-1000.webp';
+import Reveal, { stagger } from '../../components/Reveal';
+import whyusPhoto600 from '../../../assets/images/sections/whyus-photo-600.webp';
+import whyusPhoto1000 from '../../../assets/images/sections/whyus-photo-1000.webp';
 
 /** מציג את המקטע. */
 function WhyUs() {
