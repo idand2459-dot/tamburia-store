@@ -15,6 +15,7 @@
  * מתקנת את עצמה כאן — כך שהניסיון השני כבר מציג את הסכום הנכון.
  */
 import { useState, useMemo, useCallback } from 'react';
+import { createOrder, ApiError } from '../services/orderService';
 
 /**
  * מחזיר את העגלה עם המחירים שהשרת החזיר.
@@ -81,31 +82,25 @@ export function useCheckoutForm(cartState) {
     // הזמנה שנדחתה אינה מרוקנת את העגלה ואינה מציגה מסך תודה. קודם
     // הכול קרה ללא תנאי, כך שדחייה בשרת נראתה ללקוח כהצלחה והעגלה
     // שלו נמחקה — אובדן נתונים שנראה כמו הזמנה שהתקבלה.
-    let res;
     let saved;
     try {
-      res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(order),
-      });
-      saved = await res.json();
-    } catch {
-      // תקלת רשת, או תשובה שאינה JSON. בלי זה הספינר היה נתקע לנצח.
+      saved = await createOrder(order);
+    } catch (error) {
       setSubmittingOrder(false);
-      setOrderError('לא הצלחנו לשלוח את ההזמנה. בדקו את החיבור ונסו שוב.');
-      return;
-    }
 
-    if (!res.ok) {
-      setSubmittingOrder(false);
-      setOrderError(saved?.error || 'שליחת ההזמנה נכשלה. אפשר לנסות שוב.');
+      if (!(error instanceof ApiError)) {
+        // תקלת רשת, או תשובה שאינה JSON. בלי זה הספינר היה נתקע לנצח.
+        setOrderError('לא הצלחנו לשלוח את ההזמנה. בדקו את החיבור ונסו שוב.');
+        return;
+      }
+
+      setOrderError(error.message);
 
       // 409 הוא המקרה היחיד שבו לתשובה יש מה להוסיף לעגלה ולא רק
       // למסך: המחירים העדכניים, כדי שהסכום שמוצג יתיישר עם מה שהשרת
       // יקבל בפעם הבאה.
-      if (res.status === 409 && Array.isArray(saved?.details?.prices)) {
-        setCart((prev) => applyPrices(prev, saved.details.prices));
+      if (error.status === 409 && Array.isArray(error.details?.prices)) {
+        setCart((prev) => applyPrices(prev, error.details.prices));
       }
       return;
     }
