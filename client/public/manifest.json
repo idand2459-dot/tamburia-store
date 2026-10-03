@@ -41,7 +41,7 @@
       "name": "צור קשר",
       "short_name": "קשר",
       "description": "יצירת קשר עם החנות",
-      "url": "/?page=contact",
+      "url": "/contact",
       "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
     }
   ]

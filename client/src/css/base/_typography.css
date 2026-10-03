@@ -12,10 +12,13 @@
   padding-bottom: 8px;
 }
 
-/* ===== פונט עברי Heebo =====
-   !important because css/index.css also sets a font-family on body, at the same
-   specificity, and it is imported from index.js rather than from app.css — so
-   which of the two lands later in the bundle is not this file's decision. */
+/* Heebo, the Hebrew face. It overrides the system stack in _reset.css by
+   coming later in app.css. */
 body {
-  font-family: 'Heebo', 'Segoe UI', sans-serif !important;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+}
+
+/* the category ids in the admin's import instructions */
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }

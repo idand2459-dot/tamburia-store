@@ -81,5 +81,3 @@ export function useReveal() {
 
   return { ref, isVisible };
 }
-
-export default useReveal;

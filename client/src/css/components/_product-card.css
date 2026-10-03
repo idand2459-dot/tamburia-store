@@ -5,14 +5,9 @@
    page's category cards use: a 1px navy tint, a 1px shadow, and
    the depth kept for the hover lift.
 
-   What this replaces was built for a page that no longer exists:
-   a saturated tile per category behind every photograph, a
-   5.5rem Hebrew letter where a photograph was missing, a
-   full-width dark "הוסף לעגלה" button in every card, and a
-   dark-mode block — all of it either fighting the products or
-   repainted per category by the deleted _category-themes.css.
-   The card is quiet now: a neutral well for the photograph, and
-   one red square for the only action that matters.
+   The card is quiet on purpose: a neutral well for the
+   photograph, so the products carry the colour, and one red
+   square for the only action that matters.
 
    The whole card is a link, but the only element that is one is
    the name: .product-card-link::after is stretched over the card.

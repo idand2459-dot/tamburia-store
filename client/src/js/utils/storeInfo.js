@@ -66,7 +66,7 @@ export function whatsappUrl(text) {
 
 /* ---- שעות פעילות ---- */
 
-export const CLOSED_LABEL = 'סגור';
+const CLOSED_LABEL = 'סגור';
 
 /**
  * שורה אחת בטבלת השעות. `days` הם מספרי הימים כפי ש-Date#getDay מחזיר

@@ -176,9 +176,43 @@ async function testUploads() {
     missing.text.slice(0, 80));
 }
 
+/**
+ * מסך הניהול נטען בעצלתיים (App.js): לקוח בחנות לא מוריד את הקוד שלו.
+ * הבדיקה מושכת את ה-bundle הראשי מתוך index.html ומוודאת שאין בו
+ * כתובות API שרק הניהול קורא להן — ושהן כן נמצאות ב-chunk אחר.
+ */
+async function testAdminIsLazy() {
+  console.log('\n── מסך הניהול ב-chunk נפרד');
+
+  const index = await get('/');
+  const mainSrc = (index.text.match(/<script[^>]+src="([^"]*\/main\.[0-9a-f]+\.js)"/) || [])[1];
+  check('index.html טוען bundle ראשי', Boolean(mainSrc), index.text.slice(0, 120));
+  if (!mainSrc) return;
+
+  const main = await get(mainSrc);
+  const ADMIN_ONLY = ['/api/upload-multiple', '/api/reviews/all', 'stats-counting-from'];
+  const leaked = ADMIN_ONLY.filter((marker) => main.text.includes(marker));
+  check('ה-bundle הראשי אינו כולל את קוד הניהול', leaked.length === 0, leaked);
+
+  // ה-chunk עצמו נקרא "<id>.<hash>.chunk.js". webpack טוען אותו ב-e(<id>),
+  // ואת ה-hash כותב כמפה {id:"hash"} — או, כשיש chunk אחד בלבד, כמחרוזת
+  // אחת ".<hash>.chunk.js".
+  const ids = [...new Set([...main.text.matchAll(/\.e\((\d+)\)/g)].map((m) => m[1]))];
+  const mapped = [...main.text.matchAll(/(\d+):"([0-9a-f]{8})"/g)].map((m) => `${m[1]}.${m[2]}.chunk.js`);
+  const single = (main.text.match(/"\.([0-9a-f]{8})\.chunk\.js"/) || [])[1];
+  const chunkIds = single ? ids.map((id) => `${id}.${single}.chunk.js`) : mapped;
+  let found = false;
+  for (const name of chunkIds) {
+    const chunk = await get(`/static/js/${name}`);
+    if (chunk.status === 200 && ADMIN_ONLY.every((marker) => chunk.text.includes(marker))) found = true;
+  }
+  check('קוד הניהול נמצא ב-chunk שנטען לפי דרישה', found, chunkIds);
+}
+
 /** מריץ את כל הבדיקות לפי הסדר. */
 async function main() {
   await testClient();
+  await testAdminIsLazy();
   await testNothingLeaks();
   await testApi();
   await testHeaders();

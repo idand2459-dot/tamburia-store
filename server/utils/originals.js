@@ -76,5 +76,5 @@ function sourceForUpload(uploadPath, dir = ORIGINALS_DIR) {
 }
 
 module.exports = {
-  ORIGINALS_DIR, originalExt, saveOriginal, findOriginal, removeOriginal, sourceForUpload,
+  originalExt, saveOriginal, findOriginal, removeOriginal, sourceForUpload,
 };

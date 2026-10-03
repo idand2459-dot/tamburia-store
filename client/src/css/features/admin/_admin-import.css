@@ -2,15 +2,8 @@
    Admin import — the CSV import tab: instructions, upload area,
    error list, preview table and result
 
-   Brought into the redesigned panel rather than redesigned: the
-   layout is unchanged, and what moved is the scale — 16px body
-   text, 48px on the template button, 52px on the confirm.
-
-   Gone in the same pass, as dead code: .import-columns,
-   .import-column-row (and its two descendant rules),
-   .req-badge, .opt-badge and .import-upload-sub — the markup
-   that wore them has not existed for some time. The last one
-   took the file's only !important with it.
+   Sized to the rest of the panel: 16px body text, 48px on the
+   template button, 52px on the confirm.
    ========================================================== */
 
 /* ===== CSV IMPORT ===== */

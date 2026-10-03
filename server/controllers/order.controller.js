@@ -6,24 +6,13 @@ const orderService = require('../services/order.service');
 const {
   parseCreate, parseUpdate, parseStatus, parseListQuery,
 } = require('../validators/order.validator');
+const { sendList } = require('../utils/paginate');
 
 /** GET /api/orders — מחזיר רשימת הזמנות, עם דפדוף אם התבקש. */
 async function list(req, res) {
   const options = parseListQuery(req.query);
   const { orders, total } = await orderService.listOrders(options);
-
-  if (total === undefined) {
-    return res.json(orders);
-  }
-
-  res.json({
-    orders,
-    pagination: {
-      total,
-      limit: options.limit ?? total,
-      offset: options.offset ?? 0,
-    },
-  });
+  sendList(res, 'orders', orders, total, options);
 }
 
 /** GET /api/orders/:id — מחזיר הזמנה בודדת. */

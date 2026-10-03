@@ -1,5 +1,5 @@
 import { Truck, Star, Store, MessageCircle } from 'lucide-react';
-import { ADDRESS, hoursSummary } from '../utils/storeInfo';
+import { ADDRESS, hoursSummary } from '../../utils/storeInfo';
 
 /*
  * האייקונים היו ארבעה SVG-ים מוטבעים והוחלפו ברכיבי Lucide המקבילים.

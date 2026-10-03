@@ -2,12 +2,8 @@
    Admin stats — the statistics tab: the number cards, the bar
    chart, the top-categories list and the out-of-stock list
 
-   The last two arrived from _catalog.css in the previous step;
-   StatsTab is the only thing that renders them.
-
-   The old file's 480px block is gone: it set .stats-grid to
-   repeat(2, 1fr), which the 900px block above already applies
-   at that width.
+   StatsTab is the only thing that renders any of them. There is
+   no 480px block: .stats-grid is already two columns from 900px.
 
    Brought into the redesigned panel rather than redesigned: the
    layout is unchanged and what moved is the scale — 16px body

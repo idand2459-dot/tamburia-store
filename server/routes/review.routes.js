@@ -19,6 +19,5 @@ router.put('/:id', requireAdmin, idParam, controller.update);
 router.delete('/:id', requireAdmin, idParam, controller.remove);
 
 router.put('/:id/approve', requireAdmin, idParam, controller.approve);
-router.patch('/:id/approve', requireAdmin, idParam, controller.approve);
 
 module.exports = router;

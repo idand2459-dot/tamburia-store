@@ -3,16 +3,13 @@
  * האסימון נשלח כעוגיית httpOnly ואינו מוחזר בגוף התשובה.
  */
 const config = require('../config/env');
-const { createToken, passwordMatches, cookieOptions } = require('../services/auth');
-const { badRequest, AppError } = require('../utils/AppError');
+const { createToken, passwordMatches, cookieOptions } = require('../services/auth.service');
+const { parseLogin } = require('../validators/auth.validator');
+const { AppError } = require('../utils/AppError');
 
 /** POST /api/auth/login — מאמת סיסמה ומנפיק עוגיית התחברות. */
 async function login(req, res) {
-  const { password } = req.body || {};
-
-  if (typeof password !== 'string' || password === '') {
-    throw badRequest('חסרה סיסמה');
-  }
+  const password = parseLogin(req.body);
 
   if (!passwordMatches(password)) {
     throw new AppError(401, 'סיסמה שגויה');

@@ -14,8 +14,8 @@
  */
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import ProductPage from './ProductPage';
-import { StoreContext } from '../context/storeContext';
+import ProductDetails from './ProductDetails';
+import { StoreContext } from '../../../context/storeContext';
 
 const STORE = {
   addToCart: () => {},
@@ -50,7 +50,7 @@ function renderPage(product) {
   return render(
     <MemoryRouter>
       <StoreContext.Provider value={STORE}>
-        <ProductPage product={product} onAddToCart={() => {}} />
+        <ProductDetails product={product} onAddToCart={() => {}} />
       </StoreContext.Provider>
     </MemoryRouter>,
   );
@@ -79,7 +79,7 @@ test('תשובה מאוחרת של המוצר הקודם אינה נוחתת ע�
   rerender(
     <MemoryRouter>
       <StoreContext.Provider value={STORE}>
-        <ProductPage product={PRODUCT_B} onAddToCart={() => {}} />
+        <ProductDetails product={PRODUCT_B} onAddToCart={() => {}} />
       </StoreContext.Provider>
     </MemoryRouter>,
   );
@@ -135,7 +135,7 @@ test('המעבר מרוקן מיד את הביקורות ואת המוצרים �
   rerender(
     <MemoryRouter>
       <StoreContext.Provider value={STORE}>
-        <ProductPage product={PRODUCT_B} onAddToCart={() => {}} />
+        <ProductDetails product={PRODUCT_B} onAddToCart={() => {}} />
       </StoreContext.Provider>
     </MemoryRouter>,
   );

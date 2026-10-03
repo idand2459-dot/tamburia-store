@@ -13,10 +13,10 @@ import MarqueeBanner from './components/MarqueeBanner';
 import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
 import ScrollToTop from './components/ScrollToTop';
-import PaintCalcBtn from './features/calculator/PaintCalcBtn';
-import CartModal from './components/cart/CartModal';
-import OrderHistory from './pages/OrderHistory';
-import Wishlist from './pages/Wishlist';
+import PaintCalcBtn from './features/calculators/PaintCalcBtn';
+import CartModal from './features/cart/CartModal';
+import OrderHistory from './features/cart/OrderHistory';
+import Wishlist from './features/cart/Wishlist';
 import { useStore } from './context/storeContext';
 
 /**

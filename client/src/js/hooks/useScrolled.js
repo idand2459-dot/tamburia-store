@@ -51,5 +51,3 @@ export function useScrolled(offset = 8) {
 
   return scrolled;
 }
-
-export default useScrolled;

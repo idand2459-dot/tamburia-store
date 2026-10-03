@@ -44,8 +44,8 @@
 }
 
 /* The last crumb: the product itself, and the only part of the line long
-   enough to need clipping. No !important — the rule it used to fight
-   (`.breadcrumb span`) is gone, the separators carry a class of their own. */
+   enough to need clipping. The separators carry a class of their own, so
+   nothing here competes with a bare `span` rule. */
 .breadcrumb-current {
   min-width: 0;
   overflow: hidden;

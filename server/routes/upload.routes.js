@@ -4,13 +4,12 @@
  * כל תמונה עוברת עיבוד (processUploads) ורק הגרסה המעובדת נשמרת.
  */
 const express = require('express');
-const { upload, processUploads } = require('../middleware/upload');
+const { upload, processUploads, MAX_FILES } = require('../middleware/upload');
 const controller = require('../controllers/upload.controller');
 const { requireAdmin } = require('../middleware/requireAdmin');
 
 const router = express.Router();
 
-router.post('/upload', requireAdmin, upload.single('image'), processUploads, controller.uploadSingle);
-router.post('/upload-multiple', requireAdmin, upload.array('images', 5), processUploads, controller.uploadMultiple);
+router.post('/upload-multiple', requireAdmin, upload.array('images', MAX_FILES), processUploads, controller.uploadMultiple);
 
 module.exports = router;
