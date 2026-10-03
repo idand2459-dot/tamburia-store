@@ -26,7 +26,7 @@ with these rules, follow these rules and say so in the report.
   | `product/` | a product page, outermost first |
   | `cart/` | the cart flow, the order lookup and the wishlist |
   | `reviews/` | the review form, opened from both the home page and a product page |
-  | `pages/` | the static pages: about, contact, returns, 404 |
+  | `pages/` | the static pages: about, contact, returns, accessibility, 404 |
 
   A partial that belongs to a new domain gets a **new folder**, not a
   loose file at the top of `features/`. A partial shared by two domains
@@ -76,6 +76,16 @@ documented in a comment at the top of `base/_variables.css`.)
 If an existing rule uses a different value (e.g. 768, 860, 480), map it
 to the nearest one **only if the visual result doesn't change**; if it
 would, keep the original value and note it.
+
+The values kept that way, each with its reason in a comment above the query:
+
+| Value | Where | Reason (from the comment there) |
+|---|---|---|
+| `max-width: 1280px` | `components/_product-grid`, `product/_related-products` | at 1201–1280 the category sidebar leaves ~960px, four 220px cards — too narrow; related products restate all three steps |
+| `max-width: 640px` | `calculators/_project-calculator`, `_project-calc-items` | `.proj-footer` stacks here and the paired padding/type changes go with it |
+| `max-width: 600px` | `calculators/_paint-calc-section` and the three paint partials that follow it | the results grid and `.paint-coats` stack together here; splitting them would desynchronise the section |
+| `max-width: 600px` | `reviews/_review-form` | its comment points to a 600px note in `_reviews.css` that no longer exists — **to re-check** before snapping it to 560 |
+| `min-width: 769px` | `layout/_footer`, `category/_category-banner`, `calculators/_paint-calc-btn` | the complement of md (`max-width: 768px`): desktop-only rules, so the two meet with no gap |
 
 ## 5. Colors and values
 - Colors come from tokens in `base/_variables.css` (`var(--color-…)`).

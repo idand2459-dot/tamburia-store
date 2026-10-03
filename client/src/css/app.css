@@ -59,6 +59,7 @@
    two only make sense read in that order. */
 @import './features/admin/_admin-nav.css';
 @import './features/admin/_admin-products.css';
+@import './features/admin/_admin-product-actions.css';
 @import './features/admin/_admin-form.css';
 /* the colour and size editors inside that form, each split out of it when
    the form reached the line ceiling */
