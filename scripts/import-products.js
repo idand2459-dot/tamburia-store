@@ -58,6 +58,7 @@ function similarity(a, b) {
 }
 
 const { pool } = require('../server/config/db');
+const { hexFor } = require('./lib/palette');
 
 // ── Valid categories (from categories.js) ────────────────────────────────────
 const VALID_CATEGORIES = new Set([
@@ -179,8 +180,12 @@ async function importProducts(csvFile) {
     const primaryImage = imageFilenames.length > 0 ? imageUrl(imageFilenames[0]) : '';
     const allImages    = imageFilenames.map(imageUrl);
 
-    // Colors / Sizes: pipe-separated in CSV → JS array (pg driver maps to TEXT[])
-    const colors = colorsRaw ? colorsRaw.split('|').map(c => c.trim()).filter(Boolean) : [];
+    // Colors / Sizes: pipe-separated in CSV. colors is JSONB [{ name, hex }]
+    // since migration 008 — the hex comes from the same palette the admin
+    // form offers (scripts/lib/palette.js), and '' when the name is no colour.
+    const colors = colorsRaw
+      ? colorsRaw.split('|').map(c => c.trim()).filter(Boolean).map(name => ({ name, hex: hexFor(name) }))
+      : [];
     const sizes  = sizesRaw  ? sizesRaw.split('|').map(s => s.trim()).filter(Boolean)  : [];
 
     // ── Validation ────────────────────────────────────────────────────────────
@@ -229,11 +234,12 @@ async function importProducts(csvFile) {
 
       if (match) {
         // ── MERGE colors + sizes — never overwrite name/price/description ─────
-        const existingColors = match.colors || [];
+        const existingColors = Array.isArray(match.colors) ? match.colors : [];
         const existingSizes  = match.sizes  || [];
-        const mergedColors   = [...new Set([...existingColors, ...colors])];
+        const knownNames     = new Set(existingColors.map(c => c.name));
+        const addedColors    = colors.filter(c => !knownNames.has(c.name));
+        const mergedColors   = [...existingColors, ...addedColors];
         const mergedSizes    = [...new Set([...existingSizes,  ...sizes])];
-        const addedColors    = colors.filter(c => !existingColors.includes(c));
         const addedSizes     = sizes.filter(s => !existingSizes.includes(s));
 
         if (addedColors.length === 0 && addedSizes.length === 0 && match.matchType !== 'sku') {
@@ -248,10 +254,10 @@ async function importProducts(csvFile) {
                SET name=$1, price=$2, category=$3, subcategory=$4, description=$5, colors=$6, sizes=$7,
                    in_stock=$8, image_url=$9, images=$10
                WHERE id=$11`,
-              [name, price, category, subcategory, description, mergedColors, mergedSizes,
+              [name, price, category, subcategory, description, JSON.stringify(mergedColors), mergedSizes,
                effectiveInStock, primaryImage, JSON.stringify(allImages), match.id]
             );
-            const colorNote = addedColors.length > 0 ? `  +🎨 ${addedColors.join(', ')}` : '';
+            const colorNote = addedColors.length > 0 ? `  +🎨 ${addedColors.map(c => c.name).join(', ')}` : '';
             const sizeNote  = addedSizes.length  > 0 ? `  +📏 ${addedSizes.join(', ')}`  : '';
             console.log(`  ✏️  UPDATED  [${sku}] ${name}${colorNote}${sizeNote}${priceNote}`);
             updated++;
@@ -259,10 +265,10 @@ async function importProducts(csvFile) {
             // Color+size merge — preserve everything else
             await pool.query(
               'UPDATE products SET colors=$1, sizes=$2 WHERE id=$3',
-              [mergedColors, mergedSizes, match.id]
+              [JSON.stringify(mergedColors), mergedSizes, match.id]
             );
             const reason = match.matchType === 'name' ? 'same name' : 'similar description';
-            const colorNote = addedColors.length > 0 ? `  +🎨 ${addedColors.join(', ')}` : '';
+            const colorNote = addedColors.length > 0 ? `  +🎨 ${addedColors.map(c => c.name).join(', ')}` : '';
             const sizeNote  = addedSizes.length  > 0 ? `  +📏 ${addedSizes.join(', ')}`  : '';
             console.log(`  🔀  MERGED   [${sku || '—'}→${match.sku || match.id}] "${name}" (${reason})${colorNote}${sizeNote}`);
             merged++;
@@ -277,7 +283,7 @@ async function importProducts(csvFile) {
           `INSERT INTO products (name, price, stock, image_url, images, colors, sizes, category, subcategory, sku, description, in_stock)
            VALUES ($1, $2, 0, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, sku, name, description, colors, sizes`,
           [name, price, primaryImage, JSON.stringify(allImages),
-           colors, sizes, category, subcategory, sku, description, effectiveInStock]
+           JSON.stringify(colors), sizes, category, subcategory, sku, description, effectiveInStock]
         );
         existingProducts.push(result.rows[0]); // register for subsequent rows
         const sizeNote = sizes.length > 0 ? `  📏 ${sizes.join(', ')}` : '';

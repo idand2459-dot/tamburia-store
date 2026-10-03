@@ -82,6 +82,29 @@ async function main() {
 
       const { rows } = await fresh.query('SELECT count(*)::int AS n FROM pigment_formulas');
       check('גווני הפיגמנט נזרעו (005)', rows[0].n === 20, rows[0].n);
+
+      // הקטלוג: npm run products:import הוא מה ששכפול חדש מריץ אחרי
+      // המיגרציות. הוא נכתב לפני 008 והמשיך לכתוב צבעים כ-TEXT[] לעמודת
+      // JSONB — כל מוצר עם צבע נכשל, ובלי שום בדיקה שתראה.
+      console.log('\n── ייבוא הקטלוג למסד הריק');
+      const imported = spawnSync(process.execPath, [path.join(__dirname, '../scripts/import-products.js')], {
+        env: { ...process.env, DB_NAME: FRESH, DB_LOG_QUERIES: 'false' },
+        encoding: 'utf8',
+        maxBuffer: 1 << 26,
+      });
+      const log = `${imported.stdout}${imported.stderr}`;
+      check('הייבוא מסתיים בהצלחה', imported.status === 0, log.trim().split('\n').pop());
+      check('בלי שורות שנכשלו', !log.includes('❌'), log.split('\n').filter((l) => l.includes('❌')).slice(0, 3));
+
+      const catalog = await fresh.query(`
+        SELECT count(*)::int AS n,
+               count(*) FILTER (WHERE jsonb_typeof(colors) <> 'array')::int AS bad_colors,
+               count(*) FILTER (WHERE jsonb_array_length(CASE WHEN jsonb_typeof(colors) = 'array' THEN colors ELSE '[]' END) > 0)::int AS with_colors
+          FROM products`);
+      const { n, bad_colors: badColors, with_colors: withColors } = catalog.rows[0];
+      check('הקטלוג נטען (מאות מוצרים)', n >= 300, n);
+      check('colors תמיד מערך JSON', badColors === 0, badColors);
+      check('מוצרים עם צבעים נשמרו ({ name, hex })', withColors > 0, withColors);
     } finally {
       await fresh.end();
     }
