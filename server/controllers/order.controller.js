@@ -4,7 +4,7 @@
  */
 const orderService = require('../services/order.service');
 const {
-  parseCreate, parseUpdate, parseStatus, parseListQuery,
+  parseCreate, parseUpdate, parseStatus, parsePicked, parseListQuery,
 } = require('../validators/order.validator');
 const { sendList } = require('../utils/paginate');
 
@@ -43,6 +43,12 @@ async function updateStatus(req, res) {
   res.json(await orderService.updateOrderStatus(req.id, status));
 }
 
+/** PUT /api/orders/:id/items/:line/picked — מסמן שורה ברשימת הליקוט. */
+async function setPicked(req, res) {
+  const { line, picked } = parsePicked(req.params, req.body);
+  res.json(await orderService.setItemPicked(req.id, line, picked));
+}
+
 /** DELETE /api/orders/:id — מוחק הזמנה. */
 async function remove(req, res) {
   const order = await orderService.removeOrder(req.id);
@@ -54,4 +60,4 @@ async function stats(req, res) {
   res.json(await orderService.getStats());
 }
 
-module.exports = { list, getOne, byPhone, create, update, updateStatus, remove, stats };
+module.exports = { list, getOne, byPhone, create, update, updateStatus, setPicked, remove, stats };

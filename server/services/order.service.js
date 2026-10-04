@@ -41,11 +41,17 @@ function getOrder(id) {
   return requireOrder(id);
 }
 
-/** מחזיר את ההזמנות של מספר טלפון, אחרי נרמול ובדיקת תקינות. */
+/**
+ * מחזיר את ההזמנות של מספר טלפון, אחרי נרמול ובדיקת תקינות.
+ *
+ * בלי picked_items: זה הנתיב הפתוח ללקוח, ומה שהוכן במחסן הוא מצב
+ * פנימי של הטיפול — לקוח שרואה "2 מתוך 3" יתקשר לשאול על השלישי.
+ */
 async function findOrdersByPhone(rawPhone) {
   const phone = Order.digitsOnly(rawPhone);
   if (phone.length < 9) throw badRequest('מספר טלפון לא תקין');
-  return Order.findByPhone(phone);
+  const orders = await Order.findByPhone(phone);
+  return orders.map(({ picked_items, ...order }) => order);
 }
 
 /**
@@ -121,6 +127,25 @@ async function updateOrderStatus(id, status) {
   return { ...order, email_sent: mail.sent };
 }
 
+/**
+ * מסמן שורה ברשימת הליקוט כמוכנה, או מבטל את הסימון.
+ *
+ * line הוא האינדקס של השורה ב-items. שורה שאינה קיימת בהזמנה היא
+ * 404 ולא 400: הבקשה תקינה בצורתה, פשוט אין לה על מה לחול. הסטטוס
+ * אינו משתנה כאן גם כשכל השורות מסומנות — ההחלטה להתקדם נשארת אצל
+ * מי שמטפל בהזמנה.
+ */
+async function setItemPicked(id, line, picked) {
+  const existing = await requireOrder(id);
+  const items = Array.isArray(existing.items) ? existing.items : [];
+  if (line >= items.length) throw notFound(`בהזמנה ${id} אין שורה ${line}`);
+
+  // null כאן — ההזמנה נמחקה בין הקריאה לכתיבה
+  const order = await Order.setLinePicked(id, line, picked);
+  if (!order) throw notFound(`הזמנה ${id} לא נמצאה`);
+  return order;
+}
+
 /** מוחק הזמנה ומחזיר אותה, או זורק 404 אם לא הייתה. */
 async function removeOrder(id) {
   const order = await Order.remove(id);
@@ -148,6 +173,7 @@ module.exports = {
   createOrder,
   updateOrder,
   updateOrderStatus,
+  setItemPicked,
   removeOrder,
   getStats,
 };

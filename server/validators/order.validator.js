@@ -302,6 +302,25 @@ function parseStatus(body = {}) {
   return asStatus(body.status);
 }
 
+/**
+ * מאמת סימון שורה ברשימת הליקוט: מספר השורה מהנתיב, picked מהגוף.
+ *
+ * picked חייב להיות בוליאני ממש. "false" כמחרוזת הוא truthy, ובקשה
+ * כזו הייתה מסמנת שורה שהתבקש לבטל. אם השורה קיימת בהזמנה נבדק
+ * בשירות, שם יש את ההזמנה עצמה.
+ */
+function parsePicked(params = {}, body = {}) {
+  const raw = String(params.line ?? '');
+  const line = Number(raw);
+  if (!/^\d+$/.test(raw) || !Number.isSafeInteger(line)) {
+    throw badRequest(`מספר שורה לא תקין: "${raw}"`);
+  }
+  if (typeof body.picked !== 'boolean') {
+    throw badRequest('השדה picked חייב להיות true או false');
+  }
+  return { line, picked: body.picked };
+}
+
 const SORTABLE = ['id', 'created_at', 'total', 'status'];
 
 /** ממיר ערך לתאריך, ואופציונלית סוגר אותו לסוף היום. */
@@ -357,6 +376,6 @@ function parseListQuery(query = {}) {
 }
 
 module.exports = {
-  parseCreate, parseUpdate, parseStatus, parseListQuery, assertDeliveryCityAllowed,
+  parseCreate, parseUpdate, parseStatus, parsePicked, parseListQuery, assertDeliveryCityAllowed,
   assertDeliveryAddressPresent, assertStatusFitsDeliveryMethod, EDITABLE, SORTABLE,
 };
