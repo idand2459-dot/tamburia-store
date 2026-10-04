@@ -1,13 +1,13 @@
 /**
  * גישה לטבלת orders: שליפה מסוננת, חיפוש לפי טלפון, יצירה,
- * עדכון, מחיקה וסיכום לפי סטטוס.
+ * עדכון, סימון שורות שהוכנו, מחיקה וסיכום לפי סטטוס.
  */
 const { query } = require('../config/db');
 
 const COLUMNS = `
   id, customer_name, customer_phone, customer_email,
   delivery_method, delivery_address, notes, items,
-  subtotal, delivery_fee, total, status, created_at
+  subtotal, delivery_fee, total, status, created_at, picked_items
 `;
 
 const JSON_COLUMNS = new Set(['items']);
@@ -126,6 +126,30 @@ async function update(id, data) {
   return rows[0] || null;
 }
 
+/**
+ * מסמן שורה אחת בהזמנה כמוכנה, או מבטל את הסימון.
+ *
+ * picked_items היא קבוצת האינדקסים של השורות שהוכנו
+ * (מיגרציה 011). השינוי נעשה בתוך ה-UPDATE עצמו ולא כקריאה, שינוי
+ * בקוד וכתיבה, כדי ששני מכשירים שמסמנים שורות שונות באותו רגע לא
+ * ידרסו זה את זה. DISTINCT שומר על קבוצה גם כשאותה שורה מסומנת פעמיים.
+ *
+ * מחזיר את ההזמנה המעודכנת, או null אם אינה קיימת.
+ */
+async function setLinePicked(id, line, picked) {
+  const { rows } = await query(
+    `UPDATE orders
+     SET picked_items = CASE
+       WHEN $3 THEN ARRAY(SELECT DISTINCT unnest(array_append(picked_items, $2::int)) ORDER BY 1)
+       ELSE array_remove(picked_items, $2::int)
+     END
+     WHERE id = $1
+     RETURNING ${COLUMNS}`,
+    [id, line, picked]
+  );
+  return rows[0] || null;
+}
+
 /** מוחק הזמנה ומחזיר אותה, או null אם לא הייתה קיימת. */
 async function remove(id) {
   const { rows } = await query(`DELETE FROM orders WHERE id = $1 RETURNING ${COLUMNS}`, [id]);
@@ -164,5 +188,5 @@ async function statsByStatus() {
 
 module.exports = {
   list, count, findById, findByPhone,
-  create, update, remove, statsByStatus, countByProductId, digitsOnly,
+  create, update, setLinePicked, remove, statsByStatus, countByProductId, digitsOnly,
 };

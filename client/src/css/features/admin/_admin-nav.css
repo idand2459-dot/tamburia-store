@@ -176,7 +176,7 @@
   .admin-sheet {
     background: var(--color-navy);
     border-color: var(--color-surface-dark);
-    color: var(--color-text-faint);
+    color: var(--color-text-dark-muted);
   }
 
   .admin-sheet-head { color: var(--color-text-dark); }

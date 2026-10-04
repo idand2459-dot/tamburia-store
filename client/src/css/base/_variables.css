@@ -94,6 +94,9 @@
   --color-bg-dark-deep: #0a0a1a;
   --color-surface-dark: #2d2d4e;
   --color-text-dark: #e0e0e0;
+  /* secondary text on those surfaces — what --color-text-muted, -subtle and
+     -faint are on white. Those three are 2.3–3:1 on navy; this is 6:1 and up */
+  --color-text-dark-muted: #a8a8c0;
 
   /* Text */
   --color-text: #1a1a2e;
