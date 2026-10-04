@@ -71,7 +71,7 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
   const { soundOn, toggleSound, playChime } = useNewOrderChime();
 
   const {
-    orders, handleStatusChange, handleDeleteOrder, exportOrdersToExcel, getStats, ordersError,
+    orders, handleStatusChange, togglePicked, handleDeleteOrder, exportOrdersToExcel, getStats, ordersError,
     showConfetti, dismissConfetti,
   } = useAdminOrders(api, { onNewOrder: playChime });
 
@@ -159,7 +159,9 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
         {activeTab === 'orders' && (
           <OrdersTab
             orders={orders}
+            products={products}
             onStatusChange={handleStatusChange}
+            onTogglePicked={togglePicked}
             onDeleteOrder={handleDeleteOrder}
             onExport={exportOrdersToExcel}
             ordersError={ordersError}

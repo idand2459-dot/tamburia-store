@@ -14,12 +14,19 @@
  * שינוי הסטטוס הידני נמצא בתצוגה הפתוחה ולא למעלה: הוא לתיקון טעות,
  * ולא הדרך הרגילה להתקדם. הרשימה בו מוגבלת לסטטוסים שמתאימים לאופן
  * הקבלה של ההזמנה — אותו כלל שהשרת אוכף.
+ *
+ * שורות ההזמנה בתצוגה הפתוחה הן רשימת ליקוט (PickList), וההתקדמות
+ * שלה מופיעה גם בכרטיס הסגור. כשכל השורות הוכנו בהזמנה שבטיפול, הצעד
+ * הבא מודגש ולידו "כל המוצרים הוכנו" — אבל הסטטוס אינו משתנה מעצמו:
+ * ייתכן שעוד מחכים לתשלום או לשיחה עם הלקוח, וזו החלטה של מי שמטפל.
  */
 import {
   Store, Truck, Phone, ChevronDown, Settings, PackageCheck, Truck as TruckIcon, CheckCircle,
 } from 'lucide-react';
 import { STATUS_CONFIG, statusesForMethod, formatDate, timeAgo } from './adminConstants';
-import { formatPrice, lineTotal } from '../../utils/pricing';
+import { formatPrice } from '../../utils/pricing';
+import { pickProgress } from '../../utils/pickList';
+import PickList, { PickProgress } from './PickList';
 
 /* הצעד הבא לכל סטטוס. ב-processing הוא תלוי באופן הקבלה — הזמנת
    איסוף עצמי הופכת למוכנה בחנות, הזמנת משלוח יוצאת לדרך — ולכן שם
@@ -50,17 +57,16 @@ function methodOf(order) {
     : { label: 'משלוח', Icon: Truck };
 }
 
-/** בונה את שורת הווריאנט, הצבע והמידה של פריט, או מחרוזת ריקה. */
-function itemOptions(item) {
-  return [item.selectedColor, item.selectedSize].filter(Boolean).join(' · ');
-}
-
 /** מציג כרטיס הזמנה אחת. */
-function OrderCard({ order, isOpen, onToggle, onStatusChange, onDelete }) {
+function OrderCard({ order, productsById, isOpen, onToggle, onStatusChange, onTogglePicked, onDelete }) {
   const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.new;
   const next = nextStepOf(order);
   const method = methodOf(order);
   const fullDate = formatDate(order.created_at);
+  /* הזמנה שהושלמה כבר יצאה מהחנות, והתקדמות ליקוט עליה היא רעש —
+     בייחוד בהזמנות מלפני שהרשימה קיימת, שהיו מראות 0 מכל מה שנמכר. */
+  const showProgress = order.status !== 'completed';
+  const allPicked = order.status === 'processing' && pickProgress(order).complete;
 
   return (
     <article className={`order-card ${order.status === 'new' ? 'is-new' : ''} ${isOpen ? 'is-open' : ''}`}>
@@ -91,13 +97,21 @@ function OrderCard({ order, isOpen, onToggle, onStatusChange, onDelete }) {
             {timeAgo(order.created_at)}
           </time>
         </span>
+
+        {showProgress && <PickProgress order={order} />}
       </button>
+
+      {/* תמיד קיים, כדי שקורא מסך יכריז כשהשורה האחרונה סומנה:
+          אזור חי שנוסף לדף יחד עם התוכן שלו לא תמיד מוכרז. */}
+      <p className={allPicked ? 'order-ready-note' : 'visually-hidden'} role="status">
+        {allPicked && <><PackageCheck size={18} aria-hidden="true" /> כל המוצרים הוכנו</>}
+      </p>
 
       <div className="order-card-actions">
         {next && (
           <button
             type="button"
-            className="order-next-btn"
+            className={`order-next-btn ${allPicked ? 'is-ready' : ''}`}
             onClick={() => onStatusChange(order.id, next.status)}>
             <next.Icon size={20} aria-hidden="true" /> {next.label}
           </button>
@@ -110,18 +124,7 @@ function OrderCard({ order, isOpen, onToggle, onStatusChange, onDelete }) {
 
       {isOpen && (
         <div className="order-card-body">
-          <ul className="order-items">
-            {order.items.map((item, i) => (
-              <li key={i} className="order-item">
-                <span className="order-item-name">
-                  {item.name}
-                  {itemOptions(item) && <span className="order-item-options">{itemOptions(item)}</span>}
-                </span>
-                <span className="order-item-qty">×{item.quantity}</span>
-                <span className="order-item-price">{formatPrice(lineTotal(item.price, item.quantity))}</span>
-              </li>
-            ))}
-          </ul>
+          <PickList order={order} productsById={productsById} onTogglePicked={onTogglePicked} />
 
           <dl className="order-facts">
             <div className="order-fact">

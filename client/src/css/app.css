@@ -80,6 +80,9 @@
 /* one card inside the list that file lays out, split out of it at the 400-line
    ceiling; no selector appears in both */
 @import './features/admin/_admin-order-card.css';
+/* the pick list inside that card's open body, and its progress on the closed
+   head; owns only .pick-* selectors */
+@import './features/admin/_admin-pick-list.css';
 @import './features/admin/_admin-stats.css';
 @import './features/admin/_auth.css';
 /* Two unrelated calculators that shared one file. In the order their rules had

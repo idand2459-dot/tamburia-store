@@ -4,11 +4,15 @@
  * הסינון וההזמנה הפתוחה הם state מקומי של הלשונית — הם לא מעניינים
  * אף לשונית אחרת.
  *
+ * המוצרים מגיעים לכאן בשביל התמונות ברשימת הליקוט. המפה לפי id נבנית
+ * פעם אחת ללשונית ולא בכל שורה, כי חיפוש ברשימה בכל שורה של כל כרטיס
+ * הוא עבודה שחוזרת על עצמה בכל רינדור.
+ *
  * שורת הסיכום לפי סטטוס שהייתה כאן נמחקה. היא הציגה חמישה מספרים
  * שאיש לא פועל לפיהם, ואותם מספרים מופיעים עכשיו על שבבי הסינון
  * עצמם — שם הם גם אומרים למה הם טובים.
  */
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { FileSpreadsheet, AlertTriangle } from 'lucide-react';
 import { STATUS_CONFIG } from './adminConstants';
 import OrderCard from './OrderCard';
@@ -35,9 +39,10 @@ function applyFilter(orders, filter) {
 }
 
 /** מציג את לשונית ההזמנות. */
-function OrdersTab({ orders, onStatusChange, onDeleteOrder, onExport, ordersError }) {
+function OrdersTab({ orders, products, onStatusChange, onTogglePicked, onDeleteOrder, onExport, ordersError }) {
   const [expandedOrder, setExpandedOrder] = useState(null);
   const [filter, setFilter] = useState('open');
+  const productsById = useMemo(() => new Map(products.map(p => [p.id, p])), [products]);
 
   /* מהחדשה לישנה. השרת ממיין כך, אבל הסדר הוא החלטה של המסך הזה
      ולא משהו להסתמך עליו מרחוק. */
@@ -85,9 +90,11 @@ function OrdersTab({ orders, onStatusChange, onDeleteOrder, onExport, ordersErro
             <OrderCard
               key={order.id}
               order={order}
+              productsById={productsById}
               isOpen={expandedOrder === order.id}
               onToggle={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
               onStatusChange={onStatusChange}
+              onTogglePicked={onTogglePicked}
               onDelete={onDeleteOrder}
             />
           ))}
