@@ -15,6 +15,10 @@
  * H1 אחד לכל דף ובלי דילוג ברמות הכותרות, lang ו-dir על html,
  * קישור "דלג לתוכן" כרכיב הממוקד הראשון, והיעדר גלילה אופקית
  * ברוחב 640 (מסך 1280 בהגדלה של 200%) וברוחב 320 (WCAG 1.4.10).
+ *
+ * גם מסך ההזמנות של האדמין נבדק, עם רשימת ליקוט פתוחה. לשם כך הבדיקה
+ * מתחברת (ADMIN_PASSWORD מהסביבה, לא מודפס) ויוצרת שתי הזמנות זמניות,
+ * שנמחקות בסוף.
  */
 process.env.MAIL_ENABLED = 'false';
 process.env.DB_LOG_QUERIES = 'false';
@@ -23,6 +27,7 @@ process.env.PORT = process.env.A11Y_PORT || '3200';
 const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer-core');
+const { login } = require('../test/helpers');
 
 const AXE_SOURCE = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 const WRITE_REPORT = process.argv.includes('--report');
@@ -72,6 +77,67 @@ async function buildPages(baseUrl) {
     { name: 'הצהרת נגישות', path: '/accessibility' },
     { name: '404', path: '/no-such-page-a11y' },
   ];
+}
+
+/* שם הלקוח של ההזמנות הזמניות, וכך גם מזהים אותן לניקוי. */
+const A11Y_CUSTOMER = 'בדיקת נגישות';
+
+/**
+ * מכין את מסך ההזמנות של האדמין: עוגיית התחברות ושתי הזמנות בטיפול
+ * משני מוצרים מתומחרים — באחת שורה אחת מסומנת מתוך שתיים, והיא נפתחת
+ * בדף; השנייה כולה מוכנה, ולכן הכפתור שלה מודגש. כך נבדקים שני מצבי
+ * השורה, ההתקדמות וההדגשה. מחזיר את הדף לבדיקה ופונקציית ניקוי.
+ *
+ * ריצה שנקטעה באמצע לא הגיעה לניקוי, ולכן קודם נמחקות הזמנות שנשארו
+ * ממנה — לפי שם הלקוח, שאיש מלבד הבדיקה הזו אינו משתמש בו.
+ */
+async function prepareAdminOrders(baseUrl, products) {
+  const cookie = await login(baseUrl);
+  const call = (method, url, body) => fetch(`${baseUrl}/api${url}`, {
+    method,
+    headers: { 'Content-Type': 'application/json', Cookie: cookie },
+    body: body && JSON.stringify(body),
+  }).then((res) => res.json());
+
+  const priced = products
+    .filter((p) => Number(p.price) > 0 && !(p.variants || []).length)
+    .sort((a, b) => Boolean(b.image_url) - Boolean(a.image_url))
+    .slice(0, 2);
+  const items = priced.map((p) => ({ id: p.id, name: p.name, price: Number(p.price), quantity: 2 }));
+
+  const leftovers = await call('GET', `/orders?search=${encodeURIComponent(A11Y_CUSTOMER)}`);
+  for (const old of leftovers.filter((o) => o.customer_name === A11Y_CUSTOMER)) {
+    await call('DELETE', `/orders/${old.id}`);
+  }
+
+  /** יוצר הזמנה בטיפול ומסמן בה את השורות הנתונות. */
+  async function orderWith(picked) {
+    const order = await call('POST', '/orders', {
+      customer_name: A11Y_CUSTOMER, customer_phone: '0500000000', delivery_method: 'pickup', items,
+    });
+    await call('PUT', `/orders/${order.id}/status`, { status: 'processing' });
+    for (const line of picked) await call('PUT', `/orders/${order.id}/items/${line}/picked`, { picked: true });
+    return order.id;
+  }
+
+  const openId = await orderWith([0]);
+  const readyId = await orderWith(items.map((_, line) => line));
+  const [name, value] = cookie.split('=');
+
+  return {
+    spec: {
+      name: 'אדמין — הזמנות',
+      path: '/admin/orders',
+      cookie: { name, value },
+      // פותח את ההזמנה החלקית, כדי שרשימת הליקוט תהיה על המסך
+      prepare: (page) => page.evaluate((id) => {
+        const card = [...document.querySelectorAll('.order-card')]
+          .find((c) => c.querySelector('.order-card-number')?.textContent === `#${id}`);
+        card?.querySelector('.order-card-head')?.click();
+      }, openId),
+    },
+    cleanup: () => Promise.all([openId, readyId].map((id) => call('DELETE', `/orders/${id}`))),
+  };
 }
 
 /** בודק את מבנה הכותרות, השפה וקישור הדילוג, בתוך הדף. */
@@ -189,6 +255,7 @@ async function openPage(browser, baseUrl, spec, { viewport, scheme = 'light' }) 
     localStorage.clear();
     for (const [key, value] of Object.entries(storage)) localStorage.setItem(key, JSON.stringify(value));
   }, spec.storage || {});
+  if (spec.cookie) await page.setCookie({ ...spec.cookie, url: baseUrl });
   await page.goto(`${baseUrl}${spec.path}`, { waitUntil: 'networkidle0', timeout: 30000 });
   // גלילה עד הסוף, כדי שרכיבי Reveal ותמונות עצלות יופיעו.
   await page.evaluate(async () => {
@@ -198,6 +265,7 @@ async function openPage(browser, baseUrl, spec, { viewport, scheme = 'light' }) 
     }
     window.scrollTo(0, 0);
   });
+  if (spec.prepare) await spec.prepare(page);
   await new Promise((r) => setTimeout(r, 600));
   return page;
 }
@@ -299,8 +367,11 @@ async function main() {
 
   const browser = await puppeteer.launch({ executablePath, headless: true, args: ['--lang=he-IL'] });
   const results = [];
+  let admin = null;
   try {
     const pages = await buildPages(baseUrl);
+    admin = await prepareAdminOrders(baseUrl, await (await fetch(`${baseUrl}/api/products`)).json());
+    pages.push(admin.spec);
     for (const spec of pages) {
       for (const viewport of Object.keys(VIEWPORTS)) {
         const r = await auditPage(browser, baseUrl, spec, viewport);
@@ -310,6 +381,7 @@ async function main() {
       }
     }
   } finally {
+    await admin?.cleanup();
     await browser.close();
     await new Promise((resolve) => server.close(resolve));
     await db.close();
