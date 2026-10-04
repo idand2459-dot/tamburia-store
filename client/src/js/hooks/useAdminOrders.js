@@ -1,6 +1,6 @@
 /**
  * נתוני ההזמנות של מסך הניהול: הרשימה, הסקר התקופתי, הסטטוסים,
- * המחיקה, ייצוא האקסל וחישובי לשונית הסטטיסטיקות.
+ * רשימת הליקוט, המחיקה, ייצוא האקסל וחישובי לשונית הסטטיסטיקות.
  *
  * מקבל את עוטף ה-fetch (api) כארגומנט, כמו שני ההוקים האחרים.
  *
@@ -13,6 +13,7 @@ import { CATEGORIES, STATUS_CONFIG, formatDate } from '../pages/admin/adminConst
 import { useWebSocket } from './useWebSocket';
 import { errorMessageFrom, NETWORK_ERROR } from '../utils/apiErrors';
 import { sumPrices } from '../utils/pricing';
+import { withLine } from '../utils/pickList';
 
 // הסקר הוא מסלול חלופי בלבד מאז שיש WebSocket: הודעה על הזמנה חדשה
 // מגיעה תוך פחות משנייה, והסקר נשאר רק למקרה שהחיבור למטה.
@@ -109,6 +110,41 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
       setOrdersError(NETWORK_ERROR);
     }
   }, [api, fetchOrders]);
+
+  /** קובע במסך את הסימון של שורה אחת בהזמנה, בלי לגעת בשאר. */
+  const setLinePickedLocally = useCallback((orderId, line, picked) => {
+    setOrders(prev => prev.map(o => (
+      o.id === orderId ? { ...o, picked_items: withLine(o.picked_items, line, picked) } : o
+    )));
+  }, []);
+
+  /**
+   * מסמן שורה ברשימת הליקוט כמוכנה, או מבטל את הסימון.
+   *
+   * אופטימי: המסך מתעדכן מיד, כי מי שעומד ליד המדף לוחץ שורה אחרי
+   * שורה ולא מחכה לשרת. כישלון מחזיר את השורה הזו בלבד למצבה הקודם,
+   * ולא את כל ההזמנה — שורה אחרת שסומנה בינתיים נשארת מסומנת.
+   *
+   * בהצלחה לא מעתיקים את picked_items מהתשובה: שתי לחיצות מהירות
+   * יוצאות במקביל, והתשובה לראשונה עוד לא יודעת על השנייה.
+   *
+   * מחזיר הודעת שגיאה, או null. ההודעה מוצגת ליד הרשימה שנלחצה ולא
+   * בפס שבראש הלשונית, שכבר גללו ממנו.
+   */
+  const togglePicked = useCallback(async (orderId, line, picked) => {
+    setLinePickedLocally(orderId, line, picked);
+    try {
+      const res = await api(`/api/orders/${orderId}/items/${line}/picked`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ picked }),
+      });
+      if (res.ok) return null;
+      setLinePickedLocally(orderId, line, !picked);
+      return await errorMessageFrom(res, 'הסימון לא נשמר. נסה שוב.');
+    } catch {
+      setLinePickedLocally(orderId, line, !picked);
+      return NETWORK_ERROR;
+    }
+  }, [api, setLinePickedLocally]);
 
   /** מוחק הזמנה לאחר אישור המשתמש. */
   const handleDeleteOrder = useCallback(async (id) => {
@@ -221,7 +257,7 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
 
   return {
     orders, fetchOrders, ordersError,
-    handleStatusChange, handleDeleteOrder, exportOrdersToExcel, getStats,
+    handleStatusChange, togglePicked, handleDeleteOrder, exportOrdersToExcel, getStats,
     showConfetti, dismissConfetti,
   };
 }

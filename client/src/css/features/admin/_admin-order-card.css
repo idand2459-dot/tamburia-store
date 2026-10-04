@@ -7,6 +7,8 @@
    next step, and the customer's phone. The expanded body is for
    reading detail and for fixing a mistake, which is why the
    status select and delete sit down there, far from the two.
+   The lines inside the body are the pick list,
+   features/admin/_admin-pick-list.css.
 
    Split out of features/admin/_admin-orders.css, which keeps the tab's
    filter row. Replaces the table-based card that was there; gone
@@ -111,6 +113,19 @@
   color: var(--color-text-subtle);
 }
 
+/* Said once every line of an order in progress is picked, right above the
+   button it is pointing at. */
+.order-ready-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0 20px 10px;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-green);
+}
+
 /* The two buttons. Both 52px, because this is the row a thumb aims at. */
 .order-card-actions {
   display: flex;
@@ -160,46 +175,6 @@
   gap: 18px;
   padding: 18px 20px;
   border-top: 1px solid var(--color-border-soft);
-}
-
-.order-items {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.order-item {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--color-border-soft);
-  font-size: var(--font-size-body);
-}
-
-.order-item-name {
-  flex: 1;
-  color: var(--color-text);
-}
-
-.order-item-options {
-  display: block;
-  font-size: var(--font-size-small);
-  color: var(--color-text-subtle);
-}
-
-.order-item-qty {
-  color: var(--color-text-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.order-item-price {
-  min-width: 68px;
-  text-align: end;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-navy);
 }
 
 .order-facts {
@@ -272,6 +247,15 @@
 /* ---- States -------------------------------------------------------------- */
 
 .order-next-btn:hover { background: var(--color-red-dark); }
+
+/* Everything is picked: the next step turns the pick list's green and gains a
+   ring, so it reads as "this is what is left to do". */
+.order-next-btn.is-ready {
+  background: var(--color-green);
+  box-shadow: 0 0 0 4px rgba(var(--color-green-rgb), 0.25);
+}
+
+.order-next-btn.is-ready:hover { background: var(--color-green-dark); }
 
 .order-call-btn:hover {
   background: var(--color-navy);
@@ -351,6 +335,8 @@
 
   .order-card-actions { padding: 0 16px 16px; }
 
+  .order-ready-note { padding: 0 16px 10px; }
+
   .order-card-body { padding: 16px; }
 
   .order-card-name { font-size: var(--font-size-body); }
@@ -375,8 +361,6 @@
   .order-card-number,
   .order-card-name,
   .order-card-total,
-  .order-item-name,
-  .order-item-price,
   .order-fact dd {
     color: var(--color-text-dark);
   }
@@ -391,11 +375,11 @@
     color: var(--color-text-dark-muted);
   }
 
+  .order-ready-note { color: var(--color-green-bright); }
+
   .order-card.is-new { background: var(--color-bg-dark); }
 
   .order-card-body { border-top-color: var(--color-surface-dark); }
-
-  .order-item { border-bottom-color: var(--color-surface-dark); }
 
   /* navy on navy is invisible, so the handled state borrows white here */
   .order-card-status--processing {
