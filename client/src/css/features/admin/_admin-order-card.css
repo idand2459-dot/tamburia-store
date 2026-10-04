@@ -381,6 +381,16 @@
     color: var(--color-text-dark);
   }
 
+  /* everything secondary on the card: the light theme's greys vanish on navy */
+  .order-card-phone,
+  .order-card-method,
+  .order-card-age,
+  .order-fact dt,
+  .order-status-fix,
+  .order-delete-btn {
+    color: var(--color-text-dark-muted);
+  }
+
   .order-card.is-new { background: var(--color-bg-dark); }
 
   .order-card-body { border-top-color: var(--color-surface-dark); }
