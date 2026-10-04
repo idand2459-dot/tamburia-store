@@ -24,7 +24,7 @@ server/
   server.js        starts the process: migrations, HTTP server, WebSocket, graceful shutdown
   app.js           builds the Express app; middleware order lives here
   config/          env.js (reads and validates every variable), db.js (the one pg Pool)
-  db/              migrate.js (the runner) and migrations/000–010 (.sql, applied in order)
+  db/              migrate.js (the runner) and migrations/000–011 (.sql, applied in order)
   routes/          one router per domain; marks which endpoints are public and which need the admin
   validators/      parse and bound every body and query; throw 400 on bad input
   controllers/     translate HTTP to a service call and back; no SQL, no model imports, no try/catch
@@ -101,6 +101,19 @@ the same 404 as an id that never existed. An admin sees hidden products only whe
 in `product.service`, and pricing rejects hidden products again at checkout. `DELETE` works
 only for a product with no orders. Otherwise it returns 409 and suggests hiding.
 
+**The pick list is a parallel column, not a field inside `items`.** An order's lines are
+JSONB in `orders.items`, so there is no row to add `picked` to. Which lines are picked is
+`orders.picked_items INTEGER[]` (migration 011), the set of picked line indexes. `items`
+stays the untouched record of the sale. It is never edited, and it is what the customer's
+by-phone lookup returns, while picking is warehouse state that the lookup leaves out. A set of
+indexes has no length to keep aligned with `items`, and old orders get `'{}'` with no
+backfill. One toggle is a single `UPDATE` with `array_append` / `array_remove`, so two
+devices ticking different lines never overwrite each other. The index is stable because
+`items` never changes after the order is saved.
+`PUT /api/orders/:id/items/:line/picked { picked }` is admin-only. A line past the end is
+404, and the status never changes here. On the client the toggle is optimistic, and a failed
+save reverts only that line.
+
 **Content-hashed images.** Every upload is resized to a 1200px long edge, padded to a
 square, stripped of metadata (GPS included) and saved as WebP named after the SHA-256 of
 its own bytes. The photo pipeline uses `product-<id>-<hash>.webp`. A changed image is a new
@@ -121,8 +134,8 @@ there must return to the login screen.
 
 **The admin is lazy-loaded.** `App.js` loads `routes/AdminRoute` with `React.lazy` inside
 `<Suspense>`, so a shopper never downloads the admin. The main bundle went from
-149.25 kB to 132.13 kB gzipped, and the admin is a separate 21.1 kB chunk that only
-`/admin` fetches. `smoke-static` fails if admin code lands back in the main bundle. Its CSS
+149.25 kB to 132.13 kB gzipped, and the admin is a separate chunk (21.1 kB when it was split
+out) that only `/admin` fetches. `smoke-static` fails if admin code lands back in the main bundle. Its CSS
 stays in the main stylesheet, for the reason below.
 
 **ITCSS, with the import order as the cascade.** `css/app.css` only imports, and its order
@@ -141,13 +154,14 @@ gitignored, `.env.example` holds placeholders, and `unit-repo-hygiene` fails if 
 any of its secret values appears in a tracked file.
 
 **Accessibility.** The storefront targets IS 5568 / WCAG 2.1 AA. `npm run a11y` audits
-12 pages at desktop, mobile and dark mode with axe-core plus heading, language and zoom
+the 12 storefront pages and the admin's orders screen (logged in, pick list open, with two
+temporary orders it deletes afterwards) at desktop, mobile and dark mode with axe-core plus heading, language and zoom
 checks, and must report zero findings. The statement is at `/accessibility`.
 
 ## Tests
 
 `npm test` starts its own server on port 3100 against the real database, runs 15 suites
-(646 checks), and cleans up what it created:
+(671 checks), and cleans up what it created:
 
 - **unit-*** (no network or database): repo hygiene, config startup rules, order service,
   product visibility, review moderation, money, originals.
@@ -157,8 +171,9 @@ checks, and must report zero findings. The statement is at `/accessibility`.
   contract of every endpoint, including server-side totals, guarded routes, cache and
   security headers, and SPA-fallback boundaries.
 
-`npm run test:client` runs 71 Jest tests in 9 suites (services, cart, pricing, drawer focus,
-category filters, product-page races, the admin products tab). `npm run a11y` is the
+`npm run test:client` runs 90 Jest tests in 12 suites (services, cart, pricing, drawer focus,
+category filters, product-page races, the admin products tab, the pick list and its
+optimistic toggle). `npm run a11y` is the
 accessibility gate (it serves `client/build`, so build first).
 
 ## Running it

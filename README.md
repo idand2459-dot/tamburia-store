@@ -79,6 +79,9 @@ yet; everything below runs locally.
 - Hide instead of delete: products with orders are taken off the shelf, not out of the database
 - Bulk product import from CSV, with a preview and per-row validation before committing
 - Order tracking with status changes that email the customer automatically
+- A pick list in every order: each line is a large checkbox row with the product's
+  thumbnail and quantity, saved per line on the server. Progress ("3/5 הוכנו") shows on the
+  closed card, and the next step is highlighted once everything is picked
 - Review moderation: nothing is published until it is approved
 - Lazy-loaded: shoppers never download the admin code
 
@@ -143,7 +146,7 @@ origin, so there is no CORS setup in production and no second deployment target.
 ```
 server/
   config/        env loading and validation, the one shared database pool
-  db/            SQL migrations (000–010) and the runner
+  db/            SQL migrations (000–011) and the runner
   routes/        one router per domain, marking what is public and what is guarded
   validators/    every body and query parameter checked and bounded
   controllers/   HTTP in, service call, HTTP out — no SQL, no models, no try/catch
@@ -162,7 +165,7 @@ client/src/
   js/services/   every server call the storefront makes
   js/utils/      pure helpers (pricing, store info, palette, icons)
 
-test/            15 server suites, 646 checks
+test/            15 server suites, 671 checks
 scripts/         catalogue import, demo data, the product-photo pipeline, the a11y audit
 docs/            ARCHITECTURE.md, the product-photo runbook, the accessibility audit, screenshots
 photos/          raw phone photos in, processed store images out — contents gitignored
@@ -233,12 +236,18 @@ except by id, so the edit form can restore one. The rule lives in `product.servi
 checkout rejects hidden products again. A product that has orders cannot be deleted
 (409); the admin is offered "hide" instead.
 
+**The pick list is its own column.** Picked lines are `orders.picked_items`, a set of line
+indexes (migration 011), and not a flag inside the `items` JSONB. That keeps the record of
+the sale untouched and keeps warehouse state out of the customer's order lookup. Each toggle
+is one atomic `UPDATE`. See [ARCHITECTURE.md](docs/ARCHITECTURE.md#main-design-decisions).
+
 **Content-hashed images, long cache.** Every uploaded image is named after a hash of its
 processed bytes, so a changed image is a new URL. `/uploads` is cached for a week and
 `/static` for a year as `immutable`, while `index.html` is never cached.
 
 **The admin is lazy-loaded.** `React.lazy` + `Suspense` on `/admin/:tab`: the main bundle
-went from 149.25 kB to 132.13 kB (gzipped), and the admin is a separate 21.1 kB chunk.
+went from 149.25 kB to 132.13 kB (gzipped), and the admin is a separate chunk (21.1 kB when
+it was split out).
 
 **CSS: ITCSS, one component per partial.** `client/src/css/app.css` imports
 `base → layout → components → features/<domain>`, and its import order is the cascade.
@@ -285,8 +294,9 @@ Turn it on with `CSP_ENABLED=true`.
 
 ## Accessibility
 
-The storefront targets **IS 5568 / WCAG 2.1 AA**. `npm run a11y` audits 12 pages at
-desktop, mobile and dark-mode settings with axe-core, plus heading-structure, language,
+The storefront targets **IS 5568 / WCAG 2.1 AA**. `npm run a11y` audits 12 storefront
+pages and the admin's orders screen (logged in, pick list open) at desktop, mobile and
+dark-mode settings with axe-core, plus heading-structure, language,
 skip-link and zoom-reflow checks, and must report zero findings. The audit and its fixes are
 written up in [docs/a11y-audit.md](docs/a11y-audit.md); the public statement is at
 `/accessibility`. There is no third-party accessibility overlay.
@@ -296,8 +306,8 @@ written up in [docs/a11y-audit.md](docs/a11y-audit.md); the public statement is 
 ## Testing
 
 ```bash
-npm test               # server: 15 suites, 646 checks
-npm run test:client    # client: 9 suites, 71 tests
+npm test               # server: 15 suites, 671 checks
+npm run test:client    # client: 12 suites, 90 tests
 npm run a11y           # accessibility: serves client/build, so run npm run build:client first
 ```
 
@@ -309,14 +319,14 @@ afterwards.
 |---|---|---|
 | `unit-repo-hygiene` | 6 | `.env` not tracked, `.env.example` placeholders only, no secret value in any tracked file |
 | `unit-config` | 8 | The production startup rules (session secret, password length) and optional mail credentials |
-| `unit-order-service` | 46 | Order business rules, without network or database |
+| `unit-order-service` | 54 | Order business rules, the pick list included, without network or database |
 | `unit-product-service` | 14 | Hidden-product visibility for customers and admins, with a fake model |
 | `unit-review-service` | 13 | Moderation: public reads approved-only, new reviews unapproved |
 | `unit-money` | 23 | Agorot arithmetic and price parsing |
 | `unit-originals` | 14 | Keeping and finding the full-resolution original of an upload |
 | `smoke-fresh-db` | 13 | An empty database: every migration, the catalogue import, and a column-by-column schema match with the real one |
 | `smoke-static` | 47 | Client serving, cache and security headers, SPA fallback and its boundaries, no internal file exposed, the admin kept out of the main bundle |
-| `smoke-orders` | 122 | Order lifecycle, server-side pricing and totals, 409 on changed prices, status transitions, pagination, immutable fields |
+| `smoke-orders` | 139 | Order lifecycle, server-side pricing and totals, 409 on changed prices, status transitions, pagination, immutable fields, the pick list (tick, untick, missing line or order, no login) |
 | `smoke-products` | 168 | CRUD, partial updates, subcategories, hiding, delete with and without orders, image cleanup |
 | `smoke-settings` | 21 | The closed list of settings keys, set, reset |
 | `smoke-reviews` | 57 | Moderation, the public/admin split, the stats contract the home page depends on |
