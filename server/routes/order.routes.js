@@ -36,5 +36,6 @@ router.put('/:id', requireAdmin, idParam, controller.update);
 router.delete('/:id', requireAdmin, idParam, controller.remove);
 
 router.put('/:id/status', requireAdmin, idParam, controller.updateStatus);
+router.put('/:id/items/:line/picked', requireAdmin, idParam, controller.setPicked);
 
 module.exports = router;

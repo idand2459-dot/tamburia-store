@@ -478,6 +478,67 @@ async function testSavedTotalsMatch() {
   }
 }
 
+/**
+ * בודק את רשימת הליקוט: סימון, ביטול, שורה והזמנה שאינן קיימות,
+ * קלט פסול ובקשה בלי התחברות. הזמנת המשלוח מ-testCreate היא בת
+ * שתי שורות, 0 ו-1.
+ */
+async function testPicked(id) {
+  console.log('\n── רשימת ליקוט');
+  const pick = (line, picked, orderId = id) => call('PUT', `/orders/${orderId}/items/${line}/picked`, { picked });
+
+  const fresh = await call('GET', `/orders/${id}`);
+  check('הזמנה חדשה: אף שורה לא מסומנת',
+    Array.isArray(fresh.body.picked_items) && fresh.body.picked_items.length === 0, fresh.body.picked_items);
+
+  const first = await pick(0, true);
+  check('סימון שורה 0 → 200, picked_items = [0]',
+    first.status === 200 && JSON.stringify(first.body.picked_items) === '[0]', first.body.picked_items);
+
+  const again = await pick(0, true);
+  check('סימון חוזר של אותה שורה אינו מכפיל אותה',
+    JSON.stringify(again.body.picked_items) === '[0]', again.body.picked_items);
+
+  const both = await pick(1, true);
+  check('סימון שורה 1 → [0, 1]', JSON.stringify(both.body.picked_items) === '[0,1]', both.body.picked_items);
+
+  const undo = await pick(0, false);
+  check('ביטול שורה 0 → [1]', undo.status === 200 && JSON.stringify(undo.body.picked_items) === '[1]', undo.body.picked_items);
+
+  const kept = await call('GET', `/orders/${id}`);
+  check('הסימון נשמר במסד', JSON.stringify(kept.body.picked_items) === '[1]', kept.body.picked_items);
+  check('הסימון אינו משנה את הסטטוס', kept.body.status === fresh.body.status, kept.body.status);
+  check('הפריטים עצמם לא השתנו', JSON.stringify(kept.body.items) === JSON.stringify(fresh.body.items), kept.body.items);
+
+  const noLine = await pick(2, true);
+  check('שורה שאינה קיימת בהזמנה → 404', noLine.status === 404, noLine.status);
+
+  const noOrder = await pick(0, true, 999999);
+  check('הזמנה שאינה קיימת → 404', noOrder.status === 404, noOrder.status);
+
+  for (const [name, path, body] of [
+    ['מספר שורה לא מספרי → 400', 'abc', { picked: true }],
+    ['מספר שורה שלילי → 400', '-1', { picked: true }],
+    ['picked כמחרוזת → 400', '0', { picked: 'false' }],
+    ['בלי picked → 400', '0', {}],
+  ]) {
+    const res = await call('PUT', `/orders/${id}/items/${path}/picked`, body);
+    check(name, res.status === 400, res.status);
+  }
+
+  const saved = authCookie;
+  authCookie = null;
+  const anon = await pick(0, true);
+  authCookie = saved;
+  check('בלי התחברות → 401', anon.status === 401, anon.status);
+  const after = await call('GET', `/orders/${id}`);
+  check('בקשה בלי התחברות לא שינתה דבר', JSON.stringify(after.body.picked_items) === '[1]', after.body.picked_items);
+
+  const byPhone = await call('GET', '/orders/by-phone/0506735040');
+  check('החיפוש של הלקוח לפי טלפון אינו חושף picked_items',
+    byPhone.body.length > 0 && byPhone.body.every((o) => !('picked_items' in o)), byPhone.body.map(Object.keys));
+}
+
 /** מוחק את כל מה שהבדיקה יצרה ומאמת שלא נשארו שאריות. */
 async function cleanup() {
   console.log('\n── ניקוי');
@@ -513,6 +574,7 @@ async function main() {
   await testDecimalPricing();
   await testSavedTotalsMatch();
   await testUpdate(deliveryId);
+  await testPicked(deliveryId);
   await cleanup();
 
   console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);

@@ -363,7 +363,39 @@ async function testFindOrdersByPhone() {
   const result = await ok.service.findOrdersByPhone('050-673-5040');
   check('טלפון מנוקד עובר נרמול לפני החיפוש',
     ok.Order.findByPhone.calls[0][0] === '0506735040', ok.Order.findByPhone.calls[0]);
-  check('מוחזרות ההזמנות מהמודל', result === orders, result);
+  check('מוחזרות ההזמנות מהמודל', result.length === 1 && result[0].id === orders[0].id, result);
+
+  const internal = loadService({ order: { findByPhone: spy([sampleOrder({ picked_items: [0] })]) } });
+  const [shown] = await internal.service.findOrdersByPhone('0506735040');
+  check('picked_items אינו מגיע ללקוח', !('picked_items' in shown), Object.keys(shown));
+}
+
+/** setItemPicked — רשימת הליקוט. */
+async function testSetItemPicked() {
+  console.log('\n── setItemPicked');
+
+  const twoLines = sampleOrder({ items: [{ name: 'א' }, { name: 'ב' }], picked_items: [] });
+
+  const ok = loadService({ order: { findById: spy(twoLines), setLinePicked: spy({ ...twoLines, picked_items: [1] }) } });
+  const result = await ok.service.setItemPicked(7, 1, true);
+  check('שורה קיימת: המודל מקבל (id, line, picked)',
+    JSON.stringify(ok.Order.setLinePicked.calls[0]) === '[7,1,true]', ok.Order.setLinePicked.calls[0]);
+  check('מוחזרת ההזמנה המעודכנת', JSON.stringify(result.picked_items) === '[1]', result.picked_items);
+  check('הסימון אינו נוגע בסטטוס ואינו שולח מייל',
+    ok.Order.update.calls.length === 0 && ok.mailer.sendStatusUpdateToCustomer.calls.length === 0, null);
+
+  const outOfRange = loadService({ order: { findById: spy(twoLines), setLinePicked: spy(twoLines) } });
+  const err = await captureError(() => outOfRange.service.setItemPicked(7, 2, true));
+  check('שורה מעבר לסוף ההזמנה → 404', err && err.status === 404, err && err.status);
+  check('ולא פונים למודל לכתיבה', outOfRange.Order.setLinePicked.calls.length === 0, outOfRange.Order.setLinePicked.calls.length);
+
+  const missing = loadService({ order: { setLinePicked: spy(null) } });
+  const gone = await captureError(() => missing.service.setItemPicked(9, 0, true));
+  check('הזמנה שאינה קיימת → 404', gone && gone.status === 404, gone && gone.status);
+
+  const raced = loadService({ order: { findById: spy(twoLines), setLinePicked: spy(null) } });
+  const deleted = await captureError(() => raced.service.setItemPicked(7, 0, true));
+  check('הזמנה שנמחקה בין הקריאה לכתיבה → 404', deleted && deleted.status === 404, deleted && deleted.status);
 }
 
 /** מריץ את כל הבדיקות לפי הסדר. */
@@ -374,6 +406,7 @@ async function main() {
   await testStatusFitsDeliveryMethod();
   await testRemoveOrder();
   await testFindOrdersByPhone();
+  await testSetItemPicked();
 
   console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);
   process.exitCode = failed === 0 ? 0 : 1;
