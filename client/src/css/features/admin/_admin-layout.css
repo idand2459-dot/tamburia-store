@@ -237,22 +237,32 @@
      stopped following the system theme (base/_reset.css) */
   .admin { color: var(--color-text-dark); }
 
+  /* The column gets the backdrop's colour as well, which changes nothing on
+     screen: a contrast checker cannot see a fixed z-index -1 pseudo-element,
+     so it measured the light title against the blush root background instead. */
+  .admin,
   .admin::before { background: var(--color-bg-dark); }
 
   .admin-title { color: var(--color-text-dark); }
 
   .admin-count {
     background: var(--color-surface-dark);
-    color: var(--color-text-faint);
+    color: var(--color-text-dark-muted);
   }
 
   .admin-sound-btn {
     background: var(--color-navy);
     border-color: var(--color-surface-dark);
-    color: var(--color-text-faint);
+    color: var(--color-text-dark-muted);
   }
 
+  /* --color-purple is 3:1 on navy; the soft one reads */
+  .admin-sound-btn.is-on { color: var(--color-purple-soft); }
+
   .admin-tabs { border-bottom-color: var(--color-surface-dark); }
+
+  .admin-tab,
+  .admin-back-link { color: var(--color-text-dark-muted); }
 
   .admin-tab:hover,
   .admin-tab.is-active { color: var(--color-text-dark); }

@@ -14,6 +14,10 @@
  * ההתראה על הזמנה חדשה היא קונפטי וצליל. הקונפטי מגיע מ-useAdminOrders,
  * שיודע מתי נכנסה הזמנה; הצליל מורכב כאן ונמסר לו כ-onNewOrder, מפני
  * שהמתג שמכבה אותו יושב בכותרת הזו.
+ *
+ * הלשונית הפעילה יושבת ב-<main>, ולפני הכול קישור "דלג לתוכן" — כמו
+ * בחנות (StoreLayout). בלעדיהם מי שעובד במקלדת עובר בכל כניסה דרך
+ * הכותרת וכל הלשוניות לפני שהוא מגיע להזמנות.
  */
 import { useState, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -111,6 +115,7 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
 
   return (
     <div className="admin">
+      <a className="skip-link" href="#admin-content">דלג לתוכן</a>
       {showConfetti && <Confetti onDone={dismissConfetti} />}
 
       <header className="admin-header">
@@ -140,75 +145,77 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
         onBack={onBack}
       />
 
-      {activeTab === 'stats' && (
-        <StatsTab
-          api={api}
-          products={products}
-          getStats={getStats}
-          onToggleStock={toggleStock}
-          productsError={productsError}
-        />
-      )}
+      <main id="admin-content" tabIndex={-1}>
+        {activeTab === 'stats' && (
+          <StatsTab
+            api={api}
+            products={products}
+            getStats={getStats}
+            onToggleStock={toggleStock}
+            productsError={productsError}
+          />
+        )}
 
-      {activeTab === 'orders' && (
-        <OrdersTab
-          orders={orders}
-          onStatusChange={handleStatusChange}
-          onDeleteOrder={handleDeleteOrder}
-          onExport={exportOrdersToExcel}
-          ordersError={ordersError}
-        />
-      )}
+        {activeTab === 'orders' && (
+          <OrdersTab
+            orders={orders}
+            onStatusChange={handleStatusChange}
+            onDeleteOrder={handleDeleteOrder}
+            onExport={exportOrdersToExcel}
+            ordersError={ordersError}
+          />
+        )}
 
-      {activeTab === 'products' && (
-        <ProductsTab
-          products={products}
-          productsLoaded={productsLoaded}
-          onEdit={startEdit}
-          onDelete={deleteProduct}
-          onToggleStock={toggleStock}
-          onToggleActive={toggleActive}
-          onUpdatePrice={updatePrice}
-          onUpdateSubcategory={updateSubcategory}
-          productsError={productsError}
-          scrollToId={scrollToId}
-          onScrolled={clearScrollTo}
-        />
-      )}
+        {activeTab === 'products' && (
+          <ProductsTab
+            products={products}
+            productsLoaded={productsLoaded}
+            onEdit={startEdit}
+            onDelete={deleteProduct}
+            onToggleStock={toggleStock}
+            onToggleActive={toggleActive}
+            onUpdatePrice={updatePrice}
+            onUpdateSubcategory={updateSubcategory}
+            productsError={productsError}
+            scrollToId={scrollToId}
+            onScrolled={clearScrollTo}
+          />
+        )}
 
-      {activeTab === 'add' && (
-        <ProductFormTab
-          editingProduct={editingProduct}
-          onCreate={createProduct}
-          onUpdate={updateProduct}
-          onToggleActive={toggleActive}
-          uploadingImages={uploadingImages}
-          onDone={finishForm}
-          productsError={productsError}
-        />
-      )}
+        {activeTab === 'add' && (
+          <ProductFormTab
+            editingProduct={editingProduct}
+            onCreate={createProduct}
+            onUpdate={updateProduct}
+            onToggleActive={toggleActive}
+            uploadingImages={uploadingImages}
+            onDone={finishForm}
+            productsError={productsError}
+          />
+        )}
 
-      {activeTab === 'import' && (
-        <ImportTab
-          csvPreview={csvPreview}
-          csvErrors={csvErrors}
-          importing={importing}
-          importResult={importResult}
-          onDownloadTemplate={downloadTemplate}
-          onCsvFile={handleCsvFile}
-          onImport={handleImport}
-          onViewProducts={() => { handleTabChange('products'); clearImportResult(); }}
-        />
-      )}
+        {activeTab === 'import' && (
+          <ImportTab
+            csvPreview={csvPreview}
+            csvErrors={csvErrors}
+            importing={importing}
+            importResult={importResult}
+            onDownloadTemplate={downloadTemplate}
+            onCsvFile={handleCsvFile}
+            onImport={handleImport}
+            onViewProducts={() => { handleTabChange('products'); clearImportResult(); }}
+          />
+        )}
 
-      {activeTab === 'reviews' && (
-        <ReviewsTab
-          reviews={reviews}
-          onApprove={approveReview}
-          onDelete={deleteReview}
-          reviewsError={reviewsError}
-        />
-      )}
+        {activeTab === 'reviews' && (
+          <ReviewsTab
+            reviews={reviews}
+            onApprove={approveReview}
+            onDelete={deleteReview}
+            reviewsError={reviewsError}
+          />
+        )}
+      </main>
     </div>
   );
 }
