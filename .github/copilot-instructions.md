@@ -1,0 +1,8 @@
+# Agent Instructions
+
+The canonical agent instructions live in [AGENTS.md](../AGENTS.md). Follow them.
+
+This file exists only so the assistant auto-discovers the shared rules. Never duplicate
+rule content here: when a convention changes, edit [AGENTS.md](../AGENTS.md) or the
+relevant file under [.claude/rules/](../.claude/rules/) or [.doc/](../.doc/), never this
+pointer.
