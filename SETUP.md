@@ -347,3 +347,7 @@ The `AGENTS.md` SETUP pointer line was removed.
 - Item 6: `git commit -m "hook test"` with nothing staged was blocked through Bash (Phase A, and again in Step E) and through PowerShell; `HEAD` stayed at `3ea34ef`.
 
 Phase B: not started.
+Phase B: consented
+Phase B: term declined: catalogue price
+Phase B: exercises declined
+Phase B: done — test baseline (671 passed, 0 failed), codebase map (W04, W01, W02, W03, W07, W06), glossary G1–G8, audit with 8 findings (2 medium, 6 low) and 4 behavior questions, 9 backlog items
