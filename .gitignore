@@ -66,3 +66,18 @@ design-assets/reprocess-backup-*.json
 
 # הצילומים המקוריים מההעלאות, ברזולוציה מלאה — לא מוגשים ולא נכנסים לגיט
 uploads-originals/
+
+# Agent setup (ai-dev-starter): the shared .claude/ files are committed;
+# only the per-user local settings stay out of git.
+!.claude/
+.claude/settings.local.json
+
+# Env files the secret-file hook also refuses to read. Templates stay tracked.
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+!.env.*.example
+!.env.*.sample
+!.env.*.template
+!client/.env.development
