@@ -22,7 +22,7 @@ yet; everything below runs locally.
   <tr>
     <td colspan="2">
       <img src="docs/images/01-homepage.png" width="100%" alt="Home page" /><br/>
-      <sub><b>Home page</b> — hero, live review rating, and the 12 product categories.</sub>
+      <sub><b>Home page</b> — the header, the info ticker and the hero with the store's key facts.</sub>
     </td>
   </tr>
   <tr>
