@@ -29,6 +29,7 @@ server/
   validators/      parse and bound every body and query; throw 400 on bad input
   controllers/     translate HTTP to a service call and back; no SQL, no model imports, no try/catch
   services/        business rules: pricing, visibility, moderation, emails, realtime, auth, images
+    storage/       where images live: the local disk or Cloudinary, one interface (STORAGE_DRIVER)
   models/          all SQL, parameterised, explicit column lists
   middleware/      security headers, admin guard, rate limiting, uploads, the central error handler
   utils/           AppError, money in agorot, pagination envelope, category tree, originals
@@ -116,7 +117,11 @@ save reverts only that line.
 
 **Content-hashed images.** Every upload is resized to a 1200px long edge, padded to a
 square, stripped of metadata (GPS included) and saved as WebP named after the SHA-256 of
-its own bytes. The photo pipeline uses `product-<id>-<hash>.webp`. A changed image is a new
+its own bytes. The photo pipeline uses `product-<id>-<hash>.webp`. Where the file lives is
+the storage module's business (`services/storage`): the local disk by default, or Cloudinary
+with `STORAGE_DRIVER=cloudinary`, where the processed image is a public asset and the
+untouched original a private one. Reading and deleting follow the image's URL, so both kinds
+of URL can coexist. A changed image is a new
 URL, so `/uploads` can be cached for a week and the build's `/static` for a year
 (`immutable`), while `index.html` is `no-store`.
 

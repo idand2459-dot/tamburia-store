@@ -25,11 +25,8 @@
  * אחרי ה-COMMIT: קובץ שנמחק לפני שהמוצר נמחק בפועל היה משאיר מוצר
  * עם תמונה שבורה אם הטרנזקציה נכשלה.
  */
-const fs = require('fs/promises');
-const path = require('path');
 const Product = require('../models/product.model');
-const { UPLOADS_DIR } = require('../middleware/upload');
-const { removeOriginal } = require('../utils/originals');
+const storage = require('./storage');
 const { notFound, conflict, badRequest } = require('../utils/AppError');
 const { load: loadCategories, isSubcategoryOf } = require('../utils/categories');
 
@@ -75,32 +72,28 @@ function listCategories() {
 
 // ───────────────────────────── מחיקה ─────────────────────────────
 
-/** כתובות התמונה של המוצר שיושבות ב-/uploads, בלי כפילויות. */
+/** כתובות התמונה של המוצר שהאפליקציה שומרת (בדיסק או ב-Cloudinary), בלי כפילויות. */
 function uploadedImagesOf(product) {
   const urls = [product.image_url, ...(Array.isArray(product.images) ? product.images : [])];
-  return [...new Set(urls.filter((url) => typeof url === 'string' && url.startsWith('/uploads/')))];
+  return [...new Set(urls.filter((url) => storage.isManaged(url)))];
 }
 
 /**
- * מוחק מהדיסק את קבצי התמונה שאף מוצר כבר אינו מפנה אליהם.
+ * מוחק את קבצי התמונה שאף מוצר כבר אינו מפנה אליהם, דרך מנהל האחסון
+ * שבעליו הכתובת (services/storage), ואיתם את הצילום המקורי.
  *
- * רק שם הקובץ נלקח מהכתובת (basename), כך שכתובת כמו
- * /uploads/../server.js אינה יכולה לצאת מהתיקייה. קובץ שכבר אינו קיים
- * אינו שגיאה, וכישלון במחיקת קובץ אינו מכשיל את הבקשה: המוצר כבר
- * נמחק, וקובץ יתום בדיסק אינו מזיק לאיש.
+ * תמונה שמוצר אחר עדיין מפנה אליה נשארת: findUnreferencedImages בודק
+ * את זה לפני כל מחיקה. קובץ שכבר אינו קיים אינו שגיאה, וכישלון במחיקה
+ * אינו מכשיל את הבקשה: המוצר כבר נמחק, וקובץ יתום אינו מזיק לאיש.
  */
 async function removeOrphanImages(urls) {
   const orphans = await Product.findUnreferencedImages(urls);
   const removed = [];
   for (const url of orphans) {
-    const file = path.join(UPLOADS_DIR, path.basename(url));
     try {
-      await fs.rm(file, { force: true });
-      // והצילום המקורי שלו, אם נשמר: בלי הקובץ המעובד אין לו לאן לחזור
-      removeOriginal(path.basename(url));
-      removed.push(url);
+      if (await storage.remove(url)) removed.push(url);
     } catch (err) {
-      console.error(`לא הצלחנו למחוק את ${file}:`, err.message);
+      console.error(`לא הצלחנו למחוק את ${url}:`, err.message);
     }
   }
   return removed;

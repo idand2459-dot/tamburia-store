@@ -8,7 +8,7 @@ function uploadMultiple(req, res) {
   if (!req.files || req.files.length === 0) {
     throw badRequest('לא נשלחו קבצים בשדה "images"');
   }
-  res.json({ imageUrls: req.files.map((f) => '/uploads/' + f.filename) });
+  res.json({ imageUrls: req.files.map((f) => f.url) });
 }
 
 module.exports = { uploadMultiple };

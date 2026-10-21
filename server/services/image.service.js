@@ -1,7 +1,8 @@
 /**
  * מעבד תמונת מוצר שהועלתה לפני שמירתה: מיישר לפי ה-EXIF, מקטין
- * לצלע ארוכה של 1200px, משלים לריבוע בלי לחתוך (processImage) ושומר
- * כ-WebP בשם שנגזר מהתוכן.
+ * לצלע ארוכה של 1200px, משלים לריבוע בלי לחתוך (processImage) ומקודד
+ * ל-WebP בשם שנגזר מהתוכן. היכן הקובץ נשמר — הדיסק או Cloudinary — הוא
+ * עניין של services/storage, לא של העיבוד.
  *
  * תמונות מהאייפון מגיעות ב-3–5MB, ורובן נשמרות "שוכבות" עם תגית
  * סיבוב שהדפדפן לא תמיד מכבד. אחרי העיבוד כל תמונה שוקלת עשרות
@@ -10,8 +11,6 @@
  * השם הוא hash של הקובץ המעובד, ולכן אותה תמונה שעולה פעמיים נשמרת
  * פעם אחת, ואפשר להגיש אותה עם מטמון ארוך בלי חשש שתתחלף מתחתיו.
  */
-const fs = require('fs/promises');
-const path = require('path');
 const crypto = require('crypto');
 const sharp = require('sharp');
 const { AppError, badRequest } = require('../utils/AppError');
@@ -145,10 +144,10 @@ function contentName(output) {
 }
 
 /**
- * מעבד תמונה אחת מהזיכרון ושומר אותה בתיקייה. מחזיר את שם הקובץ.
- * תמונה זהה שכבר קיימת אינה נכתבת מחדש.
+ * Processes one upload from memory. Returns the processed bytes and their
+ * content-derived file name; storing them is the storage module's job.
  */
-async function processAndSave(buffer, dir) {
+async function prepareImage(buffer) {
   if (isHeic(buffer)) throw heicError();
 
   let output;
@@ -158,17 +157,9 @@ async function processAndSave(buffer, dir) {
     throw badRequest('הקובץ אינו תמונה תקינה או שאינו נקרא');
   }
 
-  const filename = contentName(output);
-
-  try {
-    await fs.writeFile(path.join(dir, filename), output, { flag: 'wx' });
-  } catch (err) {
-    if (err.code !== 'EEXIST') throw err;
-  }
-
-  return filename;
+  return { filename: contentName(output), output };
 }
 
 module.exports = {
-  processAndSave, processImage, contentName, heicError, WEBP_QUALITY,
+  prepareImage, processImage, contentName, heicError, WEBP_QUALITY,
 };

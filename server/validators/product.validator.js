@@ -23,6 +23,25 @@ function asTrimmedString(value, field, { maxLength }) {
   return trimmed;
 }
 
+/**
+ * An image address is empty, a local "/uploads/<name>" path, or an https URL (the
+ * form Cloudinary serves). Anything else, such as "javascript:" or "//host/x", is a 400.
+ */
+function asImageUrl(value, field) {
+  const url = asTrimmedString(value, field, { maxLength: MAX.image_url });
+  if (url === '') return '';
+  if (url.startsWith('/uploads/') && !url.includes('..') && !url.includes('\\')) return url;
+  if (url.startsWith('https://')) {
+    try {
+      new URL(url);
+      return url;
+    } catch {
+      // not a URL: falls through to the error below
+    }
+  }
+  throw badRequest(`השדה ${field} חייב להיות כתובת /uploads/... או כתובת https`);
+}
+
 /** ממיר מערך לרשימת מחרוזות מקוצצות, בלי ערכים ריקים. */
 function asStringArray(value, field) {
   if (!Array.isArray(value)) throw badRequest(`השדה ${field} חייב להיות מערך`);
@@ -126,7 +145,7 @@ function parseField(field, value) {
       return asProductPrice(value);
 
     case 'image_url':
-      return value == null ? '' : asTrimmedString(value, 'image_url', { maxLength: MAX.image_url });
+      return value == null ? '' : asImageUrl(value, 'image_url');
 
     case 'category':
     case 'subcategory':
@@ -141,7 +160,9 @@ function parseField(field, value) {
       return asTrimmedString(value, 'description', {}) || null;
 
     case 'images':
-      return Array.isArray(value) ? value : [];
+      return Array.isArray(value)
+        ? value.map((url, i) => asImageUrl(url, `images[${i}]`)).filter(Boolean)
+        : [];
 
     case 'colors':
       return value == null ? [] : asColors(value);
