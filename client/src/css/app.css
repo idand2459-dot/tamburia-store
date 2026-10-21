@@ -96,9 +96,6 @@
 @import './features/calculators/_paint-pigment.css';
 @import './features/calculators/_paint-calc-results.css';
 @import './features/calculators/_paint-calc-btn.css';
-@import './features/calculators/_project-calculator.css';
-@import './features/calculators/_project-calc-inputs.css';
-@import './features/calculators/_project-calc-items.css';
 @import './features/home/_category-grid.css';
 /* The product page, outermost first: the page and its two columns, then the
    image column, the trail above them, and the details card's contents from the

@@ -3,13 +3,11 @@
    shop photograph and the review form that opens on it
 
    --color-blush-deep, the deeper of the two light tones, with
-   the project calculator's --color-blush above it and the FAQ's
-   --color-blush below. That half-step is the whole seam on both
-   sides: the red-to-purple hairline belongs to a dark/light
-   boundary and is drawn on the dark side of it, so the ::after
-   this section used to carry on its top edge is gone, along
-   with the purple glow on ::before and the stacking context the
-   two needed.
+   the paint calculator's dark band above it and the FAQ's
+   --color-blush below. The top edge is a dark/light seam: the
+   red-to-purple hairline that marks it is drawn on the dark side,
+   in _paint-calc-section.css, so this section carries no edge of
+   its own. The half-step against the FAQ is the whole seam below.
 
    Layout, desktop: two cells on one row. The header and the
    carousel share the start column (the right one, in RTL), the

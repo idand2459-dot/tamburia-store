@@ -21,7 +21,7 @@ with these rules, follow these rules and say so in the report.
   |---|---|
   | `admin/` | the admin panel, one partial per tab or control, plus the admin login |
   | `home/` | the home page's bands, top to bottom |
-  | `calculators/` | the paint and project calculators |
+  | `calculators/` | the paint calculator |
   | `category/` | a category page: banner, layout, filters, toolbar |
   | `product/` | a product page, outermost first |
   | `cart/` | the cart flow, the order lookup and the wishlist |
@@ -82,7 +82,6 @@ The values kept that way, each with its reason in a comment above the query:
 | Value | Where | Reason (from the comment there) |
 |---|---|---|
 | `max-width: 1280px` | `components/_product-grid`, `product/_related-products` | at 1201–1280 the category sidebar leaves ~960px, four 220px cards — too narrow; related products restate all three steps |
-| `max-width: 640px` | `calculators/_project-calculator`, `_project-calc-items` | `.proj-footer` stacks here and the paired padding/type changes go with it |
 | `max-width: 600px` | `calculators/_paint-calc-section` and the three paint partials that follow it | the results grid and `.paint-coats` stack together here; splitting them would desynchronise the section |
 | `max-width: 600px` | `reviews/_review-form` | its comment points to a 600px note in `_reviews.css` that no longer exists — **to re-check** before snapping it to 560 |
 | `min-width: 769px` | `layout/_footer`, `category/_category-banner`, `calculators/_paint-calc-btn` | the complement of md (`max-width: 768px`): desktop-only rules, so the two meet with no gap |

@@ -1,6 +1,6 @@
 /**
  * עמוד הבית: כרזה ורצועת היתרונות מתחתיה, בחירת קטגוריה, למה אנחנו,
- * שני המחשבונים, חוות הדעת ושאלות נפוצות.
+ * מחשבון הצבע, חוות הדעת ושאלות נפוצות.
  */
 import { useState, useEffect, useRef, Fragment } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -8,7 +8,6 @@ import { Crown, Star, ArrowDown, PaintRoller } from 'lucide-react';
 import CategoryGrid from '../features/home/CategoryGrid';
 import WhyUs from '../features/home/WhyUs';
 import PaintCalculator from '../features/calculators/PaintCalculator';
-import ProjectCalculator from '../features/calculators/ProjectCalculator';
 import FeaturesBanner from '../features/home/FeaturesBanner';
 import ReviewsCarousel from '../features/catalog/ReviewsCarousel';
 import FAQ from '../features/home/FAQ';
@@ -167,9 +166,6 @@ function HomePage() {
       <CategoryGrid onSelectCategory={(category) => navigate(`/category/${category.id}`)} />
       <WhyUs />
       <Reveal variant="up"><PaintCalculator addBundleToCart={addBundleToCart} /></Reveal>
-      {/* ProjectCalculator מחשיף את עצמו ב-IntersectionObserver משלו — עטיפה
-          שנייה כאן הייתה מריצה שתי אנימציות על אותו תוכן. */}
-      <ProjectCalculator addBundleToCart={addBundleToCart} />
       <Reveal variant="up"><ReviewsCarousel /></Reveal>
       <Reveal variant="up"><FAQ /></Reveal>
     </>
