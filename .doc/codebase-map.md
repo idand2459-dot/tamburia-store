@@ -112,4 +112,4 @@ A learning aid for the codebase. The full architecture reference is [docs/ARCHIT
 - W05 — Add or edit a product with images (S12).
 - W08 — The pick list (S15).
 - W09 — The paint calculator (S8).
-- Not proposed: the CSV import (S13), the project calculator (S9), the wishlist (S4).
+- Not proposed: the CSV import (S13), the wishlist (S4).

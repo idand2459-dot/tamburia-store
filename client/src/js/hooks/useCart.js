@@ -50,7 +50,7 @@ export function useCart() {
     });
   }, []);
 
-  /** מוסיף בבת אחת את כל מה שמחשבון הצבע או הפרויקט חישב. */
+  /** מוסיף בבת אחת את כל מה שמחשבון הצבע חישב. */
   const addBundleToCart = useCallback((items) => {
     setCart((prev) => {
       let updated = [...prev];

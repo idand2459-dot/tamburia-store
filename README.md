@@ -2,9 +2,8 @@
 
 A full-stack e-commerce application for a hardware and building-supplies store in Petah
 Tikva, Israel: a catalogue of about 400 products in 12 categories, a cart and checkout flow
-with email notifications, moderated customer reviews, and two calculators that turn a job
-into a shopping list. A paint calculator works out coverage and pigment quantities, and a
-project calculator handles jobs like a bathroom renovation. Behind it is a password-protected
+with email notifications, moderated customer reviews, and a paint calculator that turns a
+job into a shopping list by working out coverage and pigment quantities. Behind it is a password-protected
 admin panel where the owner manages products, orders and reviews, with a live feed of new
 orders. The storefront is Hebrew and right-to-left, and meets IS 5568 / WCAG 2.1 AA. One
 Node process serves both the API and the React app.
@@ -62,13 +61,12 @@ yet; everything below runs locally.
 - Real URLs throughout: every page, filter and modal is linkable and survives a refresh
 - An accessibility statement at `/accessibility`
 
-### Paint and project calculators
+### Paint calculator
 - Paint calculator: wall area from any number of walls, minus windows and doors, times
   coats, converted to litres and containers
 - 20 pigment shades stored in the database, each with millilitres per litre at three
   depths, with a live colour preview
-- Project calculator: four job types that expand into a checklist of the products the job needs
-- Both add every product the job requires to the cart in one action
+- It adds every product the job requires to the cart in one action
 
 ### Admin panel
 - Six tabs, each with its own URL: statistics, orders, products, add/edit, CSV import,
