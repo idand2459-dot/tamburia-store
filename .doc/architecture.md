@@ -5,8 +5,8 @@
 - The full description of the layers, a request traced end to end, and the design decisions is [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md). This file adds configuration, limits, and test coverage, and links to it instead of copying it.
 
 ## System Overview
-- One Node process (`server/server.js:19`) serves the API under `/api` and, with `SERVE_CLIENT` on, the React build from `client/build` (`server/config/env.js:99-100`).
-- State lives in PostgreSQL (`server/config/db.js`, migrations run by `server/db/migrate.js`); uploaded images live on disk in `uploads/` and `uploads-originals/`; the cart lives in the browser's `localStorage` (`README.md:58`).
+- One Node process (`server/server.js:19`) serves the API under `/api` and, with `SERVE_CLIENT` on, the React build from `client/build` (`server/config/env.js:151-152`).
+- State lives in PostgreSQL (`server/config/db.js`, migrations run by `server/db/migrate.js`); uploaded images live on disk in `uploads/` and `uploads-originals/` or, with `STORAGE_DRIVER=cloudinary`, in Cloudinary (`server/services/storage/`); the cart lives in the browser's `localStorage` (`README.md:58`).
 - The admin's live order feed runs over WebSocket (`ws`, `README.md:76`).
 - Layers and folders: [docs/ARCHITECTURE.md — Folder structure](../docs/ARCHITECTURE.md).
 
@@ -16,6 +16,7 @@
 | `server/server.js` | Starts the server on the configured port. |
 | `server/app.js` | Builds the Express app (`createApp`), also used by the test runner (`test/run-all.js:39`). |
 | `server/config/env.js` | Reads and validates every server setting; refuses unsafe production config. |
+| `server/services/storage/` | Where product images live: one interface (`saveProcessed`, `saveOriginal`, `readProcessed`, `readOriginal`, `remove`) over the local disk and Cloudinary. New images go to the driver `STORAGE_DRIVER` names; reading and deleting follow the image's URL. |
 | `server/routes/index.js` | Mounts the API domains under `/api` (`server/routes/index.js:19-25`). |
 | `server/middleware/errorHandler.js` | Turns every error into the JSON error response. |
 | `client/src/js/App.js` | The React app's root; loads `client/src/css/app.css`. |
@@ -31,23 +32,28 @@ Server settings, read in `server/config/env.js`. Names only; `.env.example` list
 
 | Setting | Default in code | Secret | Evidence |
 |---|---|---|---|
-| `NODE_ENV` | `development` | no | `server/config/env.js:45` |
-| `PORT` | `3000` | no | `server/config/env.js:59` |
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` | `localhost`, `5432`, `tamburia`, `postgres` | no | `server/config/env.js:62-65` |
-| `DB_PASSWORD` | none, required | yes | `server/config/env.js:66` |
-| `DB_LOG_QUERIES` | on outside production | no | `server/config/env.js:67` |
-| `MAIL_ENABLED` | on unless set to `false` | no | `server/config/env.js:50` |
-| `MAIL_USER`, `MAIL_PASS` | required only when mail is on | yes | `server/config/env.js:51`, `:71-72` |
-| `MAIL_TO` | `MAIL_USER` | no | `server/config/env.js:73` |
-| `ADMIN_URL` | `http://localhost:3000/admin` | no | `server/config/env.js:78` |
-| `DELIVERY_FEE` | `20` | no | `server/config/env.js:81` |
-| `ADMIN_PASSWORD` | none, required | yes | `server/config/env.js:85` |
-| `SESSION_SECRET` | a random value per start (with a warning) | yes | `server/config/env.js:86`, `:132-133` |
-| `SESSION_TTL_HOURS` | `12` | no | `server/config/env.js:87` |
-| `LOGIN_MAX_ATTEMPTS`, `LOGIN_WINDOW_MS` | `10`, 15 minutes | no | `server/config/env.js:89-90` |
-| `CSP_ENABLED`, `HSTS_ENABLED` | off, on | no | `server/config/env.js:94-95` |
-| `SERVE_CLIENT`, `CLIENT_BUILD_DIR` | on, `client/build` | no | `server/config/env.js:99-100` |
-| `CORS_ORIGINS` | empty | no | `server/config/env.js:103` |
+| `NODE_ENV` | `development` | no | `server/config/env.js:80` |
+| `PORT` | `3000` | no | `server/config/env.js:99` |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` | `localhost`, `5432`, `tamburia`, `postgres` | no | `server/config/env.js:102-105` |
+| `DB_PASSWORD` | none, required unless `DATABASE_URL` is set | yes | `server/config/env.js:106` |
+| `DATABASE_URL` | unset; when set it wins over `DB_*`; a non-local host turns SSL on | yes | `server/config/env.js:93`, `:109` |
+| `DB_POOL_MAX` | `10` | no | `server/config/env.js:107` |
+| `DB_LOG_QUERIES` | on outside production | no | `server/config/env.js:110` |
+| `STORAGE_DRIVER` | `local` (`local` or `cloudinary`) | no | `server/config/env.js:115` |
+| `CLOUDINARY_URL` | unset; required when `STORAGE_DRIVER=cloudinary` | yes | `server/config/env.js:116`, `:161` |
+| `SITE_MODE` | `open` (`open`, `catalog` or `closed`) | no | `server/config/env.js:120` |
+| `MAIL_ENABLED` | on unless set to `false` | no | `server/config/env.js:85` |
+| `MAIL_USER`, `MAIL_PASS` | required only when mail is on | yes | `server/config/env.js:123-124` |
+| `MAIL_TO` | `MAIL_USER` | no | `server/config/env.js:125` |
+| `ADMIN_URL` | `http://localhost:3000/admin` | no | `server/config/env.js:130` |
+| `DELIVERY_FEE` | `20` | no | `server/config/env.js:133` |
+| `ADMIN_PASSWORD` | none, required | yes | `server/config/env.js:137` |
+| `SESSION_SECRET` | a random value per start (with a warning) | yes | `server/config/env.js:138`, `:188-189` |
+| `SESSION_TTL_HOURS` | `12` | no | `server/config/env.js:139` |
+| `LOGIN_MAX_ATTEMPTS`, `LOGIN_WINDOW_MS` | `10`, 15 minutes | no | `server/config/env.js:141-142` |
+| `CSP_ENABLED`, `HSTS_ENABLED` | off, on | no | `server/config/env.js:146-147` |
+| `SERVE_CLIENT`, `CLIENT_BUILD_DIR` | on, `client/build` | no | `server/config/env.js:151-152` |
+| `CORS_ORIGINS` | empty | no | `server/config/env.js:155` |
 
 Store details shown on the site (address, hours, the store landline) live in `client/src/js/utils/storeInfo.js`. WhatsApp is off while `WHATSAPP_NUMBER` there is `null`: every button or link that messages the shop is then absent, and setting that one value turns them all on. The shop's private mobile number is not shown anywhere public; `test/unit-no-private-phone.js` fails if it appears in the client source, the server (email templates) or the built bundle.
 

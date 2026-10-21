@@ -17,6 +17,8 @@ The naming rule ([naming.md](../.claude/rules/naming.md)) requires every shared 
 - hidden product — a product with `active = false`: still in the database, but not in the store for customers (`server/services/product.service.js:5-8`). UI label: "מוסתר מהחנות" (`client/src/js/pages/admin/AdminProductCard.js:197`). Not deleted or archived.
 - variant — a version of a product with its own label and price (`product.variants`); the chosen one sets the price (`server/services/pricing.service.js:62-74`). UI label: "גרסאות" (`client/src/js/components/ProductCard.js:132`). Not option or model.
 - review — a customer's rating and text about the store or a product; saved as not approved until the admin approves it (`server/services/review.service.js:45-48`). UI labels: "ביקורת" (`client/src/js/features/catalog/ReviewsCarousel.js:151`) and "ביקורות" (`client/src/js/pages/admin/adminConstants.js:71`). Not comment or feedback.
+- storage driver — where product images are kept: `local` (the `uploads/` folder) or `cloudinary`; chosen by `STORAGE_DRIVER` (`server/config/env.js:115`, `server/services/storage/index.js`). Not storage backend, image host.
+- site mode — what the public sees: `open` (the full store), `catalog` (browse only, no ordering) or `closed` (an under-construction page); chosen by `SITE_MODE` (`server/config/env.js:120`). Not maintenance mode, read-only mode.
 
 ## Naming Alignment
 - Keep this glossary aligned with naming decisions in [naming.md](../.claude/rules/naming.md).

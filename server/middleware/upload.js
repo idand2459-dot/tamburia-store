@@ -2,18 +2,17 @@
  * מגדיר את קליטת קבצי התמונה: אילו סוגים מותרים, מה גודלם המרבי,
  * ואת שלב העיבוד שבין הקליטה לבין השמירה בתיקייה.
  *
- * הקבצים נקלטים לזיכרון ולא לדיסק, כי מה שנשמר ב-uploads הוא הגרסה
- * המעובדת בשם שנגזר מהתוכן — ראו image.service. הצילום המקורי נשמר
- * בנפרד, בתיקייה שאינה מוגשת, בשם מקושר — ראו utils/originals.js.
+ * הקבצים נקלטים לזיכרון ולא לדיסק, כי מה שנשמר הוא הגרסה המעובדת בשם
+ * שנגזר מהתוכן — ראו image.service. היכן היא נשמרת (הדיסק או Cloudinary)
+ * ואיפה הצילום המקורי, שאינו מוגש — ראו services/storage.
  */
 const path = require('path');
-const fs = require('fs');
 const multer = require('multer');
-const { processAndSave, heicError } = require('../services/image.service');
-const { saveOriginal, originalExt } = require('../utils/originals');
+const { prepareImage, heicError } = require('../services/image.service');
+const storage = require('../services/storage');
+const { originalExt } = require('../utils/originals');
 
-const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
-fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+const { UPLOADS_DIR } = storage;
 
 const ALLOWED_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.avif']);
 const ALLOWED_MIME = /^image\//;
@@ -53,13 +52,17 @@ const upload = multer({
  */
 async function processUploads(req, res, next) {
   const files = req.file ? [req.file] : (req.files || []);
+  // One image at a time, and each buffer is released before the next is read, so five
+  // 15 MB photos never sit in memory together with their processed copies.
   for (const file of files) {
-    file.filename = await processAndSave(file.buffer, UPLOADS_DIR);
+    const { filename, output } = await prepareImage(file.buffer);
+    file.filename = filename;
+    file.url = await storage.saveProcessed(filename, output);
     // המקור נשמר רק אחרי שהעיבוד הצליח: קובץ שבור לא מגיע לכאן. כישלון
     // בשמירתו אינו מכשיל את ההעלאה — התמונה שהאתר מגיש כבר נשמרה, והמקור
     // הוא רק חומר גלם לעיבוד מחדש.
     try {
-      saveOriginal(file.buffer, file.filename, originalExt(file.originalname, file.mimetype));
+      await storage.saveOriginal(filename, file.buffer, originalExt(file.originalname, file.mimetype));
     } catch (err) {
       console.error(`המקור של ${file.filename} לא נשמר:`, err.message);
     }

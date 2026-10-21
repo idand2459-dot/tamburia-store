@@ -382,6 +382,11 @@ The full list with comments is in [`.env.example`](.env.example). The ones that 
 | `MAIL_ENABLED` | `true` (`.env.example`: `false`) | `false` logs emails instead of sending them |
 | `MAIL_USER` / `MAIL_PASS` | — | Gmail account and app password; required only when mail is enabled |
 | `PORT` | `3000` | Server port |
+| `DATABASE_URL` | — | Set only on the hosting service; wins over `DB_*`, and a non-local host turns SSL on |
+| `DB_POOL_MAX` | `10` | Database pool size |
+| `STORAGE_DRIVER` | `local` | Where product images go: `local` (`uploads/`) or `cloudinary` |
+| `CLOUDINARY_URL` | — | Required when `STORAGE_DRIVER=cloudinary`; a secret |
+| `SITE_MODE` | `open` | `open` (the store), `catalog` (browse only) or `closed` (under construction) |
 | `DELIVERY_FEE` | `20` | Delivery fee in shekels (must match `client/src/js/hooks/useCart.js`) |
 | `CSP_ENABLED` | `false` | Content Security Policy (see Security) |
 
