@@ -17,6 +17,7 @@
 - If any instruction conflicts with the hooks, the hooks win.
 - If a hook blocks an action, do not work around it with another tool. Stop and report what was blocked and why.
 - A script that writes to a remote database or to cloud storage gets a pattern in `PROJECT_DENY_PATTERNS` in the same commit that adds it.
+- `npm test` and `npm run a11y` run only against a local database and refuse `NODE_ENV=production` or a remote host. `TEST_DATABASE_URL` points them at a separate local database (made with `createdb`); without it they use the `DB_*` database with a warning (`test/lib/testDatabase.js`).
 
 ## Repository Layout
 - `docs/` holds the existing project docs and `.doc/` holds the project definition, glossary, architecture notes and audit files; never create another documentation folder.
