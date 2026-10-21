@@ -49,6 +49,8 @@ Server settings, read in `server/config/env.js`. Names only; `.env.example` list
 | `SERVE_CLIENT`, `CLIENT_BUILD_DIR` | on, `client/build` | no | `server/config/env.js:99-100` |
 | `CORS_ORIGINS` | empty | no | `server/config/env.js:103` |
 
+Store details shown on the site (address, hours, the store landline) live in `client/src/js/utils/storeInfo.js`. WhatsApp is off while `WHATSAPP_NUMBER` there is `null`: every button or link that messages the shop is then absent, and setting that one value turns them all on. The shop's private mobile number is not shown anywhere public; `test/unit-no-private-phone.js` fails if it appears in the client source, the server (email templates) or the built bundle.
+
 Tool settings: `TEST_PORT` (default `3100`, `test/run-all.js:13`); `TEST_DATABASE_URL` (a separate local database for `npm test` and `npm run a11y`, optional, `test/lib/testDatabase.js`); `A11Y_PORT` (default `3200`) and `CHROME_PATH` (`scripts/a11y-audit.js:25`, `:36`). The React dev server's port is set in `client/.env.development` (`README.md:431`).
 
 ## Testing

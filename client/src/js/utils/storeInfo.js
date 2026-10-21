@@ -41,26 +41,37 @@ export const PHONES = {
     display: '03-9315750',
     tel: '039315750',
   },
-  mobile: {
-    label: 'פלאפון אישי',
-    display: '050-6735040',
-    tel: '0506735040',
-  },
 };
+
+/* ---- אימייל ---- */
+
+/* The email shown as the accessibility coordinator's contact. One constant, so
+   replacing it with a store email later is a one-line change. */
+export const ACCESSIBILITY_EMAIL = 'idand2459@gmail.com';
 
 /* ---- וואטסאפ ---- */
 
-export const WHATSAPP = {
-  number: '972506735040',
-  url: 'https://wa.me/972506735040',
-  defaultMessage: 'שלום, אני מעוניין במוצר מהאתר שלכם',
-};
+/* The shop's WhatsApp number in international form, digits only (972...).
+   null means WhatsApp is off: nothing that sends a message to the shop renders,
+   and WHATSAPP and whatsappUrl() are null. Set this one value to turn it on.
+   The share button on a product page is not affected: it sends to the
+   customer's own contact, not to the shop. */
+const WHATSAPP_NUMBER = null;
+
+export const WHATSAPP = WHATSAPP_NUMBER
+  ? {
+    number: WHATSAPP_NUMBER,
+    url: `https://wa.me/${WHATSAPP_NUMBER}`,
+    defaultMessage: 'שלום, אני מעוניין במוצר מהאתר שלכם',
+  }
+  : null;
 
 /**
- * מרכיב קישור וואטסאפ עם הודעה מוכנה. הטקסט נכנס כמו שהוא — מי שצריך
- * אותו מקודד (WhatsAppButton) מעביר טקסט מקודד.
+ * מרכיב קישור וואטסאפ עם הודעה מוכנה, או null כשהוואטסאפ כבוי. הטקסט
+ * נכנס כמו שהוא — מי שצריך אותו מקודד מעביר טקסט מקודד.
  */
 export function whatsappUrl(text) {
+  if (!WHATSAPP) return null;
   return text ? `${WHATSAPP.url}?text=${text}` : WHATSAPP.url;
 }
 

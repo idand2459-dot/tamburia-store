@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { ADDRESS, PHONES } from '../utils/storeInfo';
+import { ADDRESS, PHONES, WHATSAPP, ACCESSIBILITY_EMAIL } from '../utils/storeInfo';
 
 /** קישור טלפון של החנות, בכיוון שמאל-לימין כדי שהמספר לא יתהפך. */
 function Tel({ phone }) {
@@ -31,8 +31,8 @@ function Tel({ phone }) {
 
 const FILL_IN = {
   coordinatorName: 'אנרי דביר',
-  coordinatorPhone: '050-6735040',
-  coordinatorEmail: 'idand2459@gmail.com',
+  coordinatorPhone: PHONES.store.display,
+  coordinatorEmail: ACCESSIBILITY_EMAIL,
   responseTime: 'עד 7 ימי עסקים',
   lastUpdated: '02.10.2026',
   // הסדרי הנגישות בחנות, בשלושה נושאים. null בכל אחד מהם מציג placeholder.
@@ -46,13 +46,15 @@ const FILL_IN = {
     <>
       לקוחות שמתקשים להיכנס מקבלים שירות מלא מחוץ לחנות: הצוות מביא את המוצרים
       החוצה, נותן ייעוץ ומבצע את התשלום מחוץ לחנות. אפשר להתקשר מראש
-      ל-<Tel phone={PHONES.store} /> או ל-<Tel phone={PHONES.mobile} />, כדי שנהיה מוכנים.
+      ל-<Tel phone={PHONES.store} />, כדי שנהיה מוכנים.
     </>,
     'כלבי נחייה מוזמנים להיכנס.',
     'אין בחנות שירותים ללקוחות.',
   ],
   storeRemote: [
-    'אפשר להזמין דרך האתר, בטלפון או בוואטסאפ, בלי להגיע לחנות.',
+    WHATSAPP
+      ? 'אפשר להזמין דרך האתר, בטלפון או בוואטסאפ, בלי להגיע לחנות.'
+      : 'אפשר להזמין דרך האתר או בטלפון, בלי להגיע לחנות.',
     'את ההזמנה אפשר לקבל במשלוח לפתח תקווה, גני תקווה וקריית אונו, או לאסוף בשירות מחוץ לחנות.',
   ],
 };
@@ -81,7 +83,9 @@ const ADJUSTMENTS = [
 const LIMITATIONS = [
   'המפה בעמוד "צור קשר" מוטמעת מ-Google Maps, ונגישותה תלויה ב-Google. הכתובת המלאה מופיעה בעמוד גם כטקסט, לצד קישור לניווט.',
   'חלק מתמונות המוצרים הן להמחשה בלבד, וזה מצוין בעמוד המוצר. המידע המחייב על המוצר הוא התיאור הכתוב.',
-  'הקישורים לוואטסאפ ול-Google Maps מובילים לשירותים חיצוניים, שאינם בשליטתנו.',
+  WHATSAPP
+    ? 'הקישורים לוואטסאפ ול-Google Maps מובילים לשירותים חיצוניים, שאינם בשליטתנו.'
+    : 'הקישור ל-Google Maps מוביל לשירות חיצוני, שאינו בשליטתנו.',
   'הבדיקות נעשו בכלי בדיקה אוטומטיים (axe-core) ובבדיקה ידנית במקלדת ובהגדלת תצוגה, בדפדפן Chrome במחשב ובטלפון.',
 ];
 

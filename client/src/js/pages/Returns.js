@@ -195,7 +195,7 @@ function Returns() {
           <ol className="returns-steps">
             <li className="returns-step">
               <span className="returns-step-number">1</span>
-              <p>צור קשר איתנו בטלפון <a href={`tel:${PHONES.store.tel}`}>{PHONES.store.display}</a> או <a href={`tel:${PHONES.mobile.tel}`}>{PHONES.mobile.display}</a> לפני הגעה לחנות</p>
+              <p>צור קשר איתנו בטלפון <a href={`tel:${PHONES.store.tel}`}>{PHONES.store.display}</a> לפני הגעה לחנות</p>
             </li>
             <li className="returns-step">
               <span className="returns-step-number">2</span>
@@ -230,7 +230,6 @@ function Returns() {
           <p className="returns-text">אנחנו כאן לעזור — אל תהסס לפנות אלינו</p>
           <div className="returns-contact-btns">
             <a href={`tel:${PHONES.store.tel}`} className="returns-phone-btn">{PHONES.store.display}</a>
-            <a href={`tel:${PHONES.mobile.tel}`} className="returns-phone-btn">{PHONES.mobile.display}</a>
           </div>
           <p className="returns-hours">{hoursSummary(' | ')}</p>
         </section>

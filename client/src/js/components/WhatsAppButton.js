@@ -2,6 +2,8 @@ import { WHATSAPP, whatsappUrl } from '../utils/storeInfo';
 
 /** מציג את כפתור הוואטסאפ הצף. */
 function WhatsAppButton() {
+  // WhatsApp is off (storeInfo.js): there is no number to message.
+  if (!WHATSAPP) return null;
   const url = whatsappUrl(encodeURIComponent(WHATSAPP.defaultMessage));
 
   return (

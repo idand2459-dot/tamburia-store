@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import Drawer from '../../components/Drawer';
 import { Spinner } from '../../components/LoadingStates';
-import { PHONES, whatsappUrl } from '../../utils/storeInfo';
+import { PHONES, WHATSAPP, whatsappUrl } from '../../utils/storeInfo';
 import { formatPrice, lineTotal } from '../../utils/pricing';
 import { getOrdersByPhone } from '../../services/orderService';
 
@@ -176,12 +176,14 @@ function OrderHistory({ onClose }) {
             <a href={`tel:${PHONES.store.tel}`} className="order-history-btn order-history-btn--primary">
               <Phone size={17} aria-hidden="true" /> {PHONES.store.display}
             </a>
-            <a
-              href={whatsappUrl()}
-              target="_blank" rel="noopener noreferrer"
-              className="order-history-btn order-history-btn--whatsapp">
-              <MessageCircle size={17} aria-hidden="true" /> וואטסאפ
-            </a>
+            {WHATSAPP && (
+              <a
+                href={whatsappUrl()}
+                target="_blank" rel="noopener noreferrer"
+                className="order-history-btn order-history-btn--whatsapp">
+                <MessageCircle size={17} aria-hidden="true" /> וואטסאפ
+              </a>
+            )}
           </div>
         </div>
       </div>

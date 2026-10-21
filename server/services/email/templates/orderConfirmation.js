@@ -57,8 +57,6 @@ ${header(`אישור קבלת הזמנה — מספר #${order.id}`)}
       <p style="color:#666;font-size:0.9rem;margin-bottom:12px">לכל שאלה אנחנו כאן בשבילך:</p>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         ${contactButton('tel:039315750', '📞 03-9315750', '#1a1a2e')}
-        ${contactButton('tel:0506735040', '📱 050-6735040', '#1a1a2e')}
-        ${contactButton('https://wa.me/972506735040', '💬 וואטסאפ', '#25d366')}
       </div>
     </div>
 

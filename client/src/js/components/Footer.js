@@ -8,7 +8,7 @@
  * הנגישות אין h2 לפניו — h4 שם היה דילוג של שלוש רמות.
  */
 import { Link } from 'react-router-dom';
-import { Wrench, MessageCircle, MapPin, Phone, Smartphone, Clock } from 'lucide-react';
+import { Wrench, MessageCircle, MapPin, Phone, Clock } from 'lucide-react';
 import {
   ADDRESS, PHONES, WHATSAPP, whatsappUrl, OPEN_HOURS, hoursRangeDash,
 } from '../utils/storeInfo';
@@ -49,15 +49,17 @@ function Footer() {
             חנות מקצועית לכלי עבודה, חומרי בניין וצבעים בפתח תקווה.<br />
             מאז 1991 — יחס אישי, עזרה טכנית ומחירים טובים.
           </p>
-          <a
-            href={whatsappUrl(WHATSAPP.defaultMessage)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="footer-whatsapp-btn"
-          >
-            <MessageCircle size={18} aria-hidden="true" /> שלח הודעה בוואטסאפ
-            <span className="visually-hidden"> (נפתח בחלון חדש)</span>
-          </a>
+          {WHATSAPP && (
+            <a
+              href={whatsappUrl(WHATSAPP.defaultMessage)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-whatsapp-btn"
+            >
+              <MessageCircle size={18} aria-hidden="true" /> שלח הודעה בוואטסאפ
+              <span className="visually-hidden"> (נפתח בחלון חדש)</span>
+            </a>
+          )}
         </div>
 
         {/* עמוד 2 — מפת האתר */}
@@ -95,10 +97,6 @@ function Footer() {
             <li>
               <span className="footer-contact-icon"><Phone size={16} aria-hidden="true" /></span>
               <a href={`tel:${PHONES.store.tel}`} className="footer-contact-link">{PHONES.store.display}</a>
-            </li>
-            <li>
-              <span className="footer-contact-icon"><Smartphone size={16} aria-hidden="true" /></span>
-              <a href={`tel:${PHONES.mobile.tel}`} className="footer-contact-link">{PHONES.mobile.display}</a>
             </li>
             {OPEN_HOURS.map((row) => (
               <li key={row.id}>

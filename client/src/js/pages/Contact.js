@@ -52,7 +52,7 @@ function Contact() {
             <span className="contact-card-icon"><Phone size={22} strokeWidth={1.75} aria-hidden="true" /></span>
             <h2 className="contact-card-title">טלפונים</h2>
             <ul className="contact-phones">
-              {[PHONES.store, PHONES.mobile].map((phone) => (
+              {[PHONES.store].map((phone) => (
                 <li key={phone.tel}>
                   <a href={`tel:${phone.tel}`} className="contact-phone">
                     <span className="contact-phone-label">{phone.label}</span>

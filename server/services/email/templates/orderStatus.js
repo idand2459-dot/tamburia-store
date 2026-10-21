@@ -59,7 +59,7 @@ ${header(`${cfg.emoji} עדכון הזמנה #${order.id}`)}
         ${summaryLine('סטטוס:', `<strong style="color:#e63946">${cfg.emoji} ${cfg.label}</strong>`)}
         ${summaryLine('סה"כ:', `<strong>${formatPrice(order.total)}</strong>`, { last: true })}
       </div>
-      <p style="color:#999;font-size:0.85rem">שאלות? צרו קשר: 03-9315750 | 050-6735040</p>
+      <p style="color:#999;font-size:0.85rem">שאלות? צרו קשר: 03-9315750</p>
     </div>
 ${footer('טכניק טמבור • בר כוכבא 52, פתח תקווה')}`);
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  Pause, Play, Wrench, MapPin, Phone, Smartphone, Clock, Star, Handshake, Banknote, Headset,
+  Pause, Play, Wrench, MapPin, Phone, Clock, Star, Handshake, Banknote, Headset,
 } from 'lucide-react';
 import { ADDRESS, PHONES, OPEN_HOURS, hoursRange } from '../utils/storeInfo';
 
@@ -8,7 +8,6 @@ const ITEMS = [
   { Icon: Wrench,     text: 'טכניק טמבור' },
   { Icon: MapPin,     text: ADDRESS.full },
   { Icon: Phone,      text: PHONES.store.display },
-  { Icon: Smartphone, text: PHONES.mobile.display },
   ...OPEN_HOURS.map((row) => (
     { Icon: Clock,    text: `${row.short}: ${hoursRange(row)}` }
   )),
