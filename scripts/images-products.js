@@ -11,6 +11,11 @@
  *        [--category <id>] [--since YYYY-MM-DD] [--ids 1,2]   הועלו דרך האדמין; לפני/אחרי
  *   npm run images:products -- --from-uploads --apply        ב-photos/preview-uploads.html
  *
+ *   --from-uploads works through the storage module (server/services/storage): the images
+ *   it reads, and the ones --apply writes, are on the local disk or in Cloudinary, whichever
+ *   the product's URL (reading) and STORAGE_DRIVER (writing) say. Against a cloud database,
+ *   set DATABASE_URL (and CLOUDINARY_URL) in the shell first; the local path is unchanged.
+ *
  * מקור:  photos/raw/247.jpg, photos/raw/247-2.jpg, photos/raw/new-משהו.jpg
  * יעד:   photos/processed/247.webp, photos/processed/new/new-משהו.webp
  * תצוגה: photos/preview.html
@@ -38,6 +43,7 @@ const productModel = require('../server/models/product.model');
 const { UPLOADS_DIR, pathToUrl, uploadName } = require('./lib/uploads');
 const { cutout, stop: stopCutout } = require('./lib/cutout');
 const { sourceForUpload } = require('../server/utils/originals');
+const storage = require('../server/services/storage');
 
 const ROOT = path.join(__dirname, '..');
 const RAW_DIR = path.join(ROOT, 'photos', 'raw');
@@ -234,7 +240,7 @@ function measureMask(alpha, width, height) {
  * מעבד תמונה אחת מקצה לקצה, כותב אותה ל-outPath ומחזיר את רשומת
  * המניפסט שלה. משותף לשני המקורות: photos/raw ו---from-uploads.
  */
-async function processPhoto(sourcePath, outPath, scratch) {
+async function processPhoto(sourcePath, outPath, scratch) { // sourcePath: a file path or the image's bytes
   const started = Date.now();
 
   // 1. סיבוב לפי EXIF והשטחה על לבן. מכאן והלאה עובדים על RGB גולמי:
@@ -857,7 +863,7 @@ const UPLOADS_MANIFEST_PATH = path.join(UPLOADS_OUT_DIR, '.manifest.json');
 const DONE_CORNER = 16;
 const DONE_WHITE = 250;
 
-/** הכתובת שבמסד → הקובץ ב-uploads, או null לכתובת חיצונית או חשודה. */
+/** הכתובת שבמסד → הקובץ ב-uploads, או null לכתובת חיצונית, מרוחקת או חשודה. */
 function uploadsFile(url) {
   if (typeof url !== 'string' || !url.startsWith('/uploads/')) return null;
   const name = decodeURIComponent(url.slice('/uploads/'.length).split('?')[0]);
@@ -865,9 +871,9 @@ function uploadsFile(url) {
   return path.join(UPLOADS_DIR, name);
 }
 
-/** האם התמונה כבר יצאה מהצינור הזה (ראה DONE_CORNER). */
-async function isPipelineOutput(file) {
-  const { data, info } = await sharp(fs.readFileSync(file))
+/** האם התמונה כבר יצאה מהצינור הזה (ראה DONE_CORNER). Takes a file path or the image's bytes. */
+async function isPipelineOutput(fileOrBuffer) {
+  const { data, info } = await sharp(Buffer.isBuffer(fileOrBuffer) ? fileOrBuffer : fs.readFileSync(fileOrBuffer))
     .flatten({ background: '#ffffff' })
     .toColourspace('srgb')
     .raw()
@@ -908,14 +914,26 @@ async function collectUploadJobs(opts) {
   const jobs = [];
   const missing = [];
   for (const product of rows) {
+    // Any image the app stores: a local "/uploads/..." URL or a Cloudinary one.
     const urls = [...new Set([product.image_url, ...(Array.isArray(product.images) ? product.images : [])]
-      .filter((url) => typeof url === 'string' && url.startsWith('/uploads/')))];
+      .filter((url) => storage.isManaged(url)))];
 
-    urls.forEach((url, i) => {
+    for (const [i, url] of urls.entries()) {
+      // A remote image has no file: it is read through the storage module when it is processed.
       const file = uploadsFile(url);
-      if (!file || !fs.existsSync(file)) { missing.push({ id: product.id, name: product.name, url }); return; }
+      if (file === null) {
+        const stat = await storage.statProcessed(url);
+        if (!stat) { missing.push({ id: product.id, name: product.name, url }); continue; }
+        if (opts.since && stat.mtimeMs < opts.since.getTime()) continue;
+        jobs.push({
+          id: product.id, name: product.name, category: product.category, index: i + 1, url, file: null,
+          mtimeMs: stat.mtimeMs, source: url, fromOriginal: null, remote: true,
+        });
+        continue;
+      }
+      if (!fs.existsSync(file)) { missing.push({ id: product.id, name: product.name, url }); continue; }
       const mtimeMs = fs.statSync(file).mtimeMs;
-      if (opts.since && mtimeMs < opts.since.getTime()) return;
+      if (opts.since && mtimeMs < opts.since.getTime()) continue;
       // העיבוד מתחיל מהצילום המקורי כשהוא נשמר בהעלאה (uploads-originals),
       // ומהקובץ המעובד כשלא. --since והדילוג נמדדים תמיד על הקובץ שב-uploads.
       const source = sourceForUpload(file);
@@ -923,15 +941,15 @@ async function collectUploadJobs(opts) {
         id: product.id, name: product.name, category: product.category, index: i + 1, url, file, mtimeMs,
         source: source.path, fromOriginal: source.original,
       });
-    });
+    }
   }
   return { jobs, missing, products: rows.length };
 }
 
 /** קורא את המניפסט של הריצה הקודמת על uploads. */
-function readUploadsManifest() {
+function readUploadsManifest(manifestPath = UPLOADS_MANIFEST_PATH) {
   try {
-    const parsed = JSON.parse(fs.readFileSync(UPLOADS_MANIFEST_PATH, 'utf8'));
+    const parsed = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     return Array.isArray(parsed.entries) ? parsed.entries : [];
   } catch {
     return [];
@@ -940,7 +958,10 @@ function readUploadsManifest() {
 
 /** מעבד את התמונות שנאספו, עם דילוג על מה שכבר עובד או כבר לבן. */
 async function runUploadsProcessing(jobs, opts) {
-  const previous = new Map(readUploadsManifest().map((e) => [`${e.id}:${e.url}`, e]));
+  // opts.outDir lets the tests write somewhere other than photos/processed-uploads.
+  const outDir = opts.outDir || UPLOADS_OUT_DIR;
+  const manifestPath = path.join(outDir, '.manifest.json');
+  const previous = new Map(readUploadsManifest(manifestPath).map((e) => [`${e.id}:${e.url}`, e]));
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'tamburia-cutout-'));
   const entries = [];
   const counts = { processed: 0, cached: 0, alreadyDone: 0, failed: 0 };
@@ -950,10 +971,12 @@ async function runUploadsProcessing(jobs, opts) {
   for (const [i, job] of jobs.entries()) {
     const position = `[${String(i + 1).padStart(3)}/${jobs.length}]`;
     const outName = job.index === 1 ? `${job.id}.webp` : `${job.id}-${job.index}.webp`;
-    const outPath = path.join(UPLOADS_OUT_DIR, outName);
+    const outPath = path.join(outDir, outName);
+    // A remote image has no file name of its own: the log shows its URL's last segment.
+    const label = job.file ? path.basename(job.file) : path.basename(job.url.split('?')[0]);
     const entry = {
       id: job.id, name: job.name, category: job.category, index: job.index, url: job.url,
-      source: rel(job.source), fromOriginal: job.fromOriginal,
+      source: job.remote ? job.url : rel(job.source), fromOriginal: job.fromOriginal,
     };
     const before = previous.get(`${job.id}:${job.url}`);
 
@@ -963,22 +986,37 @@ async function runUploadsProcessing(jobs, opts) {
       && before.source === entry.source) {
       Object.assign(entry, before);
       counts.cached += 1;
-      console.log(`${position} ⏭  ${job.id}  ${path.basename(job.file)}  (עובד כבר)`);
+      console.log(`${position} ⏭  ${job.id}  ${label}  (עובד כבר)`);
       entries.push(entry);
       continue;
     }
 
     try {
-      if (await isPipelineOutput(job.file)) {
+      // The bytes to process. A local job reads its file as before; a remote one
+      // downloads the processed image, and the original when the storage kept one.
+      let processed = null;
+      let source = job.source;
+      if (job.remote) {
+        processed = await storage.readProcessed(job.url);
+        if (!processed) throw new Error('התמונה לא נמצאה באחסון');
+      }
+
+      if (await isPipelineOutput(job.remote ? processed : job.file)) {
         entry.alreadyDone = true;
         entry.flags = [];
         counts.alreadyDone += 1;
-        console.log(`${position} ⏭  ${job.id}  ${path.basename(job.file)}  (כבר על לבן — לא נוגעים)`);
+        console.log(`${position} ⏭  ${job.id}  ${label}  (כבר על לבן — לא נוגעים)`);
       } else {
-        Object.assign(entry, await processPhoto(job.source, outPath, scratch));
+        if (job.remote) {
+          const original = await storage.readOriginal(job.url);
+          entry.fromOriginal = Boolean(original);
+          job.fromOriginal = entry.fromOriginal;
+          source = original ? original.buffer : processed;
+        }
+        Object.assign(entry, await processPhoto(source, outPath, scratch));
         counts.processed += 1;
         const mark = entry.flags.length > 0 ? '⚠' : '✓';
-        console.log(`${position} ${mark}  ${job.id}  ${path.basename(job.file)} → ${entry.outputName}  ` +
+        console.log(`${position} ${mark}  ${job.id}  ${label} → ${entry.outputName}  ` +
           `(${(entry.ms / 1000).toFixed(1)}s, ${job.fromOriginal ? 'מהמקור' : 'מהמעובד'})`);
         entry.flags.forEach((f) => console.log(`             לבדיקה: ${f}`));
       }
@@ -986,7 +1024,7 @@ async function runUploadsProcessing(jobs, opts) {
       entry.flags = [`העיבוד נכשל: ${err.message}`];
       entry.error = err.message;
       counts.failed += 1;
-      console.log(`${position} ✗  ${job.id}  ${path.basename(job.file)}  — ${err.message}`);
+      console.log(`${position} ✗  ${job.id}  ${label}  — ${err.message}`);
     }
     entries.push(entry);
   }
@@ -999,8 +1037,8 @@ async function runUploadsProcessing(jobs, opts) {
   // היא הייתה מוחקת את המטמון של כל מה שלא נכלל בה.
   const thisRun = new Set(entries.map((e) => `${e.id}:${e.url}`));
   const merged = [...previous.values()].filter((e) => !thisRun.has(`${e.id}:${e.url}`)).concat(entries);
-  fs.mkdirSync(UPLOADS_OUT_DIR, { recursive: true });
-  fs.writeFileSync(UPLOADS_MANIFEST_PATH,
+  fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(manifestPath,
     JSON.stringify({ generatedAt: new Date().toISOString(), entries: merged }, null, 2), 'utf8');
   return { entries, counts };
 }
@@ -1022,7 +1060,7 @@ function writeUploadsPreview(entries, missing) {
     return `
     <figure class="card${flags.length ? ' card--flagged' : ''}">
       <div class="pair">
-        <div class="shot"><span class="tag">לפני</span><img src="${src(uploadsFile(e.url))}" alt=""></div>
+        <div class="shot"><span class="tag">לפני</span><img src="${uploadsFile(e.url) ? src(uploadsFile(e.url)) : escapeHtml(e.url)}" alt=""></div>
         <div class="shot"><span class="tag">אחרי</span>${after}</div>
       </div>
       <figcaption>
@@ -1147,8 +1185,8 @@ async function applyFromUploads(entries, opts) {
       if (!stillThere) { changedMeanwhile.push(e); continue; }
       const buffer = fs.readFileSync(path.join(ROOT, e.output));
       const fileName = uploadName(id, e.index, buffer);
-      fs.copyFileSync(path.join(ROOT, e.output), path.join(UPLOADS_DIR, fileName));
-      swap.set(e.url, pathToUrl(fileName));
+      // New images go where STORAGE_DRIVER says; the URL is whatever the driver returns.
+      swap.set(e.url, await storage.saveProcessed(fileName, buffer));
     }
     if (swap.size === 0) continue;
 
@@ -1280,9 +1318,17 @@ async function main() {
   }
 }
 
-main()
-  .catch((err) => {
-    console.error(err.message);
-    process.exitCode = 1;
-  })
-  .finally(() => db.close());
+// The functions below are exported for test/unit-images-from-uploads.js; running the file
+// as a script is unchanged.
+if (require.main === module) {
+  main()
+    .catch((err) => {
+      console.error(err.message);
+      process.exitCode = 1;
+    })
+    .finally(() => db.close());
+}
+
+module.exports = {
+  collectUploadJobs, runUploadsProcessing, applyFromUploads, isPipelineOutput,
+};

@@ -157,6 +157,15 @@ async function main() {
   try { await broken.readOriginal(`${base}/${PUBLIC_FOLDER}/abc.webp`); } catch { rejected = true; }
   check('שגיאה אחרת מהשירות לא נבלעת', rejected);
 
+  const statSdk = fakeSdk({ resource: { format: 'webp', created_at: '2026-10-10T08:00:00Z' } });
+  const statDriver = createCloudinaryDriver({ sdk: statSdk, cloudName: CLOUD, fetchImpl: fakeFetch({}) });
+  const stat = await statDriver.statProcessed(`${base}/${PUBLIC_FOLDER}/abc.webp`);
+  check('זמן היצירה של הנכס הציבורי (קריאת API אחת)', stat && stat.mtimeMs === Date.parse('2026-10-10T08:00:00Z') && statSdk.calls.resources.length === 1, stat);
+  check('הקריאה היא לנכס הציבורי, לא למקור', statSdk.calls.resources[0].publicId === `${PUBLIC_FOLDER}/abc` && statSdk.calls.resources[0].options.type === 'upload', statSdk.calls.resources[0]);
+  const missingStat = createCloudinaryDriver({ sdk: fakeSdk({ resourceError: { http_code: 404 } }), cloudName: CLOUD, fetchImpl: fakeFetch({}) });
+  check('נכס שאינו קיים → null', (await missingStat.statProcessed(`${base}/${PUBLIC_FOLDER}/abc.webp`)) === null);
+  check('כתובת זרה → null בלי קריאה ל-API', (await statDriver.statProcessed('/uploads/abc.webp')) === null && statSdk.calls.resources.length === 1);
+
   console.log('\n── מחיקה');
   const delSdk = fakeSdk();
   const deleter = createCloudinaryDriver({ sdk: delSdk, cloudName: CLOUD, fetchImpl: fakeFetch({}) });

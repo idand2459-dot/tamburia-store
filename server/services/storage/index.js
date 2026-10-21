@@ -61,6 +61,12 @@ const readOriginal = (url) => {
   return driver ? driver.readOriginal(url) : Promise.resolve(null);
 };
 
+/** When the processed image was written, as { mtimeMs }, or null. */
+const statProcessed = (url) => {
+  const driver = driverFor(url);
+  return driver ? driver.statProcessed(url) : Promise.resolve(null);
+};
+
 /** Deletes an image and its original through the driver that owns the URL. Returns whether it did. */
 const remove = (url) => {
   const driver = driverFor(url);
@@ -73,6 +79,7 @@ module.exports = {
   isManaged,
   readProcessed,
   readOriginal,
+  statProcessed,
   remove,
   driverFor,
   UPLOADS_DIR: local.UPLOADS_DIR,

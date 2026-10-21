@@ -61,6 +61,16 @@ function createLocalDriver({ uploadsDir, originalsDir }) {
     return { buffer: await fs.promises.readFile(found), ext: path.extname(found) };
   }
 
+  /** When the processed file was written, as { mtimeMs }, or null when it is gone. */
+  async function statProcessed(url) {
+    try {
+      return { mtimeMs: (await fs.promises.stat(fileOf(url))).mtimeMs };
+    } catch (err) {
+      if (err.code === 'ENOENT') return null;
+      throw err;
+    }
+  }
+
   /** Deletes the processed file and its original. A file that is already gone is not an error. */
   async function remove(url) {
     await fs.promises.rm(fileOf(url), { force: true });
@@ -75,6 +85,7 @@ function createLocalDriver({ uploadsDir, originalsDir }) {
     saveOriginal: saveOriginalFile,
     readProcessed,
     readOriginal,
+    statProcessed,
     remove,
   };
 }
