@@ -15,11 +15,12 @@ process.env.LOGIN_WINDOW_MS = '2000';
 
 const path = require('path');
 const { spawn } = require('child_process');
+const { prepareTestDatabase, describeTestDatabase } = require('./lib/testDatabase');
 
 // בדיקות ה-unit רצות ראשונות: הן אינן נוגעות ברשת או במסד, ולכן נותנות
 // את סימן הכישלון המהיר ביותר אם משהו בסיסי שבור — ובראשן השמירה
 // שאף סוד לא נכנס לגיט.
-const SUITES = ['unit-repo-hygiene', 'unit-config', 'unit-order-service', 'unit-product-service', 'unit-review-service', 'unit-money', 'unit-originals', 'smoke-fresh-db', 'smoke-static', 'smoke-orders', 'smoke-products', 'smoke-settings', 'smoke-reviews', 'smoke-pigments', 'smoke-auth'];
+const SUITES = ['unit-repo-hygiene', 'unit-config', 'unit-test-database-guard', 'unit-order-service', 'unit-product-service', 'unit-review-service', 'unit-money', 'unit-originals', 'smoke-fresh-db', 'smoke-static', 'smoke-orders', 'smoke-products', 'smoke-settings', 'smoke-reviews', 'smoke-pigments', 'smoke-auth'];
 
 /** מריץ חבילה אחת כתהליך נפרד ומחזיר את קוד היציאה. */
 function runSuite(name, baseUrl) {
@@ -34,6 +35,9 @@ function runSuite(name, baseUrl) {
 
 /** מעלה שרת בדיקות, מריץ את כל החבילות ומסכם את התוצאות. */
 async function main() {
+  // The guard runs before anything loads the database config.
+  console.log(describeTestDatabase(prepareTestDatabase()));
+
   const db = require('../server/config/db');
   const { runMigrations } = require('../server/db/migrate');
   const { createApp } = require('../server/app');

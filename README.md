@@ -306,14 +306,26 @@ written up in [docs/a11y-audit.md](docs/a11y-audit.md); the public statement is 
 ## Testing
 
 ```bash
-npm test               # server: 15 suites, 671 checks
+npm test               # server: unit and smoke suites
 npm run test:client    # client: 12 suites, 90 tests
 npm run a11y           # accessibility: serves client/build, so run npm run build:client first
 ```
 
 The server suites start their own server on port 3100, so they can run while the real
-server is on 3000. They talk to the real database, create temporary records and delete them
-afterwards.
+server is on 3000. They create temporary records and delete them afterwards.
+
+They run only against a local database, and refuse `NODE_ENV=production` or a remote host
+(`test/lib/testDatabase.js`). To keep them away from your development data, create a
+separate local database and point `TEST_DATABASE_URL` at it (the same variable is used by
+`npm run a11y`):
+
+```bash
+createdb tamburia_test
+# then set TEST_DATABASE_URL=postgresql://<user>:<password>@localhost:5432/tamburia_test
+```
+
+Without `TEST_DATABASE_URL` the suites fall back to the `DB_*` database and print a
+warning.
 
 | Suite | Checks | Covers |
 |---|---|---|

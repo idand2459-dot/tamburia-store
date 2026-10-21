@@ -47,7 +47,7 @@ client/src/
   js/context/      StoreContext, the object App.js hands to every screen
   js/utils/        pure helpers: pricing, store info, colour palette, category icons…
 
-test/              15 server suites (unit-*, smoke-*), run by run-all.js
+test/              server suites (unit-*, smoke-*), run by run-all.js
 scripts/           catalog import, demo data, the product-photo pipeline, the a11y audit
 ```
 
@@ -160,11 +160,13 @@ checks, and must report zero findings. The statement is at `/accessibility`.
 
 ## Tests
 
-`npm test` starts its own server on port 3100 against the real database, runs 15 suites
-(671 checks), and cleans up what it created:
+`npm test` starts its own server on port 3100, runs the server suites, and cleans up
+what it created. It refuses `NODE_ENV=production` and any database whose host is not local
+(`test/lib/testDatabase.js`); `TEST_DATABASE_URL` points it at a separate local database,
+and without it the suites fall back to the `DB_*` database with a warning:
 
 - **unit-*** (no network or database): repo hygiene, config startup rules, order service,
-  product visibility, review moderation, money, originals.
+  product visibility, review moderation, money, originals, the test-database guard.
 - **smoke-fresh-db**: creates an empty database, runs every migration and the catalogue
   import, and compares the schema column by column with the real one.
 - **smoke-static, -orders, -products, -settings, -reviews, -pigments, -auth**: the HTTP
