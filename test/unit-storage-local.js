@@ -51,6 +51,10 @@ async function main() {
   check('המקור אינו בתיקיית ההעלאות המוגשת', !fs.readdirSync(uploadsDir).some((f) => f.endsWith('.jpg')), fs.readdirSync(uploadsDir));
   check('אין מקור → null', (await driver.readOriginal('/uploads/ffffffffffffffff.webp')) === null);
 
+  const stat = await driver.statProcessed(url);
+  check('זמן הכתיבה של התמונה המעובדת', stat && Math.abs(stat.mtimeMs - Date.now()) < 60_000, stat);
+  check('אין קובץ → null', (await driver.statProcessed('/uploads/missing.webp')) === null);
+
   console.log('\n── מחיקה');
   check('מחיקה מחזירה true', (await driver.remove(url)) === true);
   check('הקובץ המעובד נמחק', !fs.existsSync(path.join(uploadsDir, '0b99d097208f5e91.webp')));

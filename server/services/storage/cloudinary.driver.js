@@ -146,6 +146,19 @@ function createCloudinaryDriver({ sdk, cloudName, fetchImpl = fetch }) {
     return buffer ? { buffer, ext: `.${resource.format}` } : null;
   }
 
+  /** When the public asset was created, as { mtimeMs }, or null when it does not exist. One API call. */
+  async function statProcessed(url) {
+    const base = baseOfUrl(url);
+    if (base === null) return null;
+    try {
+      const resource = await sdk.api.resource(`${PUBLIC_FOLDER}/${base}`, { type: 'upload', resource_type: 'image' });
+      return { mtimeMs: Date.parse(resource.created_at) };
+    } catch (err) {
+      if (err && (err.http_code === 404 || err.error?.http_code === 404)) return null;
+      throw err;
+    }
+  }
+
   /** Deletes the public asset and the private original. An asset that is already gone is not an error. */
   async function remove(url) {
     const base = baseOfUrl(url);
@@ -156,7 +169,7 @@ function createCloudinaryDriver({ sdk, cloudName, fetchImpl = fetch }) {
   }
 
   return {
-    name: 'cloudinary', owns, saveProcessed, saveOriginal, readProcessed, readOriginal, remove,
+    name: 'cloudinary', owns, saveProcessed, saveOriginal, readProcessed, readOriginal, statProcessed, remove,
   };
 }
 
