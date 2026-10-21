@@ -18,7 +18,8 @@ const pool = new Pool({
   database: config.db.name,
   user: config.db.user,
   password: config.db.password,
-  max: 10,
+  ssl: config.db.ssl ? { rejectUnauthorized: true } : false,
+  max: config.db.poolMax,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 5_000,
 });

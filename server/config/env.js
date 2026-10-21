@@ -42,6 +42,41 @@ function number(key, fallback, { allowZero = false } = {}) {
   return parsed;
 }
 
+/** Reads a value that must be one of a fixed list; the default applies when it is unset. */
+function oneOf(key, allowed, fallback) {
+  const raw = process.env[key];
+  if (raw === undefined || raw === '') return fallback;
+  if (!allowed.includes(raw)) {
+    throw new Error(`משתנה הסביבה ${key} חייב להיות אחד מ: ${allowed.join(', ')} (התקבל: "${raw}")`);
+  }
+  return raw;
+}
+
+const LOCAL_HOSTS = ['localhost', '127.0.0.1', '::1', '[::1]'];
+
+/**
+ * Splits DATABASE_URL into the fields the pool takes. The errors never print the
+ * value: a connection string carries the password.
+ */
+function parseDatabaseUrl(raw) {
+  let url;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new Error('משתנה הסביבה DATABASE_URL אינו כתובת תקינה');
+  }
+  if (url.protocol !== 'postgres:' && url.protocol !== 'postgresql:') {
+    throw new Error('משתנה הסביבה DATABASE_URL חייב להתחיל ב-postgres:// או ב-postgresql://');
+  }
+  return {
+    host: url.hostname,
+    port: Number(url.port) || 5432,
+    name: decodeURIComponent(url.pathname.replace(/^\//, '')),
+    user: decodeURIComponent(url.username),
+    password: decodeURIComponent(url.password),
+  };
+}
+
 const nodeEnv = process.env.NODE_ENV || 'development';
 const isProduction = nodeEnv === 'production';
 
@@ -53,19 +88,36 @@ const mailCredential = (key) => (mailEnabled ? required(key) : process.env[key] 
 /** האורך המינימלי של סיסמת האדמין בייצור. */
 const MIN_ADMIN_PASSWORD = 12;
 
+// DATABASE_URL wins over DB_*. It is set only on the hosting service, so a local
+// run never reaches a cloud database by accident.
+const databaseUrl = process.env.DATABASE_URL ? parseDatabaseUrl(process.env.DATABASE_URL) : null;
+const dbHost = databaseUrl ? databaseUrl.host : process.env.DB_HOST || 'localhost';
+
 const config = {
   nodeEnv,
   isProduction,
   port: number('PORT', 3000),
 
   db: {
-    host: process.env.DB_HOST || 'localhost',
-    port: number('DB_PORT', 5432),
-    name: process.env.DB_NAME || 'tamburia',
-    user: process.env.DB_USER || 'postgres',
-    password: required('DB_PASSWORD'),
+    host: dbHost,
+    port: databaseUrl ? databaseUrl.port : number('DB_PORT', 5432),
+    name: databaseUrl ? databaseUrl.name : process.env.DB_NAME || 'tamburia',
+    user: databaseUrl ? databaseUrl.user : process.env.DB_USER || 'postgres',
+    password: databaseUrl ? databaseUrl.password : required('DB_PASSWORD'),
+    poolMax: number('DB_POOL_MAX', 10),
+    // A remote host needs TLS; a local one does not offer it by default.
+    ssl: !LOCAL_HOSTS.includes(dbHost),
     logQueries: flag('DB_LOG_QUERIES', nodeEnv !== 'production'),
   },
+
+  // 'local' keeps images on disk (uploads/); 'cloudinary' sends them to Cloudinary.
+  storage: {
+    driver: oneOf('STORAGE_DRIVER', ['local', 'cloudinary'], 'local'),
+    cloudinaryUrl: process.env.CLOUDINARY_URL || '',
+  },
+
+  // open = the full store, catalog = browse only, closed = the under-construction page.
+  siteMode: oneOf('SITE_MODE', ['open', 'catalog', 'closed'], 'open'),
 
   mail: {
     user: mailCredential('MAIL_USER'),
@@ -105,6 +157,10 @@ const config = {
     .map((origin) => origin.trim())
     .filter(Boolean),
 };
+
+if (config.storage.driver === 'cloudinary' && !config.storage.cloudinaryUrl) {
+  missing.push('CLOUDINARY_URL');
+}
 
 if (missing.length > 0) {
   throw new Error(
