@@ -161,9 +161,8 @@ checks, and must report zero findings. The statement is at `/accessibility`.
 ## Tests
 
 `npm test` starts its own server on port 3100, runs the server suites, and cleans up
-what it created. It refuses `NODE_ENV=production` and any database whose host is not local
-(`test/lib/testDatabase.js`); `TEST_DATABASE_URL` points it at a separate local database,
-and without it the suites fall back to the `DB_*` database with a warning:
+what it created. `TEST_DATABASE_URL` (a separate local database) is required; the runner refuses `NODE_ENV=production`,
+a host that is not local, and the development database itself (`test/lib/testDatabase.js`):
 
 - **unit-*** (no network or database): repo hygiene, config startup rules, order service,
   product visibility, review moderation, money, originals, the test-database guard.

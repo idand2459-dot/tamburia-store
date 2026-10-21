@@ -8,6 +8,7 @@ const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
 let passed = 0;
 let failed = 0;
 const created = [];
+let createdProduct = null;
 
 /** רושם תוצאה של בדיקה בודדת. */
 function check(name, condition, actual) {
@@ -36,12 +37,17 @@ async function call(method, path, body) {
   return { status: res.status, body: await res.json() };
 }
 
-/** צריך מוצר אמיתי כדי לבדוק חוות דעת על מוצר ואת ה-JOIN לשמו */
+/**
+ * צריך מוצר כדי לבדוק חוות דעת על מוצר ואת ה-JOIN לשמו. הבדיקה יוצרת
+ * אותו בעצמה ומוחקת בסוף, כדי שתרוץ גם על מסד בדיקות ריק.
+ */
 async function pickProduct() {
-  const { body } = await call('GET', '/products?limit=1');
-  const product = body.products[0];
-  if (!product) throw new Error('אין מוצרים ב-DB — הבדיקה דורשת לפחות אחד');
-  return product;
+  const { status, body } = await call('POST', '/products', {
+    category: 'tools', name: 'מוצר בדיקה לחוות דעת', price: 10, sku: 'TEST-REVIEWS',
+  });
+  if (status !== 201) throw new Error(`יצירת מוצר הבדיקה נכשלה: ${status}`);
+  createdProduct = body.id;
+  return body;
 }
 
 /** בודק יצירה: ערכים שנשמרים, ברירות מחדל ושדות שהשרת קובע. */
@@ -270,6 +276,10 @@ async function cleanup() {
 
   const twice = await call('DELETE', `/reviews/${created[0]}`);
   check('מחיקה חוזרת → 404', twice.status === 404, twice.status);
+
+  const product = await call('DELETE', `/products/${createdProduct}`);
+  check('נמחק מוצר הבדיקה', product.status === 200, product.status);
+  createdProduct = null;
 }
 
 /** מריץ את כל הבדיקות לפי הסדר. */
@@ -293,5 +303,6 @@ async function main() {
 main().catch(async (err) => {
   console.error('הבדיקה קרסה:', err);
   for (const id of created) if (id) await call('DELETE', `/reviews/${id}`).catch(() => {});
+  if (createdProduct) await call('DELETE', `/products/${createdProduct}`).catch(() => {});
   process.exit(1);
 });

@@ -49,7 +49,7 @@ const ok = (() => {
     return { error: err.message };
   }
 })();
-check('כתובת מקומית — מתקבלת כמסד נפרד', ok.result && ok.result.separate === true, ok);
+check('כתובת מקומית — מתקבלת', ok.result && ok.result.source === 'TEST_DATABASE_URL', ok);
 check('היא גוברת על DATABASE_URL מרוחק שנשאר בסביבה', applied.DATABASE_URL === LOCAL_URL, applied.DATABASE_URL);
 
 const remoteTest = guard({ TEST_DATABASE_URL: REMOTE_URL });
@@ -59,21 +59,25 @@ check('ההודעה אינה מדפיסה סיסמה או כתובת', remoteTes
 const garbage = guard({ TEST_DATABASE_URL: 'not a url, secret-token-9' });
 check('כתובת לא תקינה — מסרב בלי להדפיס את הערך', garbage.error && !garbage.error.includes('secret-token-9'), garbage);
 
+const DEV = { DB_HOST: 'localhost', DB_PORT: '5432', DB_NAME: 'shop_dev' };
+const sameAsDev = guard({ ...DEV, TEST_DATABASE_URL: 'postgresql://tester:pw@localhost:5432/shop_dev' });
+check('מסד הפיתוח עצמו — מסרב', sameAsDev.error && sameAsDev.error.includes('TEST_DATABASE_URL'), sameAsDev);
+const sameViaIp = guard({ ...DEV, TEST_DATABASE_URL: 'postgresql://tester:pw@127.0.0.1:5432/shop_dev' });
+check('מסד הפיתוח דרך 127.0.0.1 — מסרב', sameViaIp.error && sameViaIp.error.includes('TEST_DATABASE_URL'), sameViaIp);
+const otherDb = guard({ ...DEV, TEST_DATABASE_URL: LOCAL_URL });
+check('מסד אחר באותו שרת — מתקבל', otherDb.result && otherDb.result.host === 'localhost', otherDb);
+
 console.log('\n── בלי TEST_DATABASE_URL');
-const dbHostRemote = guard({ DB_HOST: 'db.example.test' });
-check('DB_HOST מרוחק — מסרב', dbHostRemote.error && dbHostRemote.error.includes('DB_HOST'), dbHostRemote);
-
-const urlRemote = guard({ DATABASE_URL: REMOTE_URL });
-check('DATABASE_URL מרוחק — מסרב', urlRemote.error && urlRemote.error.includes('DATABASE_URL'), urlRemote);
-
-const urlLocal = guard({ DATABASE_URL: LOCAL_URL });
-check('DATABASE_URL מקומי — מתקבל, אך לא כמסד נפרד', urlLocal.result && urlLocal.result.separate === false, urlLocal);
-
-const devDb = guard({ DB_HOST: 'localhost' });
-check('DB_HOST מקומי — מתקבל, אך לא כמסד נפרד', devDb.result && devDb.result.separate === false, devDb);
-
-const unset = guard({});
-check('בלי שום הגדרה — מקומי כברירת מחדל', unset.result && unset.result.host === 'localhost', unset);
+for (const [name, extra] of [
+  ['בלי שום הגדרה', {}],
+  ['DB_HOST מקומי', { DB_HOST: 'localhost' }],
+  ['DATABASE_URL מקומי', { DATABASE_URL: LOCAL_URL }],
+  ['DATABASE_URL מרוחק', { DATABASE_URL: REMOTE_URL }],
+  ['DB_HOST מרוחק', { DB_HOST: 'db.example.test' }],
+]) {
+  const out = guard(extra);
+  check(`${name} — מסרב ונוקב ב-TEST_DATABASE_URL`, out.error && out.error.includes('TEST_DATABASE_URL'), out);
+}
 
 console.log('\n── המריץ עצמו');
 const RUN_ALL = path.join(__dirname, 'run-all.js');
@@ -90,6 +94,10 @@ function runAll(overrides) {
 
 const prodRun = runAll({ NODE_ENV: 'production' });
 check('NODE_ENV=production — run-all נכשל לפני כל חבילה', prodRun.status !== 0 && !prodRun.output.includes('═══'), prodRun);
+
+const unsetRun = runAll({ TEST_DATABASE_URL: '' });
+check('בלי TEST_DATABASE_URL — run-all נכשל לפני כל חבילה', unsetRun.status !== 0 && !unsetRun.output.includes('═══')
+  && unsetRun.output.includes('TEST_DATABASE_URL'), unsetRun);
 
 const remoteRun = runAll({ TEST_DATABASE_URL: REMOTE_URL });
 check('TEST_DATABASE_URL מרוחק — run-all נכשל לפני כל חבילה', remoteRun.status !== 0 && !remoteRun.output.includes('═══'), remoteRun);

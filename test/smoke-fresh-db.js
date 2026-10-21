@@ -61,7 +61,8 @@ async function main() {
   try {
     console.log('\n── מיגרציות על מסד ריק');
     const run = spawnSync(process.execPath, [path.join(__dirname, '../server/db/migrate.js')], {
-      env: { ...process.env, DB_NAME: FRESH, DB_LOG_QUERIES: 'false' },
+      // DATABASE_URL (set by the test-database guard) would win over DB_NAME, so it is cleared here.
+      env: { ...process.env, DATABASE_URL: '', DB_NAME: FRESH, DB_LOG_QUERIES: 'false' },
       encoding: 'utf8',
     });
     check('כל המיגרציות עוברות על מסד ריק', run.status === 0, (run.stderr || run.stdout).trim().split('\n').pop());
@@ -88,7 +89,8 @@ async function main() {
       // JSONB — כל מוצר עם צבע נכשל, ובלי שום בדיקה שתראה.
       console.log('\n── ייבוא הקטלוג למסד הריק');
       const imported = spawnSync(process.execPath, [path.join(__dirname, '../scripts/import-products.js')], {
-        env: { ...process.env, DB_NAME: FRESH, DB_LOG_QUERIES: 'false' },
+        // DATABASE_URL (set by the test-database guard) would win over DB_NAME, so it is cleared here.
+        env: { ...process.env, DATABASE_URL: '', DB_NAME: FRESH, DB_LOG_QUERIES: 'false' },
         encoding: 'utf8',
         maxBuffer: 1 << 26,
       });
