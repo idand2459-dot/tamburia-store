@@ -30,7 +30,7 @@ const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8'
 
 // קבצי סביבה שמותר שיהיו במעקב, כי אין בהם סוד
 const ALLOWED_ENV_FILES = ['.env.example', 'client/.env.development'];
-const SECRET_KEY = /PASS|SECRET|TOKEN|KEY/;
+const SECRET_KEY = /PASS|SECRET|TOKEN|KEY|DATABASE_URL|CLOUDINARY_URL/;
 
 /** מפרק קובץ .env לזוגות [מפתח, ערך]. */
 function parseEnv(text) {

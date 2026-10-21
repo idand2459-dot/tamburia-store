@@ -35,6 +35,7 @@ try {
 
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 const puppeteer = require('puppeteer-core');
 const { login } = require('../test/helpers');
 
@@ -363,13 +364,34 @@ function renderReport(results, grouped) {
   return `${lines.join('\n')}\n`;
 }
 
+/**
+ * A separate test database starts empty, and the audit needs the catalogue's
+ * pages (category, product, admin orders). When there are no products it imports
+ * the catalogue once, through the same script a fresh clone uses.
+ */
+async function ensureCatalogue(db) {
+  const { rows } = await db.query('SELECT count(*)::int AS n FROM products');
+  if (rows[0].n > 0) return;
+  console.log('מסד הבדיקות ריק: מייבא את הקטלוג');
+  const run = spawnSync(process.execPath, [path.join(__dirname, 'import-products.js')], {
+    env: process.env, encoding: 'utf8', maxBuffer: 1 << 26,
+  });
+  if (run.status !== 0) {
+    const lastLine = (run.stderr || run.stdout).trim().split('\n').pop();
+    throw new Error(`ייבוא הקטלוג נכשל: ${lastLine}`);
+  }
+}
+
 async function main() {
   const executablePath = CHROME_CANDIDATES.find((p) => fs.existsSync(p));
   if (!executablePath) throw new Error('לא נמצא Chrome. הגדר CHROME_PATH.');
 
   const db = require('../server/config/db');
+  const { runMigrations } = require('../server/db/migrate');
   const { createApp } = require('../server/app');
   await db.assertConnection();
+  await runMigrations();
+  await ensureCatalogue(db);
   const server = createApp().listen(Number(process.env.PORT));
   await new Promise((resolve) => server.once('listening', resolve));
   const baseUrl = `http://127.0.0.1:${process.env.PORT}`;
