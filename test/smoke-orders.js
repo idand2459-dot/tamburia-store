@@ -79,7 +79,7 @@ async function setupProducts() {
 
 const validOrder = () => ({
   customer_name: 'ישראל ישראלי',
-  customer_phone: '050-673-5040',
+  customer_phone: '050-000-0000',
   customer_email: 'test@example.com',
   delivery_method: 'delivery',
   delivery_address: 'בר כוכבא 52, פתח תקווה',
@@ -162,7 +162,7 @@ async function testRead(id) {
   const badId = await call('GET', '/orders/abc');
   check('מזהה לא מספרי → 400', badId.status === 400, badId.status);
 
-  const byPhone = await call('GET', '/orders/by-phone/0506735040');
+  const byPhone = await call('GET', '/orders/by-phone/0500000000');
   check('חיפוש לפי טלפון מנוקד מוצא', byPhone.body.some((o) => o.id === id), byPhone.body.length);
 
   const badPhone = await call('GET', '/orders/by-phone/123');
@@ -534,7 +534,7 @@ async function testPicked(id) {
   const after = await call('GET', `/orders/${id}`);
   check('בקשה בלי התחברות לא שינתה דבר', JSON.stringify(after.body.picked_items) === '[1]', after.body.picked_items);
 
-  const byPhone = await call('GET', '/orders/by-phone/0506735040');
+  const byPhone = await call('GET', '/orders/by-phone/0500000000');
   check('החיפוש של הלקוח לפי טלפון אינו חושף picked_items',
     byPhone.body.length > 0 && byPhone.body.every((o) => !('picked_items' in o)), byPhone.body.map(Object.keys));
 }

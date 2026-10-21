@@ -1,11 +1,12 @@
 /**
- * שומר שהפלאפון האישי של בעל החנות לא יופיע בשום מקום ציבורי: לא בקוד
- * הקליינט, לא בקבצים הסטטיים שלו, לא בתבניות המייל שנשלחות ללקוחות, ולא
- * בבילד המוכן (client/build), אם קיים.
+ * שומר שהפלאפון האישי של בעל החנות לא יופיע בשום מקום: לא בקוד הקליינט,
+ * לא בקבצים הסטטיים שלו, לא בתבניות המייל שנשלחות ללקוחות, לא בבילד
+ * המוכן (client/build), אם קיים, ולא בנתוני הבדיקה שבתיקיית test/.
  *
- * המספר מורכב מחלקים כדי שהקובץ הזה עצמו לא יכיל אותו. הבדיקה מכסה את
- * הצורה הגולמית (0506735040 ו-972506735040), ואת הצורה עם המקפים כפי
- * שהיא מוצגת (050-6735040).
+ * המספר מורכב מחלקים כדי שהקובץ הזה עצמו לא יכיל אותו, וגם לא ההערה הזו.
+ * הבדיקה מכסה את הצורה הגולמית, את הצורה הבינלאומית (972 במקום 0 המוביל),
+ * את הצורה עם המקפים כפי שהיא מוצגת, ואת הצורה עם המקפים כפי שהיא נכתבת
+ * בקלט של טופס (מקף אחרי הקידומת ומקף נוסף אחרי שלוש ספרות).
  *
  * חיפוש בבילד דורש בילד עדכני: אם client/build ישן, הוא ייכשל עד
  * ש-npm run build:client ירוץ מחדש. בלי בילד — הבדיקה מדלגת עליו ואומרת זאת.
@@ -34,6 +35,7 @@ const FORMS = [
   `972${LOCAL.join('').slice(1)}`,
   LOCAL.join('-'),
   `+972-${LOCAL.join('').slice(1, 3)}-${LOCAL[1]}`,
+  `${LOCAL[0]}-${LOCAL[1].slice(0, 3)}-${LOCAL[1].slice(3)}`,
 ];
 const TEXT_EXT = new Set(['.js', '.jsx', '.json', '.html', '.css', '.txt', '.md', '.map', '.svg', '.xml', '.webmanifest']);
 
@@ -64,6 +66,8 @@ console.log('\n── קוד המקור');
 check('הקליינט (src ו-public) נקי', filesWithNumber([path.join(ROOT, 'client', 'src'), path.join(ROOT, 'client', 'public')]).length === 0,
   filesWithNumber([path.join(ROOT, 'client', 'src'), path.join(ROOT, 'client', 'public')]));
 check('תבניות המייל והשרת נקיים', filesWithNumber([path.join(ROOT, 'server')]).length === 0, filesWithNumber([path.join(ROOT, 'server')]));
+check('נתוני הבדיקה (test/) נקיים', filesWithNumber([__dirname]).length === 0, filesWithNumber([__dirname]));
+check('הסקריפטים (scripts/) נקיים', filesWithNumber([path.join(ROOT, 'scripts')]).length === 0, filesWithNumber([path.join(ROOT, 'scripts')]));
 
 console.log('\n── הבילד');
 const buildDir = path.join(ROOT, 'client', 'build');

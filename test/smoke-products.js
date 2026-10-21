@@ -759,7 +759,7 @@ async function testDelete() {
   const sold = await call('POST', '/products', { ...validProduct(), sku: 'TEST-DELETE-3', price: 15, image_url: shared });
   created.push(sold.body.id);
   const order = await publicCall('POST', '/orders', {
-    customer_name: 'בודק מחיקה', customer_phone: '050-673-5040', delivery_method: 'pickup',
+    customer_name: 'בודק מחיקה', customer_phone: '050-000-0000', delivery_method: 'pickup',
     items: [{ id: sold.body.id, name: sold.body.name, price: 15, quantity: 1 }],
   });
   check('נוצרה הזמנה על המוצר', order.status === 201, `${order.status} ${order.body.error || ''}`);
