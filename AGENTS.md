@@ -10,6 +10,7 @@
 - Never commit or expose secrets (tokens, API keys, passwords).
 - Never read a real env file; read `.env.example` for the variable names.
 - Never reference a server-side secret from code that runs on a client.
+- A script that targets the cloud reads `CLOUD_DATABASE_URL` and `CLOUDINARY_URL` from the env file, behind an explicit `--target cloud` flag, and refuses to run without them (`scripts/lib/target.js`). Never ask the owner to type or export a secret in the shell (PowerShell saves typed commands in a history file) and never take a secret as an argument. The hook blocks the agent from running any `--target cloud` command; the owner runs those.
 
 ## Guardrails (Single Source of Truth)
 - Guardrail logic lives in `.claude/hooks/` and is wired in `.claude/settings.json`; a hook script that is not listed there never runs.

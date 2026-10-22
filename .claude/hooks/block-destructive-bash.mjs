@@ -40,6 +40,9 @@ const PROJECT_DENY_PATTERNS = [
   startsWith(String.raw`(?:npm\s+run\s+products:import-new|node\s+\S*products-import-new\.js)\b[^;&|\n]*\s--(?:apply|revert)\b`),
   startsWith(String.raw`(?:npm\s+run\s+products:hide-unphotographed|node\s+\S*products-hide-unphotographed\.js)\b[^;&|\n]*\s--(?:apply|revert)\b`),
   startsWith(String.raw`(?:npm\s+run\s+images:products|node\s+\S*images-products\.js)\b[^;&|\n]*\s--(?:apply|revert)\b`),
+  // Any script aimed at the cloud: --target cloud makes it read the cloud database and Cloudinary
+  // credentials from the env file, so only the owner runs it (dry runs included)
+  startsWith(String.raw`(?:npm\s+run\s+\S+|node\s+\S+)\b[^;&|\n]*\s--target(?:\s+|=)cloud\b`),
   // PostgreSQL: drop a whole database
   startsWith(String.raw`dropdb\b`),
   // git clean of ignored files would delete uploads/ and uploads-originals/

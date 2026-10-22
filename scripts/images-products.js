@@ -13,8 +13,14 @@
  *
  *   --from-uploads works through the storage module (server/services/storage): the images
  *   it reads, and the ones --apply writes, are on the local disk or in Cloudinary, whichever
- *   the product's URL (reading) and STORAGE_DRIVER (writing) say. Against a cloud database,
- *   set DATABASE_URL (and CLOUDINARY_URL) in the shell first; the local path is unchanged.
+ *   the product's URL (reading) and STORAGE_DRIVER (writing) say. The local path is unchanged.
+ *
+ *   npm run images:products -- --from-uploads --target cloud [--apply]
+ *        the same on the cloud: CLOUD_DATABASE_URL and CLOUDINARY_URL come from the local
+ *        environment file (scripts/lib/target.js), and the script refuses to run without
+ *        them. They are never typed into the shell or passed as arguments: PowerShell keeps
+ *        typed commands in a history file. --target cloud works with --from-uploads and
+ *        --revert only; the raw-photo mode writes local files.
  *
  * מקור:  photos/raw/247.jpg, photos/raw/247-2.jpg, photos/raw/new-משהו.jpg
  * יעד:   photos/processed/247.webp, photos/processed/new/new-משהו.webp
@@ -34,6 +40,19 @@
  * photos/processed היא אזור המתנה: מסתכלים על preview.html, ורק אחר כך
  * מריצים --apply.
  */
+// --target must be applied before anything loads server/config (it reads the environment once).
+const { applyTarget, describeTarget } = require('./lib/target');
+
+let TARGET = { target: 'local' };
+if (require.main === module) {
+  try {
+    TARGET = applyTarget(process.argv.slice(2));
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);
+  }
+}
+
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -84,7 +103,7 @@ const HEIC_EXT = new Set(['.heic', '.heif']);
 function parseArgs(argv) {
   const opts = {
     force: false, apply: false, includeFlagged: false, revert: null,
-    fromUploads: false, category: null, since: null, ids: null,
+    fromUploads: false, category: null, since: null, ids: null, target: 'local',
   };
   const value = (i, flag) => {
     if (!argv[i + 1] || argv[i + 1].startsWith('--')) throw new Error(`חסר ערך אחרי ${flag}`);
@@ -97,6 +116,9 @@ function parseArgs(argv) {
     else if (arg === '--apply') opts.apply = true;
     else if (arg === '--include-flagged') opts.includeFlagged = true;
     else if (arg === '--from-uploads') opts.fromUploads = true;
+    // The value is validated and applied by lib/target.js, before the configuration loads.
+    else if (arg === '--target') { opts.target = value(i, arg); i += 1; }
+    else if (arg.startsWith('--target=')) opts.target = arg.slice('--target='.length);
     else if (arg === '--category') { opts.category = value(i, arg); i += 1; }
     else if (arg === '--since') {
       const raw = value(i, arg);
@@ -117,13 +139,17 @@ function parseArgs(argv) {
       throw new Error(
         `ארגומנט לא מוכר: ${arg}\n` +
         'מותרים: --force, --apply, --include-flagged, --revert <קובץ>,\n' +
-        '        --from-uploads [--category <id>] [--since YYYY-MM-DD] [--ids 1,2,3]'
+        '        --from-uploads [--category <id>] [--since YYYY-MM-DD] [--ids 1,2,3],\n' +
+        '        --target local|cloud (cloud: עם --from-uploads או --revert בלבד)'
       );
     }
   }
 
   if (opts.revert && (opts.apply || opts.force || opts.fromUploads)) {
     throw new Error('--revert רץ לבדו. הוא רק מחזיר את המסד למה שהיה.');
+  }
+  if (opts.target === 'cloud' && !opts.fromUploads && !opts.revert) {
+    throw new Error('--target cloud עובד עם --from-uploads או --revert בלבד: מצב הצילומים הגולמיים כותב קבצים מקומיים.');
   }
   if (!opts.fromUploads && (opts.category || opts.since || opts.ids)) {
     throw new Error('--category, --since ו---ids שייכים ל---from-uploads בלבד.');
@@ -1255,6 +1281,7 @@ async function mainFromUploads(opts) {
 
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
+  console.log(describeTarget(TARGET));
 
   if (opts.revert) {
     await revert(opts.revert);

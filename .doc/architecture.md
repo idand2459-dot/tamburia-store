@@ -40,7 +40,8 @@ Server settings, read in `server/config/env.js`. Names only; `.env.example` list
 | `DB_POOL_MAX` | `10` | no | `server/config/env.js:107` |
 | `DB_LOG_QUERIES` | on outside production | no | `server/config/env.js:110` |
 | `STORAGE_DRIVER` | `local` (`local` or `cloudinary`) | no | `server/config/env.js:115` |
-| `CLOUDINARY_URL` | unset; required when `STORAGE_DRIVER=cloudinary` | yes | `server/config/env.js:116`, `:161` |
+| `CLOUDINARY_URL` | unset; required when `STORAGE_DRIVER=cloudinary` and for `--target cloud` | yes | `server/config/env.js:116`, `:161` |
+| `CLOUD_DATABASE_URL` | unset; read only by scripts run with `--target cloud` (which then use it as `DATABASE_URL`), never by the server | yes | `scripts/lib/target.js` |
 | `SITE_MODE` | `open` (`open`, `catalog` or `closed`) | no | `server/config/env.js:120` |
 | `MAIL_ENABLED` | on unless set to `false` | no | `server/config/env.js:85` |
 | `MAIL_USER`, `MAIL_PASS` | required only when mail is on | yes | `server/config/env.js:123-124` |
