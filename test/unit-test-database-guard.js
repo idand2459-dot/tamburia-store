@@ -109,8 +109,18 @@ const defaults = guard({ TEST_DATABASE_URL: 'postgresql://dev:pw-dev@localhost:5
 check('with DB_* unset, the default development database (tamburia) refuses', defaults.error && defaults.error.includes('DB_*'), defaults);
 const otherDb = guard({ ...DEV, TEST_DATABASE_URL: LOCAL_URL });
 check('the same server but another database name is accepted', otherDb.result && otherDb.result.name === 'shop_test', otherDb);
-const otherPort = guard({ ...DEV, TEST_DATABASE_URL: 'postgresql://dev:pw-dev@localhost:5433/shop_dev' });
-check('the same name on another port is accepted by the guard (the identity check covers the instance)', otherPort.result && otherPort.result.port === 5433, otherPort);
+const otherPort = guard({ ...DEV, TEST_DATABASE_URL: 'postgresql://dev:pw-dev@localhost:5433/shop_dev_test' });
+check('another port is accepted by the guard (the identity check covers the instance)', otherPort.result && otherPort.result.port === 5433, otherPort);
+
+console.log('\n── the name of the test database');
+for (const name of ['postgres', 'template1', 'shop_dev', 'tamburia', 'shop_prod']) {
+  const outcome = guard({ ...DEV, TEST_DATABASE_URL: `postgresql://tester:pw-local@localhost:5432/${name}` });
+  check(`"${name}" (no "test" in the name) is refused, naming the variable only`, refusedQuietly(outcome, 'pw-local') && !outcome.error.replace('tamburia_test', '').includes(name), outcome);
+}
+for (const name of ['shop_test', 'tamburia_test', 'TEST_shop', 'tamburia-Test-2']) {
+  const outcome = guard({ ...DEV, TEST_DATABASE_URL: `postgresql://tester:pw-local@localhost:5432/${name}` });
+  check(`"${name}" is accepted`, outcome.result && outcome.result.name === name, outcome);
+}
 
 console.log('\n── no bypass marker');
 const marked = guard({ ...DEV, TEST_DATABASE_URL: DEV_URL, TEST_DATABASE_GUARDED: '1' });
@@ -213,8 +223,15 @@ const STUBS_RECORDING = `
   function Pool() { console.log('PG:pool'); }
   Pool.prototype.on = function on() {};
   Pool.prototype.query = async function query(text) {
-    console.log('PG:query:' + (String(text).includes('current_database') ? 'identity' : 'other'));
+    const sql = String(text).trim();
+    const kind = sql.includes('current_database') ? 'identity'
+      : sql.startsWith('CREATE') ? 'create'
+        : sql.startsWith('DROP') ? 'drop'
+          : sql.includes('to_regclass') ? 'catalog' : 'other';
+    console.log('PG:query:' + kind);
     if (process.env.STUB_FAIL_QUERY) throw new Error('stub: connection refused');
+    if (kind === 'create' && process.env.STUB_FAIL_CREATE) throw new Error('stub: create stopped');
+    if (kind === 'catalog') return { rows: [{ found: process.env.STUB_MIGRATED ? 'schema_migrations' : null }] };
     return { rows: [JSON.parse(process.env.STUB_IDENTITY || 'null')] };
   };
   Pool.prototype.connect = async function connect() { throw new Error('PG_TOUCHED'); };
@@ -503,6 +520,28 @@ async function main() {
       outcome.status !== 0 && !outcome.output.includes('PG_TOUCHED') && outcome.output.includes(expected), outcome);
     check(`smoke-fresh-db: ${label} → prints no secret`, !/pw-remote-123|pw-local|pw-dev/.test(outcome.output), outcome.output);
   }
+  // The recording stubs answer the identity query; STUB_FAIL_CREATE stops the suite when it
+  // tries to create its temporary database, so the child processes it would start afterwards
+  // (which have no stub) never run.
+  const FRESH_CASES = [
+    ['the PostgreSQL identity does not match (another port)', { STUB_IDENTITY: JSON.stringify({ ...GOOD_IDENTITY, port: 5433 }), STUB_MIGRATED: '1' }],
+    ['the PostgreSQL identity does not match (another database)', { STUB_IDENTITY: JSON.stringify({ ...GOOD_IDENTITY, db: 'shop_dev' }), STUB_MIGRATED: '1' }],
+    ['no identity is reported', { STUB_MIGRATED: '1' }],
+    ['the test database has no schema yet', { STUB_IDENTITY: GOOD }],
+  ];
+  for (const [label, extra] of FRESH_CASES) {
+    const outcome = await serverChild("require('./test/smoke-fresh-db.js');", { TEST_DATABASE_URL: LOCAL_URL, ...extra });
+    check(`smoke-fresh-db: ${label} → exits non-zero, creates nothing, closes its pool`,
+      outcome.status !== 0 && !outcome.output.includes('PG:query:create') && !outcome.output.includes('PG:query:drop')
+      && count(outcome.output, 'PG:end') === 1, outcome);
+  }
+  const reachesCreate = await serverChild("require('./test/smoke-fresh-db.js');",
+    { TEST_DATABASE_URL: LOCAL_URL, STUB_IDENTITY: GOOD, STUB_MIGRATED: '1', STUB_FAIL_CREATE: '1' });
+  check('smoke-fresh-db: only a matching identity on a migrated test database reaches the create step, and the identity is checked first',
+    at(reachesCreate.output, 'PG:query:identity') !== -1
+    && at(reachesCreate.output, 'PG:query:identity') < at(reachesCreate.output, 'PG:query:catalog')
+    && at(reachesCreate.output, 'PG:query:catalog') < at(reachesCreate.output, 'PG:query:create')
+    && !reachesCreate.output.includes('PG:query:drop'), reachesCreate.output);
   const passesGuard = await runChildAsync("require('./test/smoke-fresh-db.js');", { ...BASE_VARS, TEST_DATABASE_URL: LOCAL_URL });
   check('smoke-fresh-db: with a valid test database it gets past the guard and stops at the stubbed pg (no connection)',
     passesGuard.output.includes('PG_TOUCHED'), passesGuard.output);
