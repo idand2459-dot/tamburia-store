@@ -21,7 +21,7 @@ const { prepareTestDatabase, assertEffectiveDatabase, describeTestDatabase } = r
 // בדיקות ה-unit רצות ראשונות: הן אינן נוגעות ברשת או במסד, ולכן נותנות
 // את סימן הכישלון המהיר ביותר אם משהו בסיסי שבור — ובראשן השמירה
 // שאף סוד לא נכנס לגיט.
-const SUITES = ['unit-repo-hygiene', 'unit-config', 'unit-test-database-guard', 'unit-order-service', 'unit-product-service', 'unit-review-service', 'unit-money', 'unit-originals', 'smoke-fresh-db', 'smoke-static', 'smoke-orders', 'smoke-products', 'smoke-settings', 'smoke-reviews', 'smoke-pigments', 'smoke-auth'];
+const SUITES = ['unit-repo-hygiene', 'unit-config', 'unit-test-database-guard', 'unit-no-private-phone', 'unit-order-service', 'unit-product-service', 'unit-review-service', 'unit-money', 'unit-originals', 'smoke-fresh-db', 'smoke-static', 'smoke-orders', 'smoke-products', 'smoke-settings', 'smoke-reviews', 'smoke-pigments', 'smoke-auth'];
 
 /** מריץ חבילה אחת כתהליך נפרד ומחזיר את קוד היציאה. */
 function runSuite(name, baseUrl) {
