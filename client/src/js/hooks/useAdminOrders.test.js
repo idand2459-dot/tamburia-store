@@ -97,3 +97,108 @@ test('החזרה אחרי כישלון אינה מוחקת שורה אחרת ש�
   });
   expect(pickedOf(result)).toEqual([0, 1]);
 });
+
+/*
+ * handleStatusChange, pinned at the fetch level: what is sent over the network and what the
+ * screen shows afterwards. The hook is given an `api` built straight on the fake global fetch
+ * (no 401 handling: that belongs to Admin.js and gets its own test). When the admin API layer
+ * is introduced, only `apiOverFetch` changes; the assertions below keep describing the same
+ * externally visible behavior.
+ */
+describe('handleStatusChange (fetch level)', () => {
+  const STATUS_URL = '/api/orders/12/status';
+  let statusReply;
+
+  const reply = (status, body) => Promise.resolve({
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => {
+      if (body === undefined) throw new SyntaxError('not json');
+      return body;
+    },
+  });
+
+  /** The hook's `api` argument, built on the global fetch. */
+  const apiOverFetch = (url, options) => fetch(url, options);
+
+  const listCalls = () => global.fetch.mock.calls.filter(([url, options]) => url === '/api/orders' && !options);
+  const statusCalls = () => global.fetch.mock.calls.filter(([url]) => url === STATUS_URL);
+
+  beforeEach(() => {
+    statusReply = () => reply(200, {});
+    global.fetch = jest.fn((url, options) => {
+      if (url === '/api/orders' && !options) return reply(200, [ORDER]);
+      if (url === STATUS_URL) return statusReply();
+      throw new Error(`unexpected request: ${url}`);
+    });
+  });
+
+  afterEach(() => {
+    delete global.fetch;
+  });
+
+  /** Renders the hook with the fake fetch and waits for the first load. */
+  async function setupOverFetch() {
+    const { result } = renderHook(() => useAdminOrders(apiOverFetch));
+    await waitFor(() => expect(result.current.orders).toHaveLength(1));
+    return result;
+  }
+
+  test('sends the PUT with a JSON body, reloads the list on success and clears an earlier error', async () => {
+    const result = await setupOverFetch();
+
+    statusReply = () => reply(500, { error: 'שגיאת שרת' });
+    await act(async () => { await result.current.handleStatusChange(12, 'ready_for_pickup'); });
+    expect(result.current.ordersError).toBe('שגיאת שרת');
+
+    statusReply = () => reply(200, { id: 12, status: 'ready_for_pickup' });
+    await act(async () => { await result.current.handleStatusChange(12, 'ready_for_pickup'); });
+
+    expect(statusCalls()).toHaveLength(2);
+    expect(statusCalls()[1]).toEqual([STATUS_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'ready_for_pickup' }),
+    }]);
+    expect(result.current.ordersError).toBe('');
+    await waitFor(() => expect(listCalls()).toHaveLength(2));
+  });
+
+  test.each([
+    [401, 'נדרשת התחברות כמנהל'],
+    [404, 'הזמנה 12 לא נמצאה'],
+    [400, 'סטטוס לא חוקי'],
+  ])('a %i answer shows the server message as it is and does not reload', async (status, message) => {
+    const result = await setupOverFetch();
+    statusReply = () => reply(status, { error: message });
+
+    await act(async () => { await result.current.handleStatusChange(12, 'new'); });
+
+    expect(result.current.ordersError).toBe(message);
+    expect(listCalls()).toHaveLength(1);
+  });
+
+  test.each([
+    ['a body that is not JSON', undefined],
+    ['a JSON body without a message', {}],
+    ['a blank message', { error: '   ' }],
+  ])('%s: shows the fallback message and does not reload', async (_label, body) => {
+    const result = await setupOverFetch();
+    statusReply = () => reply(502, body);
+
+    await act(async () => { await result.current.handleStatusChange(12, 'new'); });
+
+    expect(result.current.ordersError).toBe('שינוי הסטטוס של הזמנה #12 נכשל.');
+    expect(listCalls()).toHaveLength(1);
+  });
+
+  test('a network failure shows the network message and does not reload', async () => {
+    const result = await setupOverFetch();
+    statusReply = () => Promise.reject(new TypeError('Failed to fetch'));
+
+    await act(async () => { await result.current.handleStatusChange(12, 'new'); });
+
+    expect(result.current.ordersError).toBe(NETWORK_ERROR);
+    expect(listCalls()).toHaveLength(1);
+  });
+});
