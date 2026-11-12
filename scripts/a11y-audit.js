@@ -24,6 +24,19 @@ process.env.MAIL_ENABLED = 'false';
 process.env.DB_LOG_QUERIES = 'false';
 process.env.PORT = process.env.A11Y_PORT || '3200';
 
+// The audit logs in as admin and creates temporary orders: the separate test database only.
+const {
+  prepareTestDatabase, assertEffectiveDatabase, describeTestDatabase,
+} = require('../test/lib/testDatabase');
+try {
+  const target = prepareTestDatabase();
+  console.log(describeTestDatabase(target));
+  assertEffectiveDatabase(target, require('../server/config/env').db);
+} catch (err) {
+  console.error('✗ הבדיקה לא רצה:', err.message);
+  process.exit(1);
+}
+
 const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer-core');
