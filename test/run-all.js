@@ -1,8 +1,9 @@
 /**
  * מריץ את כל חבילות הבדיקה מקצה לקצה עבור npm test.
  * מרים שרת משלו על פורט 3100, כדי שאפשר יהיה להריץ גם כשהשרת
- * האמיתי עובד על 3000. הבדיקות פונות למסד האמיתי, יוצרות רשומות
- * זמניות ומוחקות אותן בסוף.
+ * האמיתי עובד על 3000. The suites run only against the separate test database
+ * (TEST_DATABASE_URL, see test/lib/testDatabase.js); they create temporary records
+ * and delete them at the end.
  *
  * חלון הגבלת ההתחברות מקוצר כאן, כי כל חבילה מתחברת פעם אחת
  * ואחרת המכסה הייתה נגמרת באמצע הריצה. smoke-auth רץ אחרון
@@ -15,11 +16,12 @@ process.env.LOGIN_WINDOW_MS = '2000';
 
 const path = require('path');
 const { spawn } = require('child_process');
+const { prepareTestDatabase, assertEffectiveDatabase, describeTestDatabase } = require('./lib/testDatabase');
 
 // בדיקות ה-unit רצות ראשונות: הן אינן נוגעות ברשת או במסד, ולכן נותנות
 // את סימן הכישלון המהיר ביותר אם משהו בסיסי שבור — ובראשן השמירה
 // שאף סוד לא נכנס לגיט.
-const SUITES = ['unit-repo-hygiene', 'unit-config', 'unit-order-service', 'unit-product-service', 'unit-review-service', 'unit-money', 'unit-originals', 'smoke-fresh-db', 'smoke-static', 'smoke-orders', 'smoke-products', 'smoke-settings', 'smoke-reviews', 'smoke-pigments', 'smoke-auth'];
+const SUITES = ['unit-repo-hygiene', 'unit-config', 'unit-test-database-guard', 'unit-order-service', 'unit-product-service', 'unit-review-service', 'unit-money', 'unit-originals', 'smoke-fresh-db', 'smoke-static', 'smoke-orders', 'smoke-products', 'smoke-settings', 'smoke-reviews', 'smoke-pigments', 'smoke-auth'];
 
 /** מריץ חבילה אחת כתהליך נפרד ומחזיר את קוד היציאה. */
 function runSuite(name, baseUrl) {
@@ -34,6 +36,13 @@ function runSuite(name, baseUrl) {
 
 /** מעלה שרת בדיקות, מריץ את כל החבילות ומסכם את התוצאות. */
 async function main() {
+  // The guard runs before anything loads the database config.
+  const target = prepareTestDatabase();
+  console.log(describeTestDatabase(target));
+
+  // Check the configuration the server really loaded, not only the variable that was set.
+  assertEffectiveDatabase(target, require('../server/config/env').db);
+
   const db = require('../server/config/db');
   const { runMigrations } = require('../server/db/migrate');
   const { createApp } = require('../server/app');
