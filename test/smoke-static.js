@@ -2,8 +2,9 @@
  * בודק את הגשת אפליקציית React, את כותרות האבטחה,
  * ושאף קובץ פנימי אינו נחשף דרך הדפדפן.
  */
-const { requireTestServerOrExit } = require('./lib/testDatabase');
-const BASE = process.env.NEW_URL || 'http://127.0.0.1:3100';
+const { runHttpSuite } = require('./lib/testServer');
+// Set by runHttpSuite: the suite talks only to the server it started itself.
+let BASE;
 
 let passed = 0;
 let failed = 0;
@@ -212,8 +213,6 @@ async function testAdminIsLazy() {
 
 /** מריץ את כל הבדיקות לפי הסדר. */
 async function main() {
-  // First, before anything is sent: this suite must only talk to the test database's server.
-  await requireTestServerOrExit(BASE);
   await testClient();
   await testAdminIsLazy();
   await testNothingLeaks();
@@ -225,7 +224,7 @@ async function main() {
   process.exitCode = failed === 0 ? 0 : 1;
 }
 
-main().catch((err) => {
-  console.error('הבדיקה קרסה:', err);
-  process.exit(1);
+runHttpSuite(async (baseUrl) => {
+  BASE = baseUrl;
+  await main();
 });

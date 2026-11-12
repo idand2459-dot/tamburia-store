@@ -14,7 +14,7 @@
 | Path | Responsibility |
 |---|---|
 | `server/server.js` | Starts the server on the configured port. |
-| `server/app.js` | Builds the Express app (`createApp`), also used by the test runner (`test/run-all.js:39`). |
+| `server/app.js` | Builds the Express app (`createApp`), also used by the HTTP test suites (`test/lib/testServer.js`). |
 | `server/config/env.js` | Reads and validates every server setting; refuses unsafe production config. |
 | `server/routes/index.js` | Mounts the API domains under `/api` (`server/routes/index.js:19-25`). |
 | `server/middleware/errorHandler.js` | Turns every error into the JSON error response. |
@@ -51,11 +51,11 @@ Server settings, read in `server/config/env.js`. Names only; `.env.example` list
 
 Store details shown on the site (address, hours, the store landline) live in `client/src/js/utils/storeInfo.js`. WhatsApp is off while `WHATSAPP_NUMBER` there is `null`: every button or link that messages the shop is then absent, and setting that one value turns them all on. The shop's private mobile number is not shown anywhere public; `test/unit-no-private-phone.js` fails if it appears in the client source, the server (email templates) or the built bundle.
 
-Tool settings: `TEST_PORT` (default `3100`, `test/run-all.js:13`); `TEST_DATABASE_URL` (a separate local database for `npm test` and `npm run a11y`, required, `test/lib/testDatabase.js`); `A11Y_PORT` (default `3200`) and `CHROME_PATH` (`scripts/a11y-audit.js:25`, `:36`). The React dev server's port is set in `client/.env.development` (`README.md:431`).
+Tool settings: `TEST_DATABASE_URL` (a separate local database for `npm test` and `npm run a11y`, required, `test/lib/testDatabase.js`); `A11Y_PORT` (default `3200`) and `CHROME_PATH` (`scripts/a11y-audit.js:25`, `:36`). The React dev server's port is set in `client/.env.development` (`README.md:431`).
 
 ## Testing
 - Server tests live in `test/` and run with `npm test`; client tests sit next to the code as `client/src/js/**/*.test.js` and run with `npm run test:client`. The accessibility gate is `npm run a11y`, after `npm run build:client`.
-- `npm test` creates temporary records and deletes them (`test/run-all.js:2-5`). It runs only against `TEST_DATABASE_URL`, a separate local database made with `createdb`: the variable is required, and the runner refuses `NODE_ENV=production`, a malformed URL, a remote host and the development database itself. The URL is translated into `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD`, and the configuration that `server/config/env.js` loads is checked against it before any connection (`test/lib/testDatabase.js`). The suites and what each covers: [docs/ARCHITECTURE.md — Tests](../docs/ARCHITECTURE.md).
+- `npm test` creates temporary records and deletes them (`test/run-all.js:2-5`). It runs only against `TEST_DATABASE_URL`, a separate local database made with `createdb`: the variable is required, and the guard refuses `NODE_ENV=production`, a malformed URL, a remote host and the development database itself. The URL is translated into `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` and `DB_PASSWORD`, and the configuration that `server/config/env.js` loads is checked against it before any connection (`test/lib/testDatabase.js`). Each HTTP suite starts its own server (`test/lib/testServer.js`, a port chosen by the operating system, `NEW_URL` ignored), and after connecting checks the identity PostgreSQL reports (database, user, port, address) before running migrations; `test/run-all.js` only runs the suites and opens no connection. The suites and what each covers: [docs/ARCHITECTURE.md — Tests](../docs/ARCHITECTURE.md).
 - AC01 has no automated test yet (see Open Questions in [product-definition.md](product-definition.md)).
 
 ## External Dependencies

@@ -35,7 +35,7 @@ A learning aid for the codebase. The full architecture reference is [docs/ARCHIT
 ### Database
 - One PostgreSQL pool (`server/config/db.js:15-24`); `query` runs a single statement (`server/config/db.js:29-37`), `withTransaction` wraps BEGIN/COMMIT/ROLLBACK (`server/config/db.js:40-53`).
 - Each model imports `query` and owns its table's SQL (`server/models/order.model.js:5`, `server/models/product.model.js:5`, `server/models/review.model.js:5`).
-- The schema comes from 12 SQL migrations, `server/db/migrations/000_products_base.sql` to `011_orders_picked_items.sql`, applied once each and recorded in `schema_migrations` (`server/db/migrate.js:12-39`). They run on every server start (`server/server.js:16`) and before the tests (`test/run-all.js:42`).
+- The schema comes from 12 SQL migrations, `server/db/migrations/000_products_base.sql` to `011_orders_picked_items.sql`, applied once each and recorded in `schema_migrations` (`server/db/migrate.js:12-39`). They run on every server start (`server/server.js:16`) and when each HTTP suite starts its server (`test/lib/testServer.js`).
 
 ## Feature walkthroughs
 

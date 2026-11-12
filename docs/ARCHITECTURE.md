@@ -160,9 +160,10 @@ checks, and must report zero findings. The statement is at `/accessibility`.
 
 ## Tests
 
-`npm test` starts its own server on port 3100, runs the server suites, and cleans up
-what it created. `TEST_DATABASE_URL` (a separate local database) is required; the runner
-refuses `NODE_ENV=production`, a malformed URL, a host that is not local, and the
+`npm test` runs the server suites one after the other and opens no database connection itself;
+each HTTP suite starts its own server on a port the operating system picks, through
+`test/lib/testServer.js`, and cleans up what it created. `TEST_DATABASE_URL` (a separate local
+database) is required; the guard refuses `NODE_ENV=production`, a malformed URL, a host that is not local, and the
 development database itself (`test/lib/testDatabase.js`):
 
 - **unit-*** (no network or database): repo hygiene, config startup rules, order service,

@@ -15,8 +15,12 @@
  * server/config/env.js only reads DB_HOST, DB_PORT, DB_NAME, DB_USER and DB_PASSWORD, so
  * the URL is translated into those variables, before that file is loaded. A leftover
  * DATABASE_URL is removed so it can never win. Because a variable that is set is not the
- * same as a variable that is used, callers then confirm the configuration the server
- * really loaded with assertEffectiveDatabase().
+ * same as a variable that is used, the configuration the server really loaded is then
+ * confirmed with assertEffectiveDatabase(), and, once connected, the identity the
+ * PostgreSQL server itself reports with assertServerIdentity().
+ *
+ * There is no marker that says "the guard already ran": every process that touches a
+ * database runs the whole guard itself (test/lib/testServer.js for the HTTP suites).
  *
  * Messages name the variable only: a connection URL carries the password, so no value is
  * ever printed.
@@ -24,6 +28,9 @@
 const path = require('path');
 
 const LOCAL_HOSTS = ['localhost', '127.0.0.1', '::1'];
+
+/** The addresses a local PostgreSQL server reports for itself over TCP. */
+const LOOPBACK_ADDRESSES = ['127.0.0.1', '::1'];
 
 /** What server/config/env.js uses for the development database when DB_* is unset. */
 const DEV_DEFAULTS = { host: 'localhost', port: 5432, name: 'tamburia' };
@@ -100,15 +107,20 @@ function sameHost(a, b) {
   return a === b || (isLocal(a) && isLocal(b));
 }
 
+/** The target without its password. */
+function publicTarget(target) {
+  return { source: 'TEST_DATABASE_URL', host: target.host, port: target.port, name: target.name, user: target.user };
+}
+
 /**
- * Applies the guard to `env` and returns the database the run will use (no password).
+ * Validates `env` and returns the full target (with its password) without changing `env`.
  * Throws an Error whose message names the variable at fault.
  *
  * With the real process environment it first loads the local environment file the same
  * way server/config/env.js does (dotenv never overrides a variable that is already set),
  * so TEST_DATABASE_URL and DB_* can come from there.
  */
-function prepareTestDatabase(env = process.env) {
+function resolveTestDatabase(env = process.env) {
   if (env === process.env) {
     require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env'), quiet: true });
   }
@@ -129,47 +141,31 @@ function prepareTestDatabase(env = process.env) {
     throw new Error('TEST_DATABASE_URL מצביע על מארח שאינו מקומי. הבדיקות רצות רק מול מסד מקומי.');
   }
 
-  // Read before DB_* is overwritten below: this is the development database.
   const dev = developmentDatabase(env);
   if (sameHost(target.host, dev.host) && target.port === dev.port && target.name === dev.name) {
     throw new Error('TEST_DATABASE_URL מצביע על מסד הפיתוח (DB_*). הבדיקות צריכות מסד נפרד.');
   }
 
+  return target;
+}
+
+/** Writes the target into DB_* (what server/config/env.js reads) and drops DATABASE_URL. */
+function applyTestDatabase(env, target) {
   env.DB_HOST = target.host;
   env.DB_PORT = String(target.port);
   env.DB_NAME = target.name;
   env.DB_USER = target.user;
   env.DB_PASSWORD = target.password;
   delete env.DATABASE_URL;
-
-  // The suites that test/run-all.js starts inherit this: DB_* now holds the test database,
-  // so the development-database check above cannot be repeated there (see ensureTestDatabase).
-  env.TEST_DATABASE_GUARDED = '1';
-
-  return publicTarget(target);
-}
-
-/** The target without its password. */
-function publicTarget(target) {
-  return { source: 'TEST_DATABASE_URL', host: target.host, port: target.port, name: target.name, user: target.user };
 }
 
 /**
- * The guard for a test file that is started directly (`node test/smoke-x.js`) as well as
- * by test/run-all.js. Started directly it runs the whole guard. Started by run-all, which
- * has already run it and marked the environment, it re-reads and re-validates
- * TEST_DATABASE_URL (present, well formed, local); the callers then verify what they
- * really connect to (assertEffectiveDatabase, requireTestServer), so a hand-set marker
- * cannot lead them to another database.
+ * Applies the whole guard to `env`, translates the URL into DB_*, and returns the database
+ * the run will use (no password). Call it before server/config/env.js is loaded.
  */
-function ensureTestDatabase(env = process.env) {
-  if (env.TEST_DATABASE_GUARDED !== '1') return prepareTestDatabase(env);
-
-  if (!env.TEST_DATABASE_URL) throw new Error('חסר TEST_DATABASE_URL.');
-  const target = parseTestDatabaseUrl(env.TEST_DATABASE_URL);
-  if (!isLocal(target.host)) {
-    throw new Error('TEST_DATABASE_URL מצביע על מארח שאינו מקומי. הבדיקות רצות רק מול מסד מקומי.');
-  }
+function prepareTestDatabase(env = process.env) {
+  const target = resolveTestDatabase(env);
+  applyTestDatabase(env, target);
   return publicTarget(target);
 }
 
@@ -179,53 +175,10 @@ function ensureTestDatabase(env = process.env) {
  */
 function loadGuardedConfig() {
   try {
-    const target = ensureTestDatabase();
+    const target = prepareTestDatabase();
     const config = require('../../server/config/env');
     assertEffectiveDatabase(target, config.db);
     return config;
-  } catch (err) {
-    console.error('✗ הבדיקה לא רצה:', err.message);
-    process.exit(1);
-  }
-}
-
-/**
- * For a suite that talks to a running server over HTTP: runs the guard, then checks that
- * the server at `baseUrl` is local and reports (through GET /api/health, which returns
- * current_database()) that it is connected to the test database. A server that cannot be
- * identified is refused. Nothing but that one GET is sent before the check passes.
- */
-async function requireTestServer(baseUrl, env = process.env) {
-  const target = ensureTestDatabase(env);
-
-  let url;
-  try {
-    url = new URL(baseUrl);
-  } catch {
-    throw new Error('כתובת השרת (NEW_URL) אינה תקינה.');
-  }
-  if (!isLocal(url.hostname)) {
-    throw new Error('NEW_URL מצביע על מארח שאינו מקומי. הבדיקות רצות רק מול שרת מקומי.');
-  }
-
-  let health;
-  try {
-    const res = await fetch(new URL('/api/health', url), { signal: AbortSignal.timeout(5000) });
-    health = await res.json();
-  } catch {
-    throw new Error('לא ניתן לוודא לאיזה מסד השרת ב-NEW_URL מחובר (GET /api/health נכשל). הבדיקות לא רצות.');
-  }
-
-  if (!health || health.database !== target.name) {
-    throw new Error('השרת ב-NEW_URL אינו מחובר למסד הבדיקות (TEST_DATABASE_URL). הבדיקות לא רצות.');
-  }
-  return target;
-}
-
-/** requireTestServer for a suite's start: on a refusal it exits at once, before any cleanup runs. */
-async function requireTestServerOrExit(baseUrl) {
-  try {
-    return await requireTestServer(baseUrl);
   } catch (err) {
     console.error('✗ הבדיקה לא רצה:', err.message);
     process.exit(1);
@@ -249,12 +202,43 @@ function assertEffectiveDatabase(target, effective) {
   }
 }
 
+/** The query that asks the connected PostgreSQL server who it is. */
+const IDENTITY_SQL = `
+  SELECT current_database() AS db,
+         current_user       AS usr,
+         inet_server_port() AS port,
+         host(inet_server_addr()) AS addr
+`;
+
+/**
+ * Confirms that the PostgreSQL server we are connected to is the one TEST_DATABASE_URL
+ * names, from what the server itself reports (the row IDENTITY_SQL returns). Fails closed:
+ * the database name, the user and the port must match; the port must be reported (a
+ * connection over TCP always has one); and when the server reports its address it must be
+ * a loopback address. Throws without quoting any value.
+ */
+function assertServerIdentity(target, identity) {
+  const reportedPort = identity && identity.port !== null && identity.port !== undefined ? Number(identity.port) : null;
+  const address = identity && identity.addr ? normalizeHost(identity.addr) : null;
+
+  const matches = Boolean(identity)
+    && identity.db === target.name
+    && identity.usr === target.user
+    && reportedPort === target.port
+    && (address === null || LOOPBACK_ADDRESSES.includes(address));
+
+  if (!matches) {
+    throw new Error('זהות שרת ה-PostgreSQL (מסד, משתמש, פורט או כתובת) אינה תואמת ל-TEST_DATABASE_URL. הבדיקות לא רצות.');
+  }
+}
+
 /** One line for the run's log: the database name and where it is, never the password. */
 function describeTestDatabase(target) {
   return `מסד בדיקות נפרד (${target.name} @ ${target.host}:${target.port})`;
 }
 
 module.exports = {
-  prepareTestDatabase, ensureTestDatabase, assertEffectiveDatabase, describeTestDatabase,
-  loadGuardedConfig, requireTestServer, requireTestServerOrExit, LOCAL_HOSTS,
+  resolveTestDatabase, applyTestDatabase, prepareTestDatabase, assertEffectiveDatabase,
+  assertServerIdentity, describeTestDatabase, loadGuardedConfig, publicTarget,
+  IDENTITY_SQL, LOCAL_HOSTS,
 };
