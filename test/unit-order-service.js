@@ -360,13 +360,13 @@ async function testFindOrdersByPhone() {
 
   const orders = [sampleOrder()];
   const ok = loadService({ order: { findByPhone: spy(orders) } });
-  const result = await ok.service.findOrdersByPhone('050-673-5040');
+  const result = await ok.service.findOrdersByPhone('050-000-0000');
   check('טלפון מנוקד עובר נרמול לפני החיפוש',
-    ok.Order.findByPhone.calls[0][0] === '0506735040', ok.Order.findByPhone.calls[0]);
+    ok.Order.findByPhone.calls[0][0] === '0500000000', ok.Order.findByPhone.calls[0]);
   check('מוחזרות ההזמנות מהמודל', result.length === 1 && result[0].id === orders[0].id, result);
 
   const internal = loadService({ order: { findByPhone: spy([sampleOrder({ picked_items: [0] })]) } });
-  const [shown] = await internal.service.findOrdersByPhone('0506735040');
+  const [shown] = await internal.service.findOrdersByPhone('0500000000');
   check('picked_items אינו מגיע ללקוח', !('picked_items' in shown), Object.keys(shown));
 }
 
