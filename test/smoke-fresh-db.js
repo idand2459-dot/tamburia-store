@@ -11,7 +11,9 @@
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { Pool } = require('pg');
-const config = require('../server/config/env');
+// Runs the guard first, so this suite reads (and creates a database on) only the test database,
+// also when it is started directly; it exits when the loaded configuration is not the test one.
+const config = require('./lib/testDatabase').loadGuardedConfig();
 
 let passed = 0;
 let failed = 0;

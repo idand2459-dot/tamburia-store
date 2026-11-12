@@ -2,6 +2,7 @@
  * בודק את הגשת אפליקציית React, את כותרות האבטחה,
  * ושאף קובץ פנימי אינו נחשף דרך הדפדפן.
  */
+const { requireTestServerOrExit } = require('./lib/testDatabase');
 const BASE = process.env.NEW_URL || 'http://127.0.0.1:3100';
 
 let passed = 0;
@@ -211,6 +212,8 @@ async function testAdminIsLazy() {
 
 /** מריץ את כל הבדיקות לפי הסדר. */
 async function main() {
+  // First, before anything is sent: this suite must only talk to the test database's server.
+  await requireTestServerOrExit(BASE);
   await testClient();
   await testAdminIsLazy();
   await testNothingLeaks();

@@ -1,6 +1,7 @@
 /**
  * בדיקות לאימות האדמין: התחברות, הגנה על הנתיבים והגבלת קצב.
  */
+const { requireTestServerOrExit } = require('./lib/testDatabase');
 const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
 const PASSWORD = process.env.ADMIN_PASSWORD;
 
@@ -177,6 +178,9 @@ async function testRateLimit() {
 
 /** מריץ את כל הבדיקות לפי הסדר. */
 async function main() {
+  // First, before anything is sent: this suite must only talk to the test database's server.
+  await requireTestServerOrExit(BASE.slice(0, -4));
+
   if (!PASSWORD) throw new Error('חסר ADMIN_PASSWORD בסביבה');
 
   const cookie = await testLogin();

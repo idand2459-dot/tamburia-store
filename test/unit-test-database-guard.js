@@ -9,10 +9,11 @@
  *     connection can never be opened) replaced by stubs. A stubbed `pg` that is touched
  *     throws PG_TOUCHED, which a test would report.
  */
+const http = require('http');
 const path = require('path');
-const { spawnSync } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const {
-  prepareTestDatabase, assertEffectiveDatabase, describeTestDatabase,
+  prepareTestDatabase, assertEffectiveDatabase, describeTestDatabase, requireTestServer,
 } = require('./lib/testDatabase');
 
 const ROOT = path.join(__dirname, '..');
@@ -227,5 +228,145 @@ for (const [label, vars, expected] of [
     !/pw-remote-123|pw-local|pw-dev|secret-token-9/.test(run.output), run.output);
 }
 
-console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);
-process.exitCode = failed === 0 ? 0 : 1;
+/** Like runChild, but without blocking the event loop, so a fake server can answer meanwhile. */
+function runChildAsync(code, vars) {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, ['-e', STUBS + code], { cwd: ROOT, env: cleanEnv(vars) });
+    let output = '';
+    child.stdout.on('data', (chunk) => { output += chunk; });
+    child.stderr.on('data', (chunk) => { output += chunk; });
+    const timer = setTimeout(() => child.kill(), 30_000);
+    child.on('close', (status) => {
+      clearTimeout(timer);
+      resolve({ status, output });
+    });
+  });
+}
+
+/** A local HTTP server that answers GET /api/health like the app (database name only) and logs every request. */
+function fakeServer(database, { rawBody } = {}) {
+  const requests = [];
+  const server = http.createServer((req, res) => {
+    requests.push(`${req.method} ${req.url}`);
+    res.setHeader('Content-Type', 'application/json');
+    if (req.url === '/api/health') {
+      res.end(rawBody !== undefined ? rawBody : JSON.stringify({ status: 'ok', database, uptimeSeconds: 1 }));
+    } else {
+      res.statusCode = 404;
+      res.end('{}');
+    }
+  });
+  return new Promise((resolve) => {
+    server.listen(0, '127.0.0.1', () => {
+      resolve({
+        url: `http://127.0.0.1:${server.address().port}`,
+        requests,
+        close: () => new Promise((done) => server.close(done)),
+      });
+    });
+  });
+}
+
+/** Runs requireTestServer and returns { target } or { error }. */
+async function serverCheck(baseUrl, env) {
+  try {
+    return { target: await requireTestServer(baseUrl, { ...env }) };
+  } catch (err) {
+    return { error: err.message };
+  }
+}
+
+const SMOKE_SUITES = [
+  'smoke-auth', 'smoke-orders', 'smoke-pigments', 'smoke-products',
+  'smoke-reviews', 'smoke-settings', 'smoke-static',
+];
+
+async function main() {
+  console.log('\n── requireTestServer (HTTP suites)');
+  const testServer = await fakeServer('shop_test');
+  const devServer = await fakeServer('shop_dev');
+  const brokenServer = await fakeServer('shop_test', { rawBody: 'not json' });
+  const env = { ...DEV, TEST_DATABASE_URL: LOCAL_URL };
+
+  const good = await serverCheck(testServer.url, env);
+  check('a server connected to the test database is accepted', good.target && good.target.name === 'shop_test', good);
+  check('only GET /api/health was sent', testServer.requests.every((r) => r === 'GET /api/health'), testServer.requests);
+
+  const dev = await serverCheck(devServer.url, env);
+  check('a server connected to another database is refused', refusedQuietly(dev, 'shop_dev', 'shop_test'), dev);
+  check('and only GET /api/health was sent to it', devServer.requests.every((r) => r === 'GET /api/health'), devServer.requests);
+
+  const garbage = await serverCheck(brokenServer.url, env);
+  check('a server that cannot be identified (not JSON) is refused', garbage.error && garbage.error.includes('NEW_URL'), garbage);
+  const down = await serverCheck('http://127.0.0.1:1', env);
+  check('an unreachable server is refused (fails closed)', down.error && down.error.includes('NEW_URL'), down);
+
+  const before = testServer.requests.length;
+  const remote = await serverCheck('http://db.example.test:3100', env);
+  check('a non-local server is refused without any request', remote.error && remote.error.includes('NEW_URL') && !remote.error.includes('example.test'), remote);
+  const badBase = await serverCheck('not a url', env);
+  check('an invalid NEW_URL is refused', badBase.error && badBase.error.includes('NEW_URL'), badBase);
+
+  const noUrl = await serverCheck(testServer.url, { ...DEV });
+  check('without TEST_DATABASE_URL it is refused, even if the server looks right', refusedQuietly(noUrl), noUrl);
+  const sameAsDev = await serverCheck(devServer.url, { ...DEV, TEST_DATABASE_URL: 'postgresql://dev:pw-dev@localhost:5432/shop_dev' });
+  check('TEST_DATABASE_URL equal to the development database is refused, even if the server reports it', sameAsDev.error && sameAsDev.error.includes('DB_*'), sameAsDev);
+  const prodCheck = await serverCheck(testServer.url, { ...env, NODE_ENV: 'production' });
+  check('NODE_ENV=production is refused', prodCheck.error && prodCheck.error.includes('production'), prodCheck);
+  check('none of the refusals above sent a request to the test server',
+    testServer.requests.length === before, testServer.requests.slice(before));
+
+  const marked = { ...env, DB_NAME: 'shop_test', TEST_DATABASE_GUARDED: '1' };
+  const underRunAll = await serverCheck(testServer.url, marked);
+  check('started by run-all (environment already translated and marked) it is accepted', underRunAll.target && underRunAll.target.name === 'shop_test', underRunAll);
+  const markedWrong = await serverCheck(devServer.url, marked);
+  check('a hand-set marker does not help: the server must still report the test database', markedWrong.error && markedWrong.error.includes('NEW_URL'), markedWrong);
+  const markedRemote = await serverCheck(testServer.url, { TEST_DATABASE_GUARDED: '1', TEST_DATABASE_URL: REMOTE_URL });
+  check('the marker does not bypass the local-host check', refusedQuietly(markedRemote, 'pw-remote-123', 'example.test'), markedRemote);
+  const markedMissing = await serverCheck(testServer.url, { TEST_DATABASE_GUARDED: '1' });
+  check('the marker does not bypass the missing-URL check', markedMissing.error && markedMissing.error.includes('TEST_DATABASE_URL'), markedMissing);
+
+  console.log('\n── every HTTP suite, started directly (node test/<suite>.js)');
+  const cases = [
+    ['TEST_DATABASE_URL missing', testServer, {}, 'TEST_DATABASE_URL'],
+    ['NODE_ENV=production', testServer, { NODE_ENV: 'production', TEST_DATABASE_URL: LOCAL_URL }, 'production'],
+    ['the server at NEW_URL is on another database', devServer, { TEST_DATABASE_URL: LOCAL_URL }, 'TEST_DATABASE_URL'],
+  ];
+  for (const suite of SMOKE_SUITES) {
+    for (const [label, server, vars, expected] of cases) {
+      const start = server.requests.length;
+      const run = await runChildAsync(`require('./test/${suite}.js');`, { ...BASE_VARS, NEW_URL: server.url, ...vars });
+      const sent = server.requests.slice(start);
+      const onlyHealth = sent.every((r) => r === 'GET /api/health');
+      check(`${suite}: ${label} → exits non-zero and sends nothing but the identity check`,
+        run.status !== 0 && onlyHealth && run.output.includes(expected), { status: run.status, sent, output: run.output });
+    }
+  }
+
+  console.log('\n── smoke-fresh-db, started directly');
+  const freshCases = [
+    ['TEST_DATABASE_URL missing', {}, 'TEST_DATABASE_URL'],
+    ['TEST_DATABASE_URL is the development database', { TEST_DATABASE_URL: 'postgresql://dev:pw-dev@localhost:5432/shop_dev' }, 'DB_*'],
+    ['TEST_DATABASE_URL remote', { TEST_DATABASE_URL: REMOTE_URL }, 'TEST_DATABASE_URL'],
+    ['marked as guarded but DB_* still the development database (effective check)', { TEST_DATABASE_URL: LOCAL_URL, TEST_DATABASE_GUARDED: '1' }, 'config.db'],
+  ];
+  for (const [label, vars, expected] of freshCases) {
+    const run = await runChildAsync("require('./test/smoke-fresh-db.js');", { ...BASE_VARS, ...vars });
+    check(`${label} → exits non-zero before any database object is created`,
+      run.status !== 0 && !run.output.includes('PG_TOUCHED') && run.output.includes(expected), run);
+    check(`${label} → prints no secret`, !/pw-remote-123|pw-local|pw-dev/.test(run.output), run.output);
+  }
+  const passesGuard = await runChildAsync("require('./test/smoke-fresh-db.js');", { ...BASE_VARS, TEST_DATABASE_URL: LOCAL_URL });
+  check('with a valid test database it gets past the guard and stops at the stubbed pg (no connection)',
+    passesGuard.output.includes('PG_TOUCHED'), passesGuard.output);
+
+  await Promise.all([testServer.close(), devServer.close(), brokenServer.close()]);
+
+  console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);
+  process.exitCode = failed === 0 ? 0 : 1;
+}
+
+main().catch((err) => {
+  console.error('הבדיקה קרסה:', err);
+  process.exit(1);
+});

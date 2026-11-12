@@ -142,7 +142,94 @@ function prepareTestDatabase(env = process.env) {
   env.DB_PASSWORD = target.password;
   delete env.DATABASE_URL;
 
+  // The suites that test/run-all.js starts inherit this: DB_* now holds the test database,
+  // so the development-database check above cannot be repeated there (see ensureTestDatabase).
+  env.TEST_DATABASE_GUARDED = '1';
+
+  return publicTarget(target);
+}
+
+/** The target without its password. */
+function publicTarget(target) {
   return { source: 'TEST_DATABASE_URL', host: target.host, port: target.port, name: target.name, user: target.user };
+}
+
+/**
+ * The guard for a test file that is started directly (`node test/smoke-x.js`) as well as
+ * by test/run-all.js. Started directly it runs the whole guard. Started by run-all, which
+ * has already run it and marked the environment, it re-reads and re-validates
+ * TEST_DATABASE_URL (present, well formed, local); the callers then verify what they
+ * really connect to (assertEffectiveDatabase, requireTestServer), so a hand-set marker
+ * cannot lead them to another database.
+ */
+function ensureTestDatabase(env = process.env) {
+  if (env.TEST_DATABASE_GUARDED !== '1') return prepareTestDatabase(env);
+
+  if (!env.TEST_DATABASE_URL) throw new Error('חסר TEST_DATABASE_URL.');
+  const target = parseTestDatabaseUrl(env.TEST_DATABASE_URL);
+  if (!isLocal(target.host)) {
+    throw new Error('TEST_DATABASE_URL מצביע על מארח שאינו מקומי. הבדיקות רצות רק מול מסד מקומי.');
+  }
+  return publicTarget(target);
+}
+
+/**
+ * For a suite that reads server/config/env.js itself: runs the guard, loads the
+ * configuration and checks it is the test database. Exits the process when it is not.
+ */
+function loadGuardedConfig() {
+  try {
+    const target = ensureTestDatabase();
+    const config = require('../../server/config/env');
+    assertEffectiveDatabase(target, config.db);
+    return config;
+  } catch (err) {
+    console.error('✗ הבדיקה לא רצה:', err.message);
+    process.exit(1);
+  }
+}
+
+/**
+ * For a suite that talks to a running server over HTTP: runs the guard, then checks that
+ * the server at `baseUrl` is local and reports (through GET /api/health, which returns
+ * current_database()) that it is connected to the test database. A server that cannot be
+ * identified is refused. Nothing but that one GET is sent before the check passes.
+ */
+async function requireTestServer(baseUrl, env = process.env) {
+  const target = ensureTestDatabase(env);
+
+  let url;
+  try {
+    url = new URL(baseUrl);
+  } catch {
+    throw new Error('כתובת השרת (NEW_URL) אינה תקינה.');
+  }
+  if (!isLocal(url.hostname)) {
+    throw new Error('NEW_URL מצביע על מארח שאינו מקומי. הבדיקות רצות רק מול שרת מקומי.');
+  }
+
+  let health;
+  try {
+    const res = await fetch(new URL('/api/health', url), { signal: AbortSignal.timeout(5000) });
+    health = await res.json();
+  } catch {
+    throw new Error('לא ניתן לוודא לאיזה מסד השרת ב-NEW_URL מחובר (GET /api/health נכשל). הבדיקות לא רצות.');
+  }
+
+  if (!health || health.database !== target.name) {
+    throw new Error('השרת ב-NEW_URL אינו מחובר למסד הבדיקות (TEST_DATABASE_URL). הבדיקות לא רצות.');
+  }
+  return target;
+}
+
+/** requireTestServer for a suite's start: on a refusal it exits at once, before any cleanup runs. */
+async function requireTestServerOrExit(baseUrl) {
+  try {
+    return await requireTestServer(baseUrl);
+  } catch (err) {
+    console.error('✗ הבדיקה לא רצה:', err.message);
+    process.exit(1);
+  }
 }
 
 /**
@@ -168,5 +255,6 @@ function describeTestDatabase(target) {
 }
 
 module.exports = {
-  prepareTestDatabase, assertEffectiveDatabase, describeTestDatabase, LOCAL_HOSTS,
+  prepareTestDatabase, ensureTestDatabase, assertEffectiveDatabase, describeTestDatabase,
+  loadGuardedConfig, requireTestServer, requireTestServerOrExit, LOCAL_HOSTS,
 };
