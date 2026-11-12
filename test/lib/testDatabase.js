@@ -146,6 +146,13 @@ function resolveTestDatabase(env = process.env) {
     throw new Error('TEST_DATABASE_URL מצביע על מסד הפיתוח (DB_*). הבדיקות צריכות מסד נפרד.');
   }
 
+  // The suites write to this database, so it has to be one that was made for them: a
+  // name such as "postgres" or "template1", or a copy of the development database, is
+  // refused. A clear, reviewable convention, not proof; the identity check does the rest.
+  if (!/test/i.test(target.name)) {
+    throw new Error('שם המסד ב-TEST_DATABASE_URL חייב להכיל את המילה test (למשל tamburia_test).');
+  }
+
   return target;
 }
 

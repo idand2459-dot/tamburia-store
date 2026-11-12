@@ -326,6 +326,8 @@ createdb tamburia_test
 # then set TEST_DATABASE_URL=postgresql://<user>:<password>@localhost:5432/tamburia_test
 ```
 
+The database name must contain the word `test`, so a name such as `postgres` or `tamburia` is refused.
+
 The same rules hold when a suite is started by hand (`node test/smoke-orders.js`). An HTTP suite
 never talks to a server somebody else started and ignores `NEW_URL`: it runs the whole guard,
 checks the configuration it loaded, asks PostgreSQL itself for its identity (database, user,
