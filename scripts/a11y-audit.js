@@ -22,20 +22,10 @@
  */
 process.env.MAIL_ENABLED = 'false';
 process.env.DB_LOG_QUERIES = 'false';
-process.env.PORT = process.env.A11Y_PORT || '3200';
 
-// The audit logs in as admin and creates temporary orders: the separate test database only.
-const {
-  prepareTestDatabase, assertEffectiveDatabase, describeTestDatabase,
-} = require('../test/lib/testDatabase');
-try {
-  const target = prepareTestDatabase();
-  console.log(describeTestDatabase(target));
-  assertEffectiveDatabase(target, require('../server/config/env').db);
-} catch (err) {
-  console.error('✗ הבדיקה לא רצה:', err.message);
-  process.exit(1);
-}
+// The audit logs in as admin and creates temporary orders: it starts its own server on the
+// separate test database only (test/lib/testServer.js runs the whole guard first).
+const { startTestServer } = require('../test/lib/testServer');
 
 const fs = require('fs');
 const path = require('path');
@@ -371,17 +361,20 @@ async function main() {
   const executablePath = CHROME_CANDIDATES.find((p) => fs.existsSync(p));
   if (!executablePath) throw new Error('לא נמצא Chrome. הגדר CHROME_PATH.');
 
-  const db = require('../server/config/db');
-  const { createApp } = require('../server/app');
-  await db.assertConnection();
-  const server = createApp().listen(Number(process.env.PORT));
-  await new Promise((resolve) => server.once('listening', resolve));
-  const baseUrl = `http://127.0.0.1:${process.env.PORT}`;
+  let testServer;
+  try {
+    testServer = await startTestServer(process.env, { port: Number(process.env.A11Y_PORT || 3200) });
+  } catch (err) {
+    console.error('✗ הבדיקה לא רצה:', err.message);
+    process.exit(1);
+  }
+  const { baseUrl } = testServer;
 
-  const browser = await puppeteer.launch({ executablePath, headless: true, args: ['--lang=he-IL'] });
   const results = [];
   let admin = null;
+  let browser = null;
   try {
+    browser = await puppeteer.launch({ executablePath, headless: true, args: ['--lang=he-IL'] });
     const pages = await buildPages(baseUrl);
     admin = await prepareAdminOrders(baseUrl, await (await fetch(`${baseUrl}/api/products`)).json());
     pages.push(admin.spec);
@@ -395,9 +388,8 @@ async function main() {
     }
   } finally {
     await admin?.cleanup();
-    await browser.close();
-    await new Promise((resolve) => server.close(resolve));
-    await db.close();
+    await browser?.close();
+    await testServer.close();
   }
 
   const grouped = groupViolations(results);

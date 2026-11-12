@@ -1,9 +1,10 @@
 /**
  * בדיקות לאימות האדמין: התחברות, הגנה על הנתיבים והגבלת קצב.
  */
-const { requireTestServerOrExit } = require('./lib/testDatabase');
-const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
-const PASSWORD = process.env.ADMIN_PASSWORD;
+const { runHttpSuite } = require('./lib/testServer');
+// Set by runHttpSuite: the suite talks only to the server it started itself.
+let BASE;
+let PASSWORD; // read after the server started, when the environment file has been loaded
 
 let passed = 0;
 let failed = 0;
@@ -178,9 +179,7 @@ async function testRateLimit() {
 
 /** מריץ את כל הבדיקות לפי הסדר. */
 async function main() {
-  // First, before anything is sent: this suite must only talk to the test database's server.
-  await requireTestServerOrExit(BASE.slice(0, -4));
-
+  PASSWORD = process.env.ADMIN_PASSWORD;
   if (!PASSWORD) throw new Error('חסר ADMIN_PASSWORD בסביבה');
 
   const cookie = await testLogin();
@@ -194,7 +193,7 @@ async function main() {
   process.exitCode = failed === 0 ? 0 : 1;
 }
 
-main().catch((err) => {
-  console.error('הבדיקה קרסה:', err);
-  process.exit(1);
+runHttpSuite(async (baseUrl) => {
+  BASE = baseUrl + '/api';
+  await main();
 });

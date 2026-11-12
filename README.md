@@ -311,7 +311,7 @@ npm run test:client    # client: 12 suites, 90 tests
 npm run a11y           # accessibility: serves client/build, so run npm run build:client first
 ```
 
-The server suites start their own server on port 3100, so they can run while the real
+Each HTTP suite starts its own server on a port the operating system picks, so the suites can run while the real
 server is on 3000. They create temporary records and delete them afterwards.
 
 They run only against a separate local database, so they never touch your development
@@ -326,10 +326,11 @@ createdb tamburia_test
 # then set TEST_DATABASE_URL=postgresql://<user>:<password>@localhost:5432/tamburia_test
 ```
 
-The same rules hold when a suite is started by hand (`node test/smoke-orders.js`): the
-HTTP suites first ask the server at `NEW_URL` (`GET /api/health`) which database it is
-connected to, and stop unless it is the test database; `smoke-fresh-db` checks the
-configuration it loaded. Run the suites through `npm test`, which starts the right server.
+The same rules hold when a suite is started by hand (`node test/smoke-orders.js`). An HTTP suite
+never talks to a server somebody else started and ignores `NEW_URL`: it runs the whole guard,
+checks the configuration it loaded, asks PostgreSQL itself for its identity (database, user,
+port and address) before the first migration, and only then starts its own server
+(`test/lib/testServer.js`). `npm test` only runs the suites one after the other.
 
 | Suite | Checks | Covers |
 |---|---|---|
