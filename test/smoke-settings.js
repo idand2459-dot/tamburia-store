@@ -10,6 +10,7 @@
  * את הסיכומים של המסך האמיתי.
  */
 const { login } = require('./helpers');
+const { requireTestServerOrExit } = require('./lib/testDatabase');
 const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
 const PATH = '/settings/stats-counting-from';
 
@@ -135,6 +136,8 @@ async function cleanup() {
 
 /** מריץ את כל הבדיקות לפי הסדר. */
 async function main() {
+  // First, before anything is sent: this suite must only talk to the test database's server.
+  await requireTestServerOrExit(BASE.slice(0, -4));
   authCookie = await login(BASE.slice(0, -4));
   await testRead();
   await testWrite();

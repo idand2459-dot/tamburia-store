@@ -326,6 +326,11 @@ createdb tamburia_test
 # then set TEST_DATABASE_URL=postgresql://<user>:<password>@localhost:5432/tamburia_test
 ```
 
+The same rules hold when a suite is started by hand (`node test/smoke-orders.js`): the
+HTTP suites first ask the server at `NEW_URL` (`GET /api/health`) which database it is
+connected to, and stop unless it is the test database; `smoke-fresh-db` checks the
+configuration it loaded. Run the suites through `npm test`, which starts the right server.
+
 | Suite | Checks | Covers |
 |---|---|---|
 | `unit-repo-hygiene` | 6 | `.env` not tracked, `.env.example` placeholders only, no secret value in any tracked file |
