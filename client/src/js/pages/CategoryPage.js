@@ -12,11 +12,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { PackageSearch, X, Phone } from 'lucide-react';
+import { PackageSearch, X, Phone, Search, ArrowUpDown } from 'lucide-react';
 import categories from '../features/catalog/categories';
 import CategoryBanner from '../features/catalog/CategoryBanner';
-import CategoryFilters from '../features/catalog/CategoryFilters';
-import CategoryToolbar from '../features/catalog/CategoryToolbar';
 import NotFoundPage from './NotFoundPage';
 import ProductList from '../components/ProductList';
 import { PHONES } from '../utils/storeInfo';
@@ -205,6 +203,105 @@ function CategoryPage() {
         </div>
       </div>
     </>
+  );
+}
+
+/**
+ * סינון תת-קטגוריה בעמוד הקטגוריה.
+ *
+ * רכיב אחד ושתי צורות: סרגל צד דביק במסך רחב, ושורת צ'יפים נגללת
+ * בטלפון. ה-DOM זהה בשתיהן וה-CSS הוא שמחליף ביניהן (ראה
+ * features/category/_category-filters.css) — רינדור כפול והסתרה של אחד מהם היה
+ * מכניס כל תת-קטגוריה לעץ הנגישות פעמיים.
+ *
+ * המספרים מחושבים מהמוצרים שנשלפו, ולא בשליפה נפרדת: השליפה הזו כבר
+ * הביאה את כל מוצרי הקטגוריה, וספירה שלהם כאן זולה משנים-עשר מסלולי
+ * שרת נוספים.
+ *
+ * תת-קטגוריה בלי מוצרים אינה מוצגת: כפתור שמוביל לרשת ריקה הוא מבוי
+ * סתום, ושורה של אפסים נראית כמו אתר שבור. "הכל" מוצג תמיד.
+ */
+function CategoryFilters({ subcategories, counts, total, selected, onSelect }) {
+  /* "הכל" הוא פריט ברשימה ולא מקרה מיוחד: אותו כפתור, עם null כמזהה. */
+  const items = [
+    { id: null, name: 'הכל', count: total },
+    ...subcategories
+      .map((sub) => ({ id: sub.id, name: sub.name, count: counts[sub.id] || 0 }))
+      .filter((item) => item.count > 0),
+  ];
+
+  return (
+    <nav className="category-filters" aria-label="תתי-קטגוריות">
+      <h2 className="category-filters-title">תתי-קטגוריות</h2>
+      <ul className="category-filters-list">
+        {items.map((item) => {
+          const active = selected === item.id;
+          return (
+            <li key={item.id || 'all'}>
+              <button
+                type="button"
+                className={[
+                  'category-filter',
+                  active ? 'is-active' : '',
+                  item.count === 0 ? 'category-filter--empty' : '',
+                ].filter(Boolean).join(' ')}
+                aria-current={active ? 'true' : undefined}
+                onClick={() => onSelect(active ? null : item.id)}
+              >
+                <span>{item.name}</span>
+                <span className="category-filter-count">{item.count}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
+
+/**
+ * שורת הכלים שמעל רשת המוצרים: כמה נמצאו, חיפוש ומיון.
+ *
+ * החיפוש והמיון נשארים מצב מקומי של CategoryPage ולא נכנסים לכתובת —
+ * הם משתנים בכל הקלדה והיו מציפים את היסטוריית הדפדפן. הרכיב הזה רק
+ * מציג אותם.
+ *
+ * חמשת אפשרויות המיון היו חמישה כפתורים ועכשיו הן select אחד: שורה
+ * שלמה של העמוד ירדה למאה וחמישים פיקסלים.
+ */
+function CategoryToolbar({ count, loading, searchQuery, onSearch, sortBy, onSort, sortOptions }) {
+  return (
+    <div className="category-toolbar">
+      {/* בזמן הטעינה הפריט נשאר ריק ושומר על הגובה, כדי שהשורה לא תזוז
+          כשהמספר מגיע */}
+      {/* role="status": המספר משתנה בזמן חיפוש וסינון, וזו הדרך של קורא
+          המסך לדעת על כך בלי שהמיקוד יעזוב את שדה החיפוש (WCAG 4.1.3) */}
+      <p className="category-toolbar-count" role="status">
+        {!loading && (count === 1 ? 'מוצר אחד' : `${count} מוצרים`)}
+      </p>
+
+      <div className="category-toolbar-controls">
+        <div className="category-search">
+          <Search className="category-search-icon" size={16} aria-hidden="true" />
+          <input
+            type="search"
+            aria-label="חיפוש בקטגוריה"
+            placeholder="חפש מוצר..."
+            value={searchQuery}
+            onChange={(e) => onSearch(e.target.value)}
+          />
+        </div>
+
+        <div className="category-sort">
+          <ArrowUpDown className="category-sort-icon" size={16} aria-hidden="true" />
+          <select aria-label="מיון" value={sortBy} onChange={(e) => onSort(e.target.value)}>
+            {sortOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
   );
 }
 

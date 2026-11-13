@@ -20,5 +20,10 @@ Current queue:
 - [ ] Move the admin statistics and CSV rows out of useAdminOrders into pure utils | audit F06
 - [ ] Rename exportOrdersToExcel to match the CSV it writes | audit F07
 - [ ] The order model checks column names against its own list | audit F08
+- [ ] Unify the two wishlist persistence paths: `utils/wishlistUtils.js` (used by Wishlist.js and ProductDetails.js) writes the same localStorage key as the Redux `toggleWishlist` thunk but never updates the store ids, so the heart on the product page and the navbar count can disagree | P7 finding, behavior change
+- [ ] `scripts/lib/palette.js:41` still evaluates client source with `new Function` to read `colorPalette.js`; move the palette to a JSON file as was done for `categories.json` | P7 finding
+- [ ] Remove the obsolete `.skeleton-category-card` selector in `client/src/css/components/_loading.css` (its component was deleted in P7) | P7 finding
+- [ ] P5 security and validation findings: raw PostgreSQL text in 4xx responses (mapPgError message used only for 5xx), inconsistent validation messages and order, English parser errors (malformed JSON, 413), stack trace in non-production 5xx, rate limiting on POST /orders and POST /reviews (SEC-01), production checks for headers, `Secure` cookie, HSTS and CORS (SEC-02), undefined duplicate-SKU behavior | P5 findings, behavior change
+- [ ] Replace the manual cookie parsing in `auth.service.js` (`readCookie`) with `cookie-parser`, keeping the existing HMAC-signed token authentication and cookie flags unchanged; do NOT introduce express-session | owner decision, behavior-preserving
 
 ## DONE

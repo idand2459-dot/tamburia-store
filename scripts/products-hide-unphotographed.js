@@ -23,7 +23,7 @@ const path = require('path');
 const db = require('../server/config/db');
 const productRepository = require('../server/api/product/product.repository');
 const { fileExists } = require('./lib/uploads');
-const { load: loadCategories } = require('./lib/categories');
+const { load: loadCategories } = require('../server/utils/categories');
 
 const ROOT = path.join(__dirname, '..');
 const PROCESSED_DIR = path.join(ROOT, 'photos', 'processed');

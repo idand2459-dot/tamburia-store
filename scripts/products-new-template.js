@@ -22,7 +22,7 @@
 const fs = require('fs');
 const path = require('path');
 const ExcelJS = require('exceljs');
-const { load: loadCategories } = require('./lib/categories');
+const { load: loadCategories } = require('../server/utils/categories');
 
 const ROOT = path.join(__dirname, '..');
 const NEW_DIR = path.join(ROOT, 'photos', 'processed', 'new');

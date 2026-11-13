@@ -12,7 +12,7 @@ const { broadcast } = require('../../services/realtime.service');
 const {
   assertDeliveryCityAllowed, assertDeliveryAddressPresent,
   assertStatusFitsDeliveryMethod,
-} = require('./order.validator');
+} = require('./order.rules');
 const { badRequest, notFound } = require('../../utils/AppError');
 const { toAgorot, fromAgorot } = require('../../utils/money');
 

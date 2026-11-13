@@ -30,7 +30,7 @@ server/
                    <d>.routes (public vs admin endpoints), <d>.validator (parse and bound input, 400),
                    <d>.controller (HTTP to a service call and back; no SQL, no repository import, no
                    try/catch), <d>.service (business rules) and <d>.repository (all SQL, parameterised,
-                   explicit column lists). order also holds pricing.service; auth and upload have no repository
+                   explicit column lists). order also holds pricing.service and order.rules (the delivery-area and status-vs-method rules that the validator and the service share); auth and upload have no repository
   services/        shared infrastructure: email, realtime, image processing
   middleware/      security headers, admin guard, rate limiting, uploads, the central error handler
   utils/           AppError, money in agorot, pagination envelope, category tree, originals

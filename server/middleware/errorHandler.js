@@ -3,7 +3,7 @@
  * PostgreSQL ו-multer לקודי HTTP והודעות שהלקוח יכול להבין.
  */
 const config = require('../config/env');
-const { MAX_FILE_SIZE } = require('./upload');
+const { MAX_FILE_SIZE } = require('../services/image.service');
 
 /** מחזיר 404 בפורמט JSON לנתיב API שאינו קיים. */
 function notFoundHandler(req, res) {

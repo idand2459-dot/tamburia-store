@@ -15,6 +15,11 @@ const path = require('path');
 const crypto = require('crypto');
 const sharp = require('sharp');
 const { AppError, badRequest } = require('../utils/AppError');
+const { saveOriginal, originalExt } = require('../utils/originals');
+
+/* The size limit of one uploaded image; the upload middleware enforces it and the error handler
+   names it in the 413 message. */
+const MAX_FILE_SIZE = 15 * 1024 * 1024;
 
 const MAX_EDGE = 1200;
 const WEBP_QUALITY = 82;
@@ -169,6 +174,26 @@ async function processAndSave(buffer, dir) {
   return filename;
 }
 
+/**
+ * Processes every file multer kept in memory and saves it in `dir`, setting `file.filename` the
+ * way diskStorage used to, so the controller does not need to know anything changed.
+ * If one file fails, the whole request fails before anything else is saved.
+ */
+async function saveUploadedImages(files, dir) {
+  for (const file of files) {
+    file.filename = await processAndSave(file.buffer, dir);
+    // המקור נשמר רק אחרי שהעיבוד הצליח: קובץ שבור לא מגיע לכאן. כישלון
+    // בשמירתו אינו מכשיל את ההעלאה — התמונה שהאתר מגיש כבר נשמרה, והמקור
+    // הוא רק חומר גלם לעיבוד מחדש.
+    try {
+      saveOriginal(file.buffer, file.filename, originalExt(file.originalname, file.mimetype));
+    } catch (err) {
+      console.error(`המקור של ${file.filename} לא נשמר:`, err.message);
+    }
+    file.buffer = null;
+  }
+}
+
 module.exports = {
-  processAndSave, processImage, contentName, heicError, WEBP_QUALITY,
+  processAndSave, saveUploadedImages, heicError, MAX_FILE_SIZE, WEBP_QUALITY,
 };
