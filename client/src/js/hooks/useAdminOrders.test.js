@@ -371,3 +371,111 @@ describe('loadOrders (fetch level)', () => {
     expect(result.current.ordersError).toBe('');
   });
 });
+
+/*
+ * togglePicked, pinned at the fetch level: the exact request and what it returns. The optimistic
+ * update and the rollback are pinned by the first tests in this file; here the rollback is
+ * checked against the real request/answer shapes. The message is returned, not stored: the
+ * pick list shows it next to the line that was clicked.
+ */
+describe('togglePicked (fetch level)', () => {
+  const PICK_URL = '/api/orders/12/items/1/picked';
+  const FALLBACK = 'הסימון לא נשמר. נסה שוב.';
+  let pickReply;
+
+  const pickCalls = () => global.fetch.mock.calls.filter(([url]) => url === PICK_URL);
+
+  beforeEach(() => {
+    pickReply = () => reply(200, {});
+    global.fetch = jest.fn((url, options) => {
+      if (url === '/api/orders' && !options) return reply(200, [ORDER]);
+      if (url.startsWith('/api/orders/12/items/')) return pickReply();
+      throw new Error(`unexpected request: ${url}`);
+    });
+  });
+
+  afterEach(() => {
+    delete global.fetch;
+  });
+
+  /** Clicks a line and returns what togglePicked returned. */
+  const toggle = async (result, line, picked) => {
+    let message;
+    await act(async () => { message = await result.current.togglePicked(12, line, picked); });
+    return message;
+  };
+
+  test('sends the PUT with a JSON body, returns null, keeps the mark and does not reload the list', async () => {
+    const result = await setupOverFetch();
+
+    const message = await toggle(result, 1, true);
+
+    expect(pickCalls()).toHaveLength(1);
+    expect(pickCalls()[0][1]).toEqual({
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ picked: true }),
+    });
+    expect(message).toBeNull();
+    expect(pickedOf(result)).toEqual([0, 1]);
+    expect(listCalls()).toHaveLength(1);
+  });
+
+  test('un-marking sends picked: false', async () => {
+    const result = await setupOverFetch();
+
+    await toggle(result, 1, false);
+
+    expect(pickCalls()[0][1].body).toBe(JSON.stringify({ picked: false }));
+  });
+
+  test.each([
+    ['a 401 answer', 401, { error: 'נדרשת התחברות כמנהל' }, 'נדרשת התחברות כמנהל'],
+    ['a 404 answer', 404, { error: 'הזמנה 12 לא נמצאה' }, 'הזמנה 12 לא נמצאה'],
+    ['a 400 answer', 400, { error: 'שורה לא קיימת' }, 'שורה לא קיימת'],
+  ])('%s returns the server message and rolls the line back', async (_label, status, body, expected) => {
+    pickReply = () => reply(status, body);
+    const result = await setupOverFetch();
+
+    const message = await toggle(result, 1, true);
+
+    expect(message).toBe(expected);
+    expect(pickedOf(result)).toEqual([0]);
+    expect(listCalls()).toHaveLength(1);
+  });
+
+  test.each([
+    ['a body that is not JSON', undefined],
+    ['a JSON body without a message', {}],
+    ['a blank message', { error: '   ' }],
+  ])('%s: returns the fallback message and rolls the line back', async (_label, body) => {
+    pickReply = () => reply(500, body);
+    const result = await setupOverFetch();
+
+    const message = await toggle(result, 1, true);
+
+    expect(message).toBe(FALLBACK);
+    expect(pickedOf(result)).toEqual([0]);
+  });
+
+  test('a network failure returns the network message and rolls the line back', async () => {
+    pickReply = () => Promise.reject(new TypeError('Failed to fetch'));
+    const result = await setupOverFetch();
+
+    const message = await toggle(result, 1, true);
+
+    expect(message).toBe(NETWORK_ERROR);
+    expect(pickedOf(result)).toEqual([0]);
+  });
+
+  test('a failed un-mark puts the mark back', async () => {
+    pickReply = () => reply(500, { error: 'שגיאת שרת' });
+    const result = await setupOverFetch();
+
+    const message = await toggle(result, 0, false);
+
+    expect(global.fetch).toHaveBeenLastCalledWith('/api/orders/12/items/0/picked', expect.anything());
+    expect(message).toBe('שגיאת שרת');
+    expect(pickedOf(result)).toEqual([0]);
+  });
+});
