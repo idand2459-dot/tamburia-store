@@ -18,7 +18,11 @@
 import { Ban, Check, AlertTriangle, AlertCircle, CheckCircle } from 'lucide-react';
 import { Spinner } from '../../components/LoadingStates';
 import { useSelector } from 'react-redux';
-import { selectCartCount, selectTotal, selectDeliveryMethod } from '../../store/cart/cartSelectors';
+import {
+  selectCartItems, selectCartCount, selectTotal, selectDeliveryMethod, selectPendingPriceChanges,
+} from '../../store/cart/cartSelectors';
+import { selectUnavailableLines, isLineUnavailable } from '../../store/availability/availabilitySelectors';
+import { PriceChangeNotice } from './CartStepView';
 import { formatPrice } from '../../utils/pricing';
 import { checkAllowedCity } from '../../utils/delivery';
 
@@ -113,6 +117,8 @@ function CheckoutFormView({ setCartStep, checkout, showErrors = false }) {
         <span>{cartCount} פריטים</span>
         <span className="checkout-recap-total">סה"כ {formatPrice(total)}</span>
       </div>
+
+      <PriceChangeNotice />
 
       <p className="checkout-required-note">
         שדות המסומנים ב-<span className="checkout-req" aria-hidden="true">*</span>
@@ -219,8 +225,16 @@ function CheckoutFormView({ setCartStep, checkout, showErrors = false }) {
  */
 function CheckoutFormFooter({ onInvalid, checkout }) {
   const deliveryMethod = useSelector(selectDeliveryMethod);
+  const cart = useSelector(selectCartItems);
+  const unavailableLines = useSelector(selectUnavailableLines);
+  const pendingChanges = useSelector(selectPendingPriceChanges);
   const { submittingOrder, handlePlaceOrder, orderError } = checkout;
   const form = { ...checkout, deliveryMethod };
+
+  // The same two blockers as the cart step, so opening /checkout directly cannot skip them. The
+  // hook refuses as well (useCheckoutForm); the button only says why.
+  const hasUnavailable = cart.some((item) => isLineUnavailable(unavailableLines, item));
+  const blocked = hasUnavailable || pendingChanges.length > 0;
 
   /** בודק את הטופס, ושולח רק אם הוא תקין. */
   function handleSubmit() {
@@ -245,10 +259,17 @@ function CheckoutFormFooter({ onInvalid, checkout }) {
         </p>
       )}
 
+      {hasUnavailable && (
+        <p className="checkout-alert" role="alert">
+          <AlertTriangle size={17} aria-hidden="true" />
+          <span>יש בעגלה מוצרים שאינם זמינים כרגע. חזרו לעגלה, הסירו אותם או התקשרו לחנות.</span>
+        </p>
+      )}
+
       <button
         type="button"
         className="cart-cta"
-        disabled={submittingOrder}
+        disabled={submittingOrder || blocked}
         onClick={handleSubmit}>
         {submittingOrder
           ? <><Spinner size="small" color="white" /> שולח הזמנה…</>

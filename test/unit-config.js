@@ -69,5 +69,24 @@ const mailOn = load({ MAIL_ENABLED: 'true', MAIL_USER: '', MAIL_PASS: '' });
 check('מייל פעיל בלי פרטי חשבון — מסרב ונוקב בשמות', !mailOn.ok
   && mailOn.message.includes('MAIL_USER') && mailOn.message.includes('MAIL_PASS'), mailOn.message);
 
+console.log('\n── דמי משלוח: לקוח, שרת ותיעוד');
+{
+  const fs = require('fs');
+  const read = (file) => fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
+  const first = (text, pattern) => (text.match(pattern) || [])[1];
+
+  const client = first(read('client/src/js/utils/delivery.js'), /export const DELIVERY_FEE = (\d+(?:\.\d+)?);/);
+  const server = first(read('server/config/env.js'), /number\('DELIVERY_FEE', (\d+(?:\.\d+)?)/);
+  const example = first(read('.env.example'), /^DELIVERY_FEE=(\d+(?:\.\d+)?)\s*$/m);
+
+  check('הקבוע בלקוח (utils/delivery.js) נמצא', client !== undefined, client);
+  check('ברירת המחדל בשרת (config/env.js) נמצאת', server !== undefined, server);
+  check('הערך ב-.env.example נמצא', example !== undefined, example);
+  check('הלקוח והשרת מסכימים על דמי המשלוח', client === server, { client, server });
+  check('ו-.env.example מסכים איתם', example === server, { example, server });
+  // KNOWN: בדיקה זו משווה קוד ותיעוד בלבד. DELIVERY_FEE שנדרס בסביבת הייצור לא נראה לה,
+  // והלקוח לא יודע אותו בזמן ריצה — ראו את הפריט ב-.plan/000-backlog.md.
+}
+
 console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);
 process.exitCode = failed === 0 ? 0 : 1;

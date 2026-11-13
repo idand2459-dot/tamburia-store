@@ -14,7 +14,13 @@
  * ואינו ניסיון רמייה, אבל הוא כן אומר שהלקוח עומד לאשר סכום אחר ממה
  * שהוא רואה. השרת דוחה, מחזיר את המחירים העדכניים ב-details, והעגלה
  * מתקנת את עצמה כאן — כך שהניסיון השני כבר מציג את הסכום הנכון.
- * The repricing itself (matching by id and variant) is the cart reducer's CART_REPRICED.
+ * The repricing itself (matching by id and variant) is the cart reducer's CART_REPRICED, which also
+ * records the change for the customer to acknowledge; the order is not sent while one is pending,
+ * nor while a cart line is unavailable (the same blockers the cart step shows), so opening the
+ * checkout directly cannot skip them.
+ *
+ * A 409 with details.reason 'out_of_stock' means the cart holds a product that is not sold now:
+ * the message is shown and the cart is checked again, which flags and blocks those lines.
  */
 import { useState, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -22,7 +28,12 @@ import { createOrder, ApiError } from '../services/orderService';
 import { clearCart, repriceCart } from '../store/cart/cartActions';
 import {
   selectCartItems, selectSubtotal, selectDeliveryFee, selectTotal, selectDeliveryMethod,
+  selectPendingPriceChanges,
 } from '../store/cart/cartSelectors';
+import { checkAvailability } from '../store/availability/availabilityActions';
+import {
+  selectAvailabilityKey, selectUnavailableLines, isLineUnavailable,
+} from '../store/availability/availabilitySelectors';
 
 /** מנהל את טופס ההזמנה ואת שליחתה. */
 export function useCheckoutForm() {
@@ -32,6 +43,9 @@ export function useCheckoutForm() {
   const deliveryFee = useSelector(selectDeliveryFee);
   const total = useSelector(selectTotal);
   const deliveryMethod = useSelector(selectDeliveryMethod);
+  const pendingPriceChanges = useSelector(selectPendingPriceChanges);
+  const unavailableLines = useSelector(selectUnavailableLines);
+  const availabilityKey = useSelector(selectAvailabilityKey);
 
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -53,6 +67,7 @@ export function useCheckoutForm() {
   const handlePlaceOrder = useCallback(async () => {
     if (!customerName || !customerPhone) return;
     if (deliveryMethod === 'delivery' && !deliveryAddress) return;
+    if (pendingPriceChanges.length > 0 || cart.some((item) => isLineUnavailable(unavailableLines, item))) return;
 
     setSubmittingOrder(true);
     setOrderError('');
@@ -95,6 +110,8 @@ export function useCheckoutForm() {
       // יקבל בפעם הבאה.
       if (error.status === 409 && Array.isArray(error.details?.prices)) {
         dispatch(repriceCart(error.details.prices));
+      } else if (error.status === 409 && error.details?.reason === 'out_of_stock') {
+        dispatch(checkAvailability(availabilityKey));
       }
       return;
     }
@@ -107,7 +124,7 @@ export function useCheckoutForm() {
   }, [
     cart, subtotal, deliveryFee, total, deliveryMethod,
     customerName, customerPhone, customerEmail, deliveryAddress, orderNotes,
-    dispatch,
+    pendingPriceChanges, unavailableLines, availabilityKey, dispatch,
   ]);
 
   return useMemo(() => ({

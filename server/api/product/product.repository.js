@@ -99,7 +99,7 @@ async function findById(id) {
 async function findPricesByIds(ids) {
   if (!Array.isArray(ids) || ids.length === 0) return [];
   const { rows } = await query(
-    'SELECT id, name, price, variants, active FROM products WHERE id = ANY($1::int[])',
+    'SELECT id, name, price, variants, active, in_stock FROM products WHERE id = ANY($1::int[])',
     [ids]
   );
   return rows;

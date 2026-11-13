@@ -541,6 +541,120 @@ async function testPicked(id) {
     byPhone.body.length > 0 && byPhone.body.every((o) => !('picked_items' in o)), byPhone.body.map(Object.keys));
 }
 
+/** מספר ההזמנות השמורות כרגע; מוכיח שהזמנה שנדחתה לא כתבה כלום. */
+async function storedOrderCount() {
+  const res = await call('GET', '/orders');
+  return res.body.length;
+}
+
+/** מוצר שאזל נדחה ב-409 שהלקוח יודע לזהות, ושום דבר לא נשמר. */
+async function testAvailability() {
+  console.log('\n── זמינות מלאי (in_stock)');
+
+  await makeProduct('stockout', { name: 'מוצר שאזל בדיקה', price: 60, sku: 'TEST-ORD-STOCKOUT' });
+  const order = (items) => ({ ...validOrder(), items });
+  const line = (product, extra = {}) => ({ id: product.id, name: product.name, price: product.price, quantity: 1, ...extra });
+
+  const before = await storedOrderCount();
+  const inStock = await call('POST', '/orders', order([line(P.stockout)]));
+  created.push(inStock.body.id);
+  check('מוצר במלאי מתקבל → 201', inStock.status === 201, `${inStock.status} ${inStock.body.error || ''}`);
+
+  await call('PUT', `/products/${P.stockout.id}`, { in_stock: false });
+
+  const refused = await call('POST', '/orders', order([line(P.paint, { price: 100 }), line(P.stockout)]));
+  check('מוצר שאזל → 409', refused.status === 409, `${refused.status} ${refused.body.error || ''}`);
+  check('התשובה ניתנת לזיהוי: details.reason = out_of_stock',
+    refused.body.details?.reason === 'out_of_stock', refused.body.details);
+  check('details.unavailable מונה את המוצר שאזל ורק אותו',
+    JSON.stringify(refused.body.details?.unavailable?.map((u) => u.id)) === JSON.stringify([P.stockout.id]), refused.body.details);
+  check('ההודעה היא ההודעה המוסכמת',
+    refused.body.error === `המוצר "${P.stockout.name}" אינו זמין כרגע. ניתן להסיר אותו מהעגלה או ליצור קשר עם החנות לבירור זמינות.`,
+    refused.body.error);
+  check('גוף התשובה נשאר { error, details }', Object.keys(refused.body).sort().join() === 'details,error', Object.keys(refused.body));
+
+  // זמינות מדווחת לפני מחיר שהשתנה; המחירים נבדקים בניסיון הבא.
+  const both = await call('POST', '/orders', order([line(P.paint, { price: 1 }), line(P.stockout)]));
+  check('מוצר שאזל ומחיר שהשתנה → דווח קודם על הזמינות',
+    both.status === 409 && both.body.details?.reason === 'out_of_stock' && !both.body.details?.prices, both.body.details);
+  const next = await call('POST', '/orders', order([line(P.paint, { price: 1 })]));
+  check('אחרי הסרת המוצר שאזל — 409 המחיר הרגיל נשמר', next.status === 409 && Array.isArray(next.body.details?.prices), next.body.details);
+
+  const after = await storedOrderCount();
+  check('הדחיות לא שמרו הזמנה', after === before + 1, { before, after });
+
+  // בקשה ישירה לא עוקפת את הבדיקה: מצב המוצר במסד מכריע ולא מה שהבקשה טוענת.
+  const lying = await call('POST', '/orders', order([{ ...line(P.stockout), in_stock: true, inStock: true }]));
+  check('בקשה ישירה שטוענת שהמוצר במלאי נדחית', lying.status === 409, lying.status);
+
+  // הסתרה היא שגיאה ישנה משלה ונשארת 400.
+  await call('PUT', `/products/${P.stockout.id}`, { active: false });
+  const hidden = await call('POST', '/orders', order([line(P.stockout)]));
+  check('מוצר מוסתר נשאר 400', hidden.status === 400, `${hidden.status} ${hidden.body.error || ''}`);
+  await call('PUT', `/products/${P.stockout.id}`, { active: true, in_stock: true });
+
+  const back = await call('POST', '/orders', order([line(P.stockout)]));
+  created.push(back.body.id);
+  check('חזר למלאי → מתקבל שוב', back.status === 201, `${back.status} ${back.body.error || ''}`);
+}
+
+/** תקרות הגודל ותקרת NUMERIC(10,2) נענות ב-400 מבוקר, לא ב-500 ממסד הנתונים. */
+async function testOrderLimits() {
+  console.log('\n── תקרות גודל הזמנה');
+
+  const order = (items, extra = {}) => ({ ...validOrder(), items, ...extra });
+  const brush = (quantity = 1) => ({ id: P.brush.id, name: P.brush.name, price: 30, quantity });
+  const before = await storedOrderCount();
+
+  const fifty = await call('POST', '/orders', order(Array.from({ length: 50 }, () => brush())));
+  created.push(fifty.body.id);
+  check('50 שורות → 201', fifty.status === 201 && fifty.body.items.length === 50 && fifty.body.subtotal === 1500,
+    `${fifty.status} ${fifty.body.error || ''}`);
+
+  const tooMany = await call('POST', '/orders', order(Array.from({ length: 51 }, () => brush())));
+  check('51 שורות → 400', tooMany.status === 400, tooMany.status);
+  check('ההודעה מציינת את התקרה', tooMany.body.error === 'ההזמנה יכולה לכלול עד 50 פריטים', tooMany.body.error);
+
+  const max = await call('POST', '/orders', order([brush(999)]));
+  created.push(max.body.id);
+  check('999 יחידות בשורה → 201 (30 × 999 + 20)', max.status === 201 && max.body.total === 29990,
+    `${max.status} ${max.body.error || ''} ${max.body.total}`);
+
+  const over = await call('POST', '/orders', order([brush(1000)]));
+  check('1000 יחידות → 400', over.status === 400, over.status);
+  check('ההודעה מציינת את התקרה', over.body.error === 'items[0].quantity מוגבל ל-999', over.body.error);
+
+  const zero = await call('POST', '/orders', order([brush(0)]));
+  check('כמות 0 עדיין 400 עם ההודעה הקיימת', zero.status === 400 && zero.body.error.includes('מספר שלם חיובי'), zero.body.error);
+  const fraction = await call('POST', '/orders', order([brush(1.5)]));
+  check('כמות לא שלמה → 400', fraction.status === 400, fraction.status);
+  const huge = await call('POST', '/orders', order([brush(1e21)]));
+  check('כמות 1e21 → 400 ולא 500', huge.status === 400, huge.status);
+
+  // orders.total הוא NUMERIC(10,2): 99,999,999.99 הוא הערך הגדול ביותר שהוא מחזיק.
+  await makeProduct('maxprice', { name: 'מוצר ביוקר מרבי בדיקה', price: 99999999.99, sku: 'TEST-ORD-MAXPRICE' });
+  const maxLine = (quantity) => ({ id: P.maxprice.id, name: P.maxprice.name, price: 99999999.99, quantity });
+  const pickup = (items) => order(items, { delivery_method: 'pickup', delivery_address: undefined });
+
+  const atLimit = await call('POST', '/orders', pickup([maxLine(1)]));
+  if (atLimit.body?.id) created.push(atLimit.body.id);
+  check('בדיוק הסכום המרבי באיסוף → 201', atLimit.status === 201 && atLimit.body.total === 99999999.99,
+    `${atLimit.status} ${atLimit.body.error || ''}`);
+
+  const withFee = await call('POST', '/orders', order([maxLine(1)]));
+  check('הסכום המרבי + דמי משלוח → 400 מבוקר', withFee.status === 400, `${withFee.status} ${withFee.body.error || ''}`);
+  check('ההודעה מסבירה את החריגה', typeof withFee.body.error === 'string' && withFee.body.error.includes('חורג'), withFee.body.error);
+
+  const twice = await call('POST', '/orders', pickup([maxLine(2)]));
+  check('פעמיים הסכום המרבי → 400, לא 500', twice.status === 400, `${twice.status} ${twice.body.error || ''}`);
+
+  const many = await call('POST', '/orders', pickup(Array.from({ length: 50 }, () => maxLine(999))));
+  check('50 שורות × 999 במחיר המרבי → 400, לא 500', many.status === 400, `${many.status} ${many.body.error || ''}`);
+
+  const after = await storedOrderCount();
+  check('רק ההזמנות התקינות נשמרו (50 שורות, 999 יחידות, הסכום המרבי)', after === before + 3, { before, after });
+}
+
 /** מוחק את כל מה שהבדיקה יצרה ומאמת שלא נשארו שאריות. */
 async function cleanup() {
   console.log('\n── ניקוי');
@@ -575,6 +689,8 @@ async function main() {
   await testVariantPricing();
   await testDecimalPricing();
   await testSavedTotalsMatch();
+  await testAvailability();
+  await testOrderLimits();
   await testUpdate(deliveryId);
   await testPicked(deliveryId);
   await cleanup();

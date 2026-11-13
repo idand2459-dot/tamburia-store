@@ -12,6 +12,7 @@ export const CART_QUANTITY_CHANGED = 'CART_QUANTITY_CHANGED';
 export const CART_CLEARED = 'CART_CLEARED';
 export const CART_REPRICED = 'CART_REPRICED';
 export const DELIVERY_METHOD_SET = 'DELIVERY_METHOD_SET';
+export const PRICE_CHANGES_ACKNOWLEDGED = 'PRICE_CHANGES_ACKNOWLEDGED';
 
 /** Adds a product to the cart, or raises the quantity of the same line. */
 export function addItem(product, quantity = 1) {
@@ -38,9 +39,19 @@ export function clearCart() {
   return { type: CART_CLEARED };
 }
 
-/** Applies the current prices the server sent back (a 409 on placing an order) to the cart lines. */
+/**
+ * Applies the current prices to the cart lines: the ones the server sent back with a 409 on
+ * placing an order, or the ones the catalog has now (the freshness check). Every line whose price
+ * really changes is also recorded as a price change the customer has to acknowledge.
+ * Each price is { id, selectedVariant, price }.
+ */
 export function repriceCart(prices) {
   return { type: CART_REPRICED, prices };
+}
+
+/** The customer confirmed the price changes that are shown; clears exactly those. */
+export function acknowledgePriceChanges() {
+  return { type: PRICE_CHANGES_ACKNOWLEDGED };
 }
 
 /** Sets how the customer receives the order: 'pickup', 'delivery', or null for no choice yet. */

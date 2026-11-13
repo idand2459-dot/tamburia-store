@@ -67,7 +67,7 @@ Tool settings: `TEST_DATABASE_URL` (a separate local database for `npm test` and
 ## Operational Concerns
 - Logging: the error handler logs every 5xx with `console.error`, the method, and the URL (`server/middleware/errorHandler.js:52`); `DB_LOG_QUERIES` logs every query. What is never logged: not checked yet.
 - Failure handling: errors are mapped centrally to a status and a message (`server/middleware/errorHandler.js:17-38`); the server retries nothing, and sends `Retry-After` with `429` (`server/middleware/rateLimit.js:41`); see the [error-handling skill](../.claude/skills/error-handling/SKILL.md).
-- Limits: uploads up to 15 MB per file and 5 files (`server/middleware/upload.js:26-27`); login attempts per window from `LOGIN_MAX_ATTEMPTS` and `LOGIN_WINDOW_MS`; sessions expire after `SESSION_TTL_HOURS`.
+- Limits: an order has at most 50 lines, at most 999 units per line, and a total of at most 99,999,999.99 (`NUMERIC(10,2)`; `server/api/order/order.validator.js`, `pricing.service.js`); uploads up to 15 MB per file and 5 files (`server/middleware/upload.js:26-27`); login attempts per window from `LOGIN_MAX_ATTEMPTS` and `LOGIN_WINDOW_MS`; sessions expire after `SESSION_TTL_HOURS`.
 - Known limitations: the store runs locally only and is not live; there is no online payment (`client/src/js/features/home/FAQ.js:23`); the tests run against a separate local database (`TEST_DATABASE_URL`).
 
 ## API Contract

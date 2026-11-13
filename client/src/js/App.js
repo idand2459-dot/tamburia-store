@@ -12,7 +12,7 @@
  * ה-imports ב-css/app.css הוא ה-cascade, והוצאת חלק ממנו הייתה משנה אותו.
  */
 import { lazy, Suspense, useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import '../css/app.css';
 import { createAppStore } from './store';
@@ -40,17 +40,38 @@ const adminLoading = (
 );
 
 /**
- * The routes. It also keeps the product availability of the cart up to date: the cart can hold a
- * snapshot of a product that was hidden since (it is saved in localStorage), so whenever the set
- * of ids in the cart changes the store asks the server which of them are no longer sold. This
- * runs whether or not the cart drawer is open, so the marks are ready when it opens.
+ * The routes. It also keeps the cart fresh: the cart can hold a snapshot of a product that was
+ * hidden, sold out or re-priced since (it is saved in localStorage), so the store asks the server
+ * about the cart's products on the first load, whenever the set of ids changes, on entering the
+ * cart or the checkout, and when the tab becomes visible again. This runs whether or not the cart
+ * drawer is open, so the marks are ready when it opens.
  */
 function AppRoutes() {
   const dispatch = useDispatch();
   const availabilityKey = useSelector(selectAvailabilityKey);
+  const { pathname } = useLocation();
 
-  // The thunk returns the function that aborts the request, which is exactly the effect cleanup.
-  useEffect(() => dispatch(checkAvailability(availabilityKey)), [dispatch, availabilityKey]);
+  // The cart is checked again whenever the customer comes back to the tab, and on entering the cart
+  // or the checkout (the screens where a stale price or product matters). "Visible" only counts up
+  // on the event, so nothing loops: the check changes prices and blocked lines, never the ids.
+  const [visibleCount, setVisibleCount] = useState(0);
+  useEffect(() => {
+    /** Counts the moments the tab becomes visible again. */
+    function onVisibility() {
+      if (document.visibilityState === 'visible') setVisibleCount((count) => count + 1);
+    }
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+  const cartScreen = pathname === '/cart' || pathname === '/checkout' ? pathname : '';
+
+  // One effect, so the first load, a change of the ids, entering a cart screen and coming back to
+  // the tab each start one request, and each aborts the one before it. The thunk returns the
+  // function that aborts the request, which is exactly the effect cleanup.
+  useEffect(
+    () => dispatch(checkAvailability(availabilityKey)),
+    [dispatch, availabilityKey, cartScreen, visibleCount],
+  );
 
   return (
     <Routes>
