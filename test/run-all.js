@@ -19,7 +19,7 @@ const { resolveTestDatabase, publicTarget, describeTestDatabase } = require('./l
 // בדיקות ה-unit רצות ראשונות: הן אינן נוגעות ברשת או במסד, ולכן נותנות
 // את סימן הכישלון המהיר ביותר אם משהו בסיסי שבור — ובראשן השמירה
 // שאף סוד לא נכנס לגיט.
-const SUITES = ['unit-repo-hygiene', 'unit-config', 'unit-test-database-guard', 'unit-no-private-phone', 'unit-order-service', 'unit-product-service', 'unit-review-service', 'unit-money', 'unit-originals', 'smoke-fresh-db', 'smoke-static', 'smoke-orders', 'smoke-products', 'smoke-settings', 'smoke-reviews', 'smoke-pigments', 'smoke-contract', 'smoke-auth'];
+const SUITES = ['unit-repo-hygiene', 'unit-config', 'unit-test-database-guard', 'unit-no-private-phone', 'unit-auth-cookie', 'unit-order-service', 'unit-product-service', 'unit-review-service', 'unit-money', 'unit-originals', 'smoke-fresh-db', 'smoke-static', 'smoke-orders', 'smoke-products', 'smoke-settings', 'smoke-reviews', 'smoke-pigments', 'smoke-contract', 'smoke-auth'];
 
 /** The environment a suite inherits: ours, without anything that could point it at a server. */
 function suiteEnv() {

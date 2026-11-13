@@ -170,7 +170,7 @@ database) is required; the guard refuses `NODE_ENV=production`, a malformed URL,
 development database itself (`test/lib/testDatabase.js`):
 
 - **unit-*** (no network or database): repo hygiene, config startup rules, order service,
-  product visibility, review moderation, money, originals, the test-database guard.
+  product visibility, review moderation, money, originals, admin cookie reading, the test-database guard.
 - **smoke-fresh-db**: creates an empty database, runs every migration and the catalogue
   import, and compares the schema column by column with the real one.
 - **smoke-static, -orders, -products, -settings, -reviews, -pigments, -contract, -auth**: the HTTP

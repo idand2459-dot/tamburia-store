@@ -1,6 +1,7 @@
 /**
  * אחראי על אימות האדמין: יצירת אסימוני התחברות חתומים ואימותם,
- * השוואת סיסמאות בזמן קבוע, וקריאה וכתיבה של עוגיית ההתחברות.
+ * השוואת סיסמאות בזמן קבוע, ואפשרויות עוגיית ההתחברות. את קריאת העוגייה
+ * עושה cookie-parser (server/app.js), ואימות האסימון נשאר כאן.
  *
  * האסימון בנוי כ-base64url(payload).base64url(HMAC-SHA256) — חתום ולא
  * מוצפן, ובלי בחירת אלגוריתם מתוכו, כך שאין את חולשת "alg: none".
@@ -90,22 +91,4 @@ function cookieOptions() {
   };
 }
 
-/** קורא עוגייה בשם נתון מכותרת הבקשה. */
-function readCookie(req, name) {
-  const header = req.headers.cookie;
-  if (!header) return null;
-
-  for (const part of header.split(';')) {
-    const index = part.indexOf('=');
-    if (index === -1) continue;
-    if (part.slice(0, index).trim() !== name) continue;
-    try {
-      return decodeURIComponent(part.slice(index + 1).trim());
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
-module.exports = { createToken, verifyToken, passwordMatches, cookieOptions, readCookie };
+module.exports = { createToken, verifyToken, passwordMatches, cookieOptions };
