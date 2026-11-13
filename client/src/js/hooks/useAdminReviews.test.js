@@ -5,13 +5,16 @@
  * that carries a JSON object empties the list, while a network failure or a body that is not
  * JSON leaves it as it was. Neither shows an error.
  *
- * The hook is given an `api` built straight on the fake global fetch (no 401 handling: that
- * belongs to Admin.js and is pinned in pages/admin/Admin.test.js).
+ * The hook is given the real admin API (createAdminApi) over the fake global fetch, with a
+ * no-op expiry callback: the 401 handling is pinned in pages/admin/Admin.test.js and
+ * services/adminService.test.js. Only this adapter changed when the hook moved to named
+ * adminApi calls; the assertions did not.
  *
  * Run with `npm run test:client` from the root.
  */
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useAdminReviews } from './useAdminReviews';
+import { createAdminApi } from '../services/adminService';
 import { NETWORK_ERROR } from '../utils/apiErrors';
 
 const LIST_URL = '/api/reviews/all';
@@ -28,8 +31,8 @@ const reply = (status, body) => Promise.resolve({
   },
 });
 
-/** The hook's `api` argument, built on the global fetch. */
-const apiOverFetch = (url, options) => fetch(url, options);
+/** The hook's argument: the real admin API over the global fetch. */
+const adminApi = createAdminApi(() => {});
 
 let routes;
 let confirm;
@@ -41,7 +44,7 @@ const listCalls = () => callsTo(LIST_URL);
 
 /** Renders the hook and waits for the first list. */
 async function setup() {
-  const { result } = renderHook(() => useAdminReviews(apiOverFetch));
+  const { result } = renderHook(() => useAdminReviews(adminApi));
   await waitFor(() => expect(result.current.reviews).toHaveLength(1));
   return result;
 }

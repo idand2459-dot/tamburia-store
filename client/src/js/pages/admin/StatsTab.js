@@ -22,8 +22,8 @@ import { formatDate } from './adminConstants';
 import { formatPrice } from '../../utils/pricing';
 
 /** מציג את לשונית הסטטיסטיקות. */
-function StatsTab({ api, products, getStats, onToggleStock, productsError }) {
-  const { since, loading, baselineError, resetStats, clearBaseline } = useStatsBaseline(api);
+function StatsTab({ adminApi, products, getStats, onToggleStock, productsError }) {
+  const { since, loading, baselineError, resetStats, clearBaseline } = useStatsBaseline(adminApi);
 
   const stats = getStats(products, since);
   const maxDailyCount = Math.max(...stats.dailyOrders.map(d => d.count), 1);

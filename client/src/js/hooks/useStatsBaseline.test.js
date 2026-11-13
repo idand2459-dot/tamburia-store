@@ -3,13 +3,16 @@
  * the PUT that sets or clears it, the value the hook keeps (the one the server returns, not the
  * one it sent), and the error text for each failure. They record today's behavior.
  *
- * The hook is given an `api` built straight on the fake global fetch (no 401 handling: that
- * belongs to Admin.js and is pinned in pages/admin/Admin.test.js).
+ * The hook is given the real admin API (createAdminApi) over the fake global fetch, with a
+ * no-op expiry callback: the 401 handling is pinned in pages/admin/Admin.test.js and
+ * services/adminService.test.js. Only this adapter changed when the hook moved to named
+ * adminApi calls; the assertions did not.
  *
  * Run with `npm run test:client` from the root.
  */
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useStatsBaseline } from './useStatsBaseline';
+import { createAdminApi } from '../services/adminService';
 import { NETWORK_ERROR } from '../utils/apiErrors';
 
 const URL_ = '/api/settings/stats-counting-from';
@@ -28,8 +31,8 @@ const reply = (status, body) => Promise.resolve({
   },
 });
 
-/** The hook's `api` argument, built on the global fetch. */
-const apiOverFetch = (url, options) => fetch(url, options);
+/** The hook's argument: the real admin API over the global fetch. */
+const adminApi = createAdminApi(() => {});
 
 let getReply;
 let putReply;
@@ -39,7 +42,7 @@ const putCalls = () => global.fetch.mock.calls.filter(([, o]) => o?.method === '
 
 /** Renders the hook and waits for the first load to finish. */
 async function setup() {
-  const { result } = renderHook(() => useStatsBaseline(apiOverFetch));
+  const { result } = renderHook(() => useStatsBaseline(adminApi));
   await waitFor(() => expect(result.current.loading).toBe(false));
   return result;
 }
@@ -59,7 +62,7 @@ afterEach(() => {
 
 describe('loading the counting start', () => {
   test('GETs the setting with no options, keeps its value and stops loading', async () => {
-    const { result } = renderHook(() => useStatsBaseline(apiOverFetch));
+    const { result } = renderHook(() => useStatsBaseline(adminApi));
     expect(result.current.loading).toBe(true);
     expect(result.current.since).toBeNull();
 

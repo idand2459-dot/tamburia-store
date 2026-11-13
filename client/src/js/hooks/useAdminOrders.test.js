@@ -8,6 +8,7 @@
  */
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useAdminOrders } from './useAdminOrders';
+import { createAdminApi } from '../services/adminService';
 import { NETWORK_ERROR } from '../utils/apiErrors';
 
 jest.mock('./useWebSocket', () => ({ useWebSocket: () => {} }));
@@ -15,8 +16,10 @@ jest.mock('./useWebSocket', () => ({ useWebSocket: () => {} }));
 const ORDER = { id: 12, status: 'processing', items: [{ name: 'א' }, { name: 'ב' }], picked_items: [0] };
 
 /**
- * עוטף fetch מזויף: GET מחזיר את ההזמנה, וה-PUT מחכה עד שהבדיקה
+ * fetch מזויף: GET מחזיר את ההזמנה, וה-PUT מחכה עד שהבדיקה
  * מחליטה איך הוא ייגמר — כך אפשר לראות את המסך באמצע השמירה.
+ * ההוק מקבל את ה-API האמיתי של הניהול מעל ה-fetch הזה; `api` הוא
+ * ה-fetch המזויף עצמו, ולכן ההצהרות על הבקשות נשארו כמות שהיו.
  */
 function fakeApi() {
   let settle;
@@ -24,18 +27,23 @@ function fakeApi() {
     if (!options) return Promise.resolve({ ok: true, json: async () => [ORDER] });
     return new Promise((resolve, reject) => { settle = { resolve, reject }; });
   });
-  return { api, settle: () => settle };
+  global.fetch = api;
+  return { api, adminApi: createAdminApi(() => {}), settle: () => settle };
 }
 
 /** מרנדר את ההוק ומחכה שההזמנה תיטען. */
 async function setup() {
   const fake = fakeApi();
-  const { result } = renderHook(() => useAdminOrders(fake.api));
+  const { result } = renderHook(() => useAdminOrders(fake.adminApi));
   await waitFor(() => expect(result.current.orders).toHaveLength(1));
   return { ...fake, result };
 }
 
 const pickedOf = (result) => result.current.orders[0].picked_items;
+
+afterEach(() => {
+  delete global.fetch;
+});
 
 test('הסימון מופיע במסך מיד, לפני שהשרת ענה', async () => {
   const { api, settle, result } = await setup();
@@ -100,9 +108,9 @@ test('החזרה אחרי כישלון אינה מוחקת שורה אחרת ש�
 
 /*
  * handleStatusChange, pinned at the fetch level: what is sent over the network and what the
- * screen shows afterwards. The hook is given an `api` built straight on the fake global fetch
- * (no 401 handling: that belongs to Admin.js and gets its own test). When the admin API layer
- * is introduced, only `apiOverFetch` changes; the assertions below keep describing the same
+ * screen shows afterwards. The hook is given the real admin API (createAdminApi) over the fake
+ * global fetch (no 401 handling: that is pinned in Admin.test.js and adminService.test.js).
+ * When the admin API layer was introduced, only `adminApi` changed; the assertions below keep describing the same
  * externally visible behavior.
  */
 
@@ -116,15 +124,15 @@ const reply = (status, body) => Promise.resolve({
   },
 });
 
-/** The hook's `api` argument, built on the global fetch. */
-const apiOverFetch = (url, options) => fetch(url, options);
+/** The hook's argument: the real admin API over the global fetch (adapter changed in P2; assertions did not). */
+const adminApi = createAdminApi(() => {});
 
 /** The list loads the fake fetch has seen (a GET with no options). */
 const listCalls = () => global.fetch.mock.calls.filter(([url, options]) => url === '/api/orders' && !options);
 
 /** Renders the hook with the fake fetch and waits for the first load. */
 async function setupOverFetch() {
-  const { result } = renderHook(() => useAdminOrders(apiOverFetch));
+  const { result } = renderHook(() => useAdminOrders(adminApi));
   await waitFor(() => expect(result.current.orders).toHaveLength(1));
   return result;
 }
