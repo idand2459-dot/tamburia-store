@@ -15,30 +15,25 @@
  * השמירה. מוצר שהוסתר מהקטלוג מאז ייראה בדיוק כמו קודם, ולכן הרשימה
  * שואלת את השרת מי מהם עדיין נמכר ומסמנת את השאר "לא זמין כרגע".
  */
-import { useState, useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Heart, Trash2, Check, X } from 'lucide-react';
 import Drawer from '../../components/Drawer';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
-import { getWishlist, toggleWishlist } from '../../utils/wishlistUtils';
+import { toggleWishlist } from '../../store/wishlist/wishlistActions';
+import { selectWishlistItems, selectWishlistIds } from '../../store/wishlist/wishlistSelectors';
 import { useAvailability } from '../../hooks/useAvailability';
 import { orderablePrice, NO_PRICE_LABEL, UNAVAILABLE_LABEL, formatPrice } from '../../utils/pricing';
 
 /** מציג את חלון המועדפים. */
 function Wishlist({ onClose }) {
-  const [items, setItems] = useState([]);
-
-  useEffect(() => {
-    setItems(getWishlist());
-  }, []);
-
-  const ids = useMemo(() => items.map((product) => product.id), [items]);
-  const unavailableIds = useAvailability(ids);
+  const dispatch = useDispatch();
+  const items = useSelector(selectWishlistItems);
+  const unavailableIds = useAvailability(useSelector(selectWishlistIds));
 
   /** מסיר מוצר מהמועדפים. */
   function handleRemove(product) {
-    toggleWishlist(product);
-    setItems(getWishlist());
+    dispatch(toggleWishlist(product));
   }
 
   return (

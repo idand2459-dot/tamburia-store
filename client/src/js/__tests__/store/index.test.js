@@ -33,7 +33,7 @@ describe('the initial state', () => {
 
     expect(store.getState()).toEqual({
       cart: { items: [{ ...PAINT, quantity: 3, selectedColor: 'לבן' }], deliveryMethod: null },
-      wishlist: { ids: [5, 3] },
+      wishlist: { items: [{ id: 5 }, { id: 3 }] },
       availability: { unavailableIds: [] },
     });
   });
@@ -50,7 +50,7 @@ describe('the initial state', () => {
 
     expect(createAppStore().getState()).toEqual({
       cart: { items: [], deliveryMethod: null },
-      wishlist: { ids: [] },
+      wishlist: { items: [] },
       availability: { unavailableIds: [] },
     });
   });
@@ -70,7 +70,7 @@ describe('the initial state', () => {
 
   test('a given state is used instead of localStorage', () => {
     localStorage.setItem(CART_KEY, JSON.stringify([PAINT]));
-    const given = { cart: { items: [], deliveryMethod: 'pickup' }, wishlist: { ids: [7] }, availability: { unavailableIds: [2] } };
+    const given = { cart: { items: [], deliveryMethod: 'pickup' }, wishlist: { items: [{ id: 7 }] }, availability: { unavailableIds: [2] } };
 
     expect(createAppStore(given).getState()).toEqual(given);
   });

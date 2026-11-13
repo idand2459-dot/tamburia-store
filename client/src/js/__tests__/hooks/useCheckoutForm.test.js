@@ -52,7 +52,7 @@ function useHarness() {
 function setup({ method = 'delivery', fill = {} } = {}) {
   const store = createAppStore({
     cart: { items: CART, deliveryMethod: method },
-    wishlist: { ids: [] },
+    wishlist: { items: [] },
     availability: { unavailableIds: [] },
   });
   const wrapper = ({ children }) => <Provider store={store}>{children}</Provider>;

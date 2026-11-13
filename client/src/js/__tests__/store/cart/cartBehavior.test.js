@@ -26,7 +26,7 @@ const PRODUCT = {
 function newCart(items = []) {
   const store = createAppStore({
     cart: { items, deliveryMethod: null },
-    wishlist: { ids: [] },
+    wishlist: { items: [] },
     availability: { unavailableIds: [] },
   });
   const state = () => store.getState();

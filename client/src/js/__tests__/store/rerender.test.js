@@ -13,7 +13,7 @@ import { selectCartCount, selectDeliveryMethod } from '../../store/cart/cartSele
 import { selectWishlistIds } from '../../store/wishlist/wishlistSelectors';
 import { selectUnavailableIdSet } from '../../store/availability/availabilitySelectors';
 import { addItem, setDeliveryMethod, clearCart } from '../../store/cart/cartActions';
-import { setWishlistIds } from '../../store/wishlist/wishlistActions';
+import { toggleWishlist } from '../../store/wishlist/wishlistActions';
 import { availabilityLoaded } from '../../store/availability/availabilityActions';
 
 const renders = { count: 0, wishlist: 0, delivery: 0, unavailable: 0 };
@@ -71,9 +71,9 @@ test('a cart change renders only the components that select from the cart value 
 test('a wishlist change renders only the wishlist component', () => {
   const store = setup();
 
-  act(() => { store.dispatch(setWishlistIds([1, 2])); });
+  act(() => { store.dispatch(toggleWishlist({ id: 1, name: 'x', price: 1 })); });
 
-  expect(screen.getByTestId('wishlist')).toHaveTextContent('2');
+  expect(screen.getByTestId('wishlist')).toHaveTextContent('1');
   expect(renders).toEqual({ count: 1, wishlist: 2, delivery: 1, unavailable: 1 });
 });
 
