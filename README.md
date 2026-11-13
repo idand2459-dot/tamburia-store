@@ -310,7 +310,7 @@ written up in [docs/a11y-audit.md](docs/a11y-audit.md); the public statement is 
 
 ```bash
 npm test               # server: unit and smoke suites
-npm run test:client    # client: 12 suites, 90 tests
+npm run test:client    # client: 34 suites, 537 tests
 npm run a11y           # accessibility: serves client/build, so run npm run build:client first
 ```
 
