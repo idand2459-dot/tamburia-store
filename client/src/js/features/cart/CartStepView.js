@@ -1,12 +1,12 @@
 /**
  * שלב העגלה: רשימת הפריטים, אופן קבלת ההזמנה וסיכום הסכומים.
  *
- * מושך את מצב העגלה מ-StoreContext ומקבל בפרופס רק את מעבר השלבים
- * והסגירה, שהם עניין של הניתוב ולא של המצב המשותף.
+ * Reads the cart from the Redux store and receives as props only the step change and the
+ * closing, which belong to the routing and not to the shared state.
  *
  * הסיכום והכפתור אינם כאן אלא ב-CartStepFooter שלמטה, כי הם יושבים
- * בשורה התחתונה הדביקה של המגירה ולא בגוף הגולל. שני הרכיבים שואבים
- * מאותו קונטקסט, ולכן אין מצב שהסיכום למטה יסתור את השורות למעלה.
+ * בשורה התחתונה הדביקה של המגירה ולא בגוף הגולל. שני הרכיבים קוראים
+ * מאותו store, ולכן אין מצב שהסיכום למטה יסתור את השורות למעלה.
  *
  * פריט במחיר 0 הוא מוצר שהמחיר שלו במסד עוד לא הוקלד. באתר כבר אי
  * אפשר להוסיף מוצר כזה לעגלה, אבל עגלה נשמרת ב-localStorage וכזה
@@ -15,10 +15,15 @@
  *
  * ופריט של מוצר שהוסתר מהקטלוג מאז שנוסף מטופל בדיוק באותו אופן,
  * ומאותה סיבה: הוא נראה תקין בעגלה, השרת ידחה אותו, ועדיף שהלקוח
- * יבין למה כאן. מי אלה — useAvailability, דרך ההקשר.
+ * יבין למה כאן. מי אלה — store/availability, דרך ה-store.
  */
 import { Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
-import { useStore } from '../../context/storeContext';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  selectCartItems, selectDeliveryMethod, selectSubtotal, selectTotal,
+} from '../../store/cart/cartSelectors';
+import { removeItem, changeQuantity, clearCart } from '../../store/cart/cartActions';
+import { selectUnavailableIdSet } from '../../store/availability/availabilitySelectors';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
 import { NO_PRICE_LABEL, UNAVAILABLE_LABEL, formatPrice, lineTotal } from '../../utils/pricing';
 import DeliveryOptions from './DeliveryOptions';
@@ -36,7 +41,11 @@ function itemMeta(item) {
 
 /** מציג את תוכן העגלה ואת בחירת אופן הקבלה. */
 function CartStepView({ closeCart }) {
-  const { cart, updateQuantity, removeFromCart, unavailableIds } = useStore();
+  const dispatch = useDispatch();
+  const cart = useSelector(selectCartItems);
+  const unavailableIds = useSelector(selectUnavailableIdSet);
+  const updateQuantity = (index, delta) => dispatch(changeQuantity(index, delta));
+  const removeFromCart = (index) => dispatch(removeItem(index));
 
   if (cart.length === 0) {
     return (
@@ -120,9 +129,12 @@ function CartStepView({ closeCart }) {
  * מפסיק להיות בלוק אדום ברוחב מלא מתחת לכפתור האמיתי.
  */
 function CartStepFooter({ setCartStep }) {
-  const {
-    cart, setCart, subtotal, total, deliveryMethod, setDeliveryMethod, unavailableIds,
-  } = useStore();
+  const dispatch = useDispatch();
+  const cart = useSelector(selectCartItems);
+  const subtotal = useSelector(selectSubtotal);
+  const total = useSelector(selectTotal);
+  const deliveryMethod = useSelector(selectDeliveryMethod);
+  const unavailableIds = useSelector(selectUnavailableIdSet);
 
   const unpriced = cart.filter((item) => !itemPriced(item));
   const unavailable = cart.filter((item) => unavailableIds.has(item.id));
@@ -179,7 +191,7 @@ function CartStepFooter({ setCartStep }) {
       <button
         type="button"
         className="cart-clear"
-        onClick={() => { setCart([]); setDeliveryMethod(null); }}>
+        onClick={() => dispatch(clearCart())}>
         רוקן עגלה
       </button>
     </div>

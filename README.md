@@ -161,7 +161,8 @@ client/src/
   js/pages/      route screens (and pages/admin/, the admin screen and its tabs)
   js/components/ reusable UI
   js/features/   feature UI by domain: home, catalog, cart, calculators
-  js/hooks/      state and effects (cart, checkout, availability, admin data)
+  js/store/      the Redux store: cart, wishlist, availability (actions, reducers, selectors)
+  js/hooks/      state and effects (checkout form, admin data, recently viewed availability)
   js/services/   every server call the storefront makes
   js/utils/      pure helpers (pricing, store info, palette, icons)
 
@@ -200,8 +201,10 @@ current prices so the cart can correct itself. Money is integer agorot in code a
   closes them.
 - **Nested admin routes over query parameters.** Each admin tab is `/admin/:tab`, so a
   tab can be linked directly and back moves between tabs.
-- **Shared state lives above the routes.** Cart, wishlist and checkout sit in a context
-  provided at the app root, because the cart has to survive navigation between screens.
+- **Shared state lives above the routes.** Cart, wishlist and the availability of cart products sit in
+  one classic Redux store (`redux`, `react-redux`, `redux-thunk`) provided at the app root, because
+  the cart has to survive navigation between screens. The checkout form and the menu state are
+  React state of the store frame (`StoreLayout`), which outlives the cart drawer.
 - **Filters that belong in the URL are in the URL.** The subcategory filter is a query
   parameter so a filtered page can be shared. Search text and sort order stay local,
   because they change on every keystroke and would flood the history.
@@ -389,7 +392,7 @@ The full list with comments is in [`.env.example`](.env.example). The ones that 
 | `MAIL_ENABLED` | `true` (`.env.example`: `false`) | `false` logs emails instead of sending them |
 | `MAIL_USER` / `MAIL_PASS` | — | Gmail account and app password; required only when mail is enabled |
 | `PORT` | `3000` | Server port |
-| `DELIVERY_FEE` | `20` | Delivery fee in shekels (must match `client/src/js/hooks/useCart.js`) |
+| `DELIVERY_FEE` | `20` | Delivery fee in shekels (must match `client/src/js/utils/delivery.js`) |
 | `CSP_ENABLED` | `false` | Content Security Policy (see Security) |
 
 Generate a session secret with:

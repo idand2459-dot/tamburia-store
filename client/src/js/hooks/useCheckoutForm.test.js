@@ -6,24 +6,27 @@
  *   - any other rejection shows the server message and keeps the cart untouched;
  *   - a network failure, or an OK answer that is not JSON, shows the connection message.
  *
- * The cart is a real piece of state next to the hook, because the hook empties and re-prices it
- * through the setters it is given.
+ * The cart is the real Redux store the hook reads from and dispatches to, because the hook empties
+ * and re-prices it there. (Before P4R the cart was a React state handed to the hook together with
+ * totals; now the subtotal, fee and total are derived from the cart, so the request carries the
+ * derived fee of 20 and total of 550 instead of the arbitrary 40 and 570 the old fixture passed in.)
  *
  * Run with `npm run test:client` from the root.
  */
-import { useState } from 'react';
+import { useSelector, Provider } from 'react-redux';
 import { renderHook, act } from '@testing-library/react';
 import { useCheckoutForm } from './useCheckoutForm';
+import { createAppStore } from '../store';
+import { selectCartItems, selectDeliveryMethod } from '../store/cart/cartSelectors';
 
 const CART = [
   { id: 1, name: 'צבע לבן', price: 100, quantity: 2, selectedVariant: "5 ל'", selectedColor: 'לבן', selectedSize: null },
   { id: 1, name: 'צבע לבן', price: 300, quantity: 1, selectedVariant: "18 ל'" },
   { id: 2, name: 'מברשת', price: 30 },
 ];
-const TOTALS = { subtotal: 530, deliveryFee: 40, total: 570 };
 const REJECTED = 'שליחת ההזמנה נכשלה. אפשר לנסות שוב.';
 const CONNECTION = 'לא הצלחנו לשלוח את ההזמנה. בדקו את החיבור ונסו שוב.';
-const SAVED = { id: 321, status: 'new', total: 570 };
+const SAVED = { id: 321, status: 'new', total: 550 };
 
 /** A fetch response; a body of `undefined` is one that is not JSON. */
 const reply = (status, body) => Promise.resolve({
@@ -37,17 +40,23 @@ const reply = (status, body) => Promise.resolve({
 
 let orderReply;
 
-/** The hook next to a real cart, the way App.js wires it to useCart. */
-function useHarness(method) {
-  const [cart, setCart] = useState(CART);
-  const [deliveryMethod, setDeliveryMethod] = useState(method);
-  const form = useCheckoutForm({ cart, ...TOTALS, deliveryMethod, setCart, setDeliveryMethod });
+/** The hook next to the cart it reads from and writes to. */
+function useHarness() {
+  const cart = useSelector(selectCartItems);
+  const deliveryMethod = useSelector(selectDeliveryMethod);
+  const form = useCheckoutForm();
   return { cart, deliveryMethod, form };
 }
 
 /** Renders the harness and fills the form. */
 function setup({ method = 'delivery', fill = {} } = {}) {
-  const { result } = renderHook(() => useHarness(method));
+  const store = createAppStore({
+    cart: { items: CART, deliveryMethod: method },
+    wishlist: { ids: [] },
+    availability: { unavailableIds: [] },
+  });
+  const wrapper = ({ children }) => <Provider store={store}>{children}</Provider>;
+  const { result } = renderHook(() => useHarness(), { wrapper });
   act(() => {
     result.current.form.setCustomerName(fill.name ?? 'דנה כהן');
     result.current.form.setCustomerPhone(fill.phone ?? '0501234567');
@@ -62,6 +71,7 @@ const orderCalls = () => global.fetch.mock.calls.filter(([url]) => url === '/api
 const place = (result) => act(async () => { await result.current.form.handlePlaceOrder(); });
 
 beforeEach(() => {
+  localStorage.clear();
   orderReply = () => reply(201, SAVED);
   global.fetch = jest.fn((url) => {
     if (url === '/api/orders') return orderReply();
@@ -96,8 +106,8 @@ describe('what is sent', () => {
         { id: 2, name: 'מברשת', price: 30, quantity: 1, selectedVariant: null, selectedColor: null, selectedSize: null },
       ],
       subtotal: 530,
-      delivery_fee: 40,
-      total: 570,
+      delivery_fee: 20,
+      total: 550,
     });
   });
 

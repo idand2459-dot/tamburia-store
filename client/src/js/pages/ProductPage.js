@@ -12,18 +12,20 @@
  * כתמיד, היא לא הייתה שלנו מלכתחילה. גם המעבר למוצר אחר אינו עובר
  * יותר כאן: הכרטיסים שבתחתית העמוד הם קישורים אמיתיים.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import ProductDetails from '../features/catalog/product-page/ProductDetails';
 import NotFoundPage from './NotFoundPage';
 import { ProductCardSkeleton } from '../components/LoadingStates';
-import { useStore } from '../context/storeContext';
+import { addItem } from '../store/cart/cartActions';
 import { getProduct, isAbortError } from '../services/productService';
 
 /** טוען את המוצר לפי המזהה שבכתובת ומציג אותו. */
 function ProductPage() {
   const { id } = useParams();
-  const { addToCart } = useStore();
+  const dispatch = useDispatch();
+  const addToCart = useCallback((product, quantity) => dispatch(addItem(product, quantity)), [dispatch]);
 
   const [product, setProduct] = useState(null);
   const [status, setStatus] = useState('loading'); // loading | ready | missing

@@ -6,7 +6,7 @@
  * את העיצוב: /cart מציג את המודאל מעל עמוד הבית, וכפתור "חזור"
  * בדפדפן פשוט סוגר אותו, כי הוא חוזר לכתובת הקודמת.
  */
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation, useMatch } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import MarqueeBanner from './components/MarqueeBanner';
@@ -17,7 +17,7 @@ import PaintCalcBtn from './features/calculators/PaintCalcBtn';
 import CartModal from './features/cart/CartModal';
 import OrderHistory from './features/cart/OrderHistory';
 import Wishlist from './features/cart/Wishlist';
-import { useStore } from './context/storeContext';
+import { useCheckoutForm } from './hooks/useCheckoutForm';
 
 /**
  * מסמן על ה-body שמגירה פתוחה, כדי שה-CSS יסתיר את הכפתורים הצפים.
@@ -71,7 +71,10 @@ function useScrollToTopOnNavigate(pathname) {
 function StoreLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const store = useStore();
+  // The checkout form lives here, not in the cart drawer: the drawer unmounts when it is closed,
+  // and what the customer typed must still be there when it opens again.
+  const checkout = useCheckoutForm();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const onCart = Boolean(useMatch('/cart'));
   const onCheckout = Boolean(useMatch('/checkout'));
@@ -80,7 +83,7 @@ function StoreLayout() {
 
   useScrollToTopOnNavigate(location.pathname);
   useDrawerBodyClass(
-    store.menuOpen || onCart || onCheckout || onOrderLookup || onWishlist,
+    menuOpen || onCart || onCheckout || onOrderLookup || onWishlist,
   );
 
   /**
@@ -92,7 +95,7 @@ function StoreLayout() {
     else navigate(-1);
   }
 
-  const cartStep = store.orderSuccess && onCheckout
+  const cartStep = checkout.orderSuccess && onCheckout
     ? 'success'
     : onCheckout ? 'details' : 'cart';
 
@@ -120,10 +123,10 @@ function StoreLayout() {
           לא משנה דבר בפריסה. */}
       <div className="store-frame" inert={overlayOpen || undefined}>
         <a className="skip-link" href="#main-content">דלג לתוכן</a>
-        <Navbar />
+        <Navbar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
 
         {/* כשהתפריט פתוח הוא לבדו פעיל, כמו המגירות */}
-        <div className="store-frame" inert={store.menuOpen || undefined}>
+        <div className="store-frame" inert={menuOpen || undefined}>
           <MarqueeBanner />
 
           <main id="main-content" tabIndex={-1}>
@@ -148,7 +151,8 @@ function StoreLayout() {
         <CartModal
           cartStep={cartStep}
           setCartStep={goToCartStep}
-          closeCart={() => { store.clearOrderSuccess(); closeOverlay(); }}
+          checkout={checkout}
+          closeCart={() => { checkout.clearOrderSuccess(); closeOverlay(); }}
         />
       )}
 

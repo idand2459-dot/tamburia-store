@@ -1,9 +1,9 @@
 /**
  * סרגל הניווט העליון, כולל חיפוש מוצרים.
  *
- * מושך את מצב העגלה והתפריט מ-StoreContext ואת הניווט מהראוטר, ולא
- * מקבל אותם בפרופס: הערכים האלה זמינים בכל מקום ממילא, והעברתם דרך
- * StoreLayout רק החזירה את אותו prop-drilling שההקשר בא לבטל.
+ * Reads the cart count and the wishlist ids from the Redux store with selectors, and the
+ * navigation from the router. The menu state is the only thing it receives as props
+ * (menuOpen, setMenuOpen): StoreLayout, its parent, shares it with the page frame.
  */
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -11,7 +11,9 @@ import {
   Home, Store, Phone, Undo2, ClipboardList, Heart,
   Search, X, ImageOff, Wrench, ShoppingCart,
 } from 'lucide-react';
-import { useStore } from '../context/storeContext';
+import { useSelector } from 'react-redux';
+import { selectCartCount } from '../store/cart/cartSelectors';
+import { selectWishlistIds } from '../store/wishlist/wishlistSelectors';
 import { useScrolled } from '../hooks/useScrolled';
 import { useModalFocus } from '../hooks/useModalFocus';
 import { priceLabel } from '../utils/pricing';
@@ -34,10 +36,11 @@ function currentPageOf(pathname) {
 }
 
 /** מציג את סרגל הניווט והחיפוש. */
-function Navbar() {
+function Navbar({ menuOpen, setMenuOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { cartCount, wishlistIds, menuOpen, setMenuOpen } = useStore();
+  const cartCount = useSelector(selectCartCount);
+  const wishlistIds = useSelector(selectWishlistIds);
   const scrolled = useScrolled(8);
 
   const [searchOpen, setSearchOpen] = useState(false);

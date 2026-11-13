@@ -1,24 +1,23 @@
 /**
- * שורש האפליקציה: מרכיב את המצב המשותף ומגדיר את טבלת הניתוב.
+ * שורש האפליקציה: מגדיר את טבלת הניתוב ומחבר אליה את ה-store.
  *
- * המצב יושב כאן ולא בתוך המסכים, כדי שהוא ישרוד מעבר בין כתובות —
- * העגלה לא מתאפסת כשעוברים מקטגוריה למוצר. כל תחום מנוהל בהוק נפרד
- * תחת hooks/, וכאן הם מחוברים לאובייקט אחד שעובר ב-StoreContext.
- * צורת האובייקט הזה היא החוזה מול כל המסכים, ואסור לה להשתנות.
+ * The shared storefront state (cart, wishlist, product availability) lives in one classic Redux
+ * store, created once per mount and provided here. The state survives a move between URLs
+ * because the Provider sits above the routes. The checkout form and the menu state are React
+ * state of StoreLayout (the component that stays mounted across all storefront routes).
  *
  * מסך הניהול נטען בעצלתיים (React.lazy): הקוד שלו — הלשוניות, ההוקים
  * שלהן והקונפטי — יושב ב-chunk נפרד שהדפדפן מוריד רק כשנכנסים ל-/admin.
  * לקוח בחנות לא מוריד אותו בכלל. ה-CSS של הניהול נשאר בקובץ הראשי: סדר
  * ה-imports ב-css/app.css הוא ה-cascade, והוצאת חלק ממנו הייתה משנה אותו.
  */
-import { lazy, Suspense, useState, useMemo } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Provider, useDispatch, useSelector } from 'react-redux';
 import '../css/app.css';
-import { StoreContext } from './context/storeContext';
-import { useCart } from './hooks/useCart';
-import { useWishlist } from './hooks/useWishlist';
-import { useCheckoutForm } from './hooks/useCheckoutForm';
-import { useAvailability } from './hooks/useAvailability';
+import { createAppStore } from './store';
+import { checkAvailability } from './store/availability/availabilityActions';
+import { selectAvailabilityKey } from './store/availability/availabilitySelectors';
 import StoreLayout from './StoreLayout';
 import HomePage from './pages/HomePage';
 import CategoryPage from './pages/CategoryPage';
@@ -40,57 +39,57 @@ const adminLoading = (
   <div className="admin-login-page" role="status" aria-label="טוען את מסך הניהול" />
 );
 
-/** מציג את האפליקציה ומנהל את המצב המשותף לכל המסכים. */
-function App() {
-  const cart = useCart();
-  const wishlist = useWishlist();
-  const checkout = useCheckoutForm(cart);
+/**
+ * The routes. It also keeps the product availability of the cart up to date: the cart can hold a
+ * snapshot of a product that was hidden since (it is saved in localStorage), so whenever the set
+ * of ids in the cart changes the store asks the server which of them are no longer sold. This
+ * runs whether or not the cart drawer is open, so the marks are ready when it opens.
+ */
+function AppRoutes() {
+  const dispatch = useDispatch();
+  const availabilityKey = useSelector(selectAvailabilityKey);
 
-  /* העגלה שורדת ב-localStorage, ומוצר שהוסתר אחרי שנכנס אליה עדיין
-     יושב בה עם המחיר שהיה. הבדיקה כאן היא מה שמאפשר לעגלה להגיד את
-     זה ללקוח במקום לשלוח אותו לסירוב של השרת. */
-  const cartIds = useMemo(() => cart.cart.map((item) => item.id), [cart.cart]);
-  const unavailableIds = useAvailability(cartIds);
-
-  // התפריט הנפתח אינו שייך לאף אחד משלושת התחומים, ולכן נשאר כאן.
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const store = useMemo(() => ({
-    ...cart,
-    ...wishlist,
-    ...checkout,
-    unavailableIds,
-    menuOpen, setMenuOpen,
-  }), [cart, wishlist, checkout, unavailableIds, menuOpen]);
+  // The thunk returns the function that aborts the request, which is exactly the effect cleanup.
+  useEffect(() => dispatch(checkAvailability(availabilityKey)), [dispatch, availabilityKey]);
 
   return (
-    <StoreContext.Provider value={store}>
-      <Routes>
-        <Route element={<StoreLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="category/:slug" element={<CategoryPage />} />
-          <Route path="product/:id" element={<ProductPage />} />
-          <Route path="about" element={<About />} />
-          <Route path="contact" element={<Contact />} />
-          <Route path="returns" element={<Returns />} />
-          <Route path="accessibility" element={<Accessibility />} />
+    <Routes>
+      <Route element={<StoreLayout />}>
+        <Route index element={<HomePage />} />
+        <Route path="category/:slug" element={<CategoryPage />} />
+        <Route path="product/:id" element={<ProductPage />} />
+        <Route path="about" element={<About />} />
+        <Route path="contact" element={<Contact />} />
+        <Route path="returns" element={<Returns />} />
+        <Route path="accessibility" element={<Accessibility />} />
 
-          {/* מודאלים עם כתובת — המסגרת מציגה אותם מעל עמוד הבית */}
-          <Route path="cart" element={<HomePage />} />
-          <Route path="checkout" element={<HomePage />} />
-          <Route path="orders/lookup" element={<HomePage />} />
-          <Route path="wishlist" element={<HomePage />} />
+        {/* מודאלים עם כתובת — המסגרת מציגה אותם מעל עמוד הבית */}
+        <Route path="cart" element={<HomePage />} />
+        <Route path="checkout" element={<HomePage />} />
+        <Route path="orders/lookup" element={<HomePage />} />
+        <Route path="wishlist" element={<HomePage />} />
 
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
 
-        <Route path="/admin" element={<Navigate to="/admin/orders" replace />} />
-        <Route
-          path="/admin/:tab"
-          element={<Suspense fallback={adminLoading}><AdminRoute /></Suspense>}
-        />
-      </Routes>
-    </StoreContext.Provider>
+      <Route path="/admin" element={<Navigate to="/admin/orders" replace />} />
+      <Route
+        path="/admin/:tab"
+        element={<Suspense fallback={adminLoading}><AdminRoute /></Suspense>}
+      />
+    </Routes>
+  );
+}
+
+/** מציג את האפליקציה: ה-store של החנות והניתוב. */
+function App() {
+  // One store per mount, read from localStorage once, like the hooks it replaced.
+  const [store] = useState(() => createAppStore());
+
+  return (
+    <Provider store={store}>
+      <AppRoutes />
+    </Provider>
   );
 }
 

@@ -6,11 +6,14 @@
  * כאן בחירה בכלל. הקלט עצמו מוסתר לעין אבל נשאר תחנת מיקוד, ולכן כל
  * התנהגות המקלדת של רדיו מגיעה מהדפדפן ולא מקוד שלנו.
  *
- * הדמי 20 ₪ מוצג כאן ומחושב ב-useCart; שניהם נגזרים מאותו מספר בעולם
- * ולא אחד מהשני, ולכן שינוי מחיר משלוח נוגע בשני הקבצים.
+ * The fee of 20 is shown here and computed by store/cart/cartSelectors.js (DELIVERY_FEE in
+ * utils/delivery.js); both come from the same number in the world and not from each other, so
+ * changing the delivery price touches both files.
  */
 import { Store, Truck } from 'lucide-react';
-import { useStore } from '../../context/storeContext';
+import { useDispatch, useSelector } from 'react-redux';
+import { setDeliveryMethod } from '../../store/cart/cartActions';
+import { selectDeliveryMethod } from '../../store/cart/cartSelectors';
 import { ADDRESS } from '../../utils/storeInfo';
 
 const OPTIONS = [
@@ -34,7 +37,8 @@ const OPTIONS = [
 
 /** מציג את שני כרטיסי אופן הקבלה. */
 function DeliveryOptions() {
-  const { deliveryMethod, setDeliveryMethod } = useStore();
+  const dispatch = useDispatch();
+  const deliveryMethod = useSelector(selectDeliveryMethod);
 
   return (
     <fieldset className="delivery-options">
@@ -51,7 +55,7 @@ function DeliveryOptions() {
               name="delivery-method"
               value={value}
               checked={deliveryMethod === value}
-              onChange={() => setDeliveryMethod(value)}
+              onChange={() => dispatch(setDeliveryMethod(value))}
             />
             {/* טבעת המיקוד. שכבה משלה ולא :has() על התווית: הפרויקט
                 מצייר טבעות על אלמנט נמתח במקומות אחרים מאותה סיבה. */}

@@ -1,12 +1,13 @@
 /**
  * שלב הפרטים: טופס הלקוח, בדיקת אזור החלוקה ושליחת ההזמנה.
  *
- * מושך את שדות הטופס מ-StoreContext ומקבל בפרופס רק את מעבר השלבים,
- * שהוא עניין של הניתוב ולא של המצב המשותף.
+ * The form fields arrive as the `checkout` prop (owned by StoreLayout, so they survive the drawer
+ * being closed); the cart count, total and delivery method are read from the Redux store. The
+ * step change is a prop too, because it belongs to the routing.
  *
  * הכפתור אינו כאן אלא ב-CheckoutFormFooter שלמטה, כי הוא יושב בשורה
  * התחתונה הדביקה של המגירה. שני הרכיבים מחשבים את השגיאות מאותה
- * פונקציה טהורה ומאותו קונטקסט, ולכן מה שהכפתור דוחה הוא בדיוק מה
+ * פונקציה טהורה ומאותם נתונים, ולכן מה שהכפתור דוחה הוא בדיוק מה
  * שהשדות מציגים.
  *
  * הכפתור לא חסום כשחסר משהו, כמו שהיה. כפתור חסום לא אומר למה, וקורא
@@ -16,7 +17,8 @@
  */
 import { Ban, Check, AlertTriangle, AlertCircle, CheckCircle } from 'lucide-react';
 import { Spinner } from '../../components/LoadingStates';
-import { useStore } from '../../context/storeContext';
+import { useSelector } from 'react-redux';
+import { selectCartCount, selectTotal, selectDeliveryMethod } from '../../store/cart/cartSelectors';
 import { formatPrice } from '../../utils/pricing';
 import { checkAllowedCity } from '../../utils/delivery';
 
@@ -77,26 +79,29 @@ function FieldError({ name, error }) {
 }
 
 /** מציג את טופס ההזמנה. showErrors נדלק בלחיצה הראשונה על "שלח". */
-function CheckoutFormView({ setCartStep, showErrors = false }) {
-  const store = useStore();
+function CheckoutFormView({ setCartStep, checkout, showErrors = false }) {
+  const cartCount = useSelector(selectCartCount);
+  const total = useSelector(selectTotal);
+  const deliveryMethod = useSelector(selectDeliveryMethod);
   const {
-    cartCount, total, deliveryMethod,
     customerName, setCustomerName,
     customerPhone, setCustomerPhone,
     customerEmail, setCustomerEmail,
     deliveryAddress, setDeliveryAddress,
     orderNotes, setOrderNotes,
-  } = store;
+  } = checkout;
+  // What the form checks: the typed fields and the delivery method chosen in the cart.
+  const form = { ...checkout, deliveryMethod };
 
   /** מעדכן את הכתובת למשלוח. */
   function handleAddressChange(e) {
     setDeliveryAddress(e.target.value);
   }
 
-  const deliveryInvalid = isDeliveryInvalid(store);
+  const deliveryInvalid = isDeliveryInvalid(form);
   // השגיאות מוצגות רק אחרי ניסיון שליחה — טופס שצועק על שדות ריקים
   // לפני שהתחילו למלא אותו רק מפריע. אחרי זה הן מתעדכנות בזמן ההקלדה.
-  const errors = showErrors ? checkoutErrors(store) : {};
+  const errors = showErrors ? checkoutErrors(form) : {};
 
   return (
     <div className="checkout-form">
@@ -212,14 +217,15 @@ function CheckoutFormView({ setCartStep, showErrors = false }) {
  * הכפתור שיושב בשורה התחתונה של המגירה, והתראת השרת שמעליו.
  * onInvalid מדליק את הצגת השגיאות בטופס שמעליו (CartModal מחזיק אותה).
  */
-function CheckoutFormFooter({ onInvalid }) {
-  const store = useStore();
-  const { submittingOrder, handlePlaceOrder, orderError } = store;
+function CheckoutFormFooter({ onInvalid, checkout }) {
+  const deliveryMethod = useSelector(selectDeliveryMethod);
+  const { submittingOrder, handlePlaceOrder, orderError } = checkout;
+  const form = { ...checkout, deliveryMethod };
 
   /** בודק את הטופס, ושולח רק אם הוא תקין. */
   function handleSubmit() {
-    const firstInvalid = Object.keys(checkoutErrors(store))[0]
-      || (isDeliveryInvalid(store) ? 'address' : null);
+    const firstInvalid = Object.keys(checkoutErrors(form))[0]
+      || (isDeliveryInvalid(form) ? 'address' : null);
 
     if (firstInvalid) {
       onInvalid?.();

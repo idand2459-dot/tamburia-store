@@ -36,15 +36,15 @@ server/
 client/src/
   index.js         entry point (CRA requires exactly this path)
   css/             app.css imports every partial: base / layout / components / features/<domain>
-  js/App.js        shared state (cart, wishlist, checkout) and the route table
-  js/StoreLayout.js  the store frame: navbar, footer, drawers, floating buttons around <Outlet>
+  js/App.js        the Redux Provider and the route table
+  js/StoreLayout.js  the store frame: navbar, footer, drawers, floating buttons around <Outlet>; owns the checkout form and the menu state
   js/pages/        route screens only (home, category, product, static pages, admin login, admin/)
   js/components/   reusable UI: Drawer, Navbar, Footer, ProductCard, ProductList, LoadingStates…
   js/features/     feature UI by domain: home, catalog (+ product-page), cart, calculators
-  js/hooks/        state and effects: useCart, useCheckoutForm, useAvailability, useAdmin*…
+  js/store/        the Redux store: cart, wishlist, availability (…Actions, …Reducer, …Selectors per domain)
+  js/hooks/        state and effects: useCheckoutForm, useAvailability (recently viewed), useAdmin*…
   js/services/     every server call the storefront makes (http, product, review, order, pigment, auth)
   js/routes/       AdminRoute: the session guard in front of the admin
-  js/context/      StoreContext, the object App.js hands to every screen
   js/utils/        pure helpers: pricing, store info, colour palette, category icons…
 
 test/              server suites (unit-*, smoke-*), run by run-all.js
@@ -53,12 +53,13 @@ scripts/           catalog import, demo data, the product-photo pipeline, the a1
 
 ## A request, end to end: placing an order
 
-1. **Cart, in the browser.** `hooks/useCart` keeps the cart in `localStorage` and computes the
-   subtotal, the delivery fee (the same `DELIVERY_FEE` as the server, 20 ₪) and the total for
-   display only. `useAvailability` asks `GET /api/products?ids=…` which saved items are still
-   in the catalogue, and the cart blocks checkout for any that aren't.
+1. **Cart, in the browser.** The Redux store (`store/cart`) keeps the cart lines and the delivery
+   method; the lines are saved to `localStorage`. Selectors compute the subtotal, the delivery fee
+   (the same `DELIVERY_FEE` as the server, 20 ₪) and the total for display only. The
+   `checkAvailability` thunk (`store/availability`) asks `GET /api/products?ids=…` which saved
+   items are still in the catalogue, and the cart blocks checkout for any that aren't.
 2. **Submit.** `features/cart/CheckoutFormView` calls `handlePlaceOrder` from
-   `hooks/useCheckoutForm`. It builds the order (customer, delivery method, and for each line
+   `hooks/useCheckoutForm` (called in `StoreLayout`). It builds the order (customer, delivery method, and for each line
    the product id, quantity, chosen variant/colour/size and the price the customer saw) and
    calls `services/orderService.createOrder` → `POST /api/orders`.
 3. **Route → validator → controller.** `routes/order.routes` maps the request to
