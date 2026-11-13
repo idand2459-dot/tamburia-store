@@ -11,13 +11,12 @@ import '@testing-library/jest-dom';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 import CategoryPage from './CategoryPage';
-import { StoreContext } from '../context/storeContext';
+import { Provider } from 'react-redux';
+import { createAppStore } from '../store';
 
 /* הבאנר טוען את תמונות הקטגוריות דרך require.context של webpack, שאין
    ב-Jest. הוא לא חלק ממה שנבדק כאן. */
 jest.mock('../features/catalog/CategoryBanner', () => () => null);
-
-const STORE = { addToCart: () => {}, wishlistIds: [], toggleCardWishlist: () => {} };
 
 /* מוצרי צביעה: שניים ברולרים, אחד בצבעים, ואחד בלי תת-קטגוריה. */
 const PRODUCTS = [
@@ -36,11 +35,11 @@ function LocationProbe() {
 function renderAt(url) {
   return render(
     <MemoryRouter initialEntries={[url]}>
-      <StoreContext.Provider value={STORE}>
+      <Provider store={createAppStore()}>
         <Routes>
           <Route path="/category/:slug" element={<><CategoryPage /><LocationProbe /></>} />
         </Routes>
-      </StoreContext.Provider>
+      </Provider>
     </MemoryRouter>,
   );
 }

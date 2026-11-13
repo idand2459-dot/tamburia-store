@@ -8,8 +8,10 @@
  * מחיר אדום ושורת מלאי משלו, וכל תוספת לכרטיס האמיתי (מועדפים,
  * תת-קטגוריה, מספר גרסאות) לא הגיעה אליו.
  *
- * העגלה והמועדפים נשלפים כאן מההקשר ולא מגיעים בפרופס, בדיוק כמו
+ * העגלה והמועדפים נשלפים כאן מה-store ולא מגיעים בפרופס, בדיוק כמו
  * בעמוד הקטגוריה: זה מה שהכרטיס צריך, ועמוד המוצר אינו מתווך בזה.
+ * Availability of the recently viewed products stays a local hook (useAvailability): it is not
+ * shared state, only this component reads it.
  * הניווט הוא הקישור שבתוך הכרטיס עצמו, ולכן אין כאן onSelectProduct.
  *
  * ההבדל בין שתי הרשתות אינו רק בכותרת: "מוצרים נוספים מהקטגוריה"
@@ -17,9 +19,12 @@
  * מ-localStorage ויכולים להיות צילום של מוצר שהוסתר מאז. רק השנייה
  * נבדקת מול הקטלוג.
  */
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import ProductList from '../../../components/ProductList';
-import { useStore } from '../../../context/storeContext';
+import { addItem } from '../../../store/cart/cartActions';
+import { toggleWishlist } from '../../../store/wishlist/wishlistActions';
+import { selectWishlistIds } from '../../../store/wishlist/wishlistSelectors';
 import { useAvailability } from '../../../hooks/useAvailability';
 
 /* לכל היותר ארבעה — שורה אחת על מסך רחב. */
@@ -51,7 +56,10 @@ function RelatedGrid({
 
 /** מציג את המוצרים מאותה קטגוריה ואת "צפית לאחרונה". */
 function RelatedProducts({ recentlyViewed, relatedProducts, categoryId }) {
-  const { addToCart, wishlistIds, toggleCardWishlist } = useStore();
+  const dispatch = useDispatch();
+  const wishlistIds = useSelector(selectWishlistIds);
+  const addToCart = useCallback((product, quantity) => dispatch(addItem(product, quantity)), [dispatch]);
+  const toggleCardWishlist = useCallback((product) => dispatch(toggleWishlist(product)), [dispatch]);
 
   const recentIds = useMemo(() => recentlyViewed.map((p) => p.id), [recentlyViewed]);
   const unavailableIds = useAvailability(recentIds);

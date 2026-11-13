@@ -15,13 +15,8 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ProductDetails from './ProductDetails';
-import { StoreContext } from '../../../context/storeContext';
-
-const STORE = {
-  addToCart: () => {},
-  wishlistIds: [],
-  toggleCardWishlist: () => {},
-};
+import { Provider } from 'react-redux';
+import { createAppStore } from '../../../store';
 
 const PRODUCT_A = { id: 1, name: 'מברשת א', price: 10, category: 'painting', in_stock: true };
 const PRODUCT_B = { id: 2, name: 'מברשת ב', price: 20, category: 'tools', in_stock: true };
@@ -49,9 +44,9 @@ const respond = (body) => ({ ok: true, status: 200, json: async () => body });
 function renderPage(product) {
   return render(
     <MemoryRouter>
-      <StoreContext.Provider value={STORE}>
+      <Provider store={createAppStore()}>
         <ProductDetails product={product} onAddToCart={() => {}} />
-      </StoreContext.Provider>
+      </Provider>
     </MemoryRouter>,
   );
 }
@@ -78,9 +73,9 @@ test('תשובה מאוחרת של המוצר הקודם אינה נוחתת ע�
   // מעבר מהיר למוצר ב', בזמן ששתי הבקשות של א' עדיין באוויר.
   rerender(
     <MemoryRouter>
-      <StoreContext.Provider value={STORE}>
+      <Provider store={createAppStore()}>
         <ProductDetails product={PRODUCT_B} onAddToCart={() => {}} />
-      </StoreContext.Provider>
+      </Provider>
     </MemoryRouter>,
   );
 
@@ -134,9 +129,9 @@ test('המעבר מרוקן מיד את הביקורות ואת המוצרים �
 
   rerender(
     <MemoryRouter>
-      <StoreContext.Provider value={STORE}>
+      <Provider store={createAppStore()}>
         <ProductDetails product={PRODUCT_B} onAddToCart={() => {}} />
-      </StoreContext.Provider>
+      </Provider>
     </MemoryRouter>,
   );
 

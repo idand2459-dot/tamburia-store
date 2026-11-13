@@ -1,8 +1,8 @@
 /**
  * מסך התודה: מספר ההזמנה, פרטיה ודרכי יצירת קשר.
  *
- * מושך את תוצאת ההזמנה מ-StoreContext ומקבל בפרופס רק את הסגירה,
- * שהיא עניין של הניתוב ולא של המצב המשותף.
+ * The order result arrives in the `checkout` prop (owned by StoreLayout), and the closing as
+ * a prop too, since it belongs to the routing.
  *
  * "מה קורה עכשיו" מתאר רק מה שהמערכת באמת עושה: החנות מקבלת מייל על
  * כל הזמנה, והלקוח מקבל אישור רק אם השאיר כתובת מייל — שתי השורות
@@ -11,13 +11,12 @@
 import {
   Check, ClipboardList, Store, Truck, Mail, Phone, MessageCircle,
 } from 'lucide-react';
-import { useStore } from '../../context/storeContext';
 import { ADDRESS, PHONES, WHATSAPP, whatsappUrl } from '../../utils/storeInfo';
 import { formatPrice } from '../../utils/pricing';
 
 /** מציג את אישור ההזמנה. */
-function OrderSuccessView({ closeCart }) {
-  const { orderSuccess } = useStore();
+function OrderSuccessView({ closeCart, checkout }) {
+  const { orderSuccess } = checkout;
 
   const isPickup = orderSuccess.delivery_method === 'pickup';
 

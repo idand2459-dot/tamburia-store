@@ -1,9 +1,10 @@
 /**
  * טופס ההזמנה: פרטי הלקוח, השליחה לשרת ומסך התודה.
  *
- * מקבל את מצב העגלה כארגומנט ולא מחזיק עותק משלו — הסכומים והפריטים
- * שייכים ל-useCart, וכפילות שלהם כאן הייתה יכולה להיפרד ממנו. בסיום
- * הזמנה מוצלחת הטופס גם מרוקן את העגלה, ולכן הוא צריך את הסטרים שלה.
+ * The cart is not held here: its lines, totals and delivery method are read from the Redux store
+ * (the store is the single owner), and a successful order empties it through the same store. The
+ * form fields themselves are React state of whoever calls this hook (StoreLayout), because they
+ * must outlive the cart drawer, which unmounts when it is closed.
  *
  * הסכומים והמחירים נשלחים לשרת כדי שיהיה מה להשוות אליו, לא כדי
  * שיישמרו: השרת שולף את המחיר של כל פריט מהקטלוג, מחשב מהם את
@@ -13,31 +14,24 @@
  * ואינו ניסיון רמייה, אבל הוא כן אומר שהלקוח עומד לאשר סכום אחר ממה
  * שהוא רואה. השרת דוחה, מחזיר את המחירים העדכניים ב-details, והעגלה
  * מתקנת את עצמה כאן — כך שהניסיון השני כבר מציג את הסכום הנכון.
+ * The repricing itself (matching by id and variant) is the cart reducer's CART_REPRICED.
  */
 import { useState, useMemo, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { createOrder, ApiError } from '../services/orderService';
-
-/**
- * מחזיר את העגלה עם המחירים שהשרת החזיר.
- *
- * ההתאמה היא לפי מזהה *וגרסה*: אותו מוצר יכול לשבת בעגלה בשתי שורות
- * בשתי גרסאות במחירים שונים, והתאמה לפי מזהה בלבד הייתה נותנת לשתיהן
- * את אותו מחיר.
- */
-function applyPrices(cart, prices) {
-  return cart.map((item) => {
-    const match = prices.find((p) => p.id === item.id
-      && (p.selectedVariant || null) === (item.selectedVariant || null));
-    return match ? { ...item, price: match.price } : item;
-  });
-}
+import { clearCart, repriceCart } from '../store/cart/cartActions';
+import {
+  selectCartItems, selectSubtotal, selectDeliveryFee, selectTotal, selectDeliveryMethod,
+} from '../store/cart/cartSelectors';
 
 /** מנהל את טופס ההזמנה ואת שליחתה. */
-export function useCheckoutForm(cartState) {
-  const {
-    cart, subtotal, deliveryFee, total,
-    deliveryMethod, setCart, setDeliveryMethod,
-  } = cartState;
+export function useCheckoutForm() {
+  const dispatch = useDispatch();
+  const cart = useSelector(selectCartItems);
+  const subtotal = useSelector(selectSubtotal);
+  const deliveryFee = useSelector(selectDeliveryFee);
+  const total = useSelector(selectTotal);
+  const deliveryMethod = useSelector(selectDeliveryMethod);
 
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -100,21 +94,20 @@ export function useCheckoutForm(cartState) {
       // למסך: המחירים העדכניים, כדי שהסכום שמוצג יתיישר עם מה שהשרת
       // יקבל בפעם הבאה.
       if (error.status === 409 && Array.isArray(error.details?.prices)) {
-        setCart((prev) => applyPrices(prev, error.details.prices));
+        dispatch(repriceCart(error.details.prices));
       }
       return;
     }
 
     setSubmittingOrder(false);
     setOrderSuccess(saved);
-    setCart([]);
-    setDeliveryMethod(null);
+    dispatch(clearCart());
     setCustomerName(''); setCustomerPhone(''); setCustomerEmail('');
     setDeliveryAddress(''); setOrderNotes('');
   }, [
     cart, subtotal, deliveryFee, total, deliveryMethod,
     customerName, customerPhone, customerEmail, deliveryAddress, orderNotes,
-    setCart, setDeliveryMethod,
+    dispatch,
   ]);
 
   return useMemo(() => ({

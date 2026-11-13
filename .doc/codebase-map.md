@@ -8,7 +8,7 @@ A learning aid for the codebase. The full architecture reference is [docs/ARCHIT
 
 ### Folders
 - `server/` — the Express API: `routes/`, `controllers/`, `services/`, `models/`, `validators/`, `middleware/`, `config/`, `db/` (migrations), `utils/`.
-- `client/` — the React storefront and admin; code in `client/src/js/` (`pages/`, `features/`, `components/`, `hooks/`, `services/`, `routes/`, `context/`, `utils/`), styles in `client/src/css/`.
+- `client/` — the React storefront and admin; code in `client/src/js/` (`pages/`, `features/`, `components/`, `hooks/`, `store/`, `services/`, `routes/`, `utils/`), styles in `client/src/css/`.
 - `scripts/` — npm scripts: catalogue import, demo data, the product-photo pipeline, the accessibility audit.
 - `test/` — the server suites, run by `test/run-all.js`.
 - `docs/` — the existing project docs; `.doc/` — the project definition, glossary, architecture notes, and audit files.
@@ -22,7 +22,7 @@ A learning aid for the codebase. The full architecture reference is [docs/ARCHIT
   - The realtime service is infrastructure only; services decide what to broadcast (`server/services/realtime.service.js:4-8`).
   - Every error reaches the central handler (`server/app.js:95`).
 - Client: page or feature → hook → service → `services/http.js` → `fetch`.
-  - Example: the checkout hook calls `createOrder` (`client/src/js/hooks/useCheckoutForm.js:18`), which calls `postJson` (`client/src/js/services/orderService.js:24-25`), which calls `fetch` (`client/src/js/services/http.js:86-87`).
+  - Example: the checkout hook calls `createOrder` (`client/src/js/hooks/useCheckoutForm.js:81`), which calls `postJson` (`client/src/js/services/orderService.js:24-25`), which calls `fetch` (`client/src/js/services/http.js:86-87`).
   - The admin screen does not use these services; it calls its own `api()` wrapper (`client/src/js/services/orderService.js:9`, `client/src/js/hooks/useAdminOrders.js:58`).
 
 ### Frontend to backend
@@ -53,7 +53,7 @@ A learning aid for the codebase. The full architecture reference is [docs/ARCHIT
 
 ### W01 — Place an order: from submitting the checkout form until the order is saved and both emails are logged
 1. The submit button checks the form and calls `handlePlaceOrder`. `client/src/js/features/cart/CheckoutFormView.js:228-237`
-2. Name and phone are required, and an address for delivery; the body carries the items, their prices, and the totals. `client/src/js/hooks/useCheckoutForm.js:60-80`
+2. Name and phone are required, and an address for delivery; the body carries the items, their prices, and the totals. `client/src/js/hooks/useCheckoutForm.js:54-74`
 3. `POST /api/orders`. `client/src/js/services/orderService.js:24-25`, `client/src/js/services/http.js:86-87`
 4. The route is open to customers; the controller parses the body. `server/routes/order.routes.js:29`, `server/controllers/order.controller.js:29-31`
 5. The validator requires a name, and for delivery an address in the delivery area; the email is optional; the status starts as `new`. `server/validators/order.validator.js:236-253`
@@ -63,7 +63,7 @@ A learning aid for the codebase. The full architecture reference is [docs/ARCHIT
 9. Two emails are sent in parallel: to the store and to the customer. `server/services/order.service.js:72-75`, `server/services/email/index.js:12-27`
 10. Sending: with no recipient it returns without a log line; with `MAIL_ENABLED=false` it logs the subject and the recipient, not the body. `server/services/email/transporter.js:23`, `:25-27`
 11. The response is 201 with the order and whether each email was sent. `server/services/order.service.js:77`, `server/controllers/order.controller.js:31`
-12. The client shows the thank-you screen and empties the cart; on a rejection it keeps the cart, and a 409 updates the prices. `client/src/js/hooks/useCheckoutForm.js:108-113`, `:88-105`
+12. The client shows the thank-you screen and empties the cart; on a rejection it keeps the cart, and a 409 updates the prices. `client/src/js/hooks/useCheckoutForm.js:104`, `:97` (the cart is emptied and re-priced through `client/src/js/store/cart/cartReducer.js`)
 
 ### W02 — A new order reaches the admin: from saving the order until it appears in the feed with the chime
 1. On start, the server attaches WebSocket to the same HTTP server. `server/server.js:23`

@@ -9,7 +9,8 @@
  * מבנה העמוד: באנר תצלום למעלה, ומתחתיו אזור קנייה בהיר — סרגל סינון
  * בצד ההתחלה (צ'יפים בטלפון), שורת כלים ורשת המוצרים.
  */
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { PackageSearch, X, Phone } from 'lucide-react';
 import categories from '../features/catalog/categories';
@@ -20,7 +21,9 @@ import NotFoundPage from './NotFoundPage';
 import ProductList from '../components/ProductList';
 import { PHONES } from '../utils/storeInfo';
 import { sortByPrice } from '../utils/pricing';
-import { useStore } from '../context/storeContext';
+import { addItem } from '../store/cart/cartActions';
+import { toggleWishlist } from '../store/wishlist/wishlistActions';
+import { selectWishlistIds } from '../store/wishlist/wishlistSelectors';
 import { getProducts, isAbortError } from '../services/productService';
 import { usePageTitle } from '../hooks/usePageTitle';
 
@@ -36,7 +39,10 @@ const SORT_OPTIONS = [
 function CategoryPage() {
   const { slug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { addToCart, wishlistIds, toggleCardWishlist } = useStore();
+  const dispatch = useDispatch();
+  const wishlistIds = useSelector(selectWishlistIds);
+  const addToCart = useCallback((product, quantity) => dispatch(addItem(product, quantity)), [dispatch]);
+  const toggleCardWishlist = useCallback((product) => dispatch(toggleWishlist(product)), [dispatch]);
 
   const category = categories.find((c) => c.id === slug);
   // קטגוריה שלא קיימת מוצגת כ-404, ושם הכותרת צריכה להגיד את זה:
