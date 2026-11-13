@@ -86,7 +86,7 @@ function createApp() {
   // את index.html עם 200 — תשובה שנראית תקינה ומסתירה קישור שבור.
   app.use('/uploads', notFoundHandler);
 
-  app.use('/api', require('./routes'));
+  app.use('/api', require('./api/index'));
   app.use('/api', notFoundHandler);
 
   if (config.client.serve) mountClient(app);

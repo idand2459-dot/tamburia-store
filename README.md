@@ -120,7 +120,7 @@ flowchart LR
     subgraph S["Node process — single port"]
         H["Security headers<br/>CORS · JSON body limit"]
         U["/uploads<br/>static + 404"]
-        A["/api<br/>routes → validators → controllers<br/>→ services → models"]
+        A["/api<br/>routes → validators → controllers<br/>→ services → repositories"]
         W["/ws<br/>admin order feed"]
         C["Client static<br/>+ SPA fallback"]
     end
@@ -147,11 +147,12 @@ origin, so there is no CORS setup in production and no second deployment target.
 server/
   config/        env loading and validation, the one shared database pool
   db/            SQL migrations (000–011) and the runner
-  routes/        one router per domain, marking what is public and what is guarded
-  validators/    every body and query parameter checked and bounded
-  controllers/   HTTP in, service call, HTTP out — no SQL, no models, no try/catch
-  services/      business rules: pricing, visibility, moderation, email, realtime, auth, images
-  models/        all SQL lives here — explicit columns, never SELECT *
+  api/           one folder per domain (product, order, review, pigmentFormula, setting, auth, upload):
+                 routes, validator, controller, service, repository — plus api/index.js
+                 - routes mark what is public and what is guarded; validators check and bound input
+                 - controllers: HTTP in, service call, HTTP out — no SQL, no repositories, no try/catch
+                 - services hold the business rules; repositories hold all SQL (explicit columns, never SELECT *)
+  services/      shared infrastructure: email, realtime, image processing
   middleware/    error handling, uploads, security headers, admin guard, rate limiting
   utils/         errors, money in agorot, the pagination envelope, the category tree
 
@@ -178,7 +179,7 @@ The full map, one line per folder, is in [docs/ARCHITECTURE.md](docs/ARCHITECTUR
 ### Design decisions
 
 **Layered server, the same in every domain.** A request goes route → validator →
-controller → service → model. SQL exists only in models, validation only in validators,
+controller → service → repository. SQL exists only in repositories, validation only in validators,
 business rules only in services, and controllers contain no `try/catch`. Errors are thrown
 as `AppError` and a single error handler turns them into responses. "Where does this
 belong?" almost always has one answer.
@@ -342,7 +343,7 @@ port and address) before the first migration, and only then starts its own serve
 | `unit-repo-hygiene` | 6 | `.env` not tracked, `.env.example` placeholders only, no secret value in any tracked file |
 | `unit-config` | 8 | The production startup rules (session secret, password length) and optional mail credentials |
 | `unit-order-service` | 54 | Order business rules, the pick list included, without network or database |
-| `unit-product-service` | 14 | Hidden-product visibility for customers and admins, with a fake model |
+| `unit-product-service` | 14 | Hidden-product visibility for customers and admins, with a fake repository |
 | `unit-review-service` | 13 | Moderation: public reads approved-only, new reviews unapproved |
 | `unit-money` | 23 | Agorot arithmetic and price parsing |
 | `unit-originals` | 14 | Keeping and finding the full-resolution original of an upload |

@@ -1,6 +1,6 @@
 /**
- * בודק את כלל המודרציה של services/review.service בבידוד, בלי מסד:
- * מודל מזויף נטען למקום של models/review.model.
+ * בודק את כלל המודרציה של api/review/review.service בבידוד, בלי מסד:
+ * מודל מזויף נטען למקום של api/review/review.repository.
  *
  * הכלל: הרשימה והסטטיסטיקה הציבוריות הן של מאושרות בלבד, גם כשהבקשה
  * מנסה אחרת; חוות דעת חדשה נשמרת תמיד לא-מאושרת.
@@ -31,10 +31,10 @@ const fakeModel = {
   update: async (id, data) => (id === 1 ? { id: 1, ...data } : null),
   remove: async (id) => (id === 1 ? { id: 1 } : null),
 };
-const modelPath = require.resolve(path.join(__dirname, '../server/models/review.model'));
+const modelPath = require.resolve(path.join(__dirname, '../server/api/review/review.repository'));
 require.cache[modelPath] = { id: modelPath, filename: modelPath, loaded: true, exports: fakeModel };
 
-const service = require('../server/services/review.service');
+const service = require('../server/api/review/review.service');
 const last = (op) => calls.filter(([name]) => name === op).pop()[1];
 
 async function main() {
