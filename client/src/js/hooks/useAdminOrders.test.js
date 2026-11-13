@@ -301,3 +301,73 @@ describe('handleDeleteOrder (fetch level)', () => {
     expect(listCalls()).toHaveLength(1);
   });
 });
+
+/*
+ * loadOrders, pinned through the `fetchOrders` the hook returns. These record what the code
+ * does today, imperfections included: it never looks at the status, only at whether the body
+ * is an array. A non-OK answer with a JSON object therefore empties the list, while a failure
+ * to get or read an answer at all leaves the list as it was. Neither shows an error.
+ */
+describe('loadOrders (fetch level)', () => {
+  const SECOND = { id: 13, status: 'new', items: [{ name: 'ג' }], picked_items: [] };
+  let listReply;
+
+  beforeEach(() => {
+    listReply = () => reply(200, [ORDER]);
+    global.fetch = jest.fn((url, options) => {
+      if (url === '/api/orders' && !options) return listReply();
+      throw new Error(`unexpected request: ${url}`);
+    });
+  });
+
+  afterEach(() => {
+    delete global.fetch;
+  });
+
+  /** Loads the list again, the way the status change and the delete do. */
+  const reload = (result) => act(async () => { await result.current.fetchOrders(); });
+
+  test('loads an array of orders from GET /api/orders, with no options, and shows no error', async () => {
+    const result = await setupOverFetch();
+
+    const [firstUrl, firstOptions] = global.fetch.mock.calls[0];
+    expect(firstUrl).toBe('/api/orders');
+    expect(firstOptions).toBeUndefined();
+    expect(result.current.orders).toEqual([ORDER]);
+    expect(result.current.ordersError).toBe('');
+
+    listReply = () => reply(200, [ORDER, SECOND]);
+    await reload(result);
+    expect(result.current.orders).toEqual([ORDER, SECOND]);
+  });
+
+  test.each([
+    ['a non-OK answer with an error object (401)', 401, { error: 'נדרשת התחברות כמנהל' }],
+    ['a non-OK answer with an error object (500)', 500, { error: 'שגיאת שרת' }],
+    ['an OK answer that is an object', 200, { orders: [ORDER] }],
+    ['an OK answer that is null', 200, null],
+    ['an OK answer that is a string', 200, 'שגיאה'],
+  ])('%s: the list becomes empty and no error is shown', async (_label, status, body) => {
+    const result = await setupOverFetch();
+    listReply = () => reply(status, body);
+
+    await reload(result);
+
+    expect(result.current.orders).toEqual([]);
+    expect(result.current.ordersError).toBe('');
+  });
+
+  test.each([
+    ['a network failure', () => Promise.reject(new TypeError('Failed to fetch'))],
+    ['an OK answer whose body is not JSON', () => reply(200, undefined)],
+    ['a non-OK answer whose body is not JSON (a proxy page)', () => reply(502, undefined)],
+  ])('%s: the list stays as it was and no error is shown', async (_label, failing) => {
+    const result = await setupOverFetch();
+    listReply = failing;
+
+    await reload(result);
+
+    expect(result.current.orders).toEqual([ORDER]);
+    expect(result.current.ordersError).toBe('');
+  });
+});
