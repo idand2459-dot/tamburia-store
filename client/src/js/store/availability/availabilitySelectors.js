@@ -32,3 +32,29 @@ export const selectUnavailableIdSet = (state) => {
   }
   return lastSet;
 };
+
+const NO_VARIANTS = [];
+let linesIds = null;
+let linesVariants = null;
+let lastLines = null;
+
+/** The key of a cart line's variant in unavailableVariants. */
+export const variantKey = (id, selectedVariant) => `${id}:${selectedVariant}`;
+
+/**
+ * What blocks cart lines, as Sets: { ids, variants }. The same arrays always give the same object.
+ * Use isLineUnavailable to ask about one line.
+ */
+export const selectUnavailableLines = (state) => {
+  const { unavailableIds: ids, unavailableVariants: variants = NO_VARIANTS } = state.availability;
+  if (ids !== linesIds || variants !== linesVariants || lastLines === null) {
+    linesIds = ids;
+    linesVariants = variants;
+    lastLines = { ids: new Set(ids), variants: new Set(variants) };
+  }
+  return lastLines;
+};
+
+/** Whether this cart line cannot be bought: its product is blocked, or its own variant is. */
+export const isLineUnavailable = (lines, item) => lines.ids.has(item.id)
+  || (Boolean(item.selectedVariant) && lines.variants.has(variantKey(item.id, item.selectedVariant)));

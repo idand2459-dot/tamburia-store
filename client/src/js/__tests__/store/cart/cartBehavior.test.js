@@ -25,9 +25,9 @@ const PRODUCT = {
 /** A cart over a store, with the operations and values the screens use. */
 function newCart(items = []) {
   const store = createAppStore({
-    cart: { items, deliveryMethod: null },
+    cart: { items, deliveryMethod: null, priceChanges: [] },
     wishlist: { items: [] },
-    availability: { unavailableIds: [] },
+    availability: { unavailableIds: [], unavailableVariants: [] },
   });
   const state = () => store.getState();
   return {
@@ -83,26 +83,31 @@ test('צבע אחר הוא שורה אחרת בעגלה, עם כמות משלה'
 });
 
 /*
- * CURRENT BEHAVIOR, pinned on purpose (backlog item BF-01, REFACTOR_PLAN.md §7).
+ * BF-01 (backlog item, REFACTOR_PLAN.md §7), fixed in P7.3 for addToCart only.
  *
- * The two ways of adding to the cart match "the same line" differently, and neither one
- * looks at the variant the way the checkout form does. This test records what the code does
- * today so a refactor cannot change it by accident. It is not a statement that this is right:
- * when BF-01 is fixed, this is the test that is rewritten, deliberately and in that commit.
+ * The two ways of adding to the cart match "the same line" differently. addToCart now treats the
+ * variant as part of the line: two sizes of one product are two lines, each at its own price.
+ * addBundleToCart (the calculators) still matches by id alone, whatever the colour, size or
+ * variant: that is the old useCart behavior, kept on purpose and recorded here for a later review.
  */
-test('CURRENT BEHAVIOR (BF-01): the variant is not part of a cart line, and a bundle matches by id only', () => {
+test('addToCart keeps another variant as its own line (BF-01 fixed), while a bundle still matches by id only', () => {
   const cart = newCart();
   const small = { ...PRODUCT, price: 10, selectedVariant: '1 ליטר' };
   const large = { ...PRODUCT, price: 40, selectedVariant: '5 ליטר' };
 
-  // addToCart: another variant, with no colour or size, merges into the first line.
+  // addToCart: another variant is another line, with its own quantity and price.
   cart.addToCart(small, 1);
   cart.addToCart(large, 2);
-  expect(cart.cart).toHaveLength(1);
-  expect(cart.cart[0].quantity).toBe(3);
-  expect(cart.cart[0].selectedVariant).toBe('1 ליטר');
-  expect(cart.cart[0].price).toBe(10);
-  expect(cart.subtotal).toBe(30);
+  expect(cart.cart).toHaveLength(2);
+  expect(cart.cart.map((line) => line.quantity)).toEqual([1, 2]);
+  expect(cart.cart.map((line) => line.selectedVariant)).toEqual(['1 ליטר', '5 ליטר']);
+  expect(cart.cart.map((line) => line.price)).toEqual([10, 40]);
+  expect(cart.subtotal).toBe(90);
+
+  // The same variant again merges into its line.
+  cart.addToCart(large, 1);
+  expect(cart.cart).toHaveLength(2);
+  expect(cart.cart[1].quantity).toBe(3);
 
   // addBundleToCart: an existing id is matched whatever its colour, size or variant.
   const bundle = newCart([{ ...PRODUCT, selectedColor: 'לבן', quantity: 1 }]);

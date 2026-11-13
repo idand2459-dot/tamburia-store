@@ -7,16 +7,16 @@
  * deprecated in favor of Redux Toolkit, which this project does not use. It works the same.
  *
  * State shape:
- *   cart:         { items: [...], deliveryMethod: null | 'pickup' | 'delivery' }
+ *   cart:         { items: [...], deliveryMethod: null | 'pickup' | 'delivery', priceChanges: [...] }
  *   wishlist:     { items: [{ id, name, price, image_url, in_stock, category }] }
- *   availability: { unavailableIds: [...] }
+ *   availability: { unavailableIds: [...], unavailableVariants: [...] }
  */
 import { createStore, applyMiddleware, combineReducers } from 'redux';
 import { thunk } from 'redux-thunk';
 import { cartReducer } from './cart/cartReducer';
 import { wishlistReducer } from './wishlist/wishlistReducer';
 import { availabilityReducer } from './availability/availabilityReducer';
-import { readCartItems, readWishlistItems, persistCart, persistWishlist } from './persistence';
+import { readCartItems, readPriceChanges, readWishlistItems, persistCart, persistWishlist } from './persistence';
 
 /** One reducer per domain of the shared state. */
 export const rootReducer = combineReducers({
@@ -25,12 +25,12 @@ export const rootReducer = combineReducers({
   availability: availabilityReducer,
 });
 
-/** Builds the store and starts saving the cart and the wishlist to localStorage. */
+/** Builds the store and starts saving the cart and the wishlist to localStorage (from the first change on). */
 export function createAppStore(preloadedState) {
   const initialState = preloadedState || {
-    cart: { items: readCartItems(), deliveryMethod: null },
+    cart: { items: readCartItems(), deliveryMethod: null, priceChanges: readPriceChanges() },
     wishlist: { items: readWishlistItems() },
-    availability: { unavailableIds: [] },
+    availability: { unavailableIds: [], unavailableVariants: [] },
   };
 
   const store = createStore(rootReducer, initialState, applyMiddleware(thunk));

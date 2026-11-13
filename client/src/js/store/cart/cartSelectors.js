@@ -12,6 +12,29 @@ export const selectCartItems = (state) => state.cart.items;
 
 export const selectDeliveryMethod = (state) => state.cart.deliveryMethod;
 
+// The same inputs always give the same array, so a component that selects it is not rendered again.
+const NO_CHANGES = [];
+let lastItems = null;
+let lastChanges = null;
+let lastPending = NO_CHANGES;
+
+/**
+ * The price changes awaiting the customer's acknowledgment, for lines that are still in the cart.
+ * While this is not empty the customer cannot continue to the details or send the order.
+ */
+export const selectPendingPriceChanges = (state) => {
+  const { items, priceChanges } = state.cart;
+  if (items !== lastItems || priceChanges !== lastChanges) {
+    lastItems = items;
+    lastChanges = priceChanges;
+    const pending = (priceChanges || []).filter((change) => items.some(
+      (item) => item.id === change.id && (item.selectedVariant || null) === (change.selectedVariant || null),
+    ));
+    lastPending = pending.length > 0 ? pending : NO_CHANGES;
+  }
+  return lastPending;
+};
+
 /** How many units are in the cart; a line without a quantity counts as one. */
 export const selectCartCount = (state) => state.cart.items.reduce((sum, i) => sum + (i.quantity || 1), 0);
 

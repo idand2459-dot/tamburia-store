@@ -72,7 +72,10 @@ scripts/           catalog import, demo data, the product-photo pipeline, the a1
    `api/order/pricing.service.priceOrder`, before anything is written:
    - loads the products with `Product.findPricesByIds`;
    - rejects (400) a line whose product doesn't exist or is hidden, an unknown variant, or a
-     product with no price yet;
+     product with no price yet; a product with `in_stock = false` is refused with **409** and
+     `details.reason = 'out_of_stock'` (reported before a changed price; no quantities are tracked);
+   - rejects (400) more than 50 lines, more than 999 units in a line, or a total above
+     99,999,999.99 (the largest `NUMERIC(10,2)`), so the insert can never fail on size;
    - takes **each price from the database** (the variant's if one was chosen) and the name too;
    - compares it with what the client sent, in agorot. Any difference means **409** with
      every current price in `details.prices`, and the order is not saved;
@@ -82,9 +85,17 @@ scripts/           catalog import, demo data, the product-photo pipeline, the a1
 6. **Side effects.** The service broadcasts `order:created` over the WebSocket, so the open
    admin chimes and refreshes, and sends the store and the customer their emails. A mail
    failure never fails the order.
-7. **Back in the browser.** 201: the success step shows and the cart empties. 409: the hook
-   applies `details.prices` to the cart so the customer sees the new total before trying
-   again. Any other error shows the server's message and keeps the cart.
+7. **Back in the browser.** 201: the success step shows and the cart empties. 409 (price): the
+   hook applies `details.prices` to the cart; each change must be acknowledged by the customer
+   before the order can be sent. 409 (out of stock): the cart is checked again and the lines are
+   blocked. Any other error shows the server's message and keeps the cart.
+
+**The cart is checked against the catalogue** (`checkAvailability`, one `GET /api/products?ids=`)
+on the first load, when the set of products changes, on entering the cart or the checkout, and
+when the tab becomes visible again. A product missing, out of stock or without a price blocks all
+its lines; a variant that is gone blocks only its line; a different price re-prices the line and
+is kept as a pending change (also in localStorage, so a reload cannot skip it). The server still
+decides at order time.
 
 Errors at any layer are thrown as `AppError(status, message, details)` and become JSON in the
 single `middleware/errorHandler`. No controller has a `try/catch`.

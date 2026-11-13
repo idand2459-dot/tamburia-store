@@ -41,6 +41,19 @@ function noPriceError(name) {
   );
 }
 
+/** ההודעה על מוצר שאזל מהמלאי (בתוך 409 עם reason: 'out_of_stock'). */
+function outOfStockMessage(name) {
+  return `המוצר "${name}" אינו זמין כרגע. ניתן להסיר אותו מהעגלה או ליצור קשר עם החנות לבירור זמינות.`;
+}
+
+/**
+ * הסכום המרבי של הזמנה, באגורות: orders.subtotal, delivery_fee ו-total הם NUMERIC(10,2),
+ * כלומר עד 99,999,999.99 (migration 010). סכום גדול מזה היה נופל ב-INSERT כ-500.
+ * עם 50 שורות ו-999 יחידות לשורה (order.validator) ומחיר מרבי של 99,999,999.99, הסכום עוד
+ * קטן בהרבה מ-Number.MAX_SAFE_INTEGER (כ-5·10^14 מול 9·10^15), ולכן החשבון באגורות מדויק.
+ */
+const MAX_TOTAL_AGOROT = 9_999_999_999;
+
 /** ההודעה על מוצר שכבר אינו בקטלוג. */
 function hiddenError(name) {
   return badRequest(
@@ -95,6 +108,7 @@ async function priceOrder(data) {
 
   const priced = [];
   const changed = [];
+  const outOfStock = [];
   let firstChanged = null;
 
   for (const item of items) {
@@ -107,6 +121,13 @@ async function priceOrder(data) {
 
     // לפני המחיר: מוצר שאינו בקטלוג לא יימכר גם אם יש לו מחיר.
     if (product.active === false) throw hiddenError(product.name);
+
+    // מוצר שאזל נאסף ולא נזרק מיד, כדי שהתשובה תמנה את כולם. NULL נחשב במלאי,
+    // כמו בסינון הרשימה (COALESCE(in_stock, true)).
+    if (product.in_stock === false) {
+      outOfStock.push({ id: product.id, selectedVariant: item.selectedVariant, name: product.name });
+      continue;
+    }
 
     const price = catalogPrice(product, item);
     if (price === null) throw noPriceError(product.name);
@@ -124,6 +145,11 @@ async function priceOrder(data) {
     }
   }
 
+  // זמינות לפני מחיר: מוצר שאזל אי אפשר לתקן בעדכון מחיר, והמחירים ייבדקו בניסיון הבא.
+  if (outOfStock.length > 0) {
+    throw conflict(outOfStockMessage(outOfStock[0].name), { reason: 'out_of_stock', unavailable: outOfStock });
+  }
+
   if (firstChanged) {
     throw conflict(
       `המחיר של ${firstChanged.name} עודכן ל-${formatPrice(firstChanged.price)}. בדקו את העגלה ונסו שוב`,
@@ -135,6 +161,10 @@ async function priceOrder(data) {
   // 38.699999999999996.
   const subtotal = priced.reduce((sum, item) => sum + toAgorot(item.price) * item.quantity, 0);
   const deliveryFee = data.delivery_method === 'delivery' ? toAgorot(config.orders.deliveryFee) : 0;
+
+  if (subtotal + deliveryFee > MAX_TOTAL_AGOROT) {
+    throw badRequest('סכום ההזמנה חורג מהמקסימום המותר. אנא פצלו את ההזמנה או צרו קשר עם החנות');
+  }
 
   return {
     ...data,

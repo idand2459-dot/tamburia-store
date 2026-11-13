@@ -205,5 +205,5 @@ test('the wishlist never touches the cart', async () => {
   await click(within(windowRows()[0]).getByRole('button'));
 
   expect(store.getState().cart).toBe(cart);
-  expect(localStorage.getItem('tamburia-cart')).toBe('[]');
+  expect(localStorage.getItem('tamburia-cart')).toBeNull();
 });

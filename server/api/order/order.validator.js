@@ -21,6 +21,14 @@ const {
   STATUSES, DELIVERY_METHODS, assertDeliveryCityAllowed, DELIVERY_ADDRESS_REQUIRED,
 } = require('./order.rules');
 
+/**
+ * תקרות גודל להזמנה. 50 שורות ו-999 יחידות לשורה רחבות בהרבה מכל עגלה אמיתית (קבלנים
+ * כלולים), וביחד עם המחיר המרבי של מוצר הן שומרות את הסכום בתוך NUMERIC(10,2);
+ * pricing.service בודק את הסכום עצמו.
+ */
+const MAX_ORDER_LINES = 50;
+const MAX_LINE_QUANTITY = 999;
+
 const EDITABLE = [
   'customer_name', 'customer_phone', 'customer_email',
   'delivery_method', 'delivery_address', 'notes', 'status',
@@ -91,6 +99,9 @@ function asItems(value) {
   if (!Array.isArray(value) || value.length === 0) {
     throw badRequest('ההזמנה חייבת לכלול לפחות פריט אחד');
   }
+  if (value.length > MAX_ORDER_LINES) {
+    throw badRequest(`ההזמנה יכולה לכלול עד ${MAX_ORDER_LINES} פריטים`);
+  }
   return value.map((item, i) => {
     if (!item || typeof item !== 'object') {
       throw badRequest(`items[${i}] חייב להיות אובייקט`);
@@ -110,6 +121,9 @@ function asItems(value) {
     const quantity = Number(item.quantity ?? 1);
     if (!Number.isInteger(quantity) || quantity < 1) {
       throw badRequest(`items[${i}].quantity חייב להיות מספר שלם חיובי`);
+    }
+    if (quantity > MAX_LINE_QUANTITY) {
+      throw badRequest(`items[${i}].quantity מוגבל ל-${MAX_LINE_QUANTITY}`);
     }
 
     const id = Number(item.id);

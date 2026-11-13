@@ -13,11 +13,13 @@
  *
  * Run with `npm run test:client` from the root.
  */
-import { useSelector, Provider } from 'react-redux';
+import { useSelector, useStore, Provider } from 'react-redux';
 import { renderHook, act } from '@testing-library/react';
 import { useCheckoutForm } from '../../hooks/useCheckoutForm';
 import { createAppStore } from '../../store';
-import { selectCartItems, selectDeliveryMethod } from '../../store/cart/cartSelectors';
+import { selectCartItems, selectDeliveryMethod, selectPendingPriceChanges } from '../../store/cart/cartSelectors';
+import { acknowledgePriceChanges } from '../../store/cart/cartActions';
+import { availabilityLoaded } from '../../store/availability/availabilityActions';
 
 const CART = [
   { id: 1, name: 'צבע לבן', price: 100, quantity: 2, selectedVariant: "5 ל'", selectedColor: 'לבן', selectedSize: null },
@@ -45,7 +47,7 @@ function useHarness() {
   const cart = useSelector(selectCartItems);
   const deliveryMethod = useSelector(selectDeliveryMethod);
   const form = useCheckoutForm();
-  return { cart, deliveryMethod, form };
+  return { cart, deliveryMethod, form, store: useStore() };
 }
 
 /** Renders the harness and fills the form. */
@@ -53,7 +55,7 @@ function setup({ method = 'delivery', fill = {} } = {}) {
   const store = createAppStore({
     cart: { items: CART, deliveryMethod: method },
     wishlist: { items: [] },
-    availability: { unavailableIds: [] },
+    availability: { unavailableIds: [], unavailableVariants: [] },
   });
   const wrapper = ({ children }) => <Provider store={store}>{children}</Provider>;
   const { result } = renderHook(() => useHarness(), { wrapper });
@@ -217,10 +219,26 @@ describe('409 — a price changed while the item sat in the cart', () => {
     expect(result.current.cart.map((i) => i.price)).toEqual([100, 320, 30]);
   });
 
-  test('a second attempt sends the corrected prices', async () => {
+  test('the new prices are recorded as changes to acknowledge, and nothing is sent until they are', async () => {
     orderReply = () => reply(409, { error: 'מחירים התעדכנו', details: { prices: PRICES } });
     const result = setup();
     await place(result);
+    expect(selectPendingPriceChanges(result.current.store.getState()).map((c) => [c.id, c.selectedVariant, c.from, c.to]))
+      .toEqual([[1, "5 ל'", 100, 110], [1, "18 ל'", 300, 320], [2, null, 30, 35]]);
+
+    orderReply = () => reply(201, SAVED);
+    await place(result);
+
+    expect(orderCalls()).toHaveLength(1);
+    expect(result.current.form.orderSuccess).toBeNull();
+    expect(result.current.cart).toHaveLength(3);
+  });
+
+  test('a second attempt, after the customer acknowledged, sends the corrected prices', async () => {
+    orderReply = () => reply(409, { error: 'מחירים התעדכנו', details: { prices: PRICES } });
+    const result = setup();
+    await place(result);
+    act(() => { result.current.store.dispatch(acknowledgePriceChanges()); });
 
     orderReply = () => reply(201, SAVED);
     await place(result);
@@ -243,6 +261,96 @@ describe('409 — a price changed while the item sat in the cart', () => {
 
     expect(result.current.form.orderError).toBe('התנגשות');
     expect(result.current.cart).toEqual(CART);
+  });
+});
+
+describe('409 — a product is out of stock', () => {
+  const STOCK = {
+    error: 'המוצר "מברשת" אינו זמין כרגע. ניתן להסיר אותו מהעגלה או ליצור קשר עם החנות לבירור זמינות.',
+    details: { reason: 'out_of_stock', unavailable: [{ id: 2, selectedVariant: null, name: 'מברשת' }] },
+  };
+
+  test('shows the server message, keeps the cart, and checks the cart again so the line is blocked', async () => {
+    orderReply = (url) => reply(409, STOCK);
+    const base = global.fetch;
+    const result = setup();
+    global.fetch = jest.fn((url, options) => (String(url).startsWith('/api/products?ids=')
+      ? reply(200, [
+        { id: 1, price: 100, in_stock: true, variants: [{ label: "5 ל'", price: 100 }, { label: "18 ל'", price: 300 }] },
+      ])
+      : base(url, options)));
+
+    await place(result);
+    await act(async () => {});
+
+    expect(result.current.form.orderError).toBe(STOCK.error);
+    expect(result.current.cart).toEqual(CART);
+    expect(result.current.store.getState().availability.unavailableIds).toEqual([2]);
+    expect(global.fetch).toHaveBeenCalledWith('/api/products?ids=1%2C2', expect.anything());
+  });
+
+  test('nothing is re-priced by an out-of-stock answer', async () => {
+    orderReply = () => reply(409, STOCK);
+    const result = setup();
+
+    await place(result);
+
+    expect(selectPendingPriceChanges(result.current.store.getState())).toEqual([]);
+  });
+});
+
+describe('the blockers the cart step shows also stop the order itself', () => {
+  test('a pending price change stops the submit before any request', async () => {
+    const result = setup();
+    act(() => { result.current.store.dispatch({ type: 'CART_REPRICED', prices: [{ id: 2, price: 35 }] }); });
+
+    await place(result);
+
+    expect(orderCalls()).toHaveLength(0);
+    expect(result.current.form.submittingOrder).toBe(false);
+  });
+
+  test('after the acknowledgment the same submit goes through with the new price', async () => {
+    const result = setup();
+    act(() => { result.current.store.dispatch({ type: 'CART_REPRICED', prices: [{ id: 2, price: 35 }] }); });
+    act(() => { result.current.store.dispatch(acknowledgePriceChanges()); });
+
+    await place(result);
+
+    expect(orderCalls()).toHaveLength(1);
+    expect(JSON.parse(orderCalls()[0][1].body).items.map((i) => i.price)).toEqual([100, 300, 35]);
+  });
+
+  test('a price that changes again after the acknowledgment blocks the submit again', async () => {
+    const result = setup();
+    act(() => { result.current.store.dispatch({ type: 'CART_REPRICED', prices: [{ id: 2, price: 35 }] }); });
+    act(() => { result.current.store.dispatch(acknowledgePriceChanges()); });
+    act(() => { result.current.store.dispatch({ type: 'CART_REPRICED', prices: [{ id: 2, price: 40 }] }); });
+
+    await place(result);
+
+    expect(orderCalls()).toHaveLength(0);
+  });
+
+  test.each([
+    ['a blocked product', () => availabilityLoaded([2], [])],
+    ['a blocked variant of a line in the cart', () => availabilityLoaded([], ["1:18 ל'"])],
+  ])('%s stops the submit before any request', async (_label, action) => {
+    const result = setup();
+    act(() => { result.current.store.dispatch(action()); });
+
+    await place(result);
+
+    expect(orderCalls()).toHaveLength(0);
+  });
+
+  test('a blocked variant of another variant does not stop the order', async () => {
+    const result = setup();
+    act(() => { result.current.store.dispatch(availabilityLoaded([], ["1:99 ל'"])); });
+
+    await place(result);
+
+    expect(orderCalls()).toHaveLength(1);
   });
 });
 

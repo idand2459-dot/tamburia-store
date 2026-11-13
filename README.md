@@ -341,7 +341,7 @@ port and address) before the first migration, and only then starts its own serve
 | Suite | Checks | Covers |
 |---|---|---|
 | `unit-repo-hygiene` | 6 | `.env` not tracked, `.env.example` placeholders only, no secret value in any tracked file |
-| `unit-config` | 8 | The production startup rules (session secret, password length) and optional mail credentials |
+| `unit-config` | 13 | The production startup rules (session secret, password length), optional mail credentials, and the delivery fee agreeing across client, server default and `.env.example` |
 | `unit-order-service` | 54 | Order business rules, the pick list included, without network or database |
 | `unit-product-service` | 14 | Hidden-product visibility for customers and admins, with a fake repository |
 | `unit-review-service` | 13 | Moderation: public reads approved-only, new reviews unapproved |
@@ -350,7 +350,7 @@ port and address) before the first migration, and only then starts its own serve
 | `unit-originals` | 14 | Keeping and finding the full-resolution original of an upload |
 | `smoke-fresh-db` | 13 | An empty database: every migration, the catalogue import, and a column-by-column schema match with the real one |
 | `smoke-static` | 47 | Client serving, cache and security headers, SPA fallback and its boundaries, no internal file exposed, the admin kept out of the main bundle |
-| `smoke-orders` | 139 | Order lifecycle, server-side pricing and totals, 409 on changed prices, status transitions, pagination, immutable fields, the pick list (tick, untick, missing line or order, no login) |
+| `smoke-orders` | 175 | Order lifecycle, server-side pricing and totals, 409 on changed prices, 409 on a product out of stock, order size limits and the `NUMERIC(10,2)` ceiling, status transitions, pagination, immutable fields, the pick list (tick, untick, missing line or order, no login) |
 | `smoke-products` | 168 | CRUD, partial updates, subcategories, hiding, delete with and without orders, image cleanup |
 | `smoke-settings` | 21 | The closed list of settings keys, set, reset |
 | `smoke-reviews` | 57 | Moderation, the public/admin split, the stats contract the home page depends on |
