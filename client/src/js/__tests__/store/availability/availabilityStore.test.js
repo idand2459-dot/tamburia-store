@@ -15,7 +15,7 @@ import {
 } from '../../../store/availability/availabilityActions';
 import {
   selectAvailabilityKey, selectUnavailableIds, selectUnavailableIdSet, selectUnavailableLines,
-  isLineUnavailable, variantKey,
+  isLineUnavailable, variantKey, optionKey,
 } from '../../../store/availability/availabilitySelectors';
 import { selectPendingPriceChanges } from '../../../store/cart/cartSelectors';
 import { removeItem } from '../../../store/cart/cartActions';
@@ -56,27 +56,27 @@ afterEach(() => {
 describe('availabilityReducer', () => {
   test('starts with no unavailable ids; an unknown action returns the same state', () => {
     expect(availabilityReducer(undefined, { type: '@@INIT' })).toBe(initialAvailabilityState);
-    expect(initialAvailabilityState).toEqual({ unavailableIds: [], unavailableVariants: [] });
+    expect(initialAvailabilityState).toEqual({ unavailableIds: [], unavailableVariants: [], unavailableOptions: [] });
   });
 
   test('AVAILABILITY_LOADED stores the ids, and the same ids return the same state', () => {
     const state = availabilityReducer(initialAvailabilityState, availabilityLoaded([1, 5]));
 
-    expect(state).toEqual({ unavailableIds: [1, 5], unavailableVariants: [] });
+    expect(state).toEqual({ unavailableIds: [1, 5], unavailableVariants: [], unavailableOptions: [] });
     expect(availabilityReducer(state, availabilityLoaded([1, 5]))).toBe(state);
   });
 
   test('AVAILABILITY_LOADED stores the blocked variants too, and the same ones return the same state', () => {
     const state = availabilityReducer(initialAvailabilityState, availabilityLoaded([], ['2:5 ל\'']));
 
-    expect(state).toEqual({ unavailableIds: [], unavailableVariants: ['2:5 ל\''] });
+    expect(state).toEqual({ unavailableIds: [], unavailableVariants: ['2:5 ל\''], unavailableOptions: [] });
     expect(availabilityReducer(state, availabilityLoaded([], ['2:5 ל\'']))).toBe(state);
     expect(availabilityReducer(state, availabilityLoaded([], []))).not.toBe(state);
   });
 
   test('AVAILABILITY_CLEARED empties the ids and the variants, and an already empty state is returned as is', () => {
     expect(availabilityReducer({ unavailableIds: [1], unavailableVariants: ['1:x'] }, availabilityCleared()))
-      .toEqual({ unavailableIds: [], unavailableVariants: [] });
+      .toEqual({ unavailableIds: [], unavailableVariants: [], unavailableOptions: [] });
     expect(availabilityReducer(initialAvailabilityState, availabilityCleared())).toBe(initialAvailabilityState);
   });
 });
@@ -146,7 +146,7 @@ describe('selectors', () => {
   });
 
   test('a blocked product blocks all of its lines; a blocked variant blocks only the line with that variant', () => {
-    const lines = { ids: new Set([1]), variants: new Set([variantKey(2, "18 ל'")]) };
+    const lines = { ids: new Set([1]), variants: new Set([variantKey(2, "18 ל'")]), options: new Set() };
 
     expect(isLineUnavailable(lines, { id: 1, selectedVariant: "5 ל'" })).toBe(true);
     expect(isLineUnavailable(lines, { id: 1 })).toBe(true);
@@ -155,6 +155,26 @@ describe('selectors', () => {
     expect(isLineUnavailable(lines, { id: 2 })).toBe(false);
     expect(isLineUnavailable(lines, { id: 3, selectedVariant: "18 ל'" })).toBe(false);
   });
+
+  test('a removed colour or size blocks only the line that holds it', () => {
+    const lines = {
+      ids: new Set(), variants: new Set(),
+      options: new Set([optionKey({ id: 4, selectedColor: 'אדום', selectedSize: null })]),
+    };
+
+    expect(isLineUnavailable(lines, { id: 4, selectedColor: 'אדום' })).toBe(true);
+    expect(isLineUnavailable(lines, { id: 4, selectedColor: 'אדום', selectedSize: undefined })).toBe(true);
+    expect(isLineUnavailable(lines, { id: 4, selectedColor: 'כחול' })).toBe(false);
+    expect(isLineUnavailable(lines, { id: 4 })).toBe(false);
+    expect(isLineUnavailable(lines, { id: 5, selectedColor: 'אדום' })).toBe(false);
+  });
+
+  test('a state without unavailableOptions (an older shape) still works', () => {
+    const state = { cart: { items: [] }, availability: { unavailableIds: [9], unavailableVariants: [] } };
+
+    expect(selectUnavailableLines(state)).toBe(selectUnavailableLines(state));
+    expect(selectUnavailableLines(state).options.size).toBe(0);
+  });
 });
 
 describe('compareCartWithCatalog', () => {
@@ -162,7 +182,7 @@ describe('compareCartWithCatalog', () => {
   const product = (extra) => ({ id: 1, price: 10, in_stock: true, ...extra });
 
   test('a product that matches in price and stock changes nothing', () => {
-    expect(compareCartWithCatalog([line()], [product()])).toEqual({ ids: [], variants: [], prices: [] });
+    expect(compareCartWithCatalog([line()], [product()])).toEqual({ ids: [], variants: [], options: [], prices: [] });
   });
 
   test('a product that did not come back, is out of stock, or has no price blocks the whole product', () => {
@@ -218,6 +238,35 @@ describe('compareCartWithCatalog', () => {
     expect(result.variants).toEqual([variantKey(1, "5 ל'")]);
   });
 
+  test('a colour or size the product no longer offers blocks only that line', () => {
+    const catalog = [product({ colors: [{ name: 'לבן', hex: '#fff' }, 'שחור'], sizes: ['M'] })];
+    const result = compareCartWithCatalog([
+      line({ selectedColor: 'לבן', selectedSize: 'M' }),
+      line({ selectedColor: 'שחור' }),
+      line({ selectedColor: 'אדום' }),
+      line({ selectedSize: 'XL' }),
+    ], catalog);
+
+    expect(result.options).toEqual([
+      optionKey({ id: 1, selectedColor: 'אדום' }),
+      optionKey({ id: 1, selectedSize: 'XL' }),
+    ].sort());
+    expect(result.ids).toEqual([]);
+    expect(result.prices).toEqual([]);
+  });
+
+  test('a null colour and size are never blocked, even when the product defines options (bundle lines)', () => {
+    const catalog = [product({ colors: [{ name: 'לבן', hex: '#fff' }], sizes: ['M'] })];
+
+    expect(compareCartWithCatalog([line({ selectedColor: null, selectedSize: null }), line()], catalog).options)
+      .toEqual([]);
+  });
+
+  test('a colour on a product that defines none is blocked', () => {
+    expect(compareCartWithCatalog([line({ selectedColor: 'לבן' })], [product({ colors: [], sizes: undefined })]).options)
+      .toEqual([optionKey({ id: 1, selectedColor: 'לבן' })]);
+  });
+
   test('the ids come back sorted, and one product is listed once for several lines', () => {
     const result = compareCartWithCatalog([line({ id: 7 }), line({ id: 3 }), line({ id: 7, selectedColor: 'x' })], []);
 
@@ -246,6 +295,25 @@ describe('checkAvailability', () => {
     await flush();
 
     expect(store.getState().availability.unavailableIds).toEqual([]);
+  });
+
+  test('marks a cart line whose colour was removed from the product, and only that line', async () => {
+    answer = () => reply(200, {
+      products: [{ id: 1, price: 10, in_stock: true, colors: [{ name: 'לבן', hex: '#fff' }], sizes: [] }],
+      pagination: { total: 1 },
+    });
+    const store = newStore([
+      { id: 1, name: 'x', price: 10, quantity: 1, selectedColor: 'לבן' },
+      { id: 1, name: 'x', price: 10, quantity: 1, selectedColor: 'אדום' },
+    ]);
+
+    store.dispatch(checkAvailability('1'));
+    await flush();
+
+    expect(store.getState().availability.unavailableOptions).toEqual([optionKey({ id: 1, selectedColor: 'אדום' })]);
+    const lines = selectUnavailableLines(store.getState());
+    expect(isLineUnavailable(lines, { id: 1, selectedColor: 'אדום' })).toBe(true);
+    expect(isLineUnavailable(lines, { id: 1, selectedColor: 'לבן' })).toBe(false);
   });
 
   test('an empty key asks nothing and clears the result', async () => {

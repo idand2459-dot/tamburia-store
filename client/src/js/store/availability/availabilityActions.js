@@ -8,6 +8,8 @@
  *   - the product is missing (hidden or deleted), out of stock, or has no price: the product
  *     is unavailable and every one of its lines is blocked;
  *   - the line's variant no longer exists, or has no price: only that line is blocked;
+ *   - the line's colour or size is no longer an option of the product: only that line is blocked
+ *     (a null colour or size is fine, as the server allows it for calculator bundles);
  *   - the price differs: the line is re-priced, and the change is recorded for the customer to
  *     acknowledge (see CART_REPRICED in cartReducer).
  * The shop only serves active products (server/api/product), so "did not come back" means
@@ -19,14 +21,30 @@
 import { getProducts } from '../../services/productService';
 import { repriceCart } from '../cart/cartActions';
 import { toAgorot } from '../../utils/pricing';
-import { variantKey } from './availabilitySelectors';
+import { variantKey, optionKey } from './availabilitySelectors';
 
 export const AVAILABILITY_LOADED = 'AVAILABILITY_LOADED';
 export const AVAILABILITY_CLEARED = 'AVAILABILITY_CLEARED';
 
-/** Stores the blocked products (ids) and the blocked single variants ("<id>:<label>"). */
-export function availabilityLoaded(unavailableIds, unavailableVariants = []) {
-  return { type: AVAILABILITY_LOADED, unavailableIds, unavailableVariants };
+/**
+ * Stores the blocked products (ids), the blocked single variants ("<id>:<label>") and the blocked
+ * colour/size choices (see optionKey).
+ */
+export function availabilityLoaded(unavailableIds, unavailableVariants = [], unavailableOptions = []) {
+  return { type: AVAILABILITY_LOADED, unavailableIds, unavailableVariants, unavailableOptions };
+}
+
+/** Whether the line's colour and size (when it has them) are options the product defines. */
+function optionsStillOffered(product, line) {
+  if (line.selectedColor) {
+    const names = (Array.isArray(product.colors) ? product.colors : [])
+      .map((color) => (typeof color === 'string' ? color : color?.name));
+    if (!names.includes(line.selectedColor)) return false;
+  }
+  if (line.selectedSize) {
+    if (!(Array.isArray(product.sizes) ? product.sizes : []).includes(line.selectedSize)) return false;
+  }
+  return true;
 }
 
 /** Forgets everything that was blocked (the cart has nothing to check). */
@@ -48,12 +66,18 @@ export function compareCartWithCatalog(lines, products) {
   const byId = new Map(products.map((product) => [product.id, product]));
   const ids = new Set();
   const variants = new Set();
+  const options = new Set();
   const prices = [];
 
   for (const line of lines) {
     const product = byId.get(line.id);
     if (!product || product.in_stock === false) {
       ids.add(line.id);
+      continue;
+    }
+
+    if (!optionsStillOffered(product, line)) {
+      options.add(optionKey(line));
       continue;
     }
 
@@ -79,7 +103,9 @@ export function compareCartWithCatalog(lines, products) {
     }
   }
 
-  return { ids: [...ids].sort((a, b) => a - b), variants: [...variants].sort(), prices };
+  return {
+    ids: [...ids].sort((a, b) => a - b), variants: [...variants].sort(), options: [...options].sort(), prices,
+  };
 }
 
 /**
@@ -98,13 +124,13 @@ export function checkAvailability(key) {
       .then(({ products }) => {
         if (controller.signal.aborted) return;
         // The lines as they are now, not as they were when the request left.
-        const { ids, variants, prices } = compareCartWithCatalog(getState().cart.items, products);
+        const { ids, variants, options, prices } = compareCartWithCatalog(getState().cart.items, products);
         // An id that was asked about and did not come back is gone from the catalog, with or
         // without a cart line still holding it.
         const answered = new Set(products.map((product) => product.id));
         const missing = key.split(',').map(Number).filter((id) => !answered.has(id));
         const unavailable = [...new Set([...ids, ...missing])].sort((x, y) => x - y);
-        dispatch(availabilityLoaded(unavailable, variants));
+        dispatch(availabilityLoaded(unavailable, variants, options));
         if (prices.length > 0) dispatch(repriceCart(prices));
       })
       .catch(() => { /* ניתוק — לא חוסמים את הלקוח */ });

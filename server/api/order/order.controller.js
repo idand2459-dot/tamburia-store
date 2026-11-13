@@ -25,10 +25,15 @@ async function byPhone(req, res) {
   res.json(await orderService.findOrdersByPhone(req.params.phone));
 }
 
-/** POST /api/orders — יוצר הזמנה ושולח מייל לחנות וללקוח. */
+/**
+ * POST /api/orders — יוצר הזמנה ושולח מייל לחנות וללקוח.
+ * ניסיון חוזר עם אותו request_id מחזיר את ההזמנה המקורית ב-200 וב-Idempotent-Replayed.
+ */
 async function create(req, res) {
   const data = parseCreate(req.body);
-  res.status(201).json(await orderService.createOrder(data));
+  const { order, replayed } = await orderService.createOrder(data);
+  if (replayed) res.set('Idempotent-Replayed', 'true');
+  res.status(replayed ? 200 : 201).json(order);
 }
 
 /** PUT /api/orders/:id — מעדכן פרטי הזמנה, ושולח מייל אם הסטטוס השתנה. */

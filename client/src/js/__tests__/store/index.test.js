@@ -39,7 +39,7 @@ describe('the initial state', () => {
     expect(store.getState()).toEqual({
       cart: { items: [{ ...PAINT, quantity: 3, selectedColor: 'לבן' }], deliveryMethod: null, priceChanges: [] },
       wishlist: { items: [{ id: 5 }, { id: 3 }] },
-      availability: { unavailableIds: [], unavailableVariants: [] },
+      availability: { unavailableIds: [], unavailableVariants: [], unavailableOptions: [] },
     });
   });
 
@@ -56,7 +56,7 @@ describe('the initial state', () => {
     expect(createAppStore().getState()).toEqual({
       cart: { items: [], deliveryMethod: null, priceChanges: [] },
       wishlist: { items: [] },
-      availability: { unavailableIds: [], unavailableVariants: [] },
+      availability: { unavailableIds: [], unavailableVariants: [], unavailableOptions: [] },
     });
   });
 

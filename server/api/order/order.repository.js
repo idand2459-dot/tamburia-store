@@ -93,8 +93,8 @@ async function findByPhone(phone) {
   return list({ phone });
 }
 
-/** יוצר הזמנה חדשה ומחזיר אותה כפי שנשמרה. */
-async function create(data) {
+/** מכניס הזמנה. conflict הוא סעיף ON CONFLICT אופציונלי; בלעדיו שורה תמיד נוצרת. */
+async function insert(data, conflict = '') {
   const columns = Object.keys(data);
   const values = columns.map((col) => toDbValue(col, data[col]));
   const placeholders = columns.map((_, i) => `$${i + 1}`);
@@ -102,10 +102,38 @@ async function create(data) {
   const { rows } = await query(
     `INSERT INTO orders (${columns.join(', ')})
      VALUES (${placeholders.join(', ')})
+     ${conflict}
      RETURNING ${COLUMNS}`,
     values
   );
-  return rows[0];
+  return rows[0] || null;
+}
+
+/** יוצר הזמנה חדשה ומחזיר אותה כפי שנשמרה. */
+function create(data) {
+  return insert(data);
+}
+
+/**
+ * יוצר הזמנה שיש לה request_id, פעם אחת בלבד. האינדקס הייחודי של המסד הוא
+ * ההגנה מפני כפילות, גם בין בקשות מקבילות: ה-INSERT של הראשונה שמסיימת קובע,
+ * וכל השאר נתקלות בהתנגשות. מחזיר את ההזמנה שנוצרה, או null אם המזהה כבר תפוס
+ * (ואז findByRequestId מחזירה את ההזמנה שתפסה אותו).
+ */
+function createOnce(data) {
+  return insert(data, 'ON CONFLICT (request_id) WHERE request_id IS NOT NULL DO NOTHING');
+}
+
+/**
+ * מחזיר את ההזמנה שנוצרה עם מזהה בקשה, יחד עם request_hash שלה, או null.
+ * ה-hash אינו ב-COLUMNS בכוונה: הוא לעולם לא יוצא בתשובה ללקוח.
+ */
+async function findByRequestId(requestId) {
+  const { rows } = await query(
+    `SELECT ${COLUMNS}, request_hash FROM orders WHERE request_id = $1`,
+    [requestId]
+  );
+  return rows[0] || null;
 }
 
 /** מעדכן את השדות שנשלחו בלבד, ומחזיר null אם ההזמנה אינה קיימת. */
@@ -188,5 +216,5 @@ async function statsByStatus() {
 
 module.exports = {
   list, count, findById, findByPhone,
-  create, update, setLinePicked, remove, statsByStatus, countByProductId, digitsOnly,
+  create, createOnce, findByRequestId, update, setLinePicked, remove, statsByStatus, countByProductId, digitsOnly,
 };

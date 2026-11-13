@@ -8,21 +8,26 @@
  *
  * הזמנות הניהול אינן כאן — הן עוברות דרך api() של מסך הניהול.
  */
-import { ApiError, getJson, postJson } from './http';
+import { ApiError, TimeoutError, getJson, postJson } from './http';
 
-export { ApiError };
+export { ApiError, TimeoutError };
 
 /** ההודעה כשהשרת דחה את ההזמנה בלי להסביר למה. */
 const REJECTED = 'שליחת ההזמנה נכשלה. אפשר לנסות שוב.';
 
+/** כמה זמן מחכים לתשובה על הזמנה. השרת עצמו מוגבל ל-10 שניות בשליחת מיילים. */
+export const ORDER_TIMEOUT_MS = 20_000;
+
 /**
  * POST /api/orders — שולח הזמנה ומחזיר אותה כפי שנשמרה.
  *
- * זורקת ApiError כשהשרת דחה (status ו-details בתוכה), ושגיאה רגילה
- * כשלא הגענו לשרת בכלל.
+ * זורקת ApiError כשהשרת ענה בדחייה (status ו-details בתוכה), TimeoutError כשלא נענתה בזמן,
+ * ושגיאה רגילה כשלא הגענו לשרת בכלל. רק הראשונה (4xx) מוכיחה שההזמנה לא נוצרה: את שתי
+ * האחרות, כמו 5xx, אי אפשר לדעת. לכן ההזמנה נושאת request_id: שליחה חוזרת של אותו גוף
+ * מחזירה את ההזמנה המקורית ולא יוצרת עוד אחת.
  */
 export async function createOrder(order, { signal } = {}) {
-  return postJson('/api/orders', order, { signal, fallback: REJECTED });
+  return postJson('/api/orders', order, { signal, fallback: REJECTED, timeoutMs: ORDER_TIMEOUT_MS });
 }
 
 /**

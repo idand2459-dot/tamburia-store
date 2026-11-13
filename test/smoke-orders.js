@@ -42,7 +42,7 @@ async function call(method, path, body) {
     headers,
     body: body ? JSON.stringify(body) : undefined,
   });
-  return { status: res.status, body: await res.json() };
+  return { status: res.status, headers: res.headers, body: await res.json() };
 }
 
 /* המוצרים שהבדיקה יוצרת לעצמה, לפי מפתח. מתמלא ב-setupProducts. */
@@ -63,7 +63,11 @@ async function makeProduct(key, body) {
 async function setupProducts() {
   console.log('\n── מוצרי בדיקה');
 
-  await makeProduct('paint', { name: 'צבע לבן בדיקה', price: 100, sku: 'TEST-ORD-PAINT' });
+  // the colour and size the orders below choose must be options of the product (P7.4)
+  await makeProduct('paint', {
+    name: 'צבע לבן בדיקה', price: 100, sku: 'TEST-ORD-PAINT',
+    colors: [{ name: 'לבן', hex: '#ffffff' }], sizes: ['5 ליטר'],
+  });
   await makeProduct('brush', { name: 'מברשת בדיקה', price: 30, sku: 'TEST-ORD-BRUSH' });
   await makeProduct('thinner', { name: 'מדלל בדיקה', price: 45, sku: 'TEST-ORD-THINNER' });
   await makeProduct('roller', { name: 'רולר בדיקה', price: 12.9, sku: 'TEST-ORD-ROLLER' });
@@ -655,6 +659,204 @@ async function testOrderLimits() {
   check('רק ההזמנות התקינות נשמרו (50 שורות, 999 יחידות, הסכום המרבי)', after === before + 3, { before, after });
 }
 
+/** A fresh version-4 request id, like the storefront creates. */
+const newRequestId = () => require('crypto').randomUUID();
+
+/** Keys that must never appear in anything the API returns for an order. */
+const INTERNAL_KEYS = ['request_id', 'request_hash'];
+const hasInternal = (o) => INTERNAL_KEYS.some((key) => key in o);
+
+/**
+ * request_id: one order per id, a retry gets the original back, and the database (not the code)
+ * decides who wins when requests race.
+ */
+async function testIdempotency() {
+  console.log('\n── idempotency (request_id)');
+
+  const withKey = (key, extra = {}) => ({ ...validOrder(), request_id: key, ...extra });
+  const before = await storedOrderCount();
+
+  const key = newRequestId();
+  const first = await call('POST', '/orders', withKey(key));
+  created.push(first.body.id);
+  check('first request with an id → 201', first.status === 201, `${first.status} ${first.body.error || ''}`);
+  check('no Idempotent-Replayed header on the first', first.headers.get('idempotent-replayed') === null, null);
+  check('the created order does not expose request_id, request_hash or picked_items',
+    !hasInternal(first.body) && !('picked_items' in first.body), Object.keys(first.body));
+
+  const again = await call('POST', '/orders', withKey(key));
+  check('same id, same order → 200 with the original', again.status === 200 && again.body.id === first.body.id,
+    `${again.status} ${again.body.id}`);
+  check('marked Idempotent-Replayed', again.headers.get('idempotent-replayed') === 'true', null);
+  check('same totals as the original', again.body.total === first.body.total && again.body.subtotal === first.body.subtotal, again.body);
+  check('a replay hides request_id, request_hash and picked_items',
+    !hasInternal(again.body) && !('picked_items' in again.body), Object.keys(again.body));
+  check('a replay reports the email outcome as unknown', again.body.emails?.store === null && again.body.emails?.customer === null, again.body.emails);
+  check('no second order was stored', (await storedOrderCount()) === before + 1, null);
+
+  const upper = await call('POST', '/orders', withKey(key.toUpperCase()));
+  check('the id is case-insensitive', upper.status === 200 && upper.body.id === first.body.id, upper.status);
+
+  // what an admin does to the order afterwards is not leaked through a replay
+  await call('PUT', `/orders/${first.body.id}/items/0/picked`, { picked: true });
+  const afterPick = await call('POST', '/orders', withKey(key));
+  check('a replay after picking still hides picked_items', afterPick.status === 200 && !('picked_items' in afterPick.body), Object.keys(afterPick.body));
+
+  const stored = await call('GET', `/orders/${first.body.id}`);
+  check('the admin read does not expose the internal columns', !hasInternal(stored.body), Object.keys(stored.body));
+  const listed = await call('GET', '/orders');
+  check('the admin list does not expose them', listed.body.every((o) => !hasInternal(o)), null);
+  const byPhone = await call('GET', `/orders/by-phone/${first.body.customer_phone.replace(/\D/g, '')}`);
+  check('the phone lookup does not expose them', byPhone.body.length > 0 && byPhone.body.every((o) => !hasInternal(o)), null);
+
+  // the same id with a different order is refused, and the original stays as it was
+  const different = await call('POST', '/orders', withKey(key, { customer_name: 'מישהו אחר' }));
+  check('same id, different customer → 422', different.status === 422, `${different.status} ${different.body.error || ''}`);
+  check('the 422 says why: details.reason', different.body.details?.reason === 'request_id_reused', different.body.details);
+  const otherItems = await call('POST', '/orders', withKey(key, { items: [{ id: P.brush.id, name: P.brush.name, price: 30, quantity: 1 }] }));
+  check('same id, different items → 422', otherItems.status === 422, otherItems.status);
+  const otherColor = await call('POST', '/orders', withKey(key, {
+    items: validOrder().items.map((i, n) => (n === 0 ? { ...i, selectedColor: null } : i)),
+  }));
+  check('same id, a different option → 422', otherColor.status === 422, otherColor.status);
+  const unchanged = await call('GET', `/orders/${first.body.id}`);
+  check('the 422 left the original order untouched', unchanged.body.customer_name === first.body.customer_name, unchanged.body.customer_name);
+  check('and stored nothing', (await storedOrderCount()) === before + 1, null);
+
+  // the id is optional: orders without one are independent, as before
+  const plainA = await call('POST', '/orders', validOrder());
+  const plainB = await call('POST', '/orders', validOrder());
+  created.push(plainA.body.id, plainB.body.id);
+  check('without an id every request creates an order', plainA.status === 201 && plainB.status === 201 && plainA.body.id !== plainB.body.id, null);
+  check('and its 201 is customer-safe too', !hasInternal(plainA.body) && !('picked_items' in plainA.body), Object.keys(plainA.body));
+  const nullKey = await call('POST', '/orders', withKey(null));
+  created.push(nullKey.body.id);
+  check('request_id: null counts as no id', nullKey.status === 201, nullKey.status);
+
+  // malformed ids are refused before anything is looked up or stored
+  const mark = await storedOrderCount();
+  for (const bad of ['1', 'abc', '', ' ', 123, {}, [], newRequestId().replace(/-4/, '-1'), `${newRequestId()}x`, 'a'.repeat(300)]) {
+    const res = await call('POST', '/orders', withKey(bad));
+    check(`malformed request_id ${JSON.stringify(bad).slice(0, 20)} → 400`, res.status === 400, `${res.status} ${res.body.error || ''}`);
+  }
+  check('malformed ids stored nothing', (await storedOrderCount()) === mark, null);
+
+  // a retry must not be re-priced: the order exists, so a later price change or a sold-out
+  // product is not a reason to refuse it
+  const priced = newRequestId();
+  const line = { id: P.thinner.id, name: P.thinner.name, price: 45, quantity: 1 };
+  const original = await call('POST', '/orders', withKey(priced, { items: [line] }));
+  created.push(original.body.id);
+  check('order for the price/stock replay checks → 201', original.status === 201, original.status);
+  await call('PUT', `/products/${P.thinner.id}`, { price: 50 });
+  const afterPrice = await call('POST', '/orders', withKey(priced, { items: [line] }));
+  check('replay after a price change → 200, not 409', afterPrice.status === 200 && afterPrice.body.id === original.body.id,
+    `${afterPrice.status} ${afterPrice.body.error || ''}`);
+  check('the replay keeps the original price', afterPrice.body.total === original.body.total, afterPrice.body.total);
+  await call('PUT', `/products/${P.thinner.id}`, { in_stock: false });
+  const afterStock = await call('POST', '/orders', withKey(priced, { items: [line] }));
+  check('replay after the product sold out → 200', afterStock.status === 200 && afterStock.body.id === original.body.id, afterStock.status);
+  const fresh = await call('POST', '/orders', withKey(newRequestId(), { items: [line] }));
+  check('a new id for that product is refused (409)', fresh.status === 409, fresh.status);
+  await call('PUT', `/products/${P.thinner.id}`, { price: 45, in_stock: true });
+
+  // a rejected request leaves no row, so the same id works once the cause is fixed
+  const retried = newRequestId();
+  const stale = await call('POST', '/orders', withKey(retried, { items: [{ ...line, price: 1 }] }));
+  check('a price change is refused (409) and the id is not consumed', stale.status === 409, stale.status);
+  const fixed = await call('POST', '/orders', withKey(retried, { items: [line] }));
+  created.push(fixed.body.id);
+  check('the same id then creates the order', fixed.status === 201, `${fixed.status} ${fixed.body.error || ''}`);
+}
+
+/** Requests that race with one id: the unique index lets exactly one of them create the order. */
+async function testConcurrentIdempotency() {
+  console.log('\n── concurrent requests with one request_id');
+
+  const body = (key, extra = {}) => ({ ...validOrder(), request_id: key, ...extra });
+  const before = await storedOrderCount();
+
+  const key = newRequestId();
+  const results = await Promise.all(Array.from({ length: 8 }, () => call('POST', '/orders', body(key))));
+  const ids = new Set(results.map((r) => r.body.id));
+  created.push(...ids);
+  const statuses = results.map((r) => r.status).sort();
+  check('8 identical concurrent requests → exactly one 201, the rest 200',
+    statuses.filter((s) => s === 201).length === 1 && statuses.filter((s) => s === 200).length === 7, statuses);
+  check('all of them answer with the same order', ids.size === 1, [...ids]);
+  check('one order was stored', (await storedOrderCount()) === before + 1, null);
+
+  // two different orders under one id: one wins, every request for the other is refused
+  const raced = newRequestId();
+  const orderA = body(raced);
+  const orderB = body(raced, { customer_name: 'לקוח אחר' });
+  const mixed = await Promise.all([orderA, orderB, orderA, orderB, orderA, orderB].map((o) => call('POST', '/orders', o)));
+  const winners = mixed.filter((r) => r.status === 201 || r.status === 200);
+  created.push(...new Set(winners.map((r) => r.body.id)));
+  const winnerName = winners[0].body.customer_name;
+  check('mixed orders: every success is the same order', new Set(winners.map((r) => r.body.id)).size === 1, winners.map((r) => r.body.id));
+  check('mixed orders: the others are 422', mixed.every((r) => [200, 201, 422].includes(r.status))
+    && mixed.filter((r) => r.status === 422).every((r) => r.body.details?.reason === 'request_id_reused'), mixed.map((r) => r.status));
+  check('mixed orders: only the winner\'s payload succeeded',
+    winners.every((r) => r.body.customer_name === winnerName), winners.map((r) => r.body.customer_name));
+  check('mixed orders: exactly one more order stored', (await storedOrderCount()) === before + 2, null);
+}
+
+/** selectedColor and selectedSize must be options of the product; null stays allowed. */
+async function testProductOptions() {
+  console.log('\n── product options (colour and size)');
+
+  const paint = (extra) => ({
+    id: P.paint.id, name: P.paint.name, price: 100, quantity: 1, selectedColor: 'לבן', selectedSize: '5 ליטר', ...extra,
+  });
+  const order = (items) => ({ ...validOrder(), items });
+  const before = await storedOrderCount();
+
+  const valid = await call('POST', '/orders', order([paint()]));
+  created.push(valid.body.id);
+  check('an option the product defines → 201', valid.status === 201, `${valid.status} ${valid.body.error || ''}`);
+
+  const bundle = await call('POST', '/orders', order([paint({ selectedColor: null, selectedSize: null })]));
+  created.push(bundle.body.id);
+  check('null colour and size (a calculator bundle line) → 201', bundle.status === 201, `${bundle.status} ${bundle.body.error || ''}`);
+  const omitted = await call('POST', '/orders', order([{ id: P.paint.id, name: P.paint.name, price: 100, quantity: 1 }]));
+  created.push(omitted.body.id);
+  check('options left out → 201', omitted.status === 201, omitted.status);
+
+  const badColor = await call('POST', '/orders', order([paint({ selectedColor: 'ירוק' })]));
+  check('a colour the product does not have → 409', badColor.status === 409, `${badColor.status} ${badColor.body.error || ''}`);
+  check('details.reason = option_unavailable', badColor.body.details?.reason === 'option_unavailable', badColor.body.details);
+  const listedLine = badColor.body.details?.unavailable?.[0];
+  check('details.unavailable names the line', listedLine?.id === P.paint.id && listedLine.selectedColor === 'ירוק'
+    && listedLine.selectedSize === '5 ליטר' && listedLine.name === P.paint.name, badColor.body.details);
+  check('body stays { error, details }', Object.keys(badColor.body).sort().join() === 'details,error', Object.keys(badColor.body));
+
+  const badSize = await call('POST', '/orders', order([paint({ selectedSize: '99 ליטר' })]));
+  check('a size the product does not have → 409', badSize.status === 409 && badSize.body.details?.reason === 'option_unavailable', badSize.status);
+
+  const noOptions = await call('POST', '/orders', order([{ id: P.brush.id, name: P.brush.name, price: 30, quantity: 1, selectedColor: 'לבן' }]));
+  check('a colour on a product that defines none → 409', noOptions.status === 409, noOptions.status);
+
+  const many = await call('POST', '/orders', order([paint({ selectedColor: 'ירוק' }), paint({ selectedSize: 'x' }), paint()]));
+  check('every bad line is listed, the good one is not', many.status === 409 && many.body.details?.unavailable?.length === 2, many.body.details);
+
+  const staleToo = await call('POST', '/orders', order([paint({ selectedColor: 'ירוק', price: 1 })]));
+  check('an option is reported before a changed price', staleToo.body.details?.reason === 'option_unavailable', staleToo.body.details);
+
+  const long = await call('POST', '/orders', order([paint({ selectedColor: 'א'.repeat(101) })]));
+  check('an over-long option → 400', long.status === 400, long.status);
+
+  check('rejected orders stored nothing', (await storedOrderCount()) === before + 3, null);
+
+  // an order saved with an option the catalog no longer has stays readable
+  const read = await call('GET', `/orders/${valid.body.id}`);
+  await call('PUT', `/products/${P.paint.id}`, { colors: [{ name: 'כחול', hex: '#0000ff' }] });
+  const reread = await call('GET', `/orders/${valid.body.id}`);
+  check('an existing order keeps its option after the catalog changes',
+    reread.status === 200 && reread.body.items[0].selectedColor === read.body.items[0].selectedColor, reread.body.items);
+  await call('PUT', `/products/${P.paint.id}`, { colors: [{ name: 'לבן', hex: '#ffffff' }] });
+}
+
 /** מוחק את כל מה שהבדיקה יצרה ומאמת שלא נשארו שאריות. */
 async function cleanup() {
   console.log('\n── ניקוי');
@@ -691,6 +893,9 @@ async function main() {
   await testSavedTotalsMatch();
   await testAvailability();
   await testOrderLimits();
+  await testProductOptions();
+  await testIdempotency();
+  await testConcurrentIdempotency();
   await testUpdate(deliveryId);
   await testPicked(deliveryId);
   await cleanup();

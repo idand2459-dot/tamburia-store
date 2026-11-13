@@ -15,6 +15,7 @@
  * שדה, מסמנת אותו aria-invalid, ומעבירה את המיקוד לראשון שבהם — קורא
  * המסך מקריא את התווית ואת ההודעה יחד, דרך aria-describedby.
  */
+import { useState } from 'react';
 import { Ban, Check, AlertTriangle, AlertCircle, CheckCircle } from 'lucide-react';
 import { Spinner } from '../../components/LoadingStates';
 import { useSelector } from 'react-redux';
@@ -220,6 +221,61 @@ function CheckoutFormView({ setCartStep, checkout, showErrors = false }) {
 }
 
 /**
+ * An order that was sent and not confirmed (see useCheckoutForm): until the customer settles it, no
+ * new order can be sent. Sending it again returns the original and never creates a second order;
+ * cancelling it can, if it was in fact received, so that takes a second, explicit click.
+ */
+function PendingOrderNotice({ pendingOrder, submitting, onRetry, onCancel }) {
+  const [confirming, setConfirming] = useState(false);
+  const { submittedAt, itemCount, total, persisted, conflict } = pendingOrder;
+  const sentAt = new Date(submittedAt).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' });
+
+  return (
+    <section className="checkout-pending" aria-labelledby="checkout-pending-title">
+      <h3 id="checkout-pending-title" className="checkout-pending-title">
+        <AlertTriangle size={17} aria-hidden="true" /> יש הזמנה שלא אושרה
+      </h3>
+      <p className="checkout-pending-summary">
+        נשלחה ב-{sentAt} · {itemCount} פריטים · {formatPrice(total)}
+      </p>
+      <p>
+        {conflict
+          ? 'מזהה ההזמנה כבר שימש בשרת להזמנה אחרת, ולכן אי אפשר לשלוח אותה שוב. בדקו ב"ההזמנות שלי" לפי מספר הטלפון לפני שתבטלו.'
+          : 'ייתכן שההזמנה התקבלה. שליחה חוזרת מחזירה את אותה הזמנה ולא יוצרת הזמנה נוספת. עד שמטפלים בה אי אפשר לשלוח הזמנה חדשה.'}
+      </p>
+      {!persisted && (
+        <p>ההזמנה לא נשמרה במכשיר, ולכן אחרי רענון הדף אי אפשר יהיה לשחזר אותה.</p>
+      )}
+
+      {confirming ? (
+        <div className="checkout-pending-confirm" role="alertdialog" aria-label="אישור ביטול">
+          <p>אם ההזמנה כבר התקבלה, שליחה חדשה תיצור הזמנה נוספת. אפשר לבדוק ב"ההזמנות שלי" לפי מספר הטלפון.</p>
+          <button type="button" className="cart-cta" onClick={onCancel}>כן, בטלו את ההזמנה הקודמת</button>
+          <button type="button" className="cart-cta cart-cta--outline" onClick={() => setConfirming(false)}>חזרה</button>
+        </div>
+      ) : (
+        <div className="checkout-pending-actions">
+          {!conflict && (
+            <button type="button" className="cart-cta" disabled={submitting} onClick={onRetry}>
+              {submitting
+                ? <><Spinner size="small" color="white" /> שולח הזמנה…</>
+                : <><CheckCircle size={18} aria-hidden="true" /> שלחו שוב את ההזמנה הקודמת</>}
+            </button>
+          )}
+          <button
+            type="button"
+            className="cart-cta cart-cta--outline"
+            disabled={submitting}
+            onClick={() => setConfirming(true)}>
+            בטלו והתחילו מחדש
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/**
  * הכפתור שיושב בשורה התחתונה של המגירה, והתראת השרת שמעליו.
  * onInvalid מדליק את הצגת השגיאות בטופס שמעליו (CartModal מחזיק אותה).
  */
@@ -228,7 +284,9 @@ function CheckoutFormFooter({ onInvalid, checkout }) {
   const cart = useSelector(selectCartItems);
   const unavailableLines = useSelector(selectUnavailableLines);
   const pendingChanges = useSelector(selectPendingPriceChanges);
-  const { submittingOrder, handlePlaceOrder, orderError } = checkout;
+  const {
+    submittingOrder, handlePlaceOrder, orderError, pendingOrder, retryPendingOrder, cancelPendingOrder,
+  } = checkout;
   const form = { ...checkout, deliveryMethod };
 
   // The same two blockers as the cart step, so opening /checkout directly cannot skip them. The
@@ -266,15 +324,24 @@ function CheckoutFormFooter({ onInvalid, checkout }) {
         </p>
       )}
 
-      <button
-        type="button"
-        className="cart-cta"
-        disabled={submittingOrder || blocked}
-        onClick={handleSubmit}>
-        {submittingOrder
-          ? <><Spinner size="small" color="white" /> שולח הזמנה…</>
-          : <><CheckCircle size={18} aria-hidden="true" /> שלח הזמנה</>}
-      </button>
+      {pendingOrder ? (
+        <PendingOrderNotice
+          pendingOrder={pendingOrder}
+          submitting={submittingOrder}
+          onRetry={retryPendingOrder}
+          onCancel={cancelPendingOrder}
+        />
+      ) : (
+        <button
+          type="button"
+          className="cart-cta"
+          disabled={submittingOrder || blocked}
+          onClick={handleSubmit}>
+          {submittingOrder
+            ? <><Spinner size="small" color="white" /> שולח הזמנה…</>
+            : <><CheckCircle size={18} aria-hidden="true" /> שלח הזמנה</>}
+        </button>
+      )}
     </div>
   );
 }

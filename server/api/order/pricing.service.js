@@ -54,6 +54,31 @@ function outOfStockMessage(name) {
  */
 const MAX_TOTAL_AGOROT = 9_999_999_999;
 
+/** ההודעה על צבע או מידה שכבר אינם אפשרות של המוצר (בתוך 409 עם reason: 'option_unavailable'). */
+function optionUnavailableMessage(name) {
+  return `האפשרות שנבחרה עבור "${name}" אינה זמינה עוד. ניתן להסיר את המוצר מהעגלה ולהוסיף אותו מחדש.`;
+}
+
+/**
+ * האם הצבע והמידה של השורה הם אפשרויות שהמוצר מגדיר היום.
+ *
+ * רק ערך שנבחר נבדק: null נשאר חוקי, כי שורות שנוספו מהמחשבונים (bundle) ועגלות שנשמרו
+ * לפני שהמוצר קיבל אפשרויות באות בלי צבע ובלי מידה. בדף המוצר הבחירה ממילא חובה.
+ * הצבעים במסד הם אובייקטים { name, hex } (או מחרוזות ישנות), והמידות מחרוזות.
+ */
+function optionsAreValid(product, item) {
+  if (item.selectedColor) {
+    const colors = Array.isArray(product.colors) ? product.colors : [];
+    const names = colors.map((c) => (typeof c === 'string' ? c : c?.name));
+    if (!names.includes(item.selectedColor)) return false;
+  }
+  if (item.selectedSize) {
+    const sizes = Array.isArray(product.sizes) ? product.sizes : [];
+    if (!sizes.includes(item.selectedSize)) return false;
+  }
+  return true;
+}
+
 /** ההודעה על מוצר שכבר אינו בקטלוג. */
 function hiddenError(name) {
   return badRequest(
@@ -109,6 +134,7 @@ async function priceOrder(data) {
   const priced = [];
   const changed = [];
   const outOfStock = [];
+  const badOptions = [];
   let firstChanged = null;
 
   for (const item of items) {
@@ -126,6 +152,18 @@ async function priceOrder(data) {
     // כמו בסינון הרשימה (COALESCE(in_stock, true)).
     if (product.in_stock === false) {
       outOfStock.push({ id: product.id, selectedVariant: item.selectedVariant, name: product.name });
+      continue;
+    }
+
+    // כמו מלאי: נאסף ולא נזרק מיד, כדי שהתשובה תמנה את כל השורות שצריך להסיר.
+    if (!optionsAreValid(product, item)) {
+      badOptions.push({
+        id: product.id,
+        selectedVariant: item.selectedVariant,
+        selectedColor: item.selectedColor,
+        selectedSize: item.selectedSize,
+        name: product.name,
+      });
       continue;
     }
 
@@ -148,6 +186,14 @@ async function priceOrder(data) {
   // זמינות לפני מחיר: מוצר שאזל אי אפשר לתקן בעדכון מחיר, והמחירים ייבדקו בניסיון הבא.
   if (outOfStock.length > 0) {
     throw conflict(outOfStockMessage(outOfStock[0].name), { reason: 'out_of_stock', unavailable: outOfStock });
+  }
+
+  // אחרי המלאי ולפני המחיר: אפשרות שהוסרה אי אפשר לתקן בעדכון מחיר.
+  if (badOptions.length > 0) {
+    throw conflict(
+      optionUnavailableMessage(badOptions[0].name),
+      { reason: 'option_unavailable', unavailable: badOptions }
+    );
   }
 
   if (firstChanged) {
