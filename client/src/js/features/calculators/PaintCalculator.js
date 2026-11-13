@@ -11,15 +11,13 @@ import { PHONES } from '../../utils/storeInfo';
 import { getProduct } from '../../services/productService';
 import { getPigmentFormulas } from '../../services/pigmentService';
 import { formatPrice, lineTotal, sumPrices } from '../../utils/pricing';
+import { LARGE_BUCKET_LITERS, blendWithWhite, isLight, calculatePaint, cheaperBucket } from '../../utils/paintCalc';
 
 const SHADE_CONFIG = {
   light:  { label: 'בהיר',   Icon: Sun,      factor: 0.15 },
   medium: { label: 'בינוני', Icon: CloudSun, factor: 0.35 },
   dark:   { label: 'כהה',    Icon: Moon,     factor: 0.65 },
 };
-
-/** נפח הדלי הגדול בליטרים, כפי שהחנות מוכרת אותו. */
-const LARGE_BUCKET_LITERS = 18;
 
 /**
  * המוצרים שהחבילה מוסיפה לעגלה, לפי מזהה במסד.
@@ -41,22 +39,6 @@ const BUCKET_LABELS = {
   paint5: "5 ל'",
   paint18: `${LARGE_BUCKET_LITERS} ל'`,
 };
-
-/** מערבב צבע עם לבן לקבלת גוון בהיר יותר. */
-function blendWithWhite(hex, factor) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgb(${Math.round(255 * (1 - factor) + r * factor)},${Math.round(255 * (1 - factor) + g * factor)},${Math.round(255 * (1 - factor) + b * factor)})`;
-}
-
-/** בודק אם הצבע בהיר, כדי לבחור צבע טקסט מנוגד. */
-function isLight(rgb) {
-  const match = rgb.match(/\d+/g);
-  if (!match || match.length < 3) return true;
-  const [r, g, b] = match.map(Number);
-  return (0.299 * r + 0.587 * g + 0.114 * b) > 160;
-}
 
 /** מציג את מחשבון הצבע ואת סימולציית הגוון. */
 function PaintCalculator({ addBundleToCart }) {
@@ -110,31 +92,11 @@ function PaintCalculator({ addBundleToCart }) {
     setWalls(walls.map((w, idx) => idx === i ? { ...w, [field]: value } : w));
   }
 
-  /** מחשב את שטח הצביעה ואת כמות הצבע והפיגמנט. */
+  /** מחשב את שטח הצביעה ואת כמות הצבע והפיגמנט (utils/paintCalc.js). */
   function calculate() {
-    const totalWallArea = walls.reduce((sum, w) => {
-      return sum + (parseFloat(w.length) || 0) * (parseFloat(w.height) || 0);
-    }, 0);
-    const netArea = Math.max(0, totalWallArea - windows * 1.5 - doors * 2);
-    const paintLiters = (netArea * coats) / 10;
-
-    let colorMixBottles = 0;
-    if (selectedColor) {
-      const formula = formulas.find(f => f.color_code === selectedColor);
-      if (formula) {
-        const mlPerLiter = formula[`ml_per_liter_${selectedShade}`];
-        colorMixBottles = Math.ceil((paintLiters * mlPerLiter) / 250);
-      }
-    }
-
-    setResult({
-      totalWallArea: totalWallArea.toFixed(1),
-      netArea: netArea.toFixed(1),
-      paintLiters: Math.ceil(paintLiters * 10) / 10,
-      paintCans5: Math.ceil(paintLiters / 5),
-      paintCans18: Math.ceil(paintLiters / LARGE_BUCKET_LITERS),
-      colorMixBottles,
-    });
+    // A formula is looked up only when a color is selected.
+    const formula = selectedColor ? formulas.find(f => f.color_code === selectedColor) : undefined;
+    setResult(calculatePaint({ walls, windows, doors, coats, formula, shade: selectedShade }));
     setBundleAdded(false);
   }
 
@@ -158,35 +120,7 @@ function PaintCalculator({ addBundleToCart }) {
     : '#FFFFFF';
   const previewTextDark = isLight(previewBg);
 
-  /**
-   * בוחר את גודל הדלי שיוצא זול יותר לכמות הנדרשת.
-   *
-   * אותו נפח אפשר לכסות בדליים קטנים או גדולים, והזול מביניהם משתנה
-   * לפי הכמות: 6 דליים של 5 ל' יקרים מ-2 דליים של 18 ל'. משווים את
-   * העלות בפועל לפי המחירים מהקטלוג, ולא לפי מחיר קבוע בקוד.
-   *
-   * בתיקו נשאר 5 ל' — הוא הראשון ברשימה ו-reduce מחליף רק על "קטן ממש".
-   * אין ערבוב בין הגדלים: נבחר גודל אחד לכל הכמות.
-   */
-  function cheaperBucket() {
-    if (!result) return null;
-
-    const options = [
-      { key: 'paint5', quantity: result.paintCans5 },
-      { key: 'paint18', quantity: result.paintCans18 },
-    ]
-      .filter(option => option.quantity > 0)
-      .map(option => ({ ...option, product: findBundleProduct(option.key) }))
-      .filter(option => option.product);
-
-    if (options.length === 0) return null;
-
-    return options.reduce((best, option) => (
-      option.product.price * option.quantity < best.product.price * best.quantity ? option : best
-    ));
-  }
-
-  const chosenBucket = cheaperBucket();
+  const chosenBucket = cheaperBucket(result, findBundleProduct);
 
   // מה שהמחשבון ממליץ עליו, מול מה שבאמת קיים בקטלוג. פריט שאין לו
   // מוצר אמיתי נשאר בהמלצה על המסך אבל לא נכנס לעגלה.

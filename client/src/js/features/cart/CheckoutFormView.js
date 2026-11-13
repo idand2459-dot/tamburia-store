@@ -18,15 +18,7 @@ import { Ban, Check, AlertTriangle, AlertCircle, CheckCircle } from 'lucide-reac
 import { Spinner } from '../../components/LoadingStates';
 import { useStore } from '../../context/storeContext';
 import { formatPrice } from '../../utils/pricing';
-
-const ALLOWED_CITIES = ['פתח תקווה', 'פתח-תקווה', 'גני תקווה', 'גני-תקווה', 'קריית אונו', 'קרית אונו', 'קריית-אונו', 'קרית-אונו'];
-
-/** בודק אם הכתובת נמצאת באזור החלוקה. */
-function checkAllowedCity(address) {
-  if (!address) return true;
-  const lower = address.toLowerCase();
-  return ALLOWED_CITIES.some(city => lower.includes(city.toLowerCase()));
-}
+import { checkAllowedCity } from '../../utils/delivery';
 
 /** האם הכתובת שהוזנה מחוץ לאזור החלוקה. */
 function isDeliveryInvalid({ deliveryMethod, deliveryAddress }) {

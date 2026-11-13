@@ -7,9 +7,9 @@
  */
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { sumPrices, lineTotal } from '../utils/pricing';
+import { DELIVERY_FEE } from '../utils/delivery';
 
 const STORAGE_KEY = 'tamburia-cart';
-const DELIVERY_FEE = 20;
 
 /** מנהל את העגלה ומחזיר את המצב ואת פעולות העדכון. */
 export function useCart() {
