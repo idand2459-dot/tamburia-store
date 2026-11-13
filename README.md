@@ -345,6 +345,7 @@ port and address) before the first migration, and only then starts its own serve
 | `unit-order-service` | 54 | Order business rules, the pick list included, without network or database |
 | `unit-product-service` | 14 | Hidden-product visibility for customers and admins, with a fake repository |
 | `unit-review-service` | 13 | Moderation: public reads approved-only, new reviews unapproved |
+| `unit-auth-cookie` | 39 | Reading the admin cookie through cookie-parser: missing, expired, tampered, URL-encoded, malformed, quoted and duplicated cookies, `requireAdmin` / `markAdmin`, and the WebSocket upgrade |
 | `unit-money` | 23 | Agorot arithmetic and price parsing |
 | `unit-originals` | 14 | Keeping and finding the full-resolution original of an upload |
 | `smoke-fresh-db` | 13 | An empty database: every migration, the catalogue import, and a column-by-column schema match with the real one |

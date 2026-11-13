@@ -3,12 +3,13 @@
  * הציבוריים שמראים לאדמין יותר ממה שהם מראים ללקוח.
  */
 const config = require('../config/env');
-const { verifyToken, readCookie } = require('../api/auth/auth.service');
+const { verifyToken } = require('../api/auth/auth.service');
 const { AppError } = require('../utils/AppError');
 
 /** מאמת את עוגיית ההתחברות, ומחזיר 401 אם אינה תקפה. */
 function requireAdmin(req, res, next) {
-  const token = readCookie(req, config.auth.cookieName);
+  // req.cookies is filled by cookie-parser (server/app.js)
+  const token = req.cookies?.[config.auth.cookieName];
   const payload = verifyToken(token);
 
   if (!payload) {
@@ -27,7 +28,8 @@ function requireAdmin(req, res, next) {
  * צריך נתיב שני משלו לאותם נתונים בדיוק.
  */
 function markAdmin(req, res, next) {
-  const token = readCookie(req, config.auth.cookieName);
+  // req.cookies is filled by cookie-parser (server/app.js)
+  const token = req.cookies?.[config.auth.cookieName];
   const payload = verifyToken(token);
 
   if (payload) req.admin = payload;

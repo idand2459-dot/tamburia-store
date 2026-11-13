@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const config = require('./config/env');
 const { securityHeaders } = require('./middleware/securityHeaders');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
@@ -75,6 +76,7 @@ function createApp() {
   app.use(securityHeaders);
   app.use(cors(corsOptions()));
   app.use(express.json({ limit: '200kb' }));
+  app.use(cookieParser());
 
   app.use('/uploads', express.static(path.join(ROOT, 'uploads'), {
     index: false,

@@ -24,6 +24,6 @@ Current queue:
 - [ ] `scripts/lib/palette.js:41` still evaluates client source with `new Function` to read `colorPalette.js`; move the palette to a JSON file as was done for `categories.json` | P7 finding
 - [ ] Remove the obsolete `.skeleton-category-card` selector in `client/src/css/components/_loading.css` (its component was deleted in P7) | P7 finding
 - [ ] P5 security and validation findings: raw PostgreSQL text in 4xx responses (mapPgError message used only for 5xx), inconsistent validation messages and order, English parser errors (malformed JSON, 413), stack trace in non-production 5xx, rate limiting on POST /orders and POST /reviews (SEC-01), production checks for headers, `Secure` cookie, HSTS and CORS (SEC-02), undefined duplicate-SKU behavior | P5 findings, behavior change
-- [ ] Replace the manual cookie parsing in `auth.service.js` (`readCookie`) with `cookie-parser`, keeping the existing HMAC-signed token authentication and cookie flags unchanged; do NOT introduce express-session | owner decision, behavior-preserving
 
 ## DONE
+- [x] Replace the manual cookie parsing in `auth.service.js` (`readCookie`) with `cookie-parser`, keeping the existing HMAC-signed token authentication and cookie flags unchanged; do NOT introduce express-session | owner decision, behavior-preserving | done in P7.1 (cookie-parser 1.4.7; the WebSocket upgrade runs it by hand)

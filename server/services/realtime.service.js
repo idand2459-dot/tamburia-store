@@ -12,9 +12,11 @@
  */
 const { WebSocketServer, WebSocket } = require('ws');
 const config = require('../config/env');
-const { verifyToken, readCookie } = require('../api/auth/auth.service');
+const cookieParser = require('cookie-parser');
+const { verifyToken } = require('../api/auth/auth.service');
 
 const WS_PATH = '/ws';
+const parseCookies = cookieParser();
 
 // ה-Set ברמת המודול ולא בתוך attachRealtime, כדי ש-broadcast יעבוד
 // גם כשלא חובר שרת בכלל — בבדיקות, למשל, הוא פשוט לא עושה כלום.
@@ -42,7 +44,10 @@ function attachRealtime(httpServer) {
 
     // אותה עוגייה ואותו אימות כמו בכל נתיב ניהול — verifyToken מיובא
     // ולא משוחזר כאן, כדי שלא יהיו שתי גרסאות של אותה בדיקה.
-    const token = readCookie(req, config.auth.cookieName);
+    // An upgrade request never passes through Express, so cookie-parser is run by hand: it only
+    // reads req.headers.cookie, sets req.cookies, and calls next() synchronously.
+    parseCookies(req, null, () => {});
+    const token = req.cookies[config.auth.cookieName];
     if (!verifyToken(token)) {
       socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
       socket.destroy();
