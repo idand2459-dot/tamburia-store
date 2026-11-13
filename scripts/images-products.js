@@ -34,7 +34,7 @@ const os = require('os');
 const path = require('path');
 const sharp = require('sharp');
 const db = require('../server/config/db');
-const productModel = require('../server/models/product.model');
+const productRepository = require('../server/api/product/product.repository');
 const { UPLOADS_DIR, pathToUrl, uploadName } = require('./lib/uploads');
 const { cutout, stop: stopCutout } = require('./lib/cutout');
 const { sourceForUpload } = require('../server/utils/originals');
@@ -513,7 +513,7 @@ async function fetchProducts(entries) {
   const map = new Map();
 
   for (const id of ids) {
-    const product = await productModel.findById(id);
+    const product = await productRepository.findById(id);
     if (product) map.set(id, product);
   }
 
@@ -765,7 +765,7 @@ async function applyToProducts(entries, products, opts) {
 
     // image_url הוא הראשית, ו-images כולל אותה בראש — כך נראות השורות
     // הקיימות במסד, והגלריה בקליינט מסירה כפילויות ממילא.
-    await productModel.update(id, { image_url: urls[0], images: urls });
+    await productRepository.update(id, { image_url: urls[0], images: urls });
 
     updated += 1;
     console.log(`  ✓  ${id}  ${products.get(id).name}  →  ${urls.join(', ')}`);
@@ -787,7 +787,7 @@ async function applyToProducts(entries, products, opts) {
 async function findOrphanUploads() {
   const referenced = new Set();
 
-  for (const product of await productModel.list()) {
+  for (const product of await productRepository.list()) {
     for (const url of [product.image_url, ...(product.images || [])]) {
       if (typeof url === 'string' && url) referenced.add(path.basename(url));
     }
@@ -819,7 +819,7 @@ async function revert(file) {
   let missing = 0;
 
   for (const row of rows) {
-    const result = await productModel.update(row.id, {
+    const result = await productRepository.update(row.id, {
       image_url: row.image_url,
       images: row.images ?? [],
     });
@@ -1121,7 +1121,7 @@ async function applyFromUploads(entries, opts) {
 
   const ids = [...byProduct.keys()].sort((a, b) => a - b);
   const current = new Map();
-  for (const id of ids) current.set(id, await productModel.findById(id));
+  for (const id of ids) current.set(id, await productRepository.findById(id));
 
   const backup = ids.filter((id) => current.get(id)).map((id) => {
     const p = current.get(id);
@@ -1138,7 +1138,7 @@ async function applyFromUploads(entries, opts) {
   const replacedUrls = [];
 
   for (const id of ids) {
-    const product = await productModel.findById(id);
+    const product = await productRepository.findById(id);
     if (!product) continue;
 
     const swap = new Map();
@@ -1154,14 +1154,14 @@ async function applyFromUploads(entries, opts) {
 
     const image_url = swap.get(product.image_url) ?? product.image_url;
     const images = (product.images || []).map((url) => swap.get(url) ?? url);
-    await productModel.update(id, { image_url, images });
+    await productRepository.update(id, { image_url, images });
     replacedUrls.push(...swap.keys());
     updated += 1;
     console.log(`  ✓  ${id}  ${product.name}  →  ${[...swap.values()].join(', ')}`);
   }
 
   // הקבצים שהוחלפו ושאף מוצר כבר לא מפנה אליהם — נשארים בדיסק, רק מדווחים
-  const unreferenced = (await productModel.findUnreferencedImages([...new Set(replacedUrls)]))
+  const unreferenced = (await productRepository.findUnreferencedImages([...new Set(replacedUrls)]))
     .map((url) => path.basename(url));
 
   return { updated, skippedFlagged, changedMeanwhile, backupPath, unreferenced };

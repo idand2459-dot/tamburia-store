@@ -129,7 +129,7 @@ Another dry run: it reads every row, validates it, and prints what it found and 
 wrong with it, in Hebrew, without touching anything. Validation is in two layers — the
 sheet's own rules (image file exists, category from the tree, subcategory belonging to
 that category, a price above zero **or** at least one priced size) and then
-`server/validators/product.validator.js`, the same code the admin form goes through,
+`server/api/product/product.validator.js`, the same code the admin form goes through,
 called directly rather than reimplemented. Where the two disagree, the validator wins. A
 row with an error is skipped and never guessed at; an untouched row is simply skipped.
 

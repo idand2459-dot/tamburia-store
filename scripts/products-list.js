@@ -21,7 +21,7 @@
 const fs = require('fs');
 const path = require('path');
 const db = require('../server/config/db');
-const productModel = require('../server/models/product.model');
+const productRepository = require('../server/api/product/product.repository');
 const { fileExists } = require('./lib/uploads');
 const { load: loadCategories } = require('./lib/categories');
 
@@ -284,7 +284,7 @@ ${sections}
 
 async function main() {
   const taxonomy = loadCategories();
-  const products = await productModel.list();
+  const products = await productRepository.list();
   const rows = prepare(products, taxonomy);
 
   const withImage = rows.filter((r) => r.hasRealImage).length;

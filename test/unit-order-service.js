@@ -1,5 +1,5 @@
 /**
- * בודק את services/order.service.js בבידוד: בלי HTTP, בלי מסד ובלי
+ * בודק את api/order/order.service.js בבידוד: בלי HTTP, בלי מסד ובלי
  * מיילים. המודל ושירות המייל מוחלפים בכפילים שמתעדים איך נקראו.
  *
  * למה בנפרד מחבילות ה-smoke: שם הכל נבדק דרך הרשת מקצה לקצה, ולכן
@@ -14,10 +14,10 @@
 const path = require('path');
 const Module = require('module');
 
-const SERVICE_PATH = path.resolve(__dirname, '../server/services/order.service.js');
-const MODEL_PATH = path.resolve(__dirname, '../server/models/order.model.js');
+const SERVICE_PATH = path.resolve(__dirname, '../server/api/order/order.service.js');
+const MODEL_PATH = path.resolve(__dirname, '../server/api/order/order.repository.js');
 const MAILER_PATH = path.resolve(__dirname, '../server/services/email/index.js');
-const PRICING_PATH = path.resolve(__dirname, '../server/services/pricing.service.js');
+const PRICING_PATH = path.resolve(__dirname, '../server/api/order/pricing.service.js');
 
 let passed = 0;
 let failed = 0;

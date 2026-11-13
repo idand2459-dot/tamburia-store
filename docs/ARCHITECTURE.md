@@ -9,7 +9,7 @@ from the same origin.
 | Layer | Technology |
 |---|---|
 | Server | Node.js ≥ 18, Express 5 |
-| Database | PostgreSQL through `pg`. No ORM; plain SQL in model files |
+| Database | PostgreSQL through `pg`. No ORM; plain SQL in repository files |
 | Client | React 19 (Create React App), react-router 7, lucide-react icons |
 | Real time | `ws`: the admin's live order feed on `/ws` |
 | Images | `multer` for uploads, `sharp` to resize, square and re-encode them to WebP |
@@ -25,11 +25,13 @@ server/
   app.js           builds the Express app; middleware order lives here
   config/          env.js (reads and validates every variable), db.js (the one pg Pool)
   db/              migrate.js (the runner) and migrations/000–011 (.sql, applied in order)
-  routes/          one router per domain; marks which endpoints are public and which need the admin
-  validators/      parse and bound every body and query; throw 400 on bad input
-  controllers/     translate HTTP to a service call and back; no SQL, no model imports, no try/catch
-  services/        business rules: pricing, visibility, moderation, emails, realtime, auth, images
-  models/          all SQL, parameterised, explicit column lists
+  api/             index.js (mounts the domains, GET /health) and one folder per domain:
+                   product, order, review, pigmentFormula, setting, auth, upload. A domain folder holds
+                   <d>.routes (public vs admin endpoints), <d>.validator (parse and bound input, 400),
+                   <d>.controller (HTTP to a service call and back; no SQL, no repository import, no
+                   try/catch), <d>.service (business rules) and <d>.repository (all SQL, parameterised,
+                   explicit column lists). order also holds pricing.service; auth and upload have no repository
+  services/        shared infrastructure: email, realtime, image processing
   middleware/      security headers, admin guard, rate limiting, uploads, the central error handler
   utils/           AppError, money in agorot, pagination envelope, category tree, originals
 
@@ -62,12 +64,12 @@ scripts/           catalog import, demo data, the product-photo pipeline, the a1
    `hooks/useCheckoutForm` (called in `StoreLayout`). It builds the order (customer, delivery method, and for each line
    the product id, quantity, chosen variant/colour/size and the price the customer saw) and
    calls `services/orderService.createOrder` → `POST /api/orders`.
-3. **Route → validator → controller.** `routes/order.routes` maps the request to
-   `orderController.create`, which runs `validators/order.validator.parseCreate`: types,
+3. **Route → validator → controller.** `api/order/order.routes` maps the request to
+   `orderController.create`, which runs `api/order/order.validator.parseCreate`: types,
    lengths, phone, a delivery address when delivering, and the delivery city against the
    allowed list. Bad input becomes a 400.
-4. **Service: pricing.** `services/order.service.createOrder` first calls
-   `services/pricing.service.priceOrder`, before anything is written:
+4. **Service: pricing.** `api/order/order.service.createOrder` first calls
+   `api/order/pricing.service.priceOrder`, before anything is written:
    - loads the products with `Product.findPricesByIds`;
    - rejects (400) a line whose product doesn't exist or is hidden, an unknown variant, or a
      product with no price yet;
@@ -76,7 +78,7 @@ scripts/           catalog import, demo data, the product-photo pipeline, the a1
      every current price in `details.prices`, and the order is not saved;
    - computes `subtotal`, `delivery_fee` (from `DELIVERY_FEE`) and `total` in integer agorot,
      converting to shekels only at the end. Whatever totals the request carried are ignored.
-5. **Model.** `Order.create` inserts the priced order with one parameterised `INSERT`.
+5. **Repository.** `orderRepository.create` inserts the priced order with one parameterised `INSERT`.
 6. **Side effects.** The service broadcasts `order:created` over the WebSocket, so the open
    admin chimes and refreshes, and sends the store and the customer their emails. A mail
    failure never fails the order.
@@ -122,11 +124,11 @@ URL, so `/uploads` can be cached for a week and the build's `/static` for a year
 (`immutable`), while `index.html` is `no-store`.
 
 **Layered server, every domain the same.** routes → validators → controllers → services →
-models, for products, orders, reviews, pigment formulas and settings. The rules a reviewer
+repositories, for products, orders, reviews, pigment formulas and settings. The rules a reviewer
 would look for each have one home: pricing in `pricing.service`, visibility in
 `product.service`, moderation in `review.service` (public reads are approved-only whatever
 the query says; new reviews are always unapproved). Auth, uploads and the health check have
-no table, so they have no model.
+no table, so they have no repository.
 
 **One way to the server on the client.** Every storefront call goes through `services/`,
 built on `services/http.js` (`getJson` / `postJson`, `ApiError` with status and details,

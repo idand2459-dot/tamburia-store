@@ -16,12 +16,12 @@
 | `server/server.js` | Starts the server on the configured port. |
 | `server/app.js` | Builds the Express app (`createApp`), also used by the HTTP test suites (`test/lib/testServer.js`). |
 | `server/config/env.js` | Reads and validates every server setting; refuses unsafe production config. |
-| `server/routes/index.js` | Mounts the API domains under `/api` (`server/routes/index.js:19-25`). |
+| `server/api/index.js` | Mounts the API domains under `/api` (`server/api/index.js:19-25`). |
 | `server/middleware/errorHandler.js` | Turns every error into the JSON error response. |
 | `client/src/js/App.js` | The React app's root; loads `client/src/css/app.css`. |
 | `client/src/js/services/` | The client's calls to the server (`authService.js`, `orderService.js`, `productService.js`, and others). |
 
-The other layers (controllers, services, models, validators) are described in [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
+The other layers (controllers, services, repositories, validators) are described in [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).
 
 ## Data Flow
 - Placing an order, from the click to the database and back: [docs/ARCHITECTURE.md — A request, end to end: placing an order](../docs/ARCHITECTURE.md).

@@ -21,7 +21,7 @@
 const fs = require('fs');
 const path = require('path');
 const db = require('../server/config/db');
-const productModel = require('../server/models/product.model');
+const productRepository = require('../server/api/product/product.repository');
 const { fileExists } = require('./lib/uploads');
 const { load: loadCategories } = require('./lib/categories');
 
@@ -239,7 +239,7 @@ async function apply(rows) {
 
   let hidden = 0;
   for (const row of rows) {
-    const updated = await productModel.update(row.id, { active: false });
+    const updated = await productRepository.update(row.id, { active: false });
     if (updated) hidden += 1;
     else console.log(`  ✗  ${row.id}  — המוצר כבר לא קיים`);
   }
@@ -267,7 +267,7 @@ async function revert(file) {
   let missing = 0;
 
   for (const row of rows) {
-    const updated = await productModel.update(row.id, { active: true });
+    const updated = await productRepository.update(row.id, { active: true });
     if (updated) {
       restored += 1;
       console.log(`  ↩  ${row.id}  ${row.name || ''}`);
@@ -291,7 +291,7 @@ async function main() {
   }
 
   const taxonomy = loadCategories();
-  const products = await productModel.list();
+  const products = await productRepository.list();
   const photographed = photographedIds();
 
   const active = products.filter((p) => p.active !== false);
