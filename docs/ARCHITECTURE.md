@@ -171,9 +171,11 @@ development database itself (`test/lib/testDatabase.js`):
   product visibility, review moderation, money, originals, the test-database guard.
 - **smoke-fresh-db**: creates an empty database, runs every migration and the catalogue
   import, and compares the schema column by column with the real one.
-- **smoke-static, -orders, -products, -settings, -reviews, -pigments, -auth**: the HTTP
+- **smoke-static, -orders, -products, -settings, -reviews, -pigments, -contract, -auth**: the HTTP
   contract of every endpoint, including server-side totals, guarded routes, cache and
-  security headers, and SPA-fallback boundaries.
+  security headers, and SPA-fallback boundaries. `smoke-contract` is the black-box net for the
+  backend restructuring: it imports nothing from `server/` and covers every route, including
+  all admin routes without a cookie.
 
 `npm run test:client` runs 537 Jest tests in 34 suites (services, the Redux store, pricing, the admin
 hooks and tabs, the pure utils, App routing). They live in `client/src/js/__tests__/`, in folders that

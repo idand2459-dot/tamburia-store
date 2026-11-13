@@ -353,6 +353,7 @@ port and address) before the first migration, and only then starts its own serve
 | `smoke-settings` | 21 | The closed list of settings keys, set, reset |
 | `smoke-reviews` | 57 | Moderation, the public/admin split, the stats contract the home page depends on |
 | `smoke-pigments` | 48 | The 20 shades, ordering, search, the light < medium < dark invariant |
+| `smoke-contract` | 243 | Black-box HTTP contract of every route (REFACTOR_PLAN P5): 401 on every admin route, side-effect-free probes with exact status and message, list/pagination shapes, error shape, security headers, CORS, parser errors, and the database effects of product, order, review and pigment flows |
 | `smoke-auth` | 46 | Login, cookie flags, every guarded route, logout, rate limiting |
 
 ---
