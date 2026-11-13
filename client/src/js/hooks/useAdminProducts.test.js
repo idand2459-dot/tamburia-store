@@ -3,14 +3,16 @@
  * (URL, method, headers, body), what the hook returns, the error text it keeps, and when it
  * reloads the list. They record today's behavior, imperfections included.
  *
- * The hook is given an `api` built straight on the fake global fetch (no 401 handling: that
- * belongs to Admin.js and is pinned in pages/admin/Admin.test.js). When the admin API layer is
- * introduced, only `apiOverFetch` changes; the assertions keep describing the same behavior.
+ * The hook is given the real admin API (createAdminApi) over the fake global fetch, with a
+ * no-op expiry callback: the 401 handling is pinned in pages/admin/Admin.test.js and
+ * services/adminService.test.js. Only this adapter changed when the hook moved to named
+ * adminApi calls; the assertions did not.
  *
  * Run with `npm run test:client` from the root.
  */
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useAdminProducts } from './useAdminProducts';
+import { createAdminApi } from '../services/adminService';
 import { NETWORK_ERROR } from '../utils/apiErrors';
 
 const LIST_URL = '/api/products?active=all';
@@ -27,8 +29,8 @@ const reply = (status, body) => Promise.resolve({
   },
 });
 
-/** The hook's `api` argument, built on the global fetch. */
-const apiOverFetch = (url, options) => fetch(url, options);
+/** The hook's argument: the real admin API over the global fetch. */
+const adminApi = createAdminApi(() => {});
 
 /** The form fields the hook receives when the form is saved. */
 const FIELDS = {
@@ -70,7 +72,7 @@ const listCalls = () => callsTo(LIST_URL);
 
 /** Renders the hook and waits for the first list. */
 async function setup() {
-  const { result } = renderHook(() => useAdminProducts(apiOverFetch));
+  const { result } = renderHook(() => useAdminProducts(adminApi));
   await waitFor(() => expect(result.current.productsLoaded).toBe(true));
   return result;
 }
@@ -141,7 +143,7 @@ describe('loading the list', () => {
 
   test('when the first list is not an array the products stay empty and are not marked as loaded', async () => {
     routes.list = () => reply(401, { error: 'נדרשת התחברות כמנהל' });
-    const { result } = renderHook(() => useAdminProducts(apiOverFetch));
+    const { result } = renderHook(() => useAdminProducts(adminApi));
     await waitFor(() => expect(listCalls()).toHaveLength(1));
     await act(async () => {});
 

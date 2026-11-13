@@ -19,7 +19,7 @@
  * בחנות (StoreLayout). בלעדיהם מי שעובד במקלדת עובר בכל כניסה דרך
  * הכותרת וכל הלשוניות לפני שהוא מגיע להזמנות.
  */
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Volume2, VolumeX } from 'lucide-react';
 import Confetti from '../../components/Confetti';
@@ -27,6 +27,7 @@ import { useAdminProducts } from '../../hooks/useAdminProducts';
 import { useAdminOrders } from '../../hooks/useAdminOrders';
 import { useAdminReviews } from '../../hooks/useAdminReviews';
 import { useNewOrderChime } from '../../hooks/useNewOrderChime';
+import { createAdminApi } from '../../services/adminService';
 import AdminTabs from './AdminTabs';
 import StatsTab from './StatsTab';
 import OrdersTab from './OrdersTab';
@@ -40,12 +41,8 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
   const expiredRef = useRef(onExpired);
   expiredRef.current = onExpired;
 
-  /** קורא ל-API ומחזיר למסך הסיסמה אם ההתחברות פגה. */
-  const api = useCallback(async (url, options) => {
-    const res = await fetch(url, options);
-    if (res.status === 401) expiredRef.current?.();
-    return res;
-  }, []);
+  // Created once; the ref keeps the latest onExpired without recreating the API.
+  const adminApi = useMemo(() => createAdminApi(() => expiredRef.current?.()), []);
 
   const activeTab = tab;
   const setActiveTab = onTabChange;
@@ -66,16 +63,16 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
     uploadingImages, productsError,
     csvPreview, csvErrors, importing, importResult,
     downloadTemplate, handleCsvFile, handleImport, resetCsv, clearImportResult,
-  } = useAdminProducts(api);
+  } = useAdminProducts(adminApi);
 
   const { soundOn, toggleSound, playChime } = useNewOrderChime();
 
   const {
     orders, handleStatusChange, togglePicked, handleDeleteOrder, exportOrdersToExcel, getStats, ordersError,
     showConfetti, dismissConfetti,
-  } = useAdminOrders(api, { onNewOrder: playChime });
+  } = useAdminOrders(adminApi, { onNewOrder: playChime });
 
-  const { reviews, approveReview, deleteReview, reviewsError } = useAdminReviews(api);
+  const { reviews, approveReview, deleteReview, reviewsError } = useAdminReviews(adminApi);
 
   const [editingId, setEditingId] = useState(null);
 
@@ -148,7 +145,7 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
       <main id="admin-content" tabIndex={-1}>
         {activeTab === 'stats' && (
           <StatsTab
-            api={api}
+            adminApi={adminApi}
             products={products}
             getStats={getStats}
             onToggleStock={toggleStock}

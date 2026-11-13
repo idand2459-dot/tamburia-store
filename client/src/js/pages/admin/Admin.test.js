@@ -160,3 +160,39 @@ test('the latest onExpired is the one called after a re-render', async () => {
   expect(latest).toHaveBeenCalledTimes(1);
   expect(onExpired).not.toHaveBeenCalled();
 });
+
+describe('the stats tab', () => {
+  const SETTING_URL = '/api/settings/stats-counting-from';
+
+  /** Renders the stats tab with the order list and the counting start the fake serves. */
+  function renderStats(settingReply) {
+    global.fetch = jest.fn((url) => {
+      if (url === '/api/orders') return reply(200, [ORDER]);
+      if (url === '/api/products?active=all') return reply(200, []);
+      if (url === '/api/reviews/all') return reply(200, []);
+      if (url === SETTING_URL) return settingReply();
+      throw new Error(`unexpected request: ${url}`);
+    });
+    return render(
+      <MemoryRouter>
+        <Admin onBack={() => {}} onExpired={onExpired} tab="stats" onTabChange={() => {}} />
+      </MemoryRouter>
+    );
+  }
+
+  test('loads the counting start through the admin API, with no options', async () => {
+    renderStats(() => reply(200, { value: null }));
+
+    await waitFor(() => expect(global.fetch.mock.calls.some(([url]) => url === SETTING_URL)).toBe(true));
+    const [, options] = global.fetch.mock.calls.find(([url]) => url === SETTING_URL);
+    expect(options).toBeUndefined();
+    expect(onExpired).not.toHaveBeenCalled();
+  });
+
+  test('a 401 on the counting start calls onExpired and shows the same server message', async () => {
+    renderStats(() => reply(401, { error: 'נדרשת התחברות כמנהל' }));
+
+    expect(await screen.findByText(/נדרשת התחברות כמנהל/)).toBeInTheDocument();
+    expect(onExpired).toHaveBeenCalledTimes(1);
+  });
+});

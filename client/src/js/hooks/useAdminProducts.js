@@ -1,9 +1,9 @@
 /**
  * נתוני המוצרים של מסך הניהול: הרשימה, השמירה, המחיקה וייבוא ה-CSV.
  *
- * מקבל את עוטף ה-fetch (api) כארגומנט ולא יוצר אותו בעצמו, כי אותו
- * עוטף מטפל ב-401 ומחזיר למסך ההתחברות — הוא שייך למסך הניהול
- * כולו, ושלושת ההוקים חולקים אותו.
+ * Receives the admin API (adminApi, see services/adminService.js) as an argument and does
+ * not create it: it handles the 401 that returns to the login screen, so it belongs to the
+ * admin screen as a whole and the hooks share it.
  *
  * הטופס עצמו אינו כאן: שדות המוצר הם state של ProductFormTab, וההוק
  * מקבל אותם כארגומנט בזמן השמירה. כך אין לו מה לדעת על ה-UI.
@@ -67,7 +67,7 @@ function downloadTemplate() {
 }
 
 /** מנהל את רשימת המוצרים, עדכוניה וייבוא ה-CSV. */
-export function useAdminProducts(api) {
+export function useAdminProducts(adminApi) {
   const [products, setProducts] = useState([]);
   /* האם הרשימה כבר הגיעה מהשרת. עד אז products הוא [] — וזה לא אותו
      דבר כמו "אין מוצרים": בלי הדגל, כל קטגוריה בכתובת הייתה נראית
@@ -89,7 +89,7 @@ export function useAdminProducts(api) {
    * הרשימה כאן היא היחידה שצריכה גם את המוסתרים.
    */
   const fetchProducts = useCallback(() => {
-    api('/api/products?active=all')
+    adminApi.getProducts()
       .then(r => r.json())
       .then(data => {
         if (!Array.isArray(data)) return;
@@ -97,7 +97,7 @@ export function useAdminProducts(api) {
         setProductsLoaded(true);
       })
       .catch(() => {});
-  }, [api]);
+  }, [adminApi]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
@@ -108,9 +108,7 @@ export function useAdminProducts(api) {
    * ואז המוצר היה נשמר בלי התמונות, בשקט. השומר למעלה עוצר במקום.
    */
   const uploadImages = useCallback(async (files) => {
-    const formData = new FormData();
-    files.forEach(f => formData.append('images', f));
-    const res = await api('/api/upload-multiple', { method: 'POST', body: formData });
+    const res = await adminApi.uploadProductImages(files);
 
     if (!res.ok) {
       return { ok: false, error: await errorMessageFrom(res, 'העלאת התמונות נכשלה. המוצר לא נשמר.') };
@@ -118,7 +116,7 @@ export function useAdminProducts(api) {
 
     const body = await res.json().catch(() => ({}));
     return { ok: true, imageUrls: body.imageUrls || [] };
-  }, [api]);
+  }, [adminApi]);
 
   /**
    * יוצר מוצר חדש מתוך שדות הטופס והתמונות שנבחרו.
@@ -134,10 +132,7 @@ export function useAdminProducts(api) {
         allImageUrls = upload.imageUrls;
       }
 
-      const res = await api('/api/products', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(productBody(fields, allImageUrls))
-      });
+      const res = await adminApi.createProduct(productBody(fields, allImageUrls));
 
       if (!res.ok) {
         setProductsError(await errorMessageFrom(res, 'הוספת המוצר נכשלה.'));
@@ -154,7 +149,7 @@ export function useAdminProducts(api) {
       // זרקה, ולא נשאר נעול על "מעלה..." עד רענון הדף.
       setUploadingImages(false);
     }
-  }, [api, uploadImages, fetchProducts]);
+  }, [adminApi, uploadImages, fetchProducts]);
 
   /**
    * שומר את השינויים במוצר קיים.
@@ -171,10 +166,7 @@ export function useAdminProducts(api) {
       }
 
       const allUrls = [...existingImages, ...newUrls];
-      const res = await api('/api/products/' + id, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(productBody(fields, allUrls))
-      });
+      const res = await adminApi.updateProduct(id, productBody(fields, allUrls));
 
       if (!res.ok) {
         setProductsError(await errorMessageFrom(res, 'שמירת המוצר נכשלה.'));
@@ -189,7 +181,7 @@ export function useAdminProducts(api) {
     } finally {
       setUploadingImages(false);
     }
-  }, [api, uploadImages, fetchProducts]);
+  }, [adminApi, uploadImages, fetchProducts]);
 
   /** מוחק מוצר לאחר אישור המשתמש. */
   /**
@@ -206,7 +198,7 @@ export function useAdminProducts(api) {
    */
   const deleteProduct = useCallback(async (product) => {
     try {
-      const res = await api('/api/products/' + product.id, { method: 'DELETE' });
+      const res = await adminApi.deleteProduct(product.id);
       if (res.ok) {
         setProductsError('');
         fetchProducts();
@@ -224,7 +216,7 @@ export function useAdminProducts(api) {
     } catch {
       return { status: 'error', message: NETWORK_ERROR };
     }
-  }, [api, fetchProducts]);
+  }, [adminApi, fetchProducts]);
 
   /**
    * שולח עדכון של שדה בודד, ומחזיר true רק כשהשמירה הצליחה.
@@ -236,11 +228,7 @@ export function useAdminProducts(api) {
    */
   const patchProduct = useCallback(async (id, patch, failMessage) => {
     try {
-      const res = await api('/api/products/' + id, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patch),
-      });
+      const res = await adminApi.patchProduct(id, patch);
 
       if (!res.ok) {
         setProductsError(await errorMessageFrom(res, failMessage));
@@ -252,7 +240,7 @@ export function useAdminProducts(api) {
       setProductsError(NETWORK_ERROR);
       return false;
     }
-  }, [api, fetchProducts]);
+  }, [adminApi, fetchProducts]);
 
   /** מחליף את סימון המלאי של המוצר. */
   const toggleStock = useCallback((product) => (
@@ -313,12 +301,12 @@ export function useAdminProducts(api) {
     setImporting(true); let success = 0, failed = 0;
     for (const row of csvPreview) {
       try {
-        const r = await api('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...row, image_url: '', images: [] }) });
+        const r = await adminApi.createProduct({ ...row, image_url: '', images: [] });
         if (r.ok) success++; else failed++;
       } catch { failed++; }
     }
     setImporting(false); setImportResult({ success, failed }); setCsvPreview(null); fetchProducts();
-  }, [api, csvPreview, fetchProducts]);
+  }, [adminApi, csvPreview, fetchProducts]);
 
   /** מנקה את תוצאת הייבוא בלבד. */
   const clearImportResult = useCallback(() => setImportResult(null), []);

@@ -2,7 +2,7 @@
  * נתוני ההזמנות של מסך הניהול: הרשימה, הסקר התקופתי, הסטטוסים,
  * רשימת הליקוט, המחיקה, ייצוא האקסל וחישובי לשונית הסטטיסטיקות.
  *
- * מקבל את עוטף ה-fetch (api) כארגומנט, כמו שני ההוקים האחרים.
+ * Receives the admin API (adminApi, see services/adminService.js) as an argument.
  *
  * getStats מקבל את המוצרים כארגומנט ואינו מחזיק אותם: חישוב
  * הקטגוריות הנמכרות והמוצרים שאזלו זקוק לשתי הרשימות, וקבלת המוצרים
@@ -26,7 +26,7 @@ const POLL_MS = 120000;
  * ה-WebSocket והסקר החלופי — ליד הקונפטי. ההוק אינו יודע מה עושים
  * בהתראה, ולכן הצליל אינו כאן אלא ב-useNewOrderChime שהמסך מרכיב.
  */
-export function useAdminOrders(api, { onNewOrder } = {}) {
+export function useAdminOrders(adminApi, { onNewOrder } = {}) {
   const [orders, setOrders] = useState([]);
   const [showConfetti, setShowConfetti] = useState(false);
   const [ordersError, setOrdersError] = useState('');
@@ -55,7 +55,7 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
   const loadOrders = useCallback(async ({ detectNew = false, markSeen = false } = {}) => {
     let arr;
     try {
-      const res = await api('/api/orders');
+      const res = await adminApi.getOrders();
       const data = await res.json();
       arr = Array.isArray(data) ? data : [];
     } catch {
@@ -70,7 +70,7 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
       prevOrdersCount.current = arr.length;
     }
     setOrders(arr);
-  }, [api, announceNewOrder]);
+  }, [adminApi, announceNewOrder]);
 
   /** טוען את ההזמנות מחדש, בלי לגעת בספירה שנראתה לאחרונה. */
   const fetchOrders = useCallback(() => loadOrders(), [loadOrders]);
@@ -99,7 +99,7 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
   /** משנה את סטטוס ההזמנה. */
   const handleStatusChange = useCallback(async (orderId, status) => {
     try {
-      const res = await api(`/api/orders/${orderId}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+      const res = await adminApi.updateOrderStatus(orderId, status);
 
       if (!res.ok) {
         setOrdersError(await errorMessageFrom(res, `שינוי הסטטוס של הזמנה #${orderId} נכשל.`));
@@ -109,7 +109,7 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
     } catch {
       setOrdersError(NETWORK_ERROR);
     }
-  }, [api, fetchOrders]);
+  }, [adminApi, fetchOrders]);
 
   /** קובע במסך את הסימון של שורה אחת בהזמנה, בלי לגעת בשאר. */
   const setLinePickedLocally = useCallback((orderId, line, picked) => {
@@ -134,9 +134,7 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
   const togglePicked = useCallback(async (orderId, line, picked) => {
     setLinePickedLocally(orderId, line, picked);
     try {
-      const res = await api(`/api/orders/${orderId}/items/${line}/picked`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ picked }),
-      });
+      const res = await adminApi.setOrderLinePicked(orderId, line, picked);
       if (res.ok) return null;
       setLinePickedLocally(orderId, line, !picked);
       return await errorMessageFrom(res, 'הסימון לא נשמר. נסה שוב.');
@@ -144,14 +142,14 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
       setLinePickedLocally(orderId, line, !picked);
       return NETWORK_ERROR;
     }
-  }, [api, setLinePickedLocally]);
+  }, [adminApi, setLinePickedLocally]);
 
   /** מוחק הזמנה לאחר אישור המשתמש. */
   const handleDeleteOrder = useCallback(async (id) => {
     if (!window.confirm('למחוק את ההזמנה?')) return;
 
     try {
-      const res = await api('/api/orders/' + id, { method: 'DELETE' });
+      const res = await adminApi.deleteOrder(id);
       if (!res.ok) {
         setOrdersError(await errorMessageFrom(res, `מחיקת הזמנה #${id} נכשלה.`));
         return;
@@ -160,7 +158,7 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
     } catch {
       setOrdersError(NETWORK_ERROR);
     }
-  }, [api, fetchOrders]);
+  }, [adminApi, fetchOrders]);
 
   /**
    * מחשב את נתוני לשונית הסטטיסטיקות.
