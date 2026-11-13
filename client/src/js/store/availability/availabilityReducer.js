@@ -5,11 +5,12 @@
  * every cart line of such a product is blocked. unavailableVariants are single variants of a
  * product that is otherwise sold ("<id>:<variant label>"), and block only the line with that
  * variant. Both are arrays, since a Set cannot be serialized; selectUnavailableLines builds the
- * Sets for the components.
+ * Sets for the components. unavailableOptions are cart lines whose colour or size the product no
+ * longer offers (see optionKey), and block only those lines.
  */
 import { AVAILABILITY_LOADED, AVAILABILITY_CLEARED } from './availabilityActions';
 
-export const initialAvailabilityState = { unavailableIds: [], unavailableVariants: [] };
+export const initialAvailabilityState = { unavailableIds: [], unavailableVariants: [], unavailableOptions: [] };
 
 /** True when both arrays hold the same values in the same order. */
 function same(a, b) {
@@ -21,13 +22,18 @@ export function availabilityReducer(state = initialAvailabilityState, action) {
   switch (action.type) {
     case AVAILABILITY_LOADED: {
       const variants = action.unavailableVariants || [];
-      if (same(state.unavailableIds, action.unavailableIds) && same(state.unavailableVariants || [], variants)) return state;
-      return { ...state, unavailableIds: action.unavailableIds, unavailableVariants: variants };
+      const options = action.unavailableOptions || [];
+      if (same(state.unavailableIds, action.unavailableIds) && same(state.unavailableVariants || [], variants)
+        && same(state.unavailableOptions || [], options)) return state;
+      return {
+        ...state, unavailableIds: action.unavailableIds, unavailableVariants: variants, unavailableOptions: options,
+      };
     }
 
     case AVAILABILITY_CLEARED:
-      if (state.unavailableIds.length === 0 && !state.unavailableVariants?.length) return state;
-      return { ...state, unavailableIds: [], unavailableVariants: [] };
+      if (state.unavailableIds.length === 0 && !state.unavailableVariants?.length
+        && !state.unavailableOptions?.length) return state;
+      return { ...state, unavailableIds: [], unavailableVariants: [], unavailableOptions: [] };
 
     default:
       return state;

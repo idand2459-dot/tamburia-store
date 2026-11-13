@@ -9,7 +9,7 @@
  * State shape:
  *   cart:         { items: [...], deliveryMethod: null | 'pickup' | 'delivery', priceChanges: [...] }
  *   wishlist:     { items: [{ id, name, price, image_url, in_stock, category }] }
- *   availability: { unavailableIds: [...], unavailableVariants: [...] }
+ *   availability: { unavailableIds: [...], unavailableVariants: [...], unavailableOptions: [...] }
  */
 import { createStore, applyMiddleware, combineReducers } from 'redux';
 import { thunk } from 'redux-thunk';
@@ -30,7 +30,7 @@ export function createAppStore(preloadedState) {
   const initialState = preloadedState || {
     cart: { items: readCartItems(), deliveryMethod: null, priceChanges: readPriceChanges() },
     wishlist: { items: readWishlistItems() },
-    availability: { unavailableIds: [], unavailableVariants: [] },
+    availability: { unavailableIds: [], unavailableVariants: [], unavailableOptions: [] },
   };
 
   const store = createStore(rootReducer, initialState, applyMiddleware(thunk));

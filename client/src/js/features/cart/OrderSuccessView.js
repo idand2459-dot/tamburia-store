@@ -30,6 +30,13 @@ function OrderSuccessView({ closeCart, checkout }) {
       <h2 className="order-success-title">ההזמנה התקבלה!</h2>
       <p className="order-success-id">#{orderSuccess.id}</p>
 
+      {/* the order that was just confirmed is not the cart the customer is editing now */}
+      {checkout.cartKeptAfterOrder && (
+        <p className="order-success-kept">
+          זו ההזמנה שנשלחה קודם. העגלה הנוכחית לא נשלחה והיא נשארה בעגלה.
+        </p>
+      )}
+
       <dl className="order-success-details">
         <div>
           <dt>שם</dt>

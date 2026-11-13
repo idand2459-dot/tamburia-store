@@ -82,18 +82,62 @@ export async function getJson(url, { signal, fallback } = {}) {
   return res.json();
 }
 
-/** שולח JSON, וזורק ApiError עם הודעת השרת כשהתשובה אינה תקינה. */
-export async function postJson(url, body, { signal, fallback } = {}) {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal,
-  });
-
-  if (!res.ok) {
-    throw await apiErrorFrom(res, fallback);
+/**
+ * הבקשה לא נענתה בזמן שהוקצב לה. זה לא כישלון ידוע: השרת עשוי היה לקבל אותה ולבצע אותה,
+ * ורק התשובה לא הגיעה. מי שהבקשה שלו משנה מצב חייב להתייחס לזה כאל תוצאה לא ידועה.
+ */
+export class TimeoutError extends Error {
+  constructor(timeoutMs) {
+    super(`הבקשה לא נענתה תוך ${timeoutMs}ms`);
+    this.name = 'TimeoutError';
+    this.timeoutMs = timeoutMs;
   }
+}
 
-  return res.json();
+/**
+ * signal שמתבטל כשהמקורי מתבטל או כשעבר הזמן. AbortController ו-setTimeout ולא
+ * AbortSignal.timeout: האחרון חסר בדפדפנים שמתחת ל-Chrome 103 ול-Safari 16.
+ */
+function withTimeout(signal, timeoutMs) {
+  if (!timeoutMs) return { signal, timedOut: () => false, clear: () => {} };
+
+  const controller = new AbortController();
+  let timedOut = false;
+  const onAbort = () => controller.abort();
+  if (signal?.aborted) controller.abort();
+  else signal?.addEventListener('abort', onAbort);
+
+  const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
+  return {
+    signal: controller.signal,
+    timedOut: () => timedOut,
+    clear: () => { clearTimeout(timer); signal?.removeEventListener('abort', onAbort); },
+  };
+}
+
+/**
+ * שולח JSON, וזורק ApiError עם הודעת השרת כשהתשובה אינה תקינה.
+ * עם timeoutMs, בקשה שלא נענתה בזמן (כולל קריאת הגוף) נקטעת וזורקת TimeoutError.
+ */
+export async function postJson(url, body, { signal, fallback, timeoutMs } = {}) {
+  const guard = withTimeout(signal, timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: guard.signal,
+    });
+
+    if (!res.ok) {
+      throw await apiErrorFrom(res, fallback);
+    }
+
+    return await res.json();
+  } catch (error) {
+    if (guard.timedOut()) throw new TimeoutError(timeoutMs);
+    throw error;
+  } finally {
+    guard.clear();
+  }
 }

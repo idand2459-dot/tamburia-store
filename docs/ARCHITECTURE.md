@@ -24,7 +24,7 @@ server/
   server.js        starts the process: migrations, HTTP server, WebSocket, graceful shutdown
   app.js           builds the Express app; middleware order lives here
   config/          env.js (reads and validates every variable), db.js (the one pg Pool)
-  db/              migrate.js (the runner) and migrations/000–011 (.sql, applied in order)
+  db/              migrate.js (the runner) and migrations/000–012 (.sql, applied in order)
   api/             index.js (mounts the domains, GET /health) and one folder per domain:
                    product, order, review, pigmentFormula, setting, auth, upload. A domain folder holds
                    <d>.routes (public vs admin endpoints), <d>.validator (parse and bound input, 400),
@@ -74,6 +74,10 @@ scripts/           catalog import, demo data, the product-photo pipeline, the a1
    - rejects (400) a line whose product doesn't exist or is hidden, an unknown variant, or a
      product with no price yet; a product with `in_stock = false` is refused with **409** and
      `details.reason = 'out_of_stock'` (reported before a changed price; no quantities are tracked);
+   - refuses (409, `details.reason = 'option_unavailable'`, after stock and before price) a line
+     whose `selectedColor` or `selectedSize` is not an option the product defines today; a null
+     one is accepted (calculator bundle lines carry none), and the check is only at creation, so
+     orders already saved keep whatever they hold;
    - rejects (400) more than 50 lines, more than 999 units in a line, or a total above
      99,999,999.99 (the largest `NUMERIC(10,2)`), so the insert can never fail on size;
    - takes **each price from the database** (the variant's if one was chosen) and the name too;
@@ -82,13 +86,60 @@ scripts/           catalog import, demo data, the product-photo pipeline, the a1
    - computes `subtotal`, `delivery_fee` (from `DELIVERY_FEE`) and `total` in integer agorot,
      converting to shekels only at the end. Whatever totals the request carried are ignored.
 5. **Repository.** `orderRepository.create` inserts the priced order with one parameterised `INSERT`.
+   With a `request_id` it is `createOnce`: `INSERT … ON CONFLICT (request_id) DO NOTHING`, see
+   *One order per request id* below.
 6. **Side effects.** The service broadcasts `order:created` over the WebSocket, so the open
    admin chimes and refreshes, and sends the store and the customer their emails. A mail
-   failure never fails the order.
-7. **Back in the browser.** 201: the success step shows and the cart empties. 409 (price): the
+   failure never fails the order. The answer waits for the two emails, but never longer than
+   about 10 seconds: the SMTP transport has 5 s connection, greeting and DNS timeouts and an 8 s
+   socket timeout, with a 10 s deadline over each send. A send that hit the deadline is reported as
+   `{ sent: false, reason: 'timeout' }`, which means *unknown*, not *failed*: the message may
+   still have gone out. So `emails.store` and `emails.customer` being `false` means "not
+   confirmed sent".
+7. **Back in the browser.** 201 (or 200 for a replay): the success step shows and the cart empties. 409 (price): the
    hook applies `details.prices` to the cart; each change must be acknowledged by the customer
-   before the order can be sent. 409 (out of stock): the cart is checked again and the lines are
-   blocked. Any other error shows the server's message and keeps the cart.
+   before the order can be sent. 409 (out of stock, or a colour/size that is gone): the cart is
+   checked again and the lines are blocked. Any other 4xx shows the server's message and keeps
+   the cart. A timeout, a network failure or a 5xx is an unknown outcome, see below.
+
+**One order per request id (P7.4).** Every submission carries a `request_id`, a version-4 UUID
+the browser creates once per order. `orders.request_id` has a partial unique index
+(migration 012), so PostgreSQL, not the code, decides who wins when requests race, and
+`orders.request_hash` is the SHA-256 of the order as the validator normalized it (customer,
+delivery, notes and each line's id, name, price, quantity, variant, colour and size; not the id
+itself and not the totals). `createOrder` looks the id up *before* pricing:
+- found, same hash: the original order comes back with **200** and `Idempotent-Replayed: true`,
+  with no repricing (a price or stock change after the sale is not a reason to refuse a
+  retry), no emails and no WebSocket broadcast; `emails` is `{ store: null, customer: null }`
+  (unknown), and `picked_items`, `request_id` and `request_hash` are not returned;
+- found, different hash: **422**, `details.reason = 'request_id_reused'`, and nothing is returned
+  from the other order;
+- not found: priced and inserted with `ON CONFLICT … DO NOTHING`. If another request took the id
+  in between, the same two rules apply to the row it wrote, so concurrent identical requests give
+  exactly one 201 and the rest 200.
+
+A rejected request (400, 409) stores nothing, so the same id can be used again once the cause is
+fixed. The id is optional, so older clients work and simply get no protection, and its shape (v4
+UUID, 122 random bits) is enforced so that it cannot be guessed.
+
+On the client, `hooks/useCheckoutForm` keeps the id and the *exact body sent* in localStorage
+(`tamburia-checkout-attempt`, written just before the request leaves) until the outcome is known:
+- the order was created (201, or 200 for a replay) or the server refused it with a 4xx: the attempt
+  is removed;
+- a timeout (20 s, `AbortController` + `setTimeout`, so it works in older browsers), a network
+  failure, a 5xx, a 408 or an answer that is not JSON: the outcome is unknown, so the attempt is
+  kept, with no expiry, and a new order cannot be sent. The checkout shows the unresolved order
+  and offers *send it again* (the same body and id, so the server returns the original) or
+  *cancel* (a second click, after a warning that a duplicate may be created);
+- a 422 keeps the attempt, flagged as a conflict, and offers only *cancel*;
+- if localStorage cannot hold the attempt it still works in memory, the message does not promise
+  that a reload is safe, and the notice says that a reload will lose it;
+- when the original is confirmed after the customer changed the cart, the cart and the form are
+  kept (the confirmed order is shown, with a note), and are emptied only if the cart is still the
+  order that was sent.
+
+The attempt holds the customer's name, phone and address (no payment data exists in this app) and
+nothing is logged.
 
 **The cart is checked against the catalogue** (`checkAvailability`, one `GET /api/products?ids=`)
 on the first load, when the set of products changes, on entering the cart or the checkout, and
@@ -182,6 +233,8 @@ development database itself (`test/lib/testDatabase.js`):
 
 - **unit-*** (no network or database): repo hygiene, config startup rules, order service,
   product visibility, review moderation, money, originals, admin cookie reading, the test-database guard.
+- **unit-email-delivery**: the email sender's timeouts, deadline and non-throwing contract, with a
+  fake transport.
 - **smoke-fresh-db**: creates an empty database, runs every migration and the catalogue
   import, and compares the schema column by column with the real one.
 - **smoke-static, -orders, -products, -settings, -reviews, -pigments, -contract, -auth**: the HTTP
@@ -190,7 +243,7 @@ development database itself (`test/lib/testDatabase.js`):
   backend restructuring: it imports nothing from `server/` and covers every route, including
   all admin routes without a cookie.
 
-`npm run test:client` runs 537 Jest tests in 34 suites (services, the Redux store, pricing, the admin
+`npm run test:client` runs 724 Jest tests in 39 suites (services, the Redux store, pricing, the admin
 hooks and tabs, the pure utils, App routing). They live in `client/src/js/__tests__/`, in folders that
 mirror the code they cover. `npm run a11y` is the
 accessibility gate (it serves `client/build`, so build first).

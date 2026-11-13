@@ -62,7 +62,7 @@ Tool settings: `TEST_DATABASE_URL` (a separate local database for `npm test` and
 - PostgreSQL, the only data store.
 - Gmail SMTP through Nodemailer, only with `MAIL_ENABLED` on; with it off, emails are written to the log (`README.md:91`).
 - The installed Chrome, through puppeteer-core, for the accessibility gate only (`scripts/a11y-audit.js:11-12`).
-- Timeouts and retry behavior of these dependencies: not checked yet.
+- Timeouts: the SMTP transport has 5 s connection, greeting and DNS timeouts and an 8 s socket timeout, with a 10 s deadline over each send (`server/services/email/transporter.js`); the storefront gives an order request 20 s (`client/src/js/services/orderService.js`). A timed-out send is an unknown outcome, not a failure. There is no queue or retry for emails; PostgreSQL has only the pool's 5 s connection timeout. A retry of an order is safe through its `request_id` (see [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)).
 
 ## Operational Concerns
 - Logging: the error handler logs every 5xx with `console.error`, the method, and the URL (`server/middleware/errorHandler.js:52`); `DB_LOG_QUERIES` logs every query. What is never logged: not checked yet.

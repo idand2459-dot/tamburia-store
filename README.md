@@ -146,7 +146,7 @@ origin, so there is no CORS setup in production and no second deployment target.
 ```
 server/
   config/        env loading and validation, the one shared database pool
-  db/            SQL migrations (000–011) and the runner
+  db/            SQL migrations (000–012) and the runner
   api/           one folder per domain (product, order, review, pigmentFormula, setting, auth, upload):
                  routes, validator, controller, service, repository — plus api/index.js
                  - routes mark what is public and what is guarded; validators check and bound input
@@ -311,7 +311,7 @@ written up in [docs/a11y-audit.md](docs/a11y-audit.md); the public statement is 
 
 ```bash
 npm test               # server: unit and smoke suites
-npm run test:client    # client: 34 suites, 537 tests
+npm run test:client    # client: 39 suites, 724 tests
 npm run a11y           # accessibility: serves client/build, so run npm run build:client first
 ```
 
@@ -342,7 +342,8 @@ port and address) before the first migration, and only then starts its own serve
 |---|---|---|
 | `unit-repo-hygiene` | 6 | `.env` not tracked, `.env.example` placeholders only, no secret value in any tracked file |
 | `unit-config` | 13 | The production startup rules (session secret, password length), optional mail credentials, and the delivery fee agreeing across client, server default and `.env.example` |
-| `unit-order-service` | 54 | Order business rules, the pick list included, without network or database |
+| `unit-order-service` | 80 | Order business rules, the pick list and idempotent creation (replay, payload mismatch, lost race) included, without network or database |
+| `unit-email-delivery` | 16 | The email sender never throws and never waits forever: transport timeouts, the 10-second deadline, a timed-out send reported as an unknown outcome, its timer cleared, no unhandled rejection |
 | `unit-product-service` | 14 | Hidden-product visibility for customers and admins, with a fake repository |
 | `unit-review-service` | 13 | Moderation: public reads approved-only, new reviews unapproved |
 | `unit-auth-cookie` | 39 | Reading the admin cookie through cookie-parser: missing, expired, tampered, URL-encoded, malformed, quoted and duplicated cookies, `requireAdmin` / `markAdmin`, and the WebSocket upgrade |
@@ -350,7 +351,7 @@ port and address) before the first migration, and only then starts its own serve
 | `unit-originals` | 14 | Keeping and finding the full-resolution original of an upload |
 | `smoke-fresh-db` | 13 | An empty database: every migration, the catalogue import, and a column-by-column schema match with the real one |
 | `smoke-static` | 47 | Client serving, cache and security headers, SPA fallback and its boundaries, no internal file exposed, the admin kept out of the main bundle |
-| `smoke-orders` | 175 | Order lifecycle, server-side pricing and totals, 409 on changed prices, 409 on a product out of stock, order size limits and the `NUMERIC(10,2)` ceiling, status transitions, pagination, immutable fields, the pick list (tick, untick, missing line or order, no login) |
+| `smoke-orders` | 248 | Order lifecycle, server-side pricing and totals, 409 on changed prices, 409 on a product out of stock, 409 on a colour or size the product no longer offers, `request_id` idempotency (replay, 422 on a different order, 8 concurrent requests, malformed ids, no internal fields exposed), order size limits and the `NUMERIC(10,2)` ceiling, status transitions, pagination, immutable fields, the pick list (tick, untick, missing line or order, no login) |
 | `smoke-products` | 168 | CRUD, partial updates, subcategories, hiding, delete with and without orders, image cleanup |
 | `smoke-settings` | 21 | The closed list of settings keys, set, reset |
 | `smoke-reviews` | 57 | Moderation, the public/admin split, the stats contract the home page depends on |
@@ -469,7 +470,7 @@ Everything is under `/api`. Routes marked 🔒 require an admin session.
 |---|---|
 | **Auth** | `POST /auth/login` · `POST /auth/logout` · 🔒 `GET /auth/me` |
 | **Products** | `GET /products` · `GET /products/:id` · `GET /products/categories` · 🔒 `POST` `PUT /:id` `DELETE /:id` |
-| **Orders** | `POST /orders` · `GET /orders/by-phone/:phone` · 🔒 `GET /orders` `GET /:id` `GET /stats` `PUT /:id` `PUT /:id/status` `DELETE /:id` |
+| **Orders** | `POST /orders` (optional `request_id`: one order per id, a retry gets the original back with 200 and `Idempotent-Replayed: true`, the same id with a different order is 422) · `GET /orders/by-phone/:phone` · 🔒 `GET /orders` `GET /:id` `GET /stats` `PUT /:id` `PUT /:id/status` `DELETE /:id` |
 | **Reviews** | `GET /reviews` · `GET /reviews/stats` · `POST /reviews` · 🔒 `GET /reviews/all` `GET /:id` `PUT /:id` `PUT /:id/approve` `DELETE /:id` |
 | **Pigment formulas** | `GET /pigment-formulas` · `GET /pigment-formulas/:id` · `GET /pigment-formulas/code/:code` · 🔒 `POST` `PUT /:id` `DELETE /:id` |
 | **Settings** | 🔒 `GET /settings/:key` · 🔒 `PUT /settings/:key` |

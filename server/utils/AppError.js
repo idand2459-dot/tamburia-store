@@ -23,4 +23,7 @@ const notFound = (msg = 'לא נמצא') => new AppError(404, msg);
 /** שגיאת 409 — הפעולה מתנגשת עם המצב הקיים. */
 const conflict = (msg, details) => new AppError(409, msg, details);
 
-module.exports = { AppError, badRequest, notFound, conflict };
+/** שגיאת 422 — הבקשה תקינה בצורתה אבל סותרת בקשה קודמת עם אותו מזהה. */
+const unprocessable = (msg, details) => new AppError(422, msg, details);
+
+module.exports = { AppError, badRequest, notFound, conflict, unprocessable };

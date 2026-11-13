@@ -5,6 +5,7 @@
  * כישלון בשליחת מייל אינו מכשיל את הפעולה — services/email מחזיר
  * { sent, reason? } ואינו זורק, ולכן הזמנה נשמרת גם כשהמייל לא יצא.
  */
+const crypto = require('crypto');
 const orderRepository = require('./order.repository');
 const { priceOrder } = require('./pricing.service');
 const mailer = require('../../services/email');
@@ -13,7 +14,7 @@ const {
   assertDeliveryCityAllowed, assertDeliveryAddressPresent,
   assertStatusFitsDeliveryMethod,
 } = require('./order.rules');
-const { badRequest, notFound } = require('../../utils/AppError');
+const { badRequest, notFound, conflict, unprocessable } = require('../../utils/AppError');
 const { toAgorot, fromAgorot } = require('../../utils/money');
 
 /** שולף הזמנה או זורק 404. משמש כל פעולה שדורשת הזמנה קיימת. */
@@ -55,17 +56,83 @@ async function findOrdersByPhone(rawPhone) {
 }
 
 /**
+ * ה-hash של ההזמנה כפי שהוולידטור נירמל אותה, לפני התמחור. מה שנכנס: פרטי הלקוח,
+ * אופן הקבלה, הכתובת, ההערות וכל שורה (id, שם, מחיר שהלקוח ראה, כמות, גרסה, צבע ומידה),
+ * בסדר קבוע. מה שלא נכנס: request_id עצמו, והסכומים — הם נקבעים בשרת.
+ * הלקוח שולח שוב את אותו גוף בדיוק, ולכן אותו חישוב מניב אותו hash. ה-'v1' מאפשר
+ * לשנות את הצורה בעתיד בלי לבלבל הזמנות ישנות.
+ */
+function requestHashOf(data) {
+  const lines = data.items.map((i) => [
+    i.id, i.name, i.price, i.quantity, i.selectedVariant, i.selectedColor, i.selectedSize,
+  ]);
+  const canonical = JSON.stringify([
+    'v1', data.customer_name, data.customer_phone, data.customer_email, data.delivery_method,
+    data.delivery_address, data.notes, lines,
+  ]);
+  return crypto.createHash('sha256').update(canonical).digest('hex');
+}
+
+/** האם שני hash-ים שווים (השוואה בזמן קבוע). */
+function sameHash(a, b) {
+  const x = Buffer.from(String(a ?? ''));
+  const y = Buffer.from(String(b ?? ''));
+  return x.length === y.length && crypto.timingSafeEqual(x, y);
+}
+
+/**
+ * ההזמנה שכבר נוצרה עבור המזהה הזה, בצורה שמתאימה ללקוח: בלי request_hash, בלי
+ * picked_items (מצב פנימי של הליקוט, כמו ב-findOrdersByPhone) ובלי request_id.
+ * מזהה שהגיע עם הזמנה אחרת הוא 422 — זה לא ניסיון חוזר, ואסור להחזיר לו את ההזמנה.
+ */
+function replayOf(existing, hash) {
+  if (!sameHash(existing.request_hash, hash)) {
+    throw unprocessable(
+      'מזהה הבקשה כבר שימש להזמנה אחרת. אם השליחה הקודמת לא אושרה, בדקו אותה לפני שתשלחו הזמנה חדשה',
+      { reason: 'request_id_reused' }
+    );
+  }
+  const { request_hash, picked_items, ...order } = existing;
+  // לא ידוע מה עלה בגורל המיילים של השליחה המקורית
+  return { order: { ...order, emails: { store: null, customer: null } }, replayed: true };
+}
+
+/**
  * יוצר הזמנה, משדר אותה למסכי הניהול הפתוחים ומודיע לחנות וללקוח.
- * מחזיר את ההזמנה יחד עם מה שעלה בגורל שני המיילים.
+ * מחזיר { order, replayed }: ההזמנה יחד עם מה שעלה בגורל שני המיילים.
+ *
+ * עם request_id היצירה חד-פעמית. מזהה שכבר קיים מחזיר את ההזמנה המקורית — בלי תמחור
+ * מחדש (מחיר או מלאי שהשתנו אחרי ההצלחה אינם סיבה לדחות ניסיון חוזר), בלי מיילים ובלי
+ * שידור. כשבקשה מקבילה ניצחה, ה-INSERT לא מחזיר שורה והתוצאה זהה.
  *
  * השידור הוא החלטה עסקית ולכן הוא כאן ולא בקונטרולר: רק השכבה הזו
  * יודעת שהזמנה *נוצרה בהצלחה*. הוא סינכרוני, לא מחכה לאיש ואינו
  * חלק מ-Promise.all של המיילים — שידור אינו אמור לעכב תשובה ללקוח.
  */
 async function createOrder(data) {
+  const requestId = data.request_id || null;
+  const hash = requestId ? requestHashOf(data) : null;
+
+  if (requestId) {
+    const existing = await orderRepository.findByRequestId(requestId);
+    if (existing) return replayOf(existing, hash);
+  }
+
   // המחירים והסכומים נקבעים מהקטלוג ולא ממה שהגיע בבקשה, וזה נעשה
   // לפני הכתיבה: הזמנה שנדחתה על מחיר לא נשמרת ולא שולחת מייל.
-  const order = await orderRepository.create(await priceOrder(data));
+  const priced = await priceOrder(data);
+
+  let order;
+  if (requestId) {
+    order = await orderRepository.createOnce({ ...priced, request_hash: hash });
+    if (!order) {
+      const winner = await orderRepository.findByRequestId(requestId);
+      if (!winner) throw conflict('ההזמנה לא נשמרה. אפשר לנסות שוב');
+      return replayOf(winner, hash);
+    }
+  } else {
+    order = await orderRepository.create(priced);
+  }
 
   broadcast('order:created', { id: order.id, total: order.total });
 
@@ -74,7 +141,10 @@ async function createOrder(data) {
     mailer.sendOrderConfirmationToCustomer(order),
   ]);
 
-  return { ...order, emails: { store: store.sent, customer: customer.sent } };
+  // The customer gets the same fields as a replay and the phone lookup: picked_items is the
+  // warehouse's state, not part of what the customer is told.
+  const { picked_items, ...customerOrder } = order;
+  return { order: { ...customerOrder, emails: { store: store.sent, customer: customer.sent } }, replayed: false };
 }
 
 /**

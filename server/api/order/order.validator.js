@@ -29,6 +29,16 @@ const {
 const MAX_ORDER_LINES = 50;
 const MAX_LINE_QUANTITY = 999;
 
+/** The longest variant label, colour or size a line may carry (the catalog's own are far shorter). */
+const MAX_OPTION_LENGTH = 100;
+
+/**
+ * The request id of an order attempt: a version-4 UUID, which the storefront creates from a
+ * cryptographic random source. Requiring that shape (122 random bits) is what keeps an id from
+ * being guessed or enumerated; "1" or a short token is refused.
+ */
+const REQUEST_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
 const EDITABLE = [
   'customer_name', 'customer_phone', 'customer_email',
   'delivery_method', 'delivery_address', 'notes', 'status',
@@ -94,6 +104,14 @@ function asStatus(value) {
   return status;
 }
 
+/** מאמת את מזהה הבקשה האופציונלי ומחזיר אותו באותיות קטנות, או null כשלא נשלח. */
+function asRequestId(value) {
+  if (value === undefined || value === null) return null;
+  const id = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (!REQUEST_ID.test(id)) throw badRequest('request_id חייב להיות מזהה UUID מגרסה 4');
+  return id;
+}
+
 /** מאמת את פריטי ההזמנה ומחזיר צילום מצב מנורמל של העגלה. */
 function asItems(value) {
   if (!Array.isArray(value) || value.length === 0) {
@@ -127,6 +145,12 @@ function asItems(value) {
     }
 
     const id = Number(item.id);
+
+    for (const field of ['selectedVariant', 'selectedColor', 'selectedSize']) {
+      if (item[field] && String(item[field]).trim().length > MAX_OPTION_LENGTH) {
+        throw badRequest(`items[${i}].${field} ארוך מדי (מקסימום ${MAX_OPTION_LENGTH} תווים)`);
+      }
+    }
 
     return {
       id: Number.isInteger(id) && id > 0 ? id : null,
@@ -163,7 +187,7 @@ function parseCreate(body = {}) {
   const customer_name = asTrimmedString(body.customer_name ?? '', 'customer_name', { maxLength: MAX.customer_name });
   if (!customer_name) throw badRequest('חסר שם לקוח');
 
-  return {
+  const data = {
     customer_name,
     customer_phone: asPhone(body.customer_phone),
     customer_email: asOptionalEmail(body.customer_email),
@@ -173,6 +197,11 @@ function parseCreate(body = {}) {
     items,
     status: 'new',
   };
+
+  // Optional, so clients that predate it keep working (they just get no duplicate protection).
+  const requestId = asRequestId(body.request_id);
+  if (requestId) data.request_id = requestId;
+  return data;
 }
 
 /** ממיר שדה בודד לערך המוכן למסד, לפי הכללים של אותו שדה. */
