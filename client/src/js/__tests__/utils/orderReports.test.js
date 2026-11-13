@@ -10,13 +10,8 @@ import { computeOrderStats, ordersToCsv } from '../../utils/orderReports';
 
 const NOW = new Date(2026, 10, 13, 12, 0, 0);
 const at = (month, day, hour = 12) => new Date(2026, month - 1, day, hour).toISOString();
-const ALL_BUT_DATE = [
-  'hrtime', 'nextTick', 'performance', 'queueMicrotask', 'requestAnimationFrame',
-  'cancelAnimationFrame', 'requestIdleCallback', 'cancelIdleCallback', 'setImmediate',
-  'clearImmediate', 'setInterval', 'clearInterval', 'setTimeout', 'clearTimeout',
-];
-
-beforeEach(() => { jest.useFakeTimers({ now: NOW, doNotFake: ALL_BUT_DATE }); });
+// Jest 27 (Create React App) has no `now`/`doNotFake` options for useFakeTimers; the clock is set explicitly.
+beforeEach(() => { jest.useFakeTimers('modern'); jest.setSystemTime(NOW); });
 afterEach(() => { jest.useRealTimers(); });
 
 describe('computeOrderStats', () => {

@@ -3,8 +3,7 @@
  */
 import { useState, useEffect } from 'react';
 import { PaintRoller } from 'lucide-react';
-import scrollToSection from '../../utils/scrollToSection';
-import { PAINT_CALC_SELECTOR } from '../../utils/sections';
+import { PAINT_CALC_SELECTOR, scrollToSection } from '../../utils/sections';
 
 /** מציג את הכפתור הצף של מחשבון הצבע. */
 function PaintCalcBtn() {

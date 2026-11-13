@@ -9,8 +9,7 @@
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
-const { processAndSave, heicError } = require('../services/image.service');
-const { saveOriginal, originalExt } = require('../utils/originals');
+const { saveUploadedImages, heicError, MAX_FILE_SIZE } = require('../services/image.service');
 
 const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -23,7 +22,6 @@ const HEIC_MIME = /^image\/hei[cf](-sequence)?$/;
 /* תמונה מהאייפון שוקלת 3–5MB, ו-15MB משאירים מרווח לצילומי ProRAW
    שהומרו. עד חמישה קבצים בזיכרון בבת אחת — 75MB לכל היותר, ורק
    לאדמין מחובר. */
-const MAX_FILE_SIZE = 15 * 1024 * 1024;
 const MAX_FILES = 5;
 
 /** דוחה כל קובץ שאינו תמונה בסיומת ובסוג התוכן המותרים. */
@@ -53,19 +51,8 @@ const upload = multer({
  */
 async function processUploads(req, res, next) {
   const files = req.file ? [req.file] : (req.files || []);
-  for (const file of files) {
-    file.filename = await processAndSave(file.buffer, UPLOADS_DIR);
-    // המקור נשמר רק אחרי שהעיבוד הצליח: קובץ שבור לא מגיע לכאן. כישלון
-    // בשמירתו אינו מכשיל את ההעלאה — התמונה שהאתר מגיש כבר נשמרה, והמקור
-    // הוא רק חומר גלם לעיבוד מחדש.
-    try {
-      saveOriginal(file.buffer, file.filename, originalExt(file.originalname, file.mimetype));
-    } catch (err) {
-      console.error(`המקור של ${file.filename} לא נשמר:`, err.message);
-    }
-    file.buffer = null;
-  }
+  await saveUploadedImages(files, UPLOADS_DIR);
   next();
 }
 
-module.exports = { upload, processUploads, UPLOADS_DIR, MAX_FILE_SIZE, MAX_FILES };
+module.exports = { upload, processUploads, UPLOADS_DIR, MAX_FILES };

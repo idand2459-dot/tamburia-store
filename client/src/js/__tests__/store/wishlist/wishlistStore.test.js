@@ -7,7 +7,7 @@
  */
 import { createStore, applyMiddleware } from 'redux';
 import { thunk } from 'redux-thunk';
-import { rootReducer } from '../../../store/rootReducer';
+import { rootReducer } from '../../../store';
 import { wishlistReducer, initialWishlistState } from '../../../store/wishlist/wishlistReducer';
 import { setWishlistIds, toggleWishlist } from '../../../store/wishlist/wishlistActions';
 import { selectWishlistIds } from '../../../store/wishlist/wishlistSelectors';

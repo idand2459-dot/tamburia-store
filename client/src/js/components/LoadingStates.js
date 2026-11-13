@@ -24,11 +24,6 @@ export function ProductCardSkeleton() {
   );
 }
 
-/** מציג שלד טעינה של כרטיס קטגוריה. */
-export function CategoryCardSkeleton() {
-  return <div className="skeleton skeleton-category-card" />;
-}
-
 /** מציג ספינר טעינה בגודל ובצבע הנתונים. */
 export function Spinner({ size = 'medium', color = 'white' }) {
   return (

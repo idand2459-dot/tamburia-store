@@ -17,13 +17,11 @@ function toDbValue(column, value) {
   return JSON_COLUMNS.has(column) ? JSON.stringify(value ?? []) : value;
 }
 
-/** מחזיר מוצרים לפי הסינון, המיון והדפדוף שהתבקשו. */
-async function list(options = {}) {
-  const {
-    category, subcategory, inStock, active, ids, search,
-    sort = 'id', order = 'ASC', limit, offset,
-  } = options;
-
+/**
+ * בונה את תנאי ה-WHERE ואת הפרמטרים שלהם מאפשרויות הסינון. list ו-count משתמשים
+ * באותה פונקציה, כך שמספר הרשומות שדפדוף מדווח תמיד זהה למה ש-list מחזיר.
+ */
+function buildFilters({ category, subcategory, inStock, active, ids, search }) {
   const conditions = [];
   const params = [];
 
@@ -55,6 +53,13 @@ async function list(options = {}) {
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  return { where, params };
+}
+
+/** מחזיר מוצרים לפי הסינון, המיון והדפדוף שהתבקשו. */
+async function list(options = {}) {
+  const { sort = 'id', order = 'ASC', limit, offset } = options;
+  const { where, params } = buildFilters(options);
 
   let sql = `SELECT ${COLUMNS} FROM products ${where} ORDER BY ${sort} ${order}, id ASC`;
 
@@ -73,21 +78,7 @@ async function list(options = {}) {
 
 /** סופר מוצרים לפי אותם תנאי סינון, לצורך דפדוף. */
 async function count(options = {}) {
-  const { category, subcategory, inStock, active, ids, search } = options;
-  const conditions = [];
-  const params = [];
-
-  if (active !== undefined) { params.push(active); conditions.push(`active = $${params.length}`); }
-  if (Array.isArray(ids)) { params.push(ids); conditions.push(`id = ANY($${params.length}::int[])`); }
-  if (category) { params.push(category); conditions.push(`category = $${params.length}`); }
-  if (subcategory) { params.push(subcategory); conditions.push(`subcategory = $${params.length}`); }
-  if (inStock !== undefined) { params.push(inStock); conditions.push(`COALESCE(in_stock, true) = $${params.length}`); }
-  if (search) {
-    params.push(`%${search}%`);
-    conditions.push(`(name ILIKE $${params.length} OR sku ILIKE $${params.length} OR description ILIKE $${params.length})`);
-  }
-
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const { where, params } = buildFilters(options);
   const { rows } = await query(`SELECT COUNT(*)::int AS total FROM products ${where}`, params);
   return rows[0].total;
 }

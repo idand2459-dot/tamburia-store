@@ -12,3 +12,18 @@
 
 export const CATEGORIES_SELECTOR = '.category-section';
 export const PAINT_CALC_SELECTOR = '.paint-calc-section';
+
+/*
+ * גלילה חלקה אל מקטע בעמוד, לפי סלקטור. מקטעי עמוד הבית אינם עמודים
+ * נפרדים, ולכן הכפתורים שמובילים אליהם — הכפתור הצף של מחשבון הצבע,
+ * שני כפתורי הכרזה, והבקשה שמגיעה ב-state של הניווט ממסך ה-404 —
+ * גוללים ולא מנווטים, ופה המקום האחד שקובע את הצורה.
+ *
+ * מקטע שאינו בעמוד הנוכחי פשוט לא גורם לכלום: זו הסיבה לבדיקה, ולא
+ * תקלה שצריך לדווח עליה.
+ */
+/** גולל אל המקטע המבוקש, אם הוא קיים בעמוד. */
+export function scrollToSection(selector) {
+  const el = document.querySelector(selector);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}

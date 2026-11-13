@@ -23,7 +23,7 @@ const path = require('path');
 const db = require('../server/config/db');
 const productRepository = require('../server/api/product/product.repository');
 const { fileExists } = require('./lib/uploads');
-const { load: loadCategories } = require('./lib/categories');
+const { load: loadCategories } = require('../server/utils/categories');
 
 const OUT_DIR = path.join(__dirname, '..', 'design-assets');
 const CSV_PATH = path.join(OUT_DIR, 'product-list.csv');

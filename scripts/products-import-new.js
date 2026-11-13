@@ -33,7 +33,7 @@ const orderRepository = require('../server/api/order/order.repository');
 const { parseCreate } = require('../server/api/product/product.validator');
 const { formatPrice } = require('../server/utils/money');
 const { UPLOADS_DIR, pathToUrl, uploadName } = require('./lib/uploads');
-const { load: loadCategories } = require('./lib/categories');
+const { load: loadCategories } = require('../server/utils/categories');
 const { parseColors } = require('./lib/palette');
 
 const ROOT = path.join(__dirname, '..');

@@ -8,7 +8,7 @@
  */
 import { createStore, applyMiddleware } from 'redux';
 import { thunk } from 'redux-thunk';
-import { rootReducer } from '../../../store/rootReducer';
+import { rootReducer } from '../../../store';
 import { availabilityReducer, initialAvailabilityState } from '../../../store/availability/availabilityReducer';
 import { availabilityLoaded, availabilityCleared, checkAvailability } from '../../../store/availability/availabilityActions';
 import {

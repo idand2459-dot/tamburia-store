@@ -19,13 +19,6 @@ jest.mock('../../hooks/useWebSocket', () => ({ useWebSocket: () => {} }));
 const NOW = new Date(2026, 10, 13, 12, 0, 0);
 const at = (month, day, hour = 12, minute = 0) => new Date(2026, month - 1, day, hour, minute).toISOString();
 
-/** Everything fake-able except Date, so only the clock is frozen. */
-const ALL_BUT_DATE = [
-  'hrtime', 'nextTick', 'performance', 'queueMicrotask', 'requestAnimationFrame',
-  'cancelAnimationFrame', 'requestIdleCallback', 'cancelIdleCallback', 'setImmediate',
-  'clearImmediate', 'setInterval', 'clearInterval', 'setTimeout', 'clearTimeout',
-];
-
 const adminApi = createAdminApi(() => {});
 
 /** Renders the hook over a fake fetch serving these orders. */
@@ -38,7 +31,9 @@ async function setup(orders) {
 
 /** Runs one call with the clock frozen at NOW and puts the real clock back right after. */
 function atNow(call) {
-  jest.useFakeTimers({ now: NOW, doNotFake: ALL_BUT_DATE });
+  // Jest 27 (Create React App) ignores the `now`/`doNotFake` options, so the clock is set explicitly.
+  jest.useFakeTimers('modern');
+  jest.setSystemTime(NOW);
   try {
     return call();
   } finally {
