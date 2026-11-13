@@ -8,7 +8,7 @@
  *
  * State shape:
  *   cart:         { items: [...], deliveryMethod: null | 'pickup' | 'delivery' }
- *   wishlist:     { ids: [...] }
+ *   wishlist:     { items: [{ id, name, price, image_url, in_stock, category }] }
  *   availability: { unavailableIds: [...] }
  */
 import { createStore, applyMiddleware, combineReducers } from 'redux';
@@ -16,7 +16,7 @@ import { thunk } from 'redux-thunk';
 import { cartReducer } from './cart/cartReducer';
 import { wishlistReducer } from './wishlist/wishlistReducer';
 import { availabilityReducer } from './availability/availabilityReducer';
-import { readCartItems, readWishlistIds, persistCart } from './persistence';
+import { readCartItems, readWishlistItems, persistCart, persistWishlist } from './persistence';
 
 /** One reducer per domain of the shared state. */
 export const rootReducer = combineReducers({
@@ -25,15 +25,16 @@ export const rootReducer = combineReducers({
   availability: availabilityReducer,
 });
 
-/** Builds the store and starts saving the cart to localStorage. */
+/** Builds the store and starts saving the cart and the wishlist to localStorage. */
 export function createAppStore(preloadedState) {
   const initialState = preloadedState || {
     cart: { items: readCartItems(), deliveryMethod: null },
-    wishlist: { ids: readWishlistIds() },
+    wishlist: { items: readWishlistItems() },
     availability: { unavailableIds: [] },
   };
 
   const store = createStore(rootReducer, initialState, applyMiddleware(thunk));
   persistCart(store);
+  persistWishlist(store);
   return store;
 }

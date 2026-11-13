@@ -22,7 +22,7 @@ The naming rule ([naming.md](../.claude/rules/naming.md)) requires every shared 
 - action — a plain object with a `type` constant and a payload that describes one thing that happened (for example `CART_ITEM_ADDED`); the only way to change the store. Not event, command.
 - reducer — a pure function `(state, action) => state` that returns the next state for one domain and the same reference when nothing changes; one file per domain. Not handler.
 - selector — a pure function `(state) => value` that reads or derives a value from the store (for example `selectCartCount`); components read the store only through selectors. Not getter.
-- thunk — an action creator that returns a function, run by `redux-thunk`, for the two flows with side effects (`toggleWishlist`, `checkAvailability`). Not async action, saga.
+- thunk — an action creator that returns a function, run by `redux-thunk`, for the one flow with a side effect, `checkAvailability` (a server request). The wishlist toggle is a plain action: the reducer changes the list and `store/persistence.js` copies it to localStorage. Not async action, saga.
 - availability — which products saved in the customer's cart are no longer in the catalog (`unavailableIds`); fetched from the server by id (`client/src/js/hooks/useAvailability.js`, moved to the store in P4R). Not stock, in-stock status.
 
 ## Naming Alignment

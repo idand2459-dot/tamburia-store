@@ -14,8 +14,10 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { Check, Share2, Truck, Store, RotateCcw } from 'lucide-react';
-import { toggleWishlist, isInWishlist } from '../../../utils/wishlistUtils';
+import { toggleWishlist } from '../../../store/wishlist/wishlistActions';
+import { selectWishlistIds } from '../../../store/wishlist/wishlistSelectors';
 import categories from '../categories';
 import ProductGallery from './ProductGallery';
 import ProductVariantSelector from './ProductVariantSelector';
@@ -88,7 +90,8 @@ function ProductDetails({ product, onAddToCart }) {
   const [addedToCart, setAddedToCart] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
-  const [inWishlist, setInWishlist] = useState(false);
+  const dispatch = useDispatch();
+  const inWishlist = useSelector(selectWishlistIds).includes(product.id);
 
   const addBtnRef = useRef(null);
   const reviewsRef = useRef(null);
@@ -125,7 +128,6 @@ function ProductDetails({ product, onAddToCart }) {
 
     addToRecentlyViewed(product);
     setRecentlyViewed(getRecentlyViewed().filter(p => p.id !== product.id));
-    setInWishlist(isInWishlist(product.id));
 
     // הסינון לפי קטגוריה נעשה בשרת ולא כאן. קודם נשלף כל הקטלוג רק
     // כדי למצוא ארבעה מוצרים — חמישה מבוקשים כדי שאפשר יהיה להוציא את
@@ -274,7 +276,7 @@ function ProductDetails({ product, onAddToCart }) {
             addRef={addBtnRef}
             productName={product.name}
             inWishlist={inWishlist}
-            onToggleWishlist={() => setInWishlist(toggleWishlist(product))}
+            onToggleWishlist={() => dispatch(toggleWishlist(product))}
           />
 
           <ProductTrustRow />

@@ -28,7 +28,7 @@ let answer;
 const askedUrls = () => global.fetch.mock.calls.map(([url]) => url);
 const newStore = (items = []) => createStore(
   rootReducer,
-  { cart: { items, deliveryMethod: null }, wishlist: { ids: [] }, availability: { unavailableIds: [] } },
+  { cart: { items, deliveryMethod: null }, wishlist: { items: [] }, availability: { unavailableIds: [] } },
   applyMiddleware(thunk)
 );
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -140,7 +140,7 @@ describe('checkAvailability', () => {
   test('an empty key asks nothing and clears the result', async () => {
     const store = createStore(
       rootReducer,
-      { cart: { items: [], deliveryMethod: null }, wishlist: { ids: [] }, availability: { unavailableIds: [1] } },
+      { cart: { items: [], deliveryMethod: null }, wishlist: { items: [] }, availability: { unavailableIds: [1] } },
       applyMiddleware(thunk)
     );
 

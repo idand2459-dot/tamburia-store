@@ -43,7 +43,7 @@ client/src/
   js/pages/        route screens only (home, category, product, static pages, admin login, admin/)
   js/components/   reusable UI: Drawer, Navbar, Footer, ProductCard, ProductList, LoadingStates…
   js/features/     feature UI by domain: home, catalog (+ product-page), cart, calculators
-  js/store/        the Redux store: cart, wishlist, availability (…Actions, …Reducer, …Selectors per domain)
+  js/store/        the Redux store: cart, wishlist (the saved product records, the one wishlist state every screen reads), availability (…Actions, …Reducer, …Selectors per domain); persistence.js copies the cart and the wishlist to localStorage
   js/hooks/        state and effects: useCheckoutForm, useAvailability (recently viewed), useAdmin*…
   js/services/     every server call the storefront makes (http, product, review, order, pigment, auth)
   js/routes/       AdminRoute: the session guard in front of the admin
