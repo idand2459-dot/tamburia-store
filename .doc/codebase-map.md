@@ -17,20 +17,19 @@ A learning aid for the codebase. The full architecture reference is [docs/ARCHIT
 - Server: route → controller → service → repository → database.
   - Routes attach middleware and a controller per endpoint (`server/api/order/order.routes.js:29-39`).
   - Controllers parse the request with a validator and call one service; they never touch a repository (`server/api/order/order.controller.js:2-3`, `:29-31`).
-  - Services hold the business rules and call repositories, the email service, and the realtime broadcast (`server/api/order/order.service.js:8-17`).
+  - Services hold the business rules and call repositories and the email service (`server/api/order/order.service.js:8-17`).
   - Repositories run SQL through `query` from `server/config/db.js` (`server/api/order/order.repository.js:5`).
-  - The realtime service is infrastructure only; services decide what to broadcast (`server/services/realtime.service.js:4-8`).
   - Every error reaches the central handler (`server/app.js:95`).
 - Client: page or feature → hook → service → `services/http.js` → `fetch`.
   - Example: the checkout hook calls `createOrder` (`client/src/js/hooks/useCheckoutForm.js:81`), which calls `postJson` (`client/src/js/services/orderService.js:24-25`), which calls `fetch` (`client/src/js/services/http.js:86-87`).
   - The admin screen does not use these services; it calls its own `api()` wrapper (`client/src/js/services/orderService.js:9`, `client/src/js/hooks/useAdminOrders.js:58`).
 
 ### Frontend to backend
-- Server entry point: `server/server.js` — connects to the database, runs migrations, listens, and attaches WebSocket (`server/server.js:13-23`).
+- Server entry point: `server/server.js` — connects to the database, runs migrations, and listens (`server/server.js:13-22`).
 - One origin serves both: the API under `/api` (`server/app.js:89`) and the React build with a fallback to `index.html` (`server/app.js:92`, `:30-55`).
 - Client entry point: `client/src/js/App.js` — the store routes (`client/src/js/App.js:69-84`) and the lazy-loaded admin (`client/src/js/App.js:32`).
-- In development the React dev server proxies API calls to port 3000 (`client/package.json:3`), but not the WebSocket (`client/src/js/hooks/useWebSocket.js:12-14`).
-- Live updates: WebSocket at `/ws` on the same HTTP server (`server/services/realtime.service.js:17`, `:27`).
+- In development the React dev server proxies API calls to port 3000 (`client/package.json:3`).
+- New orders reach the admin by polling `GET /api/orders` every 30 seconds while the tab is visible (`client/src/js/hooks/useAdminOrders.js:17`, `:122-166`).
 
 ### Database
 - One PostgreSQL pool (`server/config/db.js:15-24`); `query` runs a single statement (`server/config/db.js:29-37`), `withTransaction` wraps BEGIN/COMMIT/ROLLBACK (`server/config/db.js:40-53`).
@@ -59,23 +58,21 @@ A learning aid for the codebase. The full architecture reference is [docs/ARCHIT
 5. The validator requires a name, and for delivery an address in the delivery area; the email is optional; the status starts as `new`. `server/api/order/order.validator.js:236-253`
 6. The service prices the order from the catalogue: prices and names come from the database, a hidden or unknown product is a 400, a changed price is a 409, and the delivery fee is added for delivery. `server/api/order/order.service.js:68`, `server/api/order/pricing.service.js:89-145`
 7. The repository inserts the order and returns it. `server/api/order/order.repository.js:97-108`
-8. The service broadcasts `order:created` (see W02). `server/api/order/order.service.js:70`
+8. Nothing is pushed to the admin; the open admin screen finds the order by polling (see W02).
 9. Two emails are sent in parallel: to the store and to the customer. `server/api/order/order.service.js:72-75`, `server/services/email/index.js:12-27`
 10. Sending: with no recipient it returns without a log line; with `MAIL_ENABLED=false` it logs the subject and the recipient, not the body. `server/services/email/transporter.js:23`, `:25-27`
 11. The response is 201 with the order and whether each email was sent. `server/api/order/order.service.js:77`, `server/api/order/order.controller.js:31`
 12. The client shows the thank-you screen and empties the cart; on a rejection it keeps the cart, and a 409 updates the prices. `client/src/js/hooks/useCheckoutForm.js:104`, `:97` (the cart is emptied and re-priced through `client/src/js/store/cart/cartReducer.js`)
 
 ### W02 — A new order reaches the admin: from saving the order until it appears in the feed with the chime
-1. On start, the server attaches WebSocket to the same HTTP server. `server/server.js:23`
-2. An upgrade is accepted only on `/ws` and only with a valid admin cookie. `server/services/realtime.service.js:37-50`
-3. Each accepted connection joins the client list. `server/services/realtime.service.js:57-61`
-4. Creating an order broadcasts `order:created` to every open connection. `server/api/order/order.service.js:70`, `server/services/realtime.service.js:68-82`
-5. The admin screen composes the chime and hands it to the orders hook. `client/src/js/pages/admin/Admin.js:71`, `:76`
-6. The orders hook listens for `order:created`. `client/src/js/hooks/useAdminOrders.js:83-88`
-7. The WebSocket hook connects same-origin, dispatches by message type, and reconnects after 3 seconds. `client/src/js/hooks/useWebSocket.js:26-29`, `:43-56`, `:61-64`
-8. The announcement: confetti, then the chime if sound is on. `client/src/js/hooks/useAdminOrders.js:41-44`, `client/src/js/hooks/useNewOrderChime.js:81-99`
-9. The list reloads from `GET /api/orders`, which requires an admin. `client/src/js/hooks/useAdminOrders.js:55-72`, `server/api/order/order.routes.js:33`
-10. Fallback: a poll every 2 minutes, in case the WebSocket is down. `client/src/js/hooks/useAdminOrders.js:20`, `:91-94`
+1. The order is saved by W01; the server tells no one. It appears in `GET /api/orders`, which requires an admin. `server/api/order/order.routes.js:33`
+2. The admin screen composes the chime and hands it to the orders hook. `client/src/js/pages/admin/Admin.js:68`, `:73`
+3. The orders hook loads the list once on mount and fills the set of order ids already seen, without a sound or confetti. `client/src/js/hooks/useAdminOrders.js:69-110`
+4. Every 30 seconds, while the tab is visible and no other list request is open, it loads the list again. When the tab is hidden the timer stops; when it becomes visible the list is loaded at once. `client/src/js/hooks/useAdminOrders.js:122-166`
+5. An order whose id is not in the set is a new order; the set grows, so it is announced once. `client/src/js/hooks/useAdminOrders.js:92-104`
+6. The announcement: confetti, then the chime if sound is on. `client/src/js/hooks/useAdminOrders.js:54-57`, `client/src/js/hooks/useNewOrderChime.js:81-99`
+7. A failed poll (network, 5xx) keeps the list and waits for the next tick. A 401 stops the polling; the admin API wrapper returns the admin to the login screen. `client/src/js/hooks/useAdminOrders.js:73-82`
+8. A manual reload (status change, delete) shares the same loader: a newer request makes an older answer be dropped. `client/src/js/hooks/useAdminOrders.js:69-72`, `:90`
 
 ### W03 — Change an order's status: from the admin's click until the email to the customer
 1. The next-step button or the status select calls `onStatusChange`. `client/src/js/pages/admin/OrderCard.js:115`, `:163`

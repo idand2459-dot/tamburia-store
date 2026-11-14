@@ -9,7 +9,6 @@ const crypto = require('crypto');
 const orderRepository = require('./order.repository');
 const { priceOrder } = require('./pricing.service');
 const mailer = require('../../services/email');
-const { broadcast } = require('../../services/realtime.service');
 const {
   assertDeliveryCityAllowed, assertDeliveryAddressPresent,
   assertStatusFitsDeliveryMethod,
@@ -98,16 +97,12 @@ function replayOf(existing, hash) {
 }
 
 /**
- * יוצר הזמנה, משדר אותה למסכי הניהול הפתוחים ומודיע לחנות וללקוח.
+ * יוצר הזמנה ומודיע לחנות וללקוח.
  * מחזיר { order, replayed }: ההזמנה יחד עם מה שעלה בגורל שני המיילים.
  *
  * עם request_id היצירה חד-פעמית. מזהה שכבר קיים מחזיר את ההזמנה המקורית — בלי תמחור
- * מחדש (מחיר או מלאי שהשתנו אחרי ההצלחה אינם סיבה לדחות ניסיון חוזר), בלי מיילים ובלי
- * שידור. כשבקשה מקבילה ניצחה, ה-INSERT לא מחזיר שורה והתוצאה זהה.
- *
- * השידור הוא החלטה עסקית ולכן הוא כאן ולא בקונטרולר: רק השכבה הזו
- * יודעת שהזמנה *נוצרה בהצלחה*. הוא סינכרוני, לא מחכה לאיש ואינו
- * חלק מ-Promise.all של המיילים — שידור אינו אמור לעכב תשובה ללקוח.
+ * מחדש (מחיר או מלאי שהשתנו אחרי ההצלחה אינם סיבה לדחות ניסיון חוזר) ובלי מיילים.
+ * כשבקשה מקבילה ניצחה, ה-INSERT לא מחזיר שורה והתוצאה זהה.
  */
 async function createOrder(data) {
   const requestId = data.request_id || null;
@@ -133,8 +128,6 @@ async function createOrder(data) {
   } else {
     order = await orderRepository.create(priced);
   }
-
-  broadcast('order:created', { id: order.id, total: order.total });
 
   const [store, customer] = await Promise.all([
     mailer.sendNewOrderToStore(order),

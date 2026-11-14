@@ -73,7 +73,7 @@ yet; everything below runs locally.
 ### Admin panel
 - Six tabs, each with its own URL: statistics, orders, products, add/edit, CSV import,
   review moderation
-- A live order feed over WebSocket, with a chime for each new order
+- New-order notification for the admin: the order list is polled every 30 seconds while the tab is visible, with confetti and a chime for each new order
 - Product management with multi-image upload (up to 5 per product); every image is
   squared, resized and saved as content-hashed WebP
 - Hide instead of delete: products with orders are taken off the shelf, not out of the database
@@ -99,7 +99,6 @@ user-supplied values are HTML-escaped. `MAIL_ENABLED=false` logs instead of send
 | Server | Node.js ≥ 18, Express 5 |
 | Database | PostgreSQL via `pg`, no ORM |
 | Client | React 19 (Create React App), react-router 7 |
-| Real time | `ws` (admin order feed) |
 | Images | Multer for uploads, sharp for processing |
 | Authentication | Hand-written HMAC-SHA256 session tokens in an httpOnly cookie |
 | Email | Nodemailer |
@@ -121,7 +120,6 @@ flowchart LR
         H["Security headers<br/>CORS · JSON body limit"]
         U["/uploads<br/>static + 404"]
         A["/api<br/>routes → validators → controllers<br/>→ services → repositories"]
-        W["/ws<br/>admin order feed"]
         C["Client static<br/>+ SPA fallback"]
     end
 
@@ -132,7 +130,6 @@ flowchart LR
     H --> U
     H --> A
     H --> C
-    B <-->|"WebSocket"| W
     A -->|"parameterised SQL"| DB
     A -->|"order + status mail"| M
     C -->|"index.html"| B
@@ -152,7 +149,7 @@ server/
                  - routes mark what is public and what is guarded; validators check and bound input
                  - controllers: HTTP in, service call, HTTP out — no SQL, no repositories, no try/catch
                  - services hold the business rules; repositories hold all SQL (explicit columns, never SELECT *)
-  services/      shared infrastructure: email, realtime, image processing
+  services/      shared infrastructure: email, image processing
   middleware/    error handling, uploads, security headers, admin guard, rate limiting
   utils/         errors, money in agorot, the pagination envelope, the category tree
 
@@ -317,7 +314,7 @@ files that `client/public/index.html` loads, and the note in `securityHeaders.js
 `application/ld+json` block has not been checked in a browser.
 
 **What is not solved yet** (public order lookup that returns customer details, personal data in
-logs and in `localStorage`, in-memory counters, WebSocket and upload hardening, database TLS), and
+logs and in `localStorage`, in-memory counters, upload hardening, database TLS), and
 the checklist to go through before deploying, are in [docs/security.md](docs/security.md).
 
 ---
@@ -378,7 +375,7 @@ port and address) before the first migration, and only then starts its own serve
 | `unit-email-delivery` | 16 | The email sender never throws and never waits forever: transport timeouts, the 10-second deadline, a timed-out send reported as an unknown outcome, its timer cleared, no unhandled rejection |
 | `unit-product-service` | 14 | Hidden-product visibility for customers and admins, with a fake repository |
 | `unit-review-service` | 13 | Moderation: public reads approved-only, new reviews unapproved |
-| `unit-auth-cookie` | 39 | Reading the admin cookie through cookie-parser: missing, expired, tampered, URL-encoded, malformed, quoted and duplicated cookies, `requireAdmin` / `markAdmin`, and the WebSocket upgrade |
+| `unit-auth-cookie` | 33 | Reading the admin cookie through cookie-parser: missing, expired, tampered, URL-encoded, malformed, quoted and duplicated cookies, and `requireAdmin` / `markAdmin` |
 | `unit-money` | 23 | Agorot arithmetic and price parsing |
 | `unit-originals` | 14 | Keeping and finding the full-resolution original of an upload |
 | `smoke-fresh-db` | 13 | An empty database: every migration, the catalogue import, and a column-by-column schema match with the real one |
@@ -551,7 +548,7 @@ Known gaps, in rough order of how much they matter:
    correct for a single server but would not hold behind more than one instance.
 5. **Security and privacy gaps are open** beyond that: the order lookup by phone number returns
    the customer's details, personal data reaches some logs and `localStorage`, the CSP is off,
-   and the WebSocket, uploads and database TLS are not hardened. They are listed, with the
+   and uploads and database TLS are not hardened. They are listed, with the
    deployment checklist, in [docs/security.md](docs/security.md). There is also no privacy policy
    or terms page yet.
 

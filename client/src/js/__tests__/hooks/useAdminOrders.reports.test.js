@@ -14,7 +14,6 @@ import { useAdminOrders } from '../../hooks/useAdminOrders';
 import { createAdminApi } from '../../services/adminService';
 import { STATUS_CONFIG, formatDate } from '../../pages/admin/adminConstants';
 
-jest.mock('../../hooks/useWebSocket', () => ({ useWebSocket: () => {} }));
 
 const NOW = new Date(2026, 10, 13, 12, 0, 0);
 const at = (month, day, hour = 12, minute = 0) => new Date(2026, month - 1, day, hour, minute).toISOString();

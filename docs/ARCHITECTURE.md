@@ -11,7 +11,6 @@ from the same origin.
 | Server | Node.js ≥ 18, Express 5 |
 | Database | PostgreSQL through `pg`. No ORM; plain SQL in repository files |
 | Client | React 19 (Create React App), react-router 7, lucide-react icons |
-| Real time | `ws`: the admin's live order feed on `/ws` |
 | Images | `multer` for uploads, `sharp` to resize, square and re-encode them to WebP |
 | Email | Nodemailer (Gmail) |
 | Auth | Hand-written HMAC-SHA256 session token in an `httpOnly` cookie |
@@ -21,7 +20,7 @@ from the same origin.
 
 ```
 server/
-  server.js        starts the process: migrations, HTTP server, WebSocket, graceful shutdown
+  server.js        starts the process: migrations, HTTP server, graceful shutdown
   app.js           builds the Express app; middleware order lives here
   config/          env.js (reads and validates every variable), db.js (the one pg Pool)
   db/              migrate.js (the runner) and migrations/000–012 (.sql, applied in order)
@@ -31,7 +30,7 @@ server/
                    <d>.controller (HTTP to a service call and back; no SQL, no repository import, no
                    try/catch), <d>.service (business rules) and <d>.repository (all SQL, parameterised,
                    explicit column lists). order also holds pricing.service and order.rules (the delivery-area and status-vs-method rules that the validator and the service share); auth and upload have no repository
-  services/        shared infrastructure: email, realtime, image processing
+  services/        shared infrastructure: email, image processing
   middleware/      security headers, admin guard, rate limiting, uploads, the central error handler
   utils/           AppError, money in agorot, pagination envelope, category tree, originals
 
@@ -92,8 +91,9 @@ scripts/           catalog import, demo data, the product-photo pipeline, the a1
 5. **Repository.** `orderRepository.create` inserts the priced order with one parameterised `INSERT`.
    With a `request_id` it is `createOnce`: `INSERT … ON CONFLICT (request_id) DO NOTHING`, see
    *One order per request id* below.
-6. **Side effects.** The service broadcasts `order:created` over the WebSocket, so the open
-   admin chimes and refreshes, and sends the store and the customer their emails. A mail
+6. **Side effects.** The service sends the store and the customer their emails. Nothing is
+   pushed to the admin: the open admin screen polls `GET /api/orders` every 30 seconds while
+   its tab is visible and announces ids it has not seen. A mail
    failure never fails the order. The answer waits for the two emails, but never longer than
    about 10 seconds: the SMTP transport has 5 s connection, greeting and DNS timeouts and an 8 s
    socket timeout, with a 10 s deadline over each send. A send that hit the deadline is reported as
@@ -115,7 +115,7 @@ delivery, notes and each line's id, name, price, quantity, variant, colour and s
 itself and not the totals). `createOrder` looks the id up *before* pricing:
 - found, same hash: the original order comes back with **200** and `Idempotent-Replayed: true`,
   with no repricing (a price or stock change after the sale is not a reason to refuse a
-  retry), no emails and no WebSocket broadcast; `emails` is `{ store: null, customer: null }`
+  retry), no emails; `emails` is `{ store: null, customer: null }`
   (unknown), and `picked_items`, `request_id` and `request_hash` are not returned;
 - found, different hash: **422**, `details.reason = 'request_id_reused'`, and nothing is returned
   from the other order;
@@ -237,7 +237,7 @@ also without a `SESSION_SECRET` of at least 32 characters, an admin password of 
 `https` `ADMIN_URL`. Secrets come only from the environment: `.env` is gitignored,
 `.env.example` holds placeholders, and `unit-repo-hygiene` fails if `.env` or any of its secret
 values appears in a tracked file. The rules, the deployment checklist and the gaps that are not
-closed yet (the public order lookup, personal data in logs, the CSP, the WebSocket, uploads,
+closed yet (the public order lookup, personal data in logs, the CSP, uploads,
 database TLS) are in [security.md](security.md).
 
 **Accessibility.** The storefront targets IS 5568 / WCAG 2.1 AA. `npm run a11y` audits

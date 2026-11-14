@@ -175,9 +175,6 @@ None of these is fixed by P8.1. They are listed so that nobody assumes otherwise
   Google Fonts stylesheet and font files that `client/public/index.html` loads, and the comment in
   `securityHeaders.js` about the JSON-LD block has not been verified in a browser. There is no
   `Cache-Control: no-store` on the API responses either.
-- **WebSocket.** The upgrade checks the admin cookie, but not the `Origin`, uses the library's
-  default maximum message size, and does not recheck the token while the socket is open (a logout or
-  an expiry does not close it).
 - **Uploads.** Admin only and re-encoded, but there is no explicit pixel limit for decoding (the
   library default applies), no check of the real image format beyond the decoder accepting it, no
   check of the contents of a product's `images` list, and no quota.

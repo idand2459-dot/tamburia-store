@@ -24,7 +24,7 @@ The shop needs a website that works like a real online store: customers browse p
   - S8 — Paint calculator: walls minus openings, times coats, converted to litres and containers; 20 pigment shades with a live preview (`README.md:66-69`).
   - S9 — Project calculator: four job types that expand into a product checklist; both calculators add everything to the cart in one action (`README.md:70-71`).
   - S10 — Admin panel with six tabs, each with its own URL: statistics, orders, products, add/edit, CSV import, review moderation (`README.md:74-75`).
-  - S11 — A live order feed over WebSocket, with a chime (`README.md:76`).
+  - S11 — New-order notification by polling every 30 seconds while the tab is visible, with confetti and a chime (`README.md:76`).
   - S12 — Product management with up to 5 images per product, processed to square WebP; products are hidden, not deleted (`README.md:77-79`).
   - S13 — Bulk CSV import with a preview and per-row validation (`README.md:80`).
   - S14 — Order status changes that email the customer automatically (`README.md:81`).
