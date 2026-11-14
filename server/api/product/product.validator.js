@@ -4,6 +4,7 @@
  */
 const { badRequest } = require('../../utils/AppError');
 const { parsePrice } = require('../../utils/money');
+const { MAX_INT4, isInt4Id } = require('../../utils/ids');
 
 const WRITABLE = [
   'name', 'price', 'image_url', 'images', 'colors', 'sizes',
@@ -258,7 +259,7 @@ function parseListQuery(query = {}) {
 
     const ids = parts.map((part) => {
       const id = Number(part);
-      if (!Number.isInteger(id) || id < 1) throw badRequest(`ids מכיל מזהה לא תקין: "${part}"`);
+      if (!isInt4Id(id)) throw badRequest(`ids מכיל מזהה לא תקין: "${part}"`);
       return id;
     });
     options.ids = [...new Set(ids)];
@@ -277,6 +278,7 @@ function parseListQuery(query = {}) {
     if (!Number.isInteger(offset) || offset < 0) {
       throw badRequest('offset חייב להיות מספר שלם אי-שלילי');
     }
+    if (offset > MAX_INT4) throw badRequest(`offset גדול מדי (עד ${MAX_INT4})`);
     options.offset = offset;
   }
 

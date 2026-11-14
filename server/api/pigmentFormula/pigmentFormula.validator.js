@@ -3,6 +3,7 @@
  * כולל הכלל שכמות הפיגמנט חייבת לעלות מגוון בהיר לכהה.
  */
 const { badRequest } = require('../../utils/AppError');
+const { MAX_INT4 } = require('../../utils/ids');
 
 const ML_FIELDS = ['ml_per_liter_light', 'ml_per_liter_medium', 'ml_per_liter_dark'];
 
@@ -56,6 +57,8 @@ function asSortOrder(value) {
   if (!Number.isInteger(sortOrder) || sortOrder < 0) {
     throw badRequest('sort_order חייב להיות מספר שלם אי-שלילי');
   }
+  // The column is an INTEGER.
+  if (sortOrder > MAX_INT4) throw badRequest(`sort_order גדול מדי (עד ${MAX_INT4})`);
   return sortOrder;
 }
 
@@ -145,6 +148,7 @@ function parseListQuery(query = {}) {
     if (!Number.isInteger(offset) || offset < 0) {
       throw badRequest('offset חייב להיות מספר שלם אי-שלילי');
     }
+    if (offset > MAX_INT4) throw badRequest(`offset גדול מדי (עד ${MAX_INT4})`);
     options.offset = offset;
   }
 

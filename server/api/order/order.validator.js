@@ -16,6 +16,7 @@
  */
 const { badRequest } = require('../../utils/AppError');
 const { parsePrice } = require('../../utils/money');
+const { MAX_INT4, isInt4Id } = require('../../utils/ids');
 
 const {
   STATUSES, DELIVERY_METHODS, assertDeliveryCityAllowed, DELIVERY_ADDRESS_REQUIRED,
@@ -153,7 +154,9 @@ function asItems(value) {
     }
 
     return {
-      id: Number.isInteger(id) && id > 0 ? id : null,
+      // An id above INT4 cannot be a product: null, so priceOrder refuses it with the usual 400
+      // instead of PostgreSQL failing on the ANY($1::int[]) cast.
+      id: isInt4Id(id) ? id : null,
       name,
       price,
       quantity,
@@ -306,6 +309,7 @@ function parseListQuery(query = {}) {
     if (!Number.isInteger(offset) || offset < 0) {
       throw badRequest('offset חייב להיות מספר שלם אי-שלילי');
     }
+    if (offset > MAX_INT4) throw badRequest(`offset גדול מדי (עד ${MAX_INT4})`);
     options.offset = offset;
   }
 

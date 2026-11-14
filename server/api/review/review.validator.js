@@ -4,6 +4,7 @@
  * את אישור המנהל.
  */
 const { badRequest } = require('../../utils/AppError');
+const { MAX_INT4, isInt4Id } = require('../../utils/ids');
 
 const TYPES = ['store', 'product'];
 
@@ -42,7 +43,7 @@ function asType(value) {
 /** מוודא שמזהה המוצר הוא מספר שלם חיובי. */
 function asProductId(value, field = 'product_id') {
   const id = Number(value);
-  if (!Number.isInteger(id) || id <= 0) throw badRequest(`${field} חייב להיות מזהה מוצר תקין`);
+  if (!isInt4Id(id)) throw badRequest(`${field} חייב להיות מזהה מוצר תקין`);
   return id;
 }
 
@@ -152,6 +153,7 @@ function parseListQuery(query = {}, { allowApproved = false } = {}) {
     if (!Number.isInteger(offset) || offset < 0) {
       throw badRequest('offset חייב להיות מספר שלם אי-שלילי');
     }
+    if (offset > MAX_INT4) throw badRequest(`offset גדול מדי (עד ${MAX_INT4})`);
     options.offset = offset;
   }
 

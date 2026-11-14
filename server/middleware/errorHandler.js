@@ -21,6 +21,12 @@ function mapPgError(err) {
     case '23514': return { status: 400, message: 'הערך לא עומד בכללי המערכת' };
     case '23502': return { status: 400, message: 'חסר שדה חובה' };
     case '22P02': return { status: 400, message: 'פורמט הערך שגוי' };
+    // Safety net behind the validators: a number or text the column cannot hold, or a date outside
+    // PostgreSQL's range, is a bad request and not a server failure.
+    case '22003': return { status: 400, message: 'ערך מספרי חורג מהטווח המותר' };
+    case '22001': return { status: 400, message: 'הערך ארוך מדי' };
+    case '22007':
+    case '22008': return { status: 400, message: 'תאריך לא תקין' };
     case 'ECONNREFUSED':
     case '57P01': return { status: 503, message: 'אין חיבור למסד הנתונים' };
     default: return null;
