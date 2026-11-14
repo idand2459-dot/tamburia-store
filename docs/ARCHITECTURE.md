@@ -133,9 +133,18 @@ On the client, `hooks/useCheckoutForm` keeps the id and the *exact body sent* in
   is removed;
 - a timeout (20 s, `AbortController` + `setTimeout`, so it works in older browsers), a network
   failure, a 5xx, a 408 or an answer that is not JSON: the outcome is unknown, so the attempt is
-  kept, with no expiry, and a new order cannot be sent. The checkout shows the unresolved order
-  and offers *send it again* (the same body and id, so the server returns the original) or
+  kept for at most 48 hours, and a new order cannot be sent. The checkout shows the unresolved
+  order and offers *send it again* (the same body and id, so the server returns the original) or
   *cancel* (a second click, after a warning that a duplicate may be created);
+- 48 hours after the *first* submission (a resend stores the same `submittedAt`, so it never moves
+  the clock) the customer's details are removed from the device and an expired record stays:
+  `{ requestId, submittedAt, expired, itemCount, total }`. It cannot be sent again, because there
+  is no body to send, and nothing sends it by itself. The notice says the outcome is unknown,
+  not that the order failed, and sends the customer to the store; only *cancel* is offered, with
+  the same duplicate warning, and only cancelling lets a new order get a new `request_id`. The
+  time is checked when the page loads, before every send, and by one timer for the due time, so
+  a browser that was closed and a page that stayed open both lose the details on time. A record
+  that cannot be dated or read is treated as expired or removed (`store/persistence.js`);
 - a 429 keeps the attempt too, unchanged (the same body, the same `request_id`, the same stored
   text), and shows the server's message with a line saying the same order can be sent again in a
   few minutes. The limiter answers before it looks at the request, so a 429 proves nothing about
@@ -186,8 +195,8 @@ only for a product with no orders. Otherwise it returns 409 and suggests hiding.
 **The pick list is a parallel column, not a field inside `items`.** An order's lines are
 JSONB in `orders.items`, so there is no row to add `picked` to. Which lines are picked is
 `orders.picked_items INTEGER[]` (migration 011), the set of picked line indexes. `items`
-stays the untouched record of the sale. It is never edited, and it is what the customer's
-by-phone lookup returns, while picking is warehouse state that the lookup leaves out. A set of
+stays the untouched record of the sale. It is never edited, and the customer is never told
+which lines are picked: picking is warehouse state that no public answer carries. A set of
 indexes has no length to keep aligned with `items`, and old orders get `'{}'` with no
 backfill. One toggle is a single `UPDATE` with `array_append` / `array_remove`, so two
 devices ticking different lines never overwrite each other. The index is stable because
@@ -229,7 +238,7 @@ every media context before and after.
 
 **Security.** The admin password is checked only on the server, in constant time. The
 session token's algorithm is fixed in code, and the cookie is `httpOnly` + `SameSite=Strict`
-(+ `Secure` in production). Login, order lookup, order creation and review creation are
+(+ `Secure` in production). Login, order creation and review creation are
 rate-limited per client address (in the process's memory, one server), and every query is
 parameterised. The server refuses to start on an invalid `NODE_ENV`, a malformed `CORS_ORIGINS`
 or port, a session lifetime above 168 hours, or a limiter window above a day, and in production
@@ -237,7 +246,7 @@ also without a `SESSION_SECRET` of at least 32 characters, an admin password of 
 `https` `ADMIN_URL`. Secrets come only from the environment: `.env` is gitignored,
 `.env.example` holds placeholders, and `unit-repo-hygiene` fails if `.env` or any of its secret
 values appears in a tracked file. The rules, the deployment checklist and the gaps that are not
-closed yet (the public order lookup, personal data in logs, the CSP, uploads,
+closed yet (personal data in logs, the CSP, uploads,
 database TLS) are in [security.md](security.md).
 
 **Accessibility.** The storefront targets IS 5568 / WCAG 2.1 AA. `npm run a11y` audits

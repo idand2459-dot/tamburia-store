@@ -86,6 +86,7 @@ Each of these would change behavior, so none is a finding; each is your decision
 - The question: keep it as a development aid, or remove it so no response ever carries a stack trace (the error-handling skill's rule)? Already in the backlog.
 
 ### B03 — Order lookup by phone number is open
+- Closed in P8.2: the public order lookup was removed (route, page and links); see `.plan/004-2026-11-14-p8-2-customer-data-security.md`. The text below is the original finding.
 - Evidence: `server/routes/order.routes.js:13-30` (the code's own comment: a phone number alone returns the name, address, items, and totals; it is rate-limited, 20 per 15 minutes, not protected)
 - The question: is the rate limit enough while the store runs locally only, or should proof of ownership (for example a one-time code) be planned before the store goes live?
 

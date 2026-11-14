@@ -27,7 +27,7 @@ optional `details` for validation context. Throw `AppError(status, message, deta
 upload errors to a status and message.
 
 Never include secrets, stack traces, SQL text, or raw provider payloads in a response.
-The existing exception is `errorHandler.js:62` (non-production 5xx only); see the backlog.
+No response carries a stack trace, in any environment.
 
 ## Status codes
 | Code | Use for |
@@ -44,9 +44,13 @@ The existing exception is `errorHandler.js:62` (non-production 5xx only); see th
 
 ## Logging
 - Log every unexpected error with enough context to debug it.
-- The central handler logs every 5xx with `console.error`, the method, and the URL
-  (`server/middleware/errorHandler.js:52`).
-- Redact tokens, passwords, credentials, and secrets.
+- The central handler logs every 5xx with `console.error` as one line of safe fields: the
+  method, the route template, the status, a category, the SQLSTATE or system code and an
+  order attempt's request id (`describeFailure` in `server/middleware/errorHandler.js`). It
+  never logs the URL, the error object, its message or its stack: a PostgreSQL message repeats
+  the failed statement's values and an unexpected error can hold anything the request carried.
+- Mail is logged by a fixed label and its outcome, never the recipient, the subject or an error text.
+- Redact tokens, passwords, credentials, secrets, and customer data (names, phones, emails, addresses, notes).
 
 ## Retry and recovery
 - Retry **only** transient infrastructure errors.

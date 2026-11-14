@@ -17,7 +17,7 @@ The shop needs a website that works like a real online store: customers browse p
   - S1 — Catalogue browsing by category and subcategory, with search, sorting, and stock status (`README.md:56`).
   - S2 — Product pages: image gallery, colour, size and variant selection, product reviews (`README.md:57`).
   - S3 — A cart kept in `localStorage`, pickup or delivery, with a delivery-area check (`README.md:58`).
-  - S4 — Wishlist, recently viewed products, and order lookup by phone number (`README.md:59`).
+  - S4 — Wishlist and recently viewed products (`README.md:59`).
   - S5 — Reviews of the store and of products; the home-page rating comes from approved reviews only (`README.md:60-61`).
   - S6 — Every page, filter, and modal has its own URL and survives a refresh (`README.md:62`).
   - S7 — An accessibility statement at `/accessibility` (`README.md:63`).
