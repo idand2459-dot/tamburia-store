@@ -44,16 +44,38 @@ function withDeadline(promise, ms) {
 }
 
 /**
+ * What a mail log line may say about a send: a fixed label chosen in code by the caller, such as
+ * "new-order store #12". Callers never build it from a name, an address or a subject. This only
+ * keeps the label to plain characters and a short length, so a stray newline or a very long text
+ * cannot forge or flood a log line.
+ */
+function safeLabel(label) {
+  const text = typeof label === 'string' ? label.replace(/[^A-Za-z0-9 #._-]/g, '').trim().slice(0, 60) : '';
+  return text || 'mail';
+}
+
+/** The SMTP codes of a failure (ECONNECTION, EAUTH, 550), never its message. */
+function failureCodes(err) {
+  const parts = [];
+  if (typeof err?.code === 'string' && /^[A-Z0-9_]{3,24}$/.test(err.code)) parts.push(err.code);
+  if (Number.isInteger(err?.responseCode) && err.responseCode >= 100 && err.responseCode <= 599) parts.push(err.responseCode);
+  return parts.length > 0 ? parts.join(' ') : 'no code';
+}
+
+/**
  * שולח מייל ומחזיר האם הצליח, בלי לזרוק שגיאה.
+ * The log line carries `label` and the outcome only: never the recipient, the subject (the
+ * new-order subject holds the customer's name) or the text of an error.
  *
  * sent: false עם reason 'timeout' פירושו שהשליחה לא אושרה בזמן, לא שהמייל לא יצא:
  * ייתכן ש-SMTP קיבל אותו אחרי שהפסקנו לחכות. התוצאה אינה ידועה.
  */
-async function send({ to, subject, html }, { deadlineMs = SEND_DEADLINE_MS } = {}) {
+async function send({ to, subject, html }, { deadlineMs = SEND_DEADLINE_MS, label } = {}) {
   if (!to) return { sent: false, reason: 'אין נמען' };
+  const tag = safeLabel(label);
 
   if (!config.mail.enabled) {
-    console.log(`[מייל כבוי] "${subject}" → ${to}`);
+    console.log(`[mail disabled] ${tag}`);
     return { sent: false, reason: 'MAIL_ENABLED=false' };
   }
 
@@ -63,14 +85,15 @@ async function send({ to, subject, html }, { deadlineMs = SEND_DEADLINE_MS } = {
       deadlineMs
     );
     if (outcome === TIMED_OUT) {
-      console.error(`✗ שליחת מייל לא אושרה בזמן (${deadlineMs}ms) — התוצאה אינה ידועה | ${subject}`);
+      console.error(`✗ mail not confirmed within ${deadlineMs}ms, outcome unknown | ${tag}`);
       return { sent: false, reason: 'timeout' };
     }
-    console.log(`מייל נשלח → ${to} | ${subject} ✓`);
+    console.log(`mail sent | ${tag} ✓`);
     return { sent: true };
   } catch (err) {
-    console.error(`✗ שליחת מייל נכשלה → ${to}: ${err.message}`);
-    return { sent: false, reason: err.message };
+    // The log gets the SMTP codes only, and so does the caller: err.message of a failed send usually repeats the recipient.
+    console.error(`✗ mail failed | ${tag} | ${failureCodes(err)}`);
+    return { sent: false, reason: 'delivery_failed' };
   }
 }
 

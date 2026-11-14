@@ -5,7 +5,13 @@
  * The text of an error is sent to the client only when this API wrote it: an AppError, or a
  * message defined in this file. What PostgreSQL, the body parser or any other library says is
  * never sent (it names tables, constraints and columns, or is in English), and no response carries
- * a stack trace in any environment. Failures of 500 and above are logged here with the full error.
+ * a stack trace in any environment.
+ *
+ * Failures of 500 and above are logged as one line of safe fields only: the method, the route
+ * template, the status, an error category, a SQLSTATE or system code, and the request id of an order
+ * attempt. The error object, its message and its stack are never logged, and neither is the request
+ * URL: a PostgreSQL message repeats the values of the failed statement, an unexpected error can hold
+ * anything the request carried, and a URL can hold what a customer typed.
  */
 const { MAX_FILE_SIZE } = require('../services/image.service');
 const { AppError } = require('../utils/AppError');
@@ -119,6 +125,67 @@ function describeError(err) {
   return { status: status || 500, message: INTERNAL_ERROR_MESSAGE };
 }
 
+/** A SQLSTATE (23505) or a system code (ECONNREFUSED): fixed vocabularies, never user text. */
+const SAFE_CODE = /^[A-Z0-9_]{3,24}$/;
+/** A class name such as TypeError. */
+const SAFE_NAME = /^[A-Za-z]{1,40}$/;
+/** The shape of an order attempt's request id (a version-4 UUID, as the order validator requires). */
+const REQUEST_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+/** The mount path of a router, such as /api/orders. */
+const SAFE_BASE = /^[A-Za-z0-9/_.-]{0,80}$/;
+
+/** The request method, if it is an ordinary HTTP verb. */
+function methodOf(req) {
+  return /^[A-Z]{3,10}$/.test(req.method) ? req.method : 'UNKNOWN';
+}
+
+/**
+ * The route template the request matched, for example /api/orders/:id. Never the URL: the
+ * parameters and the query are what a customer typed. A request that matched no route has none.
+ */
+function routeOf(req) {
+  const path = req.route && typeof req.route.path === 'string' ? req.route.path : null;
+  if (path === null) return '(no route)';
+  // routeBase is the mount path remembered while the request was inside the router: Express resets
+  // req.baseUrl before an error handler runs, so without it the line would say /:id and not /api/orders/:id.
+  const mount = typeof req.routeBase === 'string' ? req.routeBase : req.baseUrl;
+  const base = typeof mount === 'string' && SAFE_BASE.test(mount) ? mount : '';
+  return `${base}${path}`;
+}
+
+/** Router-level middleware: remembers where the router is mounted, for routeOf. Changes nothing else. */
+function rememberMount(req, res, next) {
+  req.routeBase = req.baseUrl;
+  next();
+}
+
+/** The request id of an order attempt, when the body carries one in the expected shape. */
+function requestIdOf(req) {
+  const id = req.body && typeof req.body === 'object' ? req.body.request_id : undefined;
+  return typeof id === 'string' && REQUEST_ID.test(id) ? id : null;
+}
+
+/** A fixed category for the log: app, database, system or unexpected. */
+function categoryOf(err) {
+  if (err instanceof AppError) return 'app';
+  if (mapPgError(err) || typeof err.severity === 'string' || typeof err.routine === 'string') return 'database';
+  if (typeof err.code === 'string' && /^E[A-Z0-9]+$/.test(err.code)) return 'system';
+  return 'unexpected';
+}
+
+/**
+ * The one line logged for a failure of 500 and above. Built only from the fields above, so nothing
+ * the customer sent, and nothing a library wrote about it, can reach the log.
+ */
+function describeFailure(err, req, status) {
+  const category = categoryOf(err);
+  const parts = [category];
+  if (typeof err.code === 'string' && SAFE_CODE.test(err.code)) parts.push(err.code);
+  if (category === 'unexpected' && typeof err.name === 'string' && SAFE_NAME.test(err.name)) parts.push(err.name);
+  const requestId = requestIdOf(req);
+  return `✗ ${methodOf(req)} ${routeOf(req)} → ${status} [${parts.join(' ')}]${requestId ? ` request_id=${requestId}` : ''}`;
+}
+
 /** מתרגם כל שגיאה שנזרקה בבקשה לתשובת JSON עם הסטטוס המתאים. */
 function errorHandler(err, req, res, next) {
   const multerMapped = mapMulterError(err);
@@ -129,12 +196,12 @@ function errorHandler(err, req, res, next) {
   const { status, message, details } = describeError(err);
 
   if (status >= 500) {
-    // The full error, with its stack, stays in the server log only.
-    console.error(`✗ ${req.method} ${req.originalUrl} →`, err);
+    // One line of safe fields; the error object, message, stack and URL are not logged (see the header).
+    console.error(describeFailure(err, req, status));
   } else if (!(err instanceof AppError) && mapPgError(err)) {
     // A database error answered as a 4xx: one line with the method and the code only. Not the URL
     // (a path can carry a customer's phone number), the query, the body, or the error's detail.
-    console.warn(`⚠ ${req.method} → PostgreSQL ${err.code}`);
+    console.warn(`⚠ ${methodOf(req)} → PostgreSQL ${err.code}`);
   }
 
   const body = { error: message };
@@ -143,4 +210,4 @@ function errorHandler(err, req, res, next) {
   res.status(status).json(body);
 }
 
-module.exports = { notFoundHandler, errorHandler };
+module.exports = { notFoundHandler, errorHandler, rememberMount };

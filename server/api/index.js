@@ -3,8 +3,12 @@
  */
 const express = require('express');
 const db = require('../config/db');
+const { rememberMount } = require('../middleware/errorHandler');
 
 const router = express.Router();
+
+// Lets the error handler log a route template with its mount path (/api/orders/:id) and no URL.
+router.use(rememberMount);
 
 /** GET /api/health — מאמת שהשרת חי ושהחיבור למסד עובד. */
 router.get('/health', async (req, res) => {
@@ -16,12 +20,12 @@ router.get('/health', async (req, res) => {
   });
 });
 
-router.use('/auth', require('./auth/auth.routes'));
-router.use('/products', require('./product/product.routes'));
-router.use('/orders', require('./order/order.routes'));
-router.use('/reviews', require('./review/review.routes'));
-router.use('/pigment-formulas', require('./pigmentFormula/pigmentFormula.routes'));
-router.use('/settings', require('./setting/setting.routes'));
-router.use('/', require('./upload/upload.routes'));
+router.use('/auth', rememberMount, require('./auth/auth.routes'));
+router.use('/products', rememberMount, require('./product/product.routes'));
+router.use('/orders', rememberMount, require('./order/order.routes'));
+router.use('/reviews', rememberMount, require('./review/review.routes'));
+router.use('/pigment-formulas', rememberMount, require('./pigmentFormula/pigmentFormula.routes'));
+router.use('/settings', rememberMount, require('./setting/setting.routes'));
+router.use('/', rememberMount, require('./upload/upload.routes'));
 
 module.exports = router;

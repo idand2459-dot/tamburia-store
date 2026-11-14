@@ -58,13 +58,13 @@ const unhandled = [];
 process.on('unhandledRejection', (reason) => unhandled.push(reason));
 
 /** Loads the email modules over a fake transport whose sendMail is `sendMail`. */
-function load(sendMail) {
+function load(sendMail, { enabled = true } = {}) {
   const created = [];
   injectFake(NODEMAILER_PATH, {
     createTransport: (options) => { created.push(options); return { sendMail }; },
   });
   injectFake(CONFIG_PATH, {
-    mail: { enabled: true, user: 'u', pass: 'p', from: 'shop@example.com', to: 'shop@example.com' },
+    mail: { enabled, user: 'u', pass: 'p', from: 'shop@example.com', to: 'store.owner@example.com' },
   });
   delete require.cache[TRANSPORTER_PATH];
   delete require.cache[INDEX_PATH];
@@ -87,7 +87,7 @@ async function testSend() {
 
   const failing = load(async () => { throw new Error('boom'); });
   const result = await failing.transporter.send(message);
-  check('a rejected send does not throw', result.sent === false && result.reason === 'boom', result);
+  check('a rejected send does not throw', result.sent === false && result.reason === 'delivery_failed', result);
   check('its timer is cleared too', active.size === 0, active.size);
 
   const none = await ok.transporter.send({ ...message, to: '' });
@@ -129,7 +129,7 @@ async function testIndex() {
   let broken;
   try { broken = await email.sendNewOrderToStore(null); } catch (err) { threw = err; }
   check('a template that throws does not throw out of the sender', threw === null, threw && threw.message);
-  check('and reports sent: false', broken && broken.sent === false, broken);
+  check('and reports sent: false with the fixed reason build_failed', broken && broken.sent === false && broken.reason === 'build_failed', broken);
 
   let customer;
   try { customer = await email.sendOrderConfirmationToCustomer({ ...order, customer_email: null }); } catch (err) { threw = err; }
@@ -138,10 +138,116 @@ async function testIndex() {
   check('no pending timers are left behind', active.size === 0, active.size);
 }
 
+/** Runs `fn` and returns what it wrote to the console, one string per call, with the result. */
+async function captureLogs(fn) {
+  const lines = [];
+  const original = { log: console.log, error: console.error, warn: console.warn, info: console.info };
+  const record = (...args) => lines.push(args.map((a) => (a instanceof Error ? `${a.message}\n${a.stack}` : String(a))).join(' '));
+  console.log = record; console.error = record; console.warn = record; console.info = record;
+  try {
+    const result = await fn();
+    return { result, lines, text: lines.join('\n') };
+  } finally {
+    Object.assign(console, original);
+  }
+}
+
+/** Mail logs: the outcome and a fixed label, never the recipient, the subject or the text of an error. (Synthetic data.) */
+async function testLogs() {
+  console.log('\n── mail logs hold no personal data');
+
+  const NAME = 'Dana Levi';
+  const EMAIL = 'dana.levi@example.com';
+  const PHONE = '0501234567';
+  const ADDRESS = 'Herzl 12, Haifa';
+  const NOTES = 'leave with the neighbour';
+  const PERSONAL = [NAME, 'Dana', 'Levi', EMAIL, 'dana.levi', PHONE, ADDRESS, 'Herzl', NOTES, 'neighbour', 'store.owner@example.com'];
+  const leaks = (text) => PERSONAL.filter((value) => text.includes(value));
+  const order = {
+    id: 7, customer_name: NAME, customer_phone: PHONE, customer_email: EMAIL, delivery_method: 'delivery',
+    delivery_address: ADDRESS, notes: NOTES, items: [], subtotal: 10, delivery_fee: 0, total: 10, status: 'new',
+  };
+  const subject = `📦 הזמנה חדשה #7 — ${NAME}`;
+
+  // success
+  const ok = load(async () => ({ accepted: [EMAIL] }));
+  const sent = await captureLogs(() => ok.email.sendNewOrderToStore(order));
+  check('a successful send is still sent: true', sent.result.sent === true, sent.result);
+  check('the success line has the label and the outcome', sent.lines.length === 1
+    && sent.lines[0] === 'mail sent | new-order store #7 ✓', sent.lines);
+  check('the success line has no recipient, name or subject', leaks(sent.text).length === 0, leaks(sent.text));
+
+  const customer = await captureLogs(() => ok.email.sendOrderConfirmationToCustomer(order));
+  check('the customer confirmation is logged by label only', customer.result.sent === true
+    && customer.lines[0] === 'mail sent | order-confirmation customer #7 ✓' && leaks(customer.text).length === 0, customer.lines);
+
+  const status = await captureLogs(() => ok.email.sendStatusUpdateToCustomer(order, 'shipped'));
+  check('a status update is logged by label only', status.result.sent === true
+    && status.lines[0] === 'mail sent | status-update customer #7 ✓' && leaks(status.text).length === 0, status.lines);
+
+  // failure whose message repeats the recipient, the name and the subject
+  const unsafe = Object.assign(new Error(`Can't send mail - all recipients were rejected: 550 <${EMAIL}> unknown user, subject "${subject}"`), {
+    code: 'EENVELOPE', responseCode: 550, command: `RCPT TO:<${EMAIL}>`, response: `550 ${EMAIL}`,
+  });
+  const failing = load(async () => { throw unsafe; });
+  const failed = await captureLogs(() => failing.email.sendNewOrderToStore(order));
+  check('a failed send still reports sent: false with its reason', failed.result.sent === false && failed.result.reason === 'delivery_failed' && !failed.result.reason.includes('@'), failed.result);
+  check('the failure line has the label and the SMTP codes', failed.lines.length === 1
+    && failed.lines[0] === '✗ mail failed | new-order store #7 | EENVELOPE 550', failed.lines);
+  check('the failure line has no recipient, name, subject or error text', leaks(failed.text).length === 0
+    && !/rejected|unknown user|RCPT/.test(failed.text), failed.text);
+
+  const codeless = load(async () => { throw new Error(`boom for ${EMAIL}`); });
+  const noCode = await captureLogs(() => codeless.email.sendNewOrderToStore(order));
+  check('an error without a code is logged as "no code", not by its message',
+    noCode.lines[0] === '✗ mail failed | new-order store #7 | no code' && leaks(noCode.text).length === 0, noCode.lines);
+
+  // timeout
+  const hung = load(() => new Promise(() => {}));
+  const timedOut = await captureLogs(() => hung.transporter.send({ to: EMAIL, subject, html: '<p>x</p>' }, { deadlineMs: 30, label: 'new-order store #7' }));
+  check('a timeout is still sent: false with reason timeout', timedOut.result.sent === false && timedOut.result.reason === 'timeout', timedOut.result);
+  check('the timeout line has the deadline and the label only', timedOut.lines.length === 1
+    && timedOut.lines[0] === '✗ mail not confirmed within 30ms, outcome unknown | new-order store #7'
+    && leaks(timedOut.text).length === 0, timedOut.lines);
+
+  // mail switched off (the development default)
+  const off = load(async () => ({}), { enabled: false });
+  const disabled = await captureLogs(() => off.email.sendNewOrderToStore(order));
+  check('with mail off the answer is unchanged', disabled.result.sent === false && disabled.result.reason === 'MAIL_ENABLED=false', disabled.result);
+  check('with mail off the line has the label only', disabled.lines.length === 1
+    && disabled.lines[0] === '[mail disabled] new-order store #7' && leaks(disabled.text).length === 0, disabled.lines);
+
+  // a template that throws with the order's data in its message
+  const brokenOrder = { ...order, get items() { throw new Error(`cannot render the order of ${NAME}, ${PHONE}, ${ADDRESS}`); } };
+  const broken = await captureLogs(() => ok.email.sendNewOrderToStore(brokenOrder));
+  check('a template failure is sent: false with the fixed reason build_failed, and does not throw', broken.result.sent === false && broken.result.reason === 'build_failed', broken.result);
+  check('the build failure line has the label and the error class only',
+    broken.lines.length === 1 && broken.lines[0] === '✗ mail build failed | new-order store #7 | Error' && leaks(broken.text).length === 0, broken.lines);
+
+  // an order that has no number yet, and no stack or error object anywhere
+  const nullOrder = await captureLogs(() => ok.email.sendNewOrderToStore(null));
+  check('a missing order is logged by the kind only', nullOrder.lines[0] === '✗ mail build failed | new-order store | TypeError'
+    && !/\n\s+at /.test(nullOrder.text), nullOrder.lines);
+  check('no mail log line carries a stack', ![sent, customer, status, failed, noCode, timedOut, disabled, broken].some((c) => /\n\s+at /.test(c.text)), null);
+
+  // a label cannot forge or flood a line
+  const forged = await captureLogs(() => ok.transporter.send({ to: EMAIL, subject, html: '<p>x</p>' }, { label: `x\n✗ forged line <${EMAIL}>`.padEnd(200, 'a') }));
+  check('a label is reduced to plain characters on one line and a short length',
+    forged.lines.length === 1 && !forged.text.includes('\n') && !forged.text.includes('@') && forged.text.length < 100, forged.lines);
+  const unlabelled = await captureLogs(() => ok.transporter.send({ to: EMAIL, subject, html: '<p>x</p>' }));
+  check('a send without a label is logged as "mail"', unlabelled.lines[0] === 'mail sent | mail ✓', unlabelled.lines);
+
+  // no recipient: nothing is sent and nothing is logged
+  const none = await captureLogs(() => ok.email.sendOrderConfirmationToCustomer({ ...order, customer_email: null }));
+  check('no recipient → sent: false and no log line', none.result.sent === false && none.lines.length === 0, none);
+  check('no pending timers are left behind', active.size === 0, active.size);
+}
+
 async function main() {
   await testSend();
   await testTimeout();
   await testIndex();
+  await testLogs();
 
   console.log(`\n${failed === 0 ? '✓' : '✗'} passed ${passed}, failed ${failed}`);
   process.exitCode = failed === 0 ? 0 : 1;
