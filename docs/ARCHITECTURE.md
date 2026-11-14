@@ -64,10 +64,14 @@ scripts/           catalog import, demo data, the product-photo pipeline, the a1
    `hooks/useCheckoutForm` (called in `StoreLayout`). It builds the order (customer, delivery method, and for each line
    the product id, quantity, chosen variant/colour/size and the price the customer saw) and
    calls `services/orderService.createOrder` → `POST /api/orders`.
-3. **Route → validator → controller.** `api/order/order.routes` maps the request to
-   `orderController.create`, which runs `api/order/order.validator.parseCreate`: types,
-   lengths, phone, a delivery address when delivering, and the delivery city against the
-   allowed list. Bad input becomes a 400.
+3. **Route → limiter → validator → controller.** `api/order/order.routes` first runs the order
+   limiter (`createLimiter`, 10 requests per 15 minutes per client address by default; over it,
+   a 429 with `Retry-After`, answered before the controller, so nothing is created or read), then
+   maps the request to `orderController.create`, which runs
+   `api/order/order.validator.parseCreate`: types, lengths (notes 1000, delivery address 200, an item
+   name 255, customer name 30), ids no larger than the PostgreSQL `INTEGER` maximum, phone, a
+   delivery address when delivering, and the delivery city against the allowed list. Bad input
+   becomes a 400.
 4. **Service: pricing.** `api/order/order.service.createOrder` first calls
    `api/order/pricing.service.priceOrder`, before anything is written:
    - loads the products with `Product.findPricesByIds`;
@@ -99,8 +103,9 @@ scripts/           catalog import, demo data, the product-photo pipeline, the a1
 7. **Back in the browser.** 201 (or 200 for a replay): the success step shows and the cart empties. 409 (price): the
    hook applies `details.prices` to the cart; each change must be acknowledged by the customer
    before the order can be sent. 409 (out of stock, or a colour/size that is gone): the cart is
-   checked again and the lines are blocked. Any other 4xx shows the server's message and keeps
-   the cart. A timeout, a network failure or a 5xx is an unknown outcome, see below.
+   checked again and the lines are blocked. A 429 (the rate limit) keeps the attempt, see below.
+   Any other 4xx shows the server's message and keeps the cart. A timeout, a network failure or
+   a 5xx is an unknown outcome, see below.
 
 **One order per request id (P7.4).** Every submission carries a `request_id`, a version-4 UUID
 the browser creates once per order. `orders.request_id` has a partial unique index
@@ -131,6 +136,13 @@ On the client, `hooks/useCheckoutForm` keeps the id and the *exact body sent* in
   kept, with no expiry, and a new order cannot be sent. The checkout shows the unresolved order
   and offers *send it again* (the same body and id, so the server returns the original) or
   *cancel* (a second click, after a warning that a duplicate may be created);
+- a 429 keeps the attempt too, unchanged (the same body, the same `request_id`, the same stored
+  text), and shows the server's message with a line saying the same order can be sent again in a
+  few minutes. The limiter answers before it looks at the request, so a 429 proves nothing about
+  an earlier send of the same order: treating it as a refusal (and dropping the attempt) could
+  lead to a duplicate. Nothing is retried automatically, no new `request_id` is made, and the
+  customer presses *send again*, which the server answers with the original order if it exists.
+  Limits count every request, a replay included; see [security.md](security.md);
 - a 422 keeps the attempt, flagged as a conflict, and offers only *cancel*;
 - if localStorage cannot hold the attempt it still works in memory, the message does not promise
   that a reload is safe, and the notice says that a reload will lose it;
@@ -149,7 +161,12 @@ is kept as a pending change (also in localStorage, so a reload cannot skip it). 
 decides at order time.
 
 Errors at any layer are thrown as `AppError(status, message, details)` and become JSON in the
-single `middleware/errorHandler`. No controller has a `try/catch`.
+single `middleware/errorHandler`. No controller has a `try/catch`. The handler sends only text
+this API wrote: an `AppError`'s message and details, a translated message for a known PostgreSQL
+error (its status kept, 4xx included), a Hebrew message for a body-parser error (malformed JSON,
+a body over 200 KB, an unsupported encoding), and a generic text for anything else. What
+PostgreSQL, the parser or an unexpected error says is never sent, and no response carries a stack
+trace in any environment; 5xx errors are logged in full on the server.
 
 ## Main design decisions
 
@@ -212,11 +229,16 @@ every media context before and after.
 
 **Security.** The admin password is checked only on the server, in constant time. The
 session token's algorithm is fixed in code, and the cookie is `httpOnly` + `SameSite=Strict`
-(+ `Secure` in production). Login and order lookup are rate-limited, and every query is
-parameterised. In production the server refuses to start without `SESSION_SECRET` or with
-an admin password under 12 characters. Secrets come only from the environment: `.env` is
-gitignored, `.env.example` holds placeholders, and `unit-repo-hygiene` fails if `.env` or
-any of its secret values appears in a tracked file.
+(+ `Secure` in production). Login, order lookup, order creation and review creation are
+rate-limited per client address (in the process's memory, one server), and every query is
+parameterised. The server refuses to start on an invalid `NODE_ENV`, a malformed `CORS_ORIGINS`
+or port, a session lifetime above 168 hours, or a limiter window above a day, and in production
+also without a `SESSION_SECRET` of at least 32 characters, an admin password of at least 12, or an
+`https` `ADMIN_URL`. Secrets come only from the environment: `.env` is gitignored,
+`.env.example` holds placeholders, and `unit-repo-hygiene` fails if `.env` or any of its secret
+values appears in a tracked file. The rules, the deployment checklist and the gaps that are not
+closed yet (the public order lookup, personal data in logs, the CSP, the WebSocket, uploads,
+database TLS) are in [security.md](security.md).
 
 **Accessibility.** The storefront targets IS 5568 / WCAG 2.1 AA. `npm run a11y` audits
 the 12 storefront pages and the admin's orders screen (logged in, pick list open, with two
@@ -232,18 +254,21 @@ database) is required; the guard refuses `NODE_ENV=production`, a malformed URL,
 development database itself (`test/lib/testDatabase.js`):
 
 - **unit-*** (no network or database): repo hygiene, config startup rules, order service,
-  product visibility, review moderation, money, originals, admin cookie reading, the test-database guard.
+  product visibility, review moderation, money, originals, admin cookie reading, the test-database guard,
+  numeric ids and offsets, the error handler, the rate limiter and its address keys, and the order
+  field-length limits.
 - **unit-email-delivery**: the email sender's timeouts, deadline and non-throwing contract, with a
   fake transport.
 - **smoke-fresh-db**: creates an empty database, runs every migration and the catalogue
   import, and compares the schema column by column with the real one.
-- **smoke-static, -orders, -products, -settings, -reviews, -pigments, -contract, -auth**: the HTTP
+- **smoke-static, -orders, -products, -settings, -reviews, -pigments, -contract, -rate-limits, -auth**: the HTTP
   contract of every endpoint, including server-side totals, guarded routes, cache and
-  security headers, and SPA-fallback boundaries. `smoke-contract` is the black-box net for the
+  security headers, and SPA-fallback boundaries. `smoke-rate-limits` starts its server with low
+  order and review limits, and every other suite runs with limits too high to reach. `smoke-contract` is the black-box net for the
   backend restructuring: it imports nothing from `server/` and covers every route, including
   all admin routes without a cookie.
 
-`npm run test:client` runs 724 Jest tests in 39 suites (services, the Redux store, pricing, the admin
+`npm run test:client` runs 736 Jest tests in 40 suites (services, the Redux store, pricing, the admin
 hooks and tabs, the pure utils, App routing). They live in `client/src/js/__tests__/`, in folders that
 mirror the code they cover. `npm run a11y` is the
 accessibility gate (it serves `client/build`, so build first).

@@ -268,20 +268,42 @@ The rules are in [client/src/css/CONVENTIONS.md](client/src/css/CONVENTIONS.md).
   JWT attack does not apply. Signatures are compared with `crypto.timingSafeEqual`.
 - **The token is delivered in an `httpOnly`, `SameSite=Strict` cookie**, never in the
   response body. `Secure` is set automatically in production.
-- **Production refuses weak configuration.** The server will not start in production
-  without `SESSION_SECRET`, or with an `ADMIN_PASSWORD` shorter than 12 characters. The
-  error names the variable, never its value.
+- **The server refuses unsafe configuration.** It will not start with an invalid `NODE_ENV`
+  (only `development`, `test` and `production` are allowed), with `NODE_ENV` unset next to a
+  database that is not on this machine, or with a malformed `CORS_ORIGINS`, `PORT`,
+  `DB_PORT`, `SESSION_TTL_HOURS` (above 168) or limiter window (above 24 hours). In production it
+  also needs a `SESSION_SECRET` of at least 32 characters, an `ADMIN_PASSWORD` of at least 12,
+  and an `https` `ADMIN_URL`. Each error names the variable, never its value. The `NODE_ENV`
+  check is a safety net: a deployment still has to set `NODE_ENV=production` itself.
 - **Secrets live only in the environment.** `.env` is gitignored, `.env.example` holds
   placeholders only, and `test/unit-repo-hygiene.js` fails the suite if `.env` is tracked
   or any secret value from it appears in a tracked file.
-- **Login and order lookup are rate limited.** Login allows 10 attempts per 15 minutes per IP,
-  with `RateLimit-*` and `Retry-After` headers, and a successful login resets the counter.
+- **Login, order lookup and public writes are rate limited**, per client address, with
+  `RateLimit-*` and `Retry-After` headers on a `429`:
+
+  | Route | Default limit | Variables |
+  |---|---|---|
+  | `POST /auth/login` | 10 per 15 minutes (a good login resets the counter) | `LOGIN_MAX_ATTEMPTS`, `LOGIN_WINDOW_MS` |
+  | `POST /orders` | 10 per 15 minutes | `ORDER_RATE_MAX`, `ORDER_RATE_WINDOW_MS` |
+  | `POST /reviews` | 5 per hour | `REVIEW_RATE_MAX`, `REVIEW_RATE_WINDOW_MS` |
+  | `GET /orders/by-phone/:phone` | 20 per 15 minutes (fixed in code) | none |
+
+  Every request counts, a retry of the same order included. The counters live in the memory of
+  the Node process, so a restart clears them and several instances would not share them. A `429`
+  never creates or changes an order: the checkout keeps the order it was sending, with the same
+  `request_id`, and the customer sends it again by hand a few minutes later (the server then
+  returns the original, never a second order). `TRUST_PROXY_HOPS` decides which address is
+  counted behind a proxy and must match the hosting; see [docs/security.md](docs/security.md).
+- **Errors say only what this API wrote.** PostgreSQL's text, the JSON parser's text and the
+  message of an unexpected error are never sent, and no response carries a stack trace in any
+  environment (5xx errors are logged in full on the server). Ids and offsets above
+  2147483647 are a `400`; an order's notes, delivery address and item names are length-limited.
 - **Order totals are computed server-side**; see Design decisions. Editing `total` or
   `items` on an existing order is rejected with a 400.
 - **Reviews are always stored unapproved**, and the public endpoints always return approved
   reviews only, whatever the query asks.
 - **Every query is parameterised**, and **every input is validated and bounded**.
-- **Uploads are restricted** to an allowlist of image types, capped at 8 MB and 5 files,
+- **Uploads are restricted** to an allowlist of image types, capped at 15 MB and 5 files,
   re-encoded (which strips metadata, GPS included) and stored under a content hash.
 - **User-supplied values in emails are HTML-escaped.**
 - **Security headers on every response:** `X-Content-Type-Options: nosniff`,
@@ -289,10 +311,14 @@ The rules are in [client/src/css/CONVENTIONS.md](client/src/css/CONVENTIONS.md).
   production. `X-Powered-By` is disabled. CORS is open in development and restricted to
   configured origins in production.
 
-A Content Security Policy is written and ready but **off by default**. The built
-`index.html` contains an `application/ld+json` block for structured data, which browsers
-block under `script-src 'self'`, so enabling it costs SEO metadata, not functionality.
-Turn it on with `CSP_ENABLED=true`.
+A Content Security Policy is written but **off by default** (`CSP_ENABLED=true` turns it on).
+It is not ready to enable: as written it would also block the Google Fonts stylesheet and font
+files that `client/public/index.html` loads, and the note in `securityHeaders.js` about the
+`application/ld+json` block has not been checked in a browser.
+
+**What is not solved yet** (public order lookup that returns customer details, personal data in
+logs and in `localStorage`, in-memory counters, WebSocket and upload hardening, database TLS), and
+the checklist to go through before deploying, are in [docs/security.md](docs/security.md).
 
 ---
 
@@ -311,7 +337,7 @@ written up in [docs/a11y-audit.md](docs/a11y-audit.md); the public statement is 
 
 ```bash
 npm test               # server: unit and smoke suites
-npm run test:client    # client: 39 suites, 724 tests
+npm run test:client    # client: 40 suites, 736 tests
 npm run a11y           # accessibility: serves client/build, so run npm run build:client first
 ```
 
@@ -340,8 +366,14 @@ port and address) before the first migration, and only then starts its own serve
 
 | Suite | Checks | Covers |
 |---|---|---|
-| `unit-repo-hygiene` | 6 | `.env` not tracked, `.env.example` placeholders only, no secret value in any tracked file |
-| `unit-config` | 13 | The production startup rules (session secret, password length), optional mail credentials, and the delivery fee agreeing across client, server default and `.env.example` |
+| `unit-repo-hygiene` | 8 | `.env` not tracked, `.env.example` placeholders only, no secret value in any tracked file |
+| `unit-config` | 186 | Every startup rule of `server/config/env.js` (`NODE_ENV`, `DB_HOST` with `NODE_ENV` unset, session secret and password length, `ADMIN_URL`, `CORS_ORIGINS`, ports, session lifetime, limiter windows, rate-limit defaults and `TRUST_PROXY_HOPS`), no secret in any message, optional mail credentials, and the delivery fee agreeing across client, server default and `.env.example` |
+| `unit-test-database-guard` | 168 | The guard that keeps `npm test` and `npm run a11y` on a separate local database |
+| `unit-no-private-phone` | 5 | The shop owner's private number appears nowhere public |
+| `unit-numeric-ids` | 71 | Ids, offsets and `sort_order` above the PostgreSQL `INTEGER` maximum are a 400; the error handler maps numeric-range errors |
+| `unit-error-handler` | 90 | The client sees only this API's text: no PostgreSQL or parser text, no stack trace, `AppError` details kept, a 4xx database warning that logs no URL or personal data |
+| `unit-rate-limit` | 41 | The limiter and its keys: IPv4, IPv4-mapped IPv6, IPv6 `/64`, 429 and `Retry-After`, separate counters, the window |
+| `unit-order-limits` | 15 | Exact limits of an order's notes (1000), delivery address (200) and item names (255) |
 | `unit-order-service` | 80 | Order business rules, the pick list and idempotent creation (replay, payload mismatch, lost race) included, without network or database |
 | `unit-email-delivery` | 16 | The email sender never throws and never waits forever: transport timeouts, the 10-second deadline, a timed-out send reported as an unknown outcome, its timer cleared, no unhandled rejection |
 | `unit-product-service` | 14 | Hidden-product visibility for customers and admins, with a fake repository |
@@ -356,7 +388,8 @@ port and address) before the first migration, and only then starts its own serve
 | `smoke-settings` | 21 | The closed list of settings keys, set, reset |
 | `smoke-reviews` | 57 | Moderation, the public/admin split, the stats contract the home page depends on |
 | `smoke-pigments` | 48 | The 20 shades, ordering, search, the light < medium < dark invariant |
-| `smoke-contract` | 243 | Black-box HTTP contract of every route (REFACTOR_PLAN P5): 401 on every admin route, side-effect-free probes with exact status and message, list/pagination shapes, error shape, security headers, CORS, parser errors, and the database effects of product, order, review and pigment flows |
+| `smoke-contract` | 267 | Black-box HTTP contract of every route (REFACTOR_PLAN P5): 401 on every admin route, side-effect-free probes with exact status and message, list/pagination shapes, error shape, security headers, CORS, parser errors in Hebrew, no database text, numeric limits, field-length limits, and the database effects of product, order, review and pigment flows |
+| `smoke-rate-limits` | 41 | The order and review limits on the real routes (low limits, set before the server starts): 429 with `Retry-After`, separate counters, nothing else limited, and a refused or replayed order never creating a second one |
 | `smoke-auth` | 46 | Login, cookie flags, every guarded route, logout, rate limiting |
 
 ---
@@ -391,13 +424,24 @@ The full list with comments is in [`.env.example`](.env.example). The ones that 
 | Variable | Default | Description |
 |---|---|---|
 | `DB_PASSWORD` | — | **Required.** PostgreSQL password |
+| `NODE_ENV` | `development` | `development`, `test` or `production`; anything else stops the server. Set `production` explicitly when deploying |
 | `ADMIN_PASSWORD` | — | **Required.** Admin panel password; at least 12 characters in production |
-| `SESSION_SECRET` | random per start | Token signing secret. **Required in production** |
+| `SESSION_SECRET` | random per start | Token signing secret. **Required in production**, at least 32 characters |
+| `SESSION_TTL_HOURS` | `12` | Admin login lifetime, 1 to 168 |
+| `ADMIN_URL` | `http://localhost:3000/admin` | Admin link in the new-order email. **Required in production**, and must be `https` |
+| `CORS_ORIGINS` | empty | Extra origins allowed to call the API, comma separated; each exactly `scheme://host[:port]` |
 | `MAIL_ENABLED` | `true` (`.env.example`: `false`) | `false` logs emails instead of sending them |
 | `MAIL_USER` / `MAIL_PASS` | — | Gmail account and app password; required only when mail is enabled |
-| `PORT` | `3000` | Server port |
+| `PORT` / `DB_PORT` | `3000` / `5432` | Server and PostgreSQL ports, 1 to 65535 |
+| `ORDER_RATE_MAX` / `ORDER_RATE_WINDOW_MS` | `10` / 15 minutes | Order creations per client address and window |
+| `REVIEW_RATE_MAX` / `REVIEW_RATE_WINDOW_MS` | `5` / 1 hour | Review creations per client address and window |
+| `LOGIN_MAX_ATTEMPTS` / `LOGIN_WINDOW_MS` | `10` / 15 minutes | Login attempts per client address and window |
+| `TRUST_PROXY_HOPS` | `1` in production, `0` elsewhere | Proxies in front of the server, 0 to 5; decides which address the limits count |
 | `DELIVERY_FEE` | `20` | Delivery fee in shekels (must match `client/src/js/utils/delivery.js`) |
 | `CSP_ENABLED` | `false` | Content Security Policy (see Security) |
+
+A limiter window is at most 24 hours. The rules, the reasons, and the checklist for deploying
+are in [docs/security.md](docs/security.md).
 
 Generate a session secret with:
 
@@ -470,8 +514,8 @@ Everything is under `/api`. Routes marked 🔒 require an admin session.
 |---|---|
 | **Auth** | `POST /auth/login` · `POST /auth/logout` · 🔒 `GET /auth/me` |
 | **Products** | `GET /products` · `GET /products/:id` · `GET /products/categories` · 🔒 `POST` `PUT /:id` `DELETE /:id` |
-| **Orders** | `POST /orders` (optional `request_id`: one order per id, a retry gets the original back with 200 and `Idempotent-Replayed: true`, the same id with a different order is 422) · `GET /orders/by-phone/:phone` · 🔒 `GET /orders` `GET /:id` `GET /stats` `PUT /:id` `PUT /:id/status` `DELETE /:id` |
-| **Reviews** | `GET /reviews` · `GET /reviews/stats` · `POST /reviews` · 🔒 `GET /reviews/all` `GET /:id` `PUT /:id` `PUT /:id/approve` `DELETE /:id` |
+| **Orders** | `POST /orders` (optional `request_id`: one order per id, a retry gets the original back with 200 and `Idempotent-Replayed: true`, the same id with a different order is 422; rate limited, 429 with `Retry-After`) · `GET /orders/by-phone/:phone` · 🔒 `GET /orders` `GET /:id` `GET /stats` `PUT /:id` `PUT /:id/status` `DELETE /:id` |
+| **Reviews** | `GET /reviews` · `GET /reviews/stats` · `POST /reviews` (rate limited, 429) · 🔒 `GET /reviews/all` `GET /:id` `PUT /:id` `PUT /:id/approve` `DELETE /:id` |
 | **Pigment formulas** | `GET /pigment-formulas` · `GET /pigment-formulas/:id` · `GET /pigment-formulas/code/:code` · 🔒 `POST` `PUT /:id` `DELETE /:id` |
 | **Settings** | 🔒 `GET /settings/:key` · 🔒 `PUT /settings/:key` |
 | **Uploads** | 🔒 `POST /upload-multiple` |
@@ -505,6 +549,11 @@ Known gaps, in rough order of how much they matter:
    page and leads to an empty category page.
 4. **Rate limiting is in-process.** Counters live in the Node process's memory, which is
    correct for a single server but would not hold behind more than one instance.
+5. **Security and privacy gaps are open** beyond that: the order lookup by phone number returns
+   the customer's details, personal data reaches some logs and `localStorage`, the CSP is off,
+   and the WebSocket, uploads and database TLS are not hardened. They are listed, with the
+   deployment checklist, in [docs/security.md](docs/security.md). There is also no privacy policy
+   or terms page yet.
 
 The figures in the home page hero (400+ products, 12 categories, 30+ years) are hardcoded.
 The rating beside them is computed from approved reviews and disappears when there are none.
