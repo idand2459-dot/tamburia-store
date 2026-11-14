@@ -1,11 +1,11 @@
 # 002 — P8.1 backend security hardening
 
-Status: active
+Status: done
 Owner: Idan
 Last updated: 2026-11-14
 
 Branch: `fix/p8-1-backend-hardening` (created from `1380a01`, the P7.4 commit, which `main` does not contain yet).
-Approved by the owner on 2026-11-14 with the refinements marked **[refinement]** below. Implementation has not started and needs a separate explicit go-ahead.
+Approved by the owner on 2026-11-14 with the refinements marked **[refinement]** below. Steps 1 to 7 (A to E) are implemented and reviewed; what differs from the plan is listed under Rollout Order, "Result". The steps below are kept as they were approved.
 
 ## Goal
 Close the P8 audit findings S-01, S-04, S-05, S-12 and S-02/S-08, plus the part of S-06 that rate limiting needs to be correct (IPv6 keys and the proxy hop count). The API keeps its status codes and its `{ error, details? }` shape; only error texts change. Order idempotency, the checkout retry flow and the stateless HMAC admin authentication stay as they are.
@@ -107,7 +107,7 @@ Unit (no database):
 - `node test/unit-config.js` (agent-run). New cases: `NODE_ENV=prod` is rejected; an unset `NODE_ENV` with `DB_HOST=db.example.com` is rejected and with `NODE_ENV=development` it starts; production rejects a 31-character secret, an `http://` or missing `ADMIN_URL`; `CORS_ORIGINS` of `*`, `https://a.com/` and `a.com` are rejected and `https://a.com` passes; `PORT=70000` and `SESSION_TTL_HOURS=169` are rejected; no message contains a secret value; the existing production, development and mail cases still pass.
 - `node test/unit-rate-limit.js` (agent-run, new). **[refinement]** It loads the real `server/middleware/rateLimit.js` and the real route modules' limiter settings from `config`, with isolated counters (one `rateLimit()` instance per test) and small configurable thresholds and windows. It checks `Retry-After` (a positive integer that does not exceed the window), `RateLimit-Limit/Remaining/Reset`, the 429 after the threshold, the reset after the window, and that two instances never share counters. Key cases for `keyOf`: IPv4 (`203.0.113.5`), IPv4-mapped (`::ffff:203.0.113.5` equals the IPv4 key), compressed IPv6 (`2001:db8::1`), expanded IPv6, zone id (`fe80::1%eth0`), two different addresses in the same /64 share a key, and two addresses in different /64s do not.
 - `node test/unit-error-handler.js` (agent-run, new). Synthetic errors through the real `errorHandler`: PostgreSQL 23503, 23505, 22P02, 22003, 22001, 22008 give a translated message and never contain `constraint`, `violates`, `invalid input` or a column name; `entity.parse.failed` gives 400 and `entity.too.large` gives 413, both in Hebrew; an unknown error with `status: 400` gives a generic text; an `AppError` keeps its message and `details`; an unknown error gives 500 with the generic text; no response has a `stack` key, also for a 5xx; the log call for a 5xx still receives the error with its stack.
-- `node test/unit-ids.js` (agent-run, new, may be folded into the error handler suite): `MAX_INT4` and `isInt4Id` boundaries (0, 1, 2147483647, 2147483648, 1e21, `NaN`).
+- `node test/unit-numeric-ids.js` (agent-run, new; planned as `unit-ids.js`): `MAX_INT4` and `isInt4Id` boundaries (0, 1, 2147483647, 2147483648, 2^53, 1e21, `NaN`), and every validator that takes an id or an offset.
 
 HTTP (owner-run, against the test database):
 - `npm test` (owner-run). It must stay green, with these additions.
@@ -137,16 +137,27 @@ Static checks (agent-run):
 - Tests that need many orders are limited by mistake: prevented by the `testServer.js` defaults.
 
 ## Rollout Order
-1. Approval is done (Status `active`, 2026-11-14). Implementation waits for a separate explicit go-ahead.
+1. Approval is done (2026-11-14).
 2. Implementation sequence, one commit each (the owner runs the commits):
-   1. `fix(server): validate numeric ids and map numeric overflow` (step 1)
-   2. `fix(server): never return raw database or parser errors` (step 2)
-   3. `feat(server): rate limit order and review creation` (steps 3 and 5, because the client change depends on the 429)
-   4. `feat(server): stricter environment validation` (step 4)
-   5. `docs: P8.1 settings, env example and backlog` (step 7)
+   1. `fix(server): validate numeric ids and map numeric overflow` (step 1), commit `3684ed2`
+   2. `fix(server): never return raw database or parser errors` (step 2), commit `953e0a7`
+   3. `feat(server): rate limit order and review creation` (steps 3 and 5, because the client change depends on the 429), commit `800ad23`
+   4. `feat(server): stricter environment validation` (step 4), commit `5089643`
+   5. `docs: P8.1 settings, env example and backlog` (step 7), prepared and waiting for the owner's commit
    Tests are added in the commit of the code they cover; the new suites are registered in `test/run-all.js` in the same commit.
 3. Validate with the Validation list.
 4. Merge through a pull request from the branch (the owner), after a review pass.
+
+**Result.** All five steps are done. What differs from the plan:
+- The ids suite is `test/unit-numeric-ids.js` (not `unit-ids.js`), and `test/unit-order-limits.js` was added for the exact limits of an order's notes, delivery address and item names.
+- The 24-hour cap on a limiter window applies to `LOGIN_WINDOW_MS` as well as the order and review windows, because a timer longer than about 24.8 days runs as 1 ms.
+- The warning line for a database error answered as a 4xx logs only the method and the PostgreSQL code (not the path), so a phone number in a URL cannot reach it. The 5xx line still logs the URL and the whole error: that stays for P8.2.
+- The checkout test that expected a 429 to end the attempt was changed, because the approved behavior is the opposite.
+- `smoke-rate-limits` runs its server with a 3-second window; the clock-based unit test uses short real windows. Both can only fail by being slow, never pass wrongly.
+- New: `docs/security.md` holds the rules, the deployment checklist and the list of gaps that remain; the README, `docs/ARCHITECTURE.md`, `.doc/architecture.md`, `.doc/glossary.md`, `.env.example` and the backlog point to it.
+- Noted in review and **not** changed: a forwarded address with a port, an address in brackets, or an IPv4 address with leading zeros is used as it arrives as the rate-limit key; the backlog has it.
+
+Not part of this plan and still open (see `docs/security.md` and the backlog): the public order lookup, personal data in logs and in `localStorage`, shared counters, the CSP, WebSocket and upload hardening, database TLS, `npm audit` in CI, and the legal pages.
 
 Deployment-dependent, not part of this plan: the real `TRUST_PROXY_HOPS`, tuning the thresholds to real traffic, a shared limiter store for several instances, `DB_SSL`, the real `ADMIN_URL` and `CORS_ORIGINS`, setting `NODE_ENV=production` explicitly, proxy body limits and timeouts.
 
@@ -155,4 +166,4 @@ Deployment-dependent, not part of this plan: the real `TRUST_PROXY_HOPS`, tuning
 - Each commit reverts on its own (`git revert <commit>`); the branch can be deleted before merging with no effect on `main`.
 - Without reverting: raise `ORDER_RATE_MAX` and `REVIEW_RATE_MAX` to switch the limits off in practice; set `TRUST_PROXY_HOPS` to restore any earlier proxy setting.
 - The new variables are additive; removing them from the environment returns the defaults.
-- Safe to delete after a revert: `server/utils/ids.js`, `test/unit-rate-limit.js`, `test/unit-error-handler.js`, `test/unit-ids.js`, `test/smoke-rate-limits.js` and their entries in `test/run-all.js`.
+- Safe to delete after a revert: `server/utils/ids.js`, `test/unit-rate-limit.js`, `test/unit-error-handler.js`, `test/unit-numeric-ids.js`, `test/unit-order-limits.js`, `test/smoke-rate-limits.js` and their entries in `test/run-all.js`; and `docs/security.md` with the lines that link to it.
