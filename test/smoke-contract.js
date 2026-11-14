@@ -380,6 +380,14 @@ async function testListContract() {
     ['/products?in_stock=maybe', 'in_stock חייב להיות true או false'],
     ['/products?active=maybe', 'active חייב להיות true, false או all'],
     ['/products?ids=1,x', 'ids מכיל מזהה לא תקין'],
+    // Above INT4 no row can match; PostgreSQL would fail with 22003 (a 500), so these are refused first.
+    ['/products?ids=99999999999', 'ids מכיל מזהה לא תקין'],
+    ['/products?offset=2147483648', 'offset גדול מדי'],
+    ['/products/99999999999', 'מזהה לא תקין: "99999999999"'],
+    ['/reviews?product_id=99999999999', 'product_id חייב להיות מזהה מוצר תקין'],
+    ['/reviews?offset=2147483648', 'offset גדול מדי'],
+    ['/pigment-formulas/99999999999', 'מזהה לא תקין: "99999999999"'],
+    ['/pigment-formulas?offset=2147483648', 'offset גדול מדי'],
     ['/reviews?limit=0', 'limit חייב להיות מספר שלם בין 1 ל-500'],
     ['/pigment-formulas?limit=abc', 'limit חייב להיות מספר שלם בין 1 ל-500'],
   ];
@@ -515,6 +523,11 @@ async function testOrderRejections() {
     orderBody({ items: [{ id: MISSING_ID, name: 'ghost', price: 1, quantity: 1 }] })), 400, 'כבר אינו בקטלוג');
   expectError('פריט בלי מזהה → 400', await pub('POST', '/orders',
     orderBody({ items: [{ name: 'ghost', price: 1, quantity: 1 }] })), 400, 'כבר אינו בקטלוג');
+  // An id above INT4 used to reach `ANY($1::int[])` and fail with 22003, a 500.
+  expectError('מזהה פריט מעל INT4 → 400 ולא 500', await pub('POST', '/orders',
+    orderBody({ items: [{ id: 99999999999, name: 'ghost', price: 1, quantity: 1 }] })), 400, 'כבר אינו בקטלוג');
+  expectError('חוות דעת על מזהה מוצר מעל INT4 → 400', await pub('POST', '/reviews',
+    { reviewer_name: 'Dana', text: 'x', rating: 5, type: 'product', product_id: 99999999999 }), 400, 'product_id חייב להיות מזהה מוצר תקין');
   expectError('גרסה שאינה קיימת → 400', await pub('POST', '/orders',
     orderBody({ items: [{ id: product.id, name: product.name, price: 25, quantity: 1, selectedVariant: 'nope' }] })), 400, 'אינה קיימת עבור');
   expectError('בלי פריטים → 400', await pub('POST', '/orders', orderBody({ items: [] })), 400, 'לפחות פריט אחד');
