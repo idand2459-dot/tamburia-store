@@ -26,6 +26,16 @@ const MAIL_AND_LOGGING = {
   LOGIN_WINDOW_MS: '2000',
 };
 
+/**
+ * Limits for the public writes (config.rateLimits), set high for every suite: many suites create
+ * far more than 10 orders. A value the suite set before starting the server is kept, which is how
+ * smoke-rate-limits runs with low ones.
+ */
+const RATE_LIMIT_DEFAULTS = {
+  ORDER_RATE_MAX: '100000',
+  REVIEW_RATE_MAX: '100000',
+};
+
 /** The server modules whose configuration must not have been loaded before the guard ran. */
 const CONFIG_MODULES = ['../../server/config/env', '../../server/config/db'];
 
@@ -63,6 +73,9 @@ async function startTestServer(env = process.env, { port = 0 } = {}) {
   }
 
   Object.assign(env, MAIL_AND_LOGGING);
+  for (const [key, value] of Object.entries(RATE_LIMIT_DEFAULTS)) {
+    if (env[key] === undefined) env[key] = value;
+  }
   const target = prepareTestDatabase(env);
   console.log(describeTestDatabase(target));
   assertEffectiveDatabase(target, require('../../server/config/env').db);

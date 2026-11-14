@@ -29,8 +29,8 @@ function flag(key, fallback) {
   return raw === 'true';
 }
 
-/** קורא משתנה מספרי שלם, ומחזיר את ברירת המחדל אם לא הוגדר. */
-function number(key, fallback, { allowZero = false } = {}) {
+/** קורא משתנה מספרי שלם, ומחזיר את ברירת המחדל אם לא הוגדר. max אופציונלי: תקרה לערך. */
+function number(key, fallback, { allowZero = false, max } = {}) {
   const raw = process.env[key];
   if (raw === undefined || raw === '') return fallback;
   const parsed = Number(raw);
@@ -39,8 +39,17 @@ function number(key, fallback, { allowZero = false } = {}) {
     const expected = allowZero ? 'מספר שלם אי-שלילי' : 'מספר שלם חיובי';
     throw new Error(`משתנה הסביבה ${key} חייב להיות ${expected} (התקבל: "${raw}")`);
   }
+  if (max !== undefined && parsed > max) {
+    throw new Error(`משתנה הסביבה ${key} חייב להיות לכל היותר ${max} (התקבל: "${raw}")`);
+  }
   return parsed;
 }
+
+/**
+ * The longest rate-limit window: a day. The limiter sweeps its counters with a timer of the
+ * window's length, and Node runs a timer above about 24.8 days as if it were 1 ms.
+ */
+const MAX_RATE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 const isProduction = nodeEnv === 'production';
@@ -89,6 +98,24 @@ const config = {
     loginMaxAttempts: number('LOGIN_MAX_ATTEMPTS', 10),
     loginWindowMs: number('LOGIN_WINDOW_MS', 15 * 60 * 1000),
   },
+
+  // Public writes, counted per client address (middleware/rateLimit.js): every request counts,
+  // a retry of the same order included. Defaults: 10 orders per 15 minutes, 5 reviews per hour.
+  rateLimits: {
+    orders: {
+      max: number('ORDER_RATE_MAX', 10),
+      windowMs: number('ORDER_RATE_WINDOW_MS', 15 * 60 * 1000, { max: MAX_RATE_WINDOW_MS }),
+    },
+    reviews: {
+      max: number('REVIEW_RATE_MAX', 5),
+      windowMs: number('REVIEW_RATE_WINDOW_MS', 60 * 60 * 1000, { max: MAX_RATE_WINDOW_MS }),
+    },
+  },
+
+  // How many proxies stand between the internet and this process (0 = none). It decides which
+  // address req.ip reports, and so which client a rate limit counts: the number must match the
+  // real hosting, so check it on deployment. Default: 1 in production, 0 elsewhere.
+  trustProxyHops: number('TRUST_PROXY_HOPS', isProduction ? 1 : 0, { allowZero: true, max: 5 }),
 
   security: {
     cspEnabled: flag('CSP_ENABLED', false),

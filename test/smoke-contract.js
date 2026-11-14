@@ -546,6 +546,12 @@ async function testOrderRejections() {
   // KNOWN: the same rule has two messages — create says 'חסרה כתובת למשלוח', update says 'משלוח דורש כתובת'.
   expectError('משלוח בלי כתובת → 400', await pub('POST', '/orders', orderBody({ delivery_address: '' })), 400, 'חסרה כתובת למשלוח');
   expectError('משלוח מחוץ לאזור → 400', await pub('POST', '/orders', orderBody({ delivery_address: 'הרצל 1, חיפה' })), 400, 'מצטערים');
+  // the length limits (P8.1): notes 1000, address 200, item name 255
+  expectError('הערות מעל 1000 תווים → 400', await pub('POST', '/orders', orderBody({ notes: 'x'.repeat(1001) })), 400, 'notes ארוך מדי (מקסימום 1000');
+  expectError('כתובת מעל 200 תווים → 400', await pub('POST', '/orders',
+    orderBody({ delivery_address: `פתח תקווה ${'x'.repeat(191)}` })), 400, 'delivery_address ארוך מדי (מקסימום 200');
+  expectError('שם פריט מעל 255 תווים → 400', await pub('POST', '/orders',
+    orderBody({ items: [{ id: product.id, name: 'x'.repeat(256), price: 25, quantity: 1 }] })), 400, 'items[0].name ארוך מדי (מקסימום 255');
 
   // A hidden product cannot be ordered, even with the right price.
   await admin('PUT', `/products/${product.id}`, { active: false });
