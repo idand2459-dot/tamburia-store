@@ -72,7 +72,6 @@ async function buildPages(baseUrl) {
     { name: 'מוצר', path: `/product/${product.id}` },
     { name: 'עגלה', path: '/cart', storage: { 'tamburia-cart': [cartItem] } },
     { name: "צ'קאאוט", path: '/checkout', storage: { 'tamburia-cart': [cartItem] }, checkErrors: true },
-    { name: 'הזמנות שלי', path: '/orders/lookup' },
     { name: 'מועדפים', path: '/wishlist', storage: { 'tamburia-wishlist': [product] } },
     { name: 'אודות', path: '/about' },
     { name: 'צור קשר', path: '/contact' },

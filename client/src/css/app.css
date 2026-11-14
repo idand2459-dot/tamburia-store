@@ -123,10 +123,6 @@
 @import './features/cart/_delivery-options.css';
 @import './features/cart/_checkout-form.css';
 @import './features/cart/_order-success.css';
-@import './features/cart/_order-history.css';
-/* one result card inside that lookup, split out of the file above it at the
-   400-line ceiling; no selector appears in both */
-@import './features/cart/_order-history-card.css';
 @import './features/cart/_wishlist.css';
 @import './features/home/_reviews.css';
 /* the rotating card, split out of _reviews.css; it needs the dark band that

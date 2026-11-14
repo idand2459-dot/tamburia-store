@@ -49,7 +49,6 @@ async function testClient() {
     '/product/216',
     '/cart',
     '/checkout',
-    '/orders/lookup',
     '/admin/orders',
     '/route/that/does/not/exist',
   ];

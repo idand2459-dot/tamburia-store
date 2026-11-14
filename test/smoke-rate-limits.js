@@ -112,7 +112,7 @@ async function testLimits() {
   check('ההזמנות עדיין חסומות', (await postOrder({})).status === 429);
 
   console.log('\n── מה שלא מוגבל');
-  check('חיפוש הזמנה לפי טלפון (המגביל שלו נפרד)', (await call('GET', '/orders/by-phone/0501234567')).status === 200);
+  check('the removed order lookup is a 404 with no limiter', (await call('GET', '/orders/by-phone/0501234567')).status === 404);
   check('רשימת הזמנות לאדמין', (await admin('GET', '/orders')).status === 200);
   check('קריאת חוות דעת מאושרות', (await call('GET', '/reviews')).status === 200);
   check('קריאת מוצרים', (await call('GET', '/products?limit=1')).status === 200);

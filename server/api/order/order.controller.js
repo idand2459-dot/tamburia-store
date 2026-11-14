@@ -20,11 +20,6 @@ async function getOne(req, res) {
   res.json(await orderService.getOrder(req.id));
 }
 
-/** GET /api/orders/by-phone/:phone — מחזיר את ההזמנות של מספר טלפון. */
-async function byPhone(req, res) {
-  res.json(await orderService.findOrdersByPhone(req.params.phone));
-}
-
 /**
  * POST /api/orders — יוצר הזמנה ושולח מייל לחנות וללקוח.
  * ניסיון חוזר עם אותו request_id מחזיר את ההזמנה המקורית ב-200 וב-Idempotent-Replayed.
@@ -65,4 +60,4 @@ async function stats(req, res) {
   res.json(await orderService.getStats());
 }
 
-module.exports = { list, getOne, byPhone, create, update, updateStatus, setPicked, remove, stats };
+module.exports = { list, getOne, create, update, updateStatus, setPicked, remove, stats };

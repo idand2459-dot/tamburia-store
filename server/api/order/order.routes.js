@@ -1,6 +1,10 @@
 /**
- * נתיבי ההזמנות. יצירת הזמנה וחיפוש לפי טלפון פתוחים ללקוח,
- * כל השאר דורש התחברות כאדמין. /stats מוגדר לפני /:id.
+ * נתיבי ההזמנות. יצירת הזמנה פתוחה ללקוח, כל השאר דורש התחברות כאדמין.
+ * /stats מוגדר לפני /:id.
+ *
+ * There is no public way to read an order: the lookup by phone number was removed in P8.2
+ * because a phone number alone returned a customer's name, address and email. Do not add a
+ * public GET here without a new decision; every read goes through requireAdmin.
  */
 const express = require('express');
 const config = require('../../config/env');
@@ -10,22 +14,6 @@ const { requireAdmin } = require('../../middleware/requireAdmin');
 const { rateLimit } = require('../../middleware/rateLimit');
 
 const router = express.Router();
-
-/**
- * החיפוש לפי טלפון פתוח בכוונה — לקוח בודק הזמנה בלי להירשם.
- * המחיר הוא שמספר טלפון לבדו מחזיר שם, כתובת, פריטים וסכומים,
- * ואפשר לסרוק מספרים ברצף. ההגבלה כאן לא הופכת את הנתיב למוגן,
- * רק הורסת את הכדאיות של סריקה בנפח: לקוח בודק הזמנה כמה פעמים,
- * סקריפט מנסה מאות מספרים.
- *
- * הגנה מלאה דורשת הוכחת בעלות על המספר (OTP), וזו החלטה מוצרית
- * נפרדת — ראה את ההערה בסיכום.
- */
-const byPhoneLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: 'יותר מדי בדיקות, נסה שוב מאוחר יותר',
-});
 
 /**
  * Creating an order sends two emails and writes a row, so it is limited per client address
@@ -40,7 +28,6 @@ const createLimiter = rateLimit({
 });
 
 router.post('/', createLimiter, controller.create);
-router.get('/by-phone/:phone', byPhoneLimiter, controller.byPhone);
 
 router.get('/stats', requireAdmin, controller.stats);
 router.get('/', requireAdmin, controller.list);

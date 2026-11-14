@@ -344,12 +344,11 @@ async function testPublicRoutes() {
   expectError('POST /reviews מסוג product בלי product_id → 400',
     await pub('POST', '/reviews', { reviewer_name: 'x', text: 'y', rating: 5, type: 'product' }), 400, 'product_id');
 
-  expectError('GET /orders/by-phone/123 → 400', await pub('GET', '/orders/by-phone/123'), 400, 'מספר טלפון לא תקין');
-  const none = await pub('GET', '/orders/by-phone/0500000000');
-  check('GET /orders/by-phone/<אין הזמנות> → 200 []', none.status === 200 && Array.isArray(none.body) && none.body.length === 0, none.body);
-  check('by-phone מחזיר כותרות RateLimit',
-    none.headers.get('ratelimit-limit') === '20' && none.headers.get('ratelimit-remaining') !== null
-    && none.headers.get('ratelimit-reset') !== null, [...none.headers.entries()]);
+  // The public order lookup was removed (P8.2): the API's own not-found answer, no order data, no limiter.
+  const gone = await pub('GET', '/orders/by-phone/0500000000');
+  check('GET /orders/by-phone/:phone → 404 { error, path }',
+    gone.status === 404 && typeof gone.body.error === 'string' && !Array.isArray(gone.body), gone.body);
+  check('the removed lookup has no RateLimit headers', gone.headers.get('ratelimit-limit') === null, [...gone.headers.entries()]);
 }
 
 // ───────────────────────────── list queries and pagination ─────────────────────────────
@@ -594,13 +593,10 @@ async function testOrderFlow() {
   const inList = (await ourOrders()).some((o) => o.id === order.id);
   check('ההזמנה מופיעה ב-GET /orders', inList, null);
 
-  // Public lookup by phone: the customer sees the order, but not the picking state.
+  // The customer cannot read the order back by phone number any more (P8.2).
   const lookup = await pub('GET', '/orders/by-phone/0500000098');
-  check('GET /orders/by-phone/:phone מוצא את ההזמנה',
-    lookup.status === 200 && lookup.body.some((o) => o.id === order.id), lookup.body);
-  check('by-phone אינו חושף picked_items', lookup.body.every((o) => !('picked_items' in o)), lookup.body.map((o) => Object.keys(o)));
-  const formatted = await pub('GET', '/orders/by-phone/050-000-0098');
-  check('by-phone מנרמל מקפים', formatted.status === 200 && formatted.body.some((o) => o.id === order.id), formatted.status);
+  check('the phone number no longer finds the order: 404 and no customer data',
+    lookup.status === 404 && !JSON.stringify(lookup.body).includes('customer_'), lookup.body);
 
   // Edit.
   const edited = await admin('PUT', `/orders/${order.id}`, { notes: 'עודכן' });

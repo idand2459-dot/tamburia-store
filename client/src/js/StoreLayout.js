@@ -1,7 +1,7 @@
 /**
  * המסגרת של החנות: נאבאר, כרזה, פוטר והכפתורים הצפים, סביב ה-Outlet.
  *
- * העגלה, איתור ההזמנות והמועדפים הם חלונות מודאליים שנפתחים לפי
+ * העגלה והמועדפים הם חלונות מודאליים שנפתחים לפי
  * הכתובת ולא לפי מצב מקומי. זה מה שנותן להם כתובת אמיתית בלי לשנות
  * את העיצוב: /cart מציג את המודאל מעל עמוד הבית, וכפתור "חזור"
  * בדפדפן פשוט סוגר אותו, כי הוא חוזר לכתובת הקודמת.
@@ -15,15 +15,13 @@ import WhatsAppButton from './components/WhatsAppButton';
 import ScrollToTop from './components/ScrollToTop';
 import PaintCalcBtn from './features/calculators/PaintCalcBtn';
 import CartModal from './features/cart/CartModal';
-import OrderHistory from './features/cart/OrderHistory';
 import Wishlist from './features/cart/Wishlist';
 import { useCheckoutForm } from './hooks/useCheckoutForm';
 
 /**
  * מסמן על ה-body שמגירה פתוחה, כדי שה-CSS יסתיר את הכפתורים הצפים.
  *
- * ארבע המגירות מסומנות באותו דגל: התפריט, העגלה, איתור ההזמנות
- * והמועדפים. כולן מכסות את המסך מהצד, וכל כפתור צף שנשאר מעליהן הוא
+ * שלוש המגירות מסומנות באותו דגל: התפריט, העגלה והמועדפים. כולן מכסות את המסך מהצד, וכל כפתור צף שנשאר מעליהן הוא
  * מכשול — בטלפון אופקי כפתור מחשבון הצבע יושב בדיוק על "צור קשר"
  * שבתפריט, ובולע את הלחיצה.
  *
@@ -38,7 +36,7 @@ function useDrawerBodyClass(open) {
   }, [open]);
 }
 
-const OVERLAY_PATHS = ['/cart', '/checkout', '/orders/lookup', '/wishlist'];
+const OVERLAY_PATHS = ['/cart', '/checkout', '/wishlist'];
 
 /** האם הכתובת היא של מודאל, שמוצג מעל העמוד ולא במקומו. */
 function isOverlayPath(pathname) {
@@ -78,13 +76,10 @@ function StoreLayout() {
 
   const onCart = Boolean(useMatch('/cart'));
   const onCheckout = Boolean(useMatch('/checkout'));
-  const onOrderLookup = Boolean(useMatch('/orders/lookup'));
   const onWishlist = Boolean(useMatch('/wishlist'));
 
   useScrollToTopOnNavigate(location.pathname);
-  useDrawerBodyClass(
-    menuOpen || onCart || onCheckout || onOrderLookup || onWishlist,
-  );
+  useDrawerBodyClass(menuOpen || onCart || onCheckout || onWishlist);
 
   /**
    * סוגר מודאל. חוזר אחורה כשיש לאן, ואחרת עולה לעמוד הבית — כך
@@ -114,7 +109,7 @@ function StoreLayout() {
     else navigate('/cart');
   }
 
-  const overlayOpen = onCart || onCheckout || onOrderLookup || onWishlist;
+  const overlayOpen = onCart || onCheckout || onWishlist;
 
   return (
     <div className="App">
@@ -155,8 +150,6 @@ function StoreLayout() {
           closeCart={() => { checkout.clearOrderSuccess(); closeOverlay(); }}
         />
       )}
-
-      {onOrderLookup && <OrderHistory onClose={closeOverlay} />}
 
       {/* הניווט לעמוד מוצר הוא קישור בתוך החלון עצמו, ולכן אין כאן
           onSelectProduct: מעבר הכתובת הוא גם הסגירה. */}

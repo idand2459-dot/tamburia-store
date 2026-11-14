@@ -6,7 +6,8 @@
  * העדכניים ב-details, הודעת השרת עוברת כמו שהיא, וטלפון נשלח בספרות
  * בלבד. מריצים עם `npm run test:client` מהשורש.
  */
-import { createOrder, getOrdersByPhone, ApiError } from '../../services/orderService';
+import * as orderServiceModule from '../../services/orderService';
+import { createOrder, ApiError } from '../../services/orderService';
 import { getPigmentFormulas } from '../../services/pigmentService';
 import { login, isLoggedIn, logout } from '../../services/authService';
 import { getReviews, getReviewStats } from '../../services/reviewService';
@@ -66,19 +67,9 @@ describe('createOrder', () => {
   });
 });
 
-describe('getOrdersByPhone', () => {
-  test('שולח את הספרות בלבד', async () => {
-    global.fetch.mockReturnValue(ok([]));
-
-    await getOrdersByPhone('050-123 4567');
-
-    expect(global.fetch.mock.calls[0][0]).toBe('/api/orders/by-phone/0501234567');
-  });
-
-  test('הגבלת קצב (429) זורקת, ולא חוזרת כאילו היו הזמנות', async () => {
-    global.fetch.mockReturnValue(fail(429, { error: 'יותר מדי בדיקות' }));
-
-    await expect(getOrdersByPhone('0501234567')).rejects.toBeInstanceOf(ApiError);
+describe('orderService', () => {
+  test('exports no public order lookup', () => {
+    expect(Object.keys(orderServiceModule).sort()).toEqual(['ApiError', 'ORDER_TIMEOUT_MS', 'TimeoutError', 'createOrder']);
   });
 });
 

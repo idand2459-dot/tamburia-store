@@ -2,9 +2,9 @@
    Modals, dialogs and overlay backdrops
 
    What is left here is the nav drawer's backdrop and the global search popup.
-   The cart, order-history and wishlist panels used to be here as well — three
-   copies of one overlay, one 380-420px white panel, one sticky header and one
-   .cart-close-btn they all shared. They are components/_drawer.css now, and
+   The cart and wishlist panels used to be here as well — copies of one
+   overlay, one 380-420px white panel, one sticky header and one
+   .cart-close-btn they shared. They are components/_drawer.css now, and
    every rule of theirs is gone from this file.
    ========================================================================== */
 
