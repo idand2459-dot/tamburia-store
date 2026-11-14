@@ -75,7 +75,7 @@ function expectError(name, res, status, text) {
 function hasErrorShape(res) {
   return res.body !== null
     && typeof res.body.error === 'string'
-    && Object.keys(res.body).every((k) => ['error', 'details', 'path', 'stack'].includes(k));
+    && Object.keys(res.body).every((k) => ['error', 'details', 'path'].includes(k));
 }
 
 // ───────────────────────────── routing ─────────────────────────────
@@ -526,6 +526,13 @@ async function testOrderRejections() {
   // An id above INT4 used to reach `ANY($1::int[])` and fail with 22003, a 500.
   expectError('מזהה פריט מעל INT4 → 400 ולא 500', await pub('POST', '/orders',
     orderBody({ items: [{ id: 99999999999, name: 'ghost', price: 1, quantity: 1 }] })), 400, 'כבר אינו בקטלוג');
+  // A product id that fits INT4 but does not exist: the database refuses the review (foreign key,
+  // 23503). The status stays 409; the text is this API's and never the database's.
+  const noProduct = await pub('POST', '/reviews',
+    { reviewer_name: 'Dana', text: 'x', rating: 5, type: 'product', product_id: MISSING_ID });
+  expectError('חוות דעת על מוצר שאינו קיים → 409', noProduct, 409, 'הפעולה מפרה קישור לרשומה אחרת');
+  check('חוות דעת על מוצר שאינו קיים: בלי טקסט PostgreSQL',
+    hasErrorShape(noProduct) && !/violates|constraint|foreign key|reviews|fkey|insert or update/i.test(errorOf(noProduct)), errorOf(noProduct));
   expectError('חוות דעת על מזהה מוצר מעל INT4 → 400', await pub('POST', '/reviews',
     { reviewer_name: 'Dana', text: 'x', rating: 5, type: 'product', product_id: 99999999999 }), 400, 'product_id חייב להיות מזהה מוצר תקין');
   expectError('גרסה שאינה קיימת → 400', await pub('POST', '/orders',
@@ -721,10 +728,12 @@ async function testPigmentFlow() {
 
   const dup = await admin('POST', '/pigment-formulas', body);
   if (dup.body && dup.body.id) createdFormulas.push(dup.body.id);
-  // KNOWN BUG (B-pg-message): errorHandler.mapPgError maps 23505 to 'הערך כבר קיים במערכת', but the
-  // message is only used for status >= 500, so a 4xx response carries the raw PostgreSQL text
-  // (constraint name included). Pinned here: the status and the error shape, not the text.
+  // errorHandler maps 23505 to 'הערך כבר קיים במערכת' at every status, so a 4xx never carries the
+  // raw PostgreSQL text (which names the constraint).
   check('קוד כפול → 409 בצורת { error }', dup.status === 409 && hasErrorShape(dup), `${dup.status} ${errorOf(dup)}`);
+  expectError('קוד כפול: ההודעה של ה-API', dup, 409, 'הערך כבר קיים במערכת');
+  check('קוד כפול: בלי טקסט PostgreSQL',
+    !/duplicate key|unique constraint|violates|pigment_formulas/i.test(errorOf(dup)), errorOf(dup));
 
   expectError('כמויות שאינן עולות → 400', await admin('POST', '/pigment-formulas', { ...body, color_code: `${code}_x`, ml_per_liter_medium: 5 }), 400, 'חייבת לעלות');
   expectError('hex לא תקין → 400', await admin('POST', '/pigment-formulas', { ...body, color_code: `${code}_y`, hex: 'red' }), 400, 'hex חייב להיות בפורמט');
@@ -768,13 +777,30 @@ async function testHeadersAndParsing() {
   });
   check('OPTIONS preflight → 204', preflight.status === 204, preflight.status);
 
-  // Malformed JSON and oversized bodies are answered by the JSON parser itself.
-  // KNOWN: the message is the parser's English text, not Hebrew product content.
+  // Malformed JSON and oversized bodies are raised by the JSON parser, and the error handler
+  // answers them in Hebrew: the parser's own English text (which can quote the body) is not sent.
   const malformed = await call('POST', '/orders', { raw: '{"customer_name":', headers: { 'Content-Type': 'application/json' } });
   check('JSON שבור → 400 בצורת { error }', malformed.status === 400 && hasErrorShape(malformed), `${malformed.status} ${errorOf(malformed)}`);
+  expectError('JSON שבור: הודעה בעברית', malformed, 400, 'גוף הבקשה אינו JSON תקין');
+  check('JSON שבור: בלי טקסט המנתח ובלי ציטוט הגוף',
+    !/Unexpected|JSON|position|customer_name/.test(errorOf(malformed).replace('JSON תקין', '')), errorOf(malformed));
 
   const huge = await call('POST', '/orders', { body: { notes: 'x'.repeat(250 * 1024) } });
   check('גוף מעל 200KB → 413', huge.status === 413 && hasErrorShape(huge), `${huge.status} ${errorOf(huge)}`);
+  expectError('גוף מעל 200KB: הודעה בעברית', huge, 413, 'גוף הבקשה גדול מדי');
+  check('גוף מעל 200KB: בלי טקסט המנתח', !/entity|request/i.test(errorOf(huge)), errorOf(huge));
+
+  const encoding = await call('POST', '/orders', { raw: '{}', headers: { 'Content-Type': 'application/json', 'Content-Encoding': 'x-unknown' } });
+  expectError('קידוד תוכן לא נתמך → 415 בעברית', encoding, 415, 'קידוד הבקשה אינו נתמך');
+  check('קידוד תוכן לא נתמך: בצורת { error }', hasErrorShape(encoding), encoding.body);
+
+  const charset = await call('POST', '/orders', { raw: '{}', headers: { 'Content-Type': 'application/json; charset=latin1' } });
+  expectError('charset לא נתמך → 415 בעברית', charset, 415, 'קידוד הבקשה אינו נתמך');
+
+  // A malformed path parameter is an error the router raises, with an English message of its own.
+  const badPath = await pub('GET', '/products/%E0%A4%A');
+  check('אחוז-קידוד שבור בנתיב → 400 בעברית, בלי טקסט הנתב',
+    badPath.status === 400 && hasErrorShape(badPath) && !/decode|param/i.test(errorOf(badPath)), `${badPath.status} ${errorOf(badPath)}`);
 
   const wrongType = await call('POST', '/orders', { raw: 'customer_name=x', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
   check('גוף שאינו JSON נקרא כריק → 400 ולא 500', wrongType.status === 400 && hasErrorShape(wrongType), `${wrongType.status} ${errorOf(wrongType)}`);
