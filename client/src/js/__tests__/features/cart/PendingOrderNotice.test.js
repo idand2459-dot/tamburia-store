@@ -114,3 +114,51 @@ test('the cancel warning points to the store, not to a removed order lookup', ()
   expect(document.body.textContent).toContain('לברר מול החנות בטלפון');
   expect(document.body.textContent).not.toContain('ההזמנות שלי');
 });
+
+describe('an order whose 48 hours are up (expired)', () => {
+  const EXPIRED = { ...PENDING, expired: true };
+
+  test('there is no way to send it again, and the notice says the outcome is unknown and points to the store', () => {
+    const checkout = renderFooter({ pendingOrder: EXPIRED });
+
+    expect(screen.queryByRole('button', { name: /שלחו שוב/ })).toBeNull();
+    expect(screen.getByRole('button', { name: 'בטלו והתחילו מחדש' })).toBeTruthy();
+    expect(screen.getByText(/לא ידוע אם ההזמנה התקבלה/)).toBeTruthy();
+    expect(screen.getByText(/התקשרו לחנות/)).toBeTruthy();
+    expect(screen.getByText(/48 שעות/)).toBeTruthy();
+    expect(screen.getByText(/4 פריטים/)).toBeTruthy();
+    expect(checkout.retryPendingOrder).not.toHaveBeenCalled();
+    expect(checkout.handlePlaceOrder).not.toHaveBeenCalled();
+  });
+
+  test('it never says the order failed', () => {
+    renderFooter({ pendingOrder: EXPIRED });
+
+    expect(document.body.textContent).not.toMatch(/נכשל|לא התקבלה|בוטלה על ידי/);
+  });
+
+  test('the "not saved on this device" line is not shown for it', () => {
+    renderFooter({ pendingOrder: { ...EXPIRED, persisted: false } });
+
+    expect(screen.queryByText(/אחרי רענון הדף אי אפשר יהיה לשחזר אותה/)).toBeNull();
+  });
+
+  test('cancelling is the same two-step choice, with the duplicate warning', () => {
+    const checkout = renderFooter({ pendingOrder: EXPIRED });
+
+    fireEvent.click(screen.getByRole('button', { name: 'בטלו והתחילו מחדש' }));
+    expect(checkout.cancelPendingOrder).not.toHaveBeenCalled();
+    expect(screen.getByText(/שליחה חדשה תיצור הזמנה נוספת/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /כן, בטלו/ }));
+    expect(checkout.cancelPendingOrder).toHaveBeenCalledTimes(1);
+  });
+
+  test('a record that could not be dated shows no date, no count and no total, and no "Invalid Date"', () => {
+    renderFooter({ pendingOrder: { submittedAt: null, itemCount: 0, total: null, persisted: true, conflict: false, expired: true } });
+
+    expect(document.body.textContent).not.toMatch(/Invalid|NaN|undefined|נשלחה ב-/);
+    expect(screen.getByText(/לא ידוע אם ההזמנה התקבלה/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'בטלו והתחילו מחדש' })).toBeTruthy();
+  });
+});

@@ -227,26 +227,37 @@ function CheckoutFormView({ setCartStep, checkout, showErrors = false }) {
  * An order that was sent and not confirmed (see useCheckoutForm): until the customer settles it, no
  * new order can be sent. Sending it again returns the original and never creates a second order;
  * cancelling it can, if it was in fact received, so that takes a second, explicit click.
+ *
+ * Once 48 hours have passed (`expired`) the order's details have been removed from the device, so it
+ * cannot be sent again: the notice says the outcome is unknown, sends the customer to the store, and
+ * offers only the same two-step cancel. It never says the order failed.
  */
 function PendingOrderNotice({ pendingOrder, submitting, onRetry, onCancel }) {
   const [confirming, setConfirming] = useState(false);
-  const { submittedAt, itemCount, total, persisted, conflict } = pendingOrder;
-  const sentAt = new Date(submittedAt).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' });
+  const { submittedAt, itemCount, total, persisted, conflict, expired } = pendingOrder;
+  const sentAt = Number.isFinite(submittedAt)
+    ? new Date(submittedAt).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' })
+    : null;
+  const facts = [
+    sentAt && `נשלחה ב-${sentAt}`,
+    itemCount > 0 && `${itemCount} פריטים`,
+    Number.isFinite(total) && formatPrice(total),
+  ].filter(Boolean);
 
   return (
     <section className="checkout-pending" aria-labelledby="checkout-pending-title">
       <h3 id="checkout-pending-title" className="checkout-pending-title">
         <AlertTriangle size={17} aria-hidden="true" /> יש הזמנה שלא אושרה
       </h3>
-      <p className="checkout-pending-summary">
-        נשלחה ב-{sentAt} · {itemCount} פריטים · {formatPrice(total)}
-      </p>
+      {facts.length > 0 && <p className="checkout-pending-summary">{facts.join(' · ')}</p>}
       <p>
-        {conflict
+        {expired
+          ? `עברו 48 שעות מאז ששלחתם את ההזמנה ולא קיבלנו אישור מהשרת, ולכן פרטי ההזמנה נמחקו מהמכשיר ואי אפשר לשלוח אותה שוב. לא ידוע אם ההזמנה התקבלה. התקשרו לחנות (${PHONES.store.display}) כדי לברר זאת לפני שתשלחו הזמנה חדשה.`
+          : conflict
           ? `מזהה ההזמנה כבר שימש בשרת להזמנה אחרת, ולכן אי אפשר לשלוח אותה שוב. התקשרו לחנות (${PHONES.store.display}) כדי לברר אם ההזמנה התקבלה לפני שתבטלו.`
           : 'ייתכן שההזמנה התקבלה. שליחה חוזרת מחזירה את אותה הזמנה ולא יוצרת הזמנה נוספת. עד שמטפלים בה אי אפשר לשלוח הזמנה חדשה.'}
       </p>
-      {!persisted && (
+      {!persisted && !expired && (
         <p>ההזמנה לא נשמרה במכשיר, ולכן אחרי רענון הדף אי אפשר יהיה לשחזר אותה.</p>
       )}
 
@@ -258,7 +269,7 @@ function PendingOrderNotice({ pendingOrder, submitting, onRetry, onCancel }) {
         </div>
       ) : (
         <div className="checkout-pending-actions">
-          {!conflict && (
+          {!conflict && !expired && (
             <button type="button" className="cart-cta" disabled={submitting} onClick={onRetry}>
               {submitting
                 ? <><Spinner size="small" color="white" /> שולח הזמנה…</>

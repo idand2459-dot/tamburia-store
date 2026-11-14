@@ -959,4 +959,430 @@ describe('when localStorage cannot be used', () => {
     expect(result.current.form.orderSuccess).toEqual(SAVED);
     expect(result.current.form.pendingOrder).toBeNull();
   });
+
+  /** Every localStorage call throws, as in a browser that blocks site data. */
+  function blockStorage() {
+    jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('SecurityError'); });
+    jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('SecurityError'); });
+    jest.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('SecurityError'); });
+  }
+
+  test('blocked storage, unknown outcome: the page keeps the original id and body, and sends exactly them again', async () => {
+    blockStorage();
+    orderReply = () => Promise.reject(new TypeError('Failed to fetch'));
+    const result = setup();
+
+    await place(result);
+    expect(result.current.form.pendingOrder).toMatchObject({ itemCount: 4, total: 550, persisted: false });
+
+    orderReply = () => reply(200, SAVED); // the server answers a replay with the original order
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+
+    expect(orderCalls()).toHaveLength(2);
+    expect(orderCalls()[1][1].body).toBe(orderCalls()[0][1].body);
+    expect(result.current.form.orderSuccess).toEqual(SAVED);
+    expect(result.current.form.pendingOrder).toBeNull();
+  });
+
+  test('blocked storage: a new order cannot be started over the unresolved one, however often it is tried', async () => {
+    blockStorage();
+    orderReply = () => Promise.reject(new TypeError('Failed to fetch'));
+    const result = setup();
+    await place(result);
+    const first = JSON.parse(orderCalls()[0][1].body).request_id;
+    orderReply = () => reply(201, SAVED);
+
+    await place(result);
+    await place(result);
+
+    expect(orderCalls()).toHaveLength(1);
+    expect(result.current.form.pendingOrder).not.toBeNull();
+    expect(result.current.form.orderSuccess).toBeNull();
+    expect(first).toMatch(UUID_V4);
+  });
+
+  test('blocked storage, rate limited: the attempt stays in memory with its id, and the notice says a reload would lose it', async () => {
+    blockStorage();
+    orderReply = () => reply(429, { error: 'יותר מדי הזמנות בזמן קצר (עוד 60 שניות)' });
+    const result = setup();
+
+    await place(result);
+
+    expect(result.current.form.pendingOrder).toMatchObject({ persisted: false, conflict: false });
+    expect(orderCalls()).toHaveLength(1);
+
+    orderReply = () => reply(200, SAVED);
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+    expect(orderCalls()[1][1].body).toBe(orderCalls()[0][1].body);
+    expect(result.current.form.orderSuccess).toEqual(SAVED);
+  });
+
+  test('blocked storage: nothing is ever sent by itself, however long the page waits', async () => {
+    jest.useFakeTimers();
+    try {
+      blockStorage();
+      orderReply = () => Promise.reject(new TypeError('Failed to fetch'));
+      const result = setup();
+      await place(result);
+      const calls = global.fetch.mock.calls.length;
+
+      await act(async () => { jest.advanceTimersByTime(10 * 24 * 60 * 60 * 1000); });
+
+      expect(global.fetch.mock.calls.length).toBe(calls);
+      // 48 hours on, the details are gone from memory too, and the order cannot be sent again
+      expect(result.current.form.pendingOrder).toMatchObject({ expired: true, persisted: false });
+      await act(async () => { await result.current.form.retryPendingOrder(); });
+      expect(global.fetch.mock.calls.length).toBe(calls);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('storage that fails at first and works later: the resend stores the very same attempt', async () => {
+    const setItem = jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('QuotaExceededError'); });
+    orderReply = () => Promise.reject(new TypeError('Failed to fetch'));
+    const result = setup();
+    await place(result);
+    expect(result.current.form.pendingOrder).toMatchObject({ persisted: false });
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBeNull();
+
+    setItem.mockRestore();
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+
+    expect(result.current.form.pendingOrder).toMatchObject({ persisted: true });
+    const storedAttempt = JSON.parse(localStorage.getItem(ATTEMPT_KEY));
+    expect(storedAttempt.requestId).toBe(JSON.parse(orderCalls()[0][1].body).request_id);
+    expect(storedAttempt.body).toEqual(JSON.parse(orderCalls()[0][1].body));
+    expect(orderCalls()[1][1].body).toBe(orderCalls()[0][1].body);
+  });
+
+  test('a reload after a failed write has nothing to recover: the page is blank, and that is the case the warning is for', async () => {
+    jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('QuotaExceededError'); });
+    orderReply = () => Promise.reject(new TypeError('Failed to fetch'));
+    const first = setup();
+    await place(first);
+    expect(first.current.form.orderError).toBe(UNCERTAIN_UNSAVED);
+    unmountLast();
+
+    const reloaded = setup();
+
+    expect(reloaded.current.form.pendingOrder).toBeNull();
+    expect(orderCalls()).toHaveLength(1); // opening the page sends nothing
+  });
+});
+
+describe('the 48-hour retention of an unresolved order', () => {
+  const T0 = Date.UTC(2026, 10, 14, 9, 0, 0);
+  const HOUR = 60 * 60 * 1000;
+  const PERSONAL = ['דנה כהן', '0501234567', 'dana@example.com', 'הרצל 1, חיפה', 'להתקשר לפני', 'צבע לבן', 'מברשת'];
+  const EXPIRED_RECORD = (requestId) => ({ requestId, submittedAt: T0, expired: true, itemCount: 4, total: 550 });
+  const advance = (ms) => act(async () => { jest.advanceTimersByTime(ms); });
+  const stored = () => JSON.parse(localStorage.getItem(ATTEMPT_KEY));
+  const noPersonalData = () => PERSONAL.forEach((value) => expect(localStorage.getItem(ATTEMPT_KEY)).not.toContain(value));
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(T0);
+    orderReply = () => Promise.reject(new TypeError('Failed to fetch'));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  /** Places an order whose outcome is unknown, so an attempt is stored at T0. */
+  async function placeUnknown() {
+    const result = setup();
+    await place(result);
+    expect(stored()).toMatchObject({ submittedAt: T0 });
+    return result;
+  }
+
+  test('at 47 hours the same body and request id are sent again, and the original time is stored', async () => {
+    const result = await placeUnknown();
+    await advance(47 * HOUR);
+    expect(result.current.form.pendingOrder).toMatchObject({ itemCount: 4, total: 550, submittedAt: T0 });
+    expect(result.current.form.pendingOrder.expired).toBeUndefined();
+
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+
+    expect(orderCalls()).toHaveLength(2);
+    expect(orderCalls()[1][1].body).toBe(orderCalls()[0][1].body);
+    expect(stored()).toMatchObject({ requestId: sentBody(0).request_id, submittedAt: T0 });
+    expect(stored().body).toEqual(sentBody(0));
+    expect(result.current.form.pendingOrder.expired).toBeUndefined();
+  });
+
+  test('a retry does not move the clock: 48 hours after the FIRST send the details go, whatever the retries', async () => {
+    const result = await placeUnknown();
+    await advance(47 * HOUR);
+    await act(async () => { await result.current.form.retryPendingOrder(); }); // fails again, at 47 h
+    expect(stored().submittedAt).toBe(T0);
+
+    await advance(HOUR - 1);
+    expect(result.current.form.pendingOrder.expired).toBeUndefined();
+    await advance(1);
+
+    expect(result.current.form.pendingOrder).toMatchObject({ expired: true, submittedAt: T0 });
+    expect(stored()).toEqual(EXPIRED_RECORD(sentBody(0).request_id));
+    expect(orderCalls()).toHaveLength(2);
+  });
+
+  test('a successful retry at 47 hours settles it: one order, the attempt gone', async () => {
+    const result = await placeUnknown();
+    await advance(47 * HOUR);
+    orderReply = () => reply(200, SAVED); // the server answers a replay with the original order
+
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+
+    expect(sentBody(1)).toEqual(sentBody(0));
+    expect(result.current.form.orderSuccess).toEqual(SAVED);
+    expect(result.current.form.pendingOrder).toBeNull();
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBeNull();
+    expect(result.current.cart).toEqual([]);
+  });
+
+  test('at exactly 48 hours, with the page open, the details are removed and nothing is sent', async () => {
+    const result = await placeUnknown();
+    const requestId = sentBody(0).request_id;
+
+    await advance(48 * HOUR - 1);
+    expect(stored().body).toEqual(sentBody(0));
+    await advance(1);
+
+    expect(result.current.form.pendingOrder).toEqual({
+      submittedAt: T0, itemCount: 4, total: 550, persisted: true, conflict: false, expired: true,
+    });
+    expect(stored()).toEqual(EXPIRED_RECORD(requestId));
+    noPersonalData();
+    expect(orderCalls()).toHaveLength(1);
+  });
+
+  test('after 49 hours the retry sends nothing, and neither does placing a new order', async () => {
+    const result = await placeUnknown();
+    await advance(49 * HOUR);
+    orderReply = () => reply(201, SAVED);
+
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+    await place(result);
+
+    expect(orderCalls()).toHaveLength(1);
+    expect(result.current.form.pendingOrder.expired).toBe(true);
+    expect(result.current.form.orderSuccess).toBeNull();
+    expect(result.current.cart).toEqual(CART);
+  });
+
+  test('no request of any kind is made by the passage of time, and no new request id is made', async () => {
+    const result = await placeUnknown();
+    const calls = global.fetch.mock.calls.length;
+
+    await advance(30 * 24 * HOUR);
+    await advance(30 * 24 * HOUR);
+
+    expect(global.fetch.mock.calls.length).toBe(calls);
+    expect(orderCalls()).toHaveLength(1);
+    expect(stored().requestId).toBe(sentBody(0).request_id);
+    expect(result.current.form.pendingOrder.expired).toBe(true);
+  });
+
+  test('after a reload past 48 hours the page shows the expired order, with the details already gone', async () => {
+    await placeUnknown();
+    const requestId = sentBody(0).request_id;
+    unmountLast();
+    jest.setSystemTime(T0 + 49 * HOUR); // the browser was closed meanwhile: no timer ran
+
+    const result = setup();
+
+    expect(result.current.form.pendingOrder).toMatchObject({ expired: true, itemCount: 4, total: 550, submittedAt: T0 });
+    expect(stored()).toEqual(EXPIRED_RECORD(requestId));
+    noPersonalData();
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+    await place(result);
+    expect(orderCalls()).toHaveLength(1);
+  });
+
+  test('after a reload within 48 hours the order is recovered and sent again as it was', async () => {
+    await placeUnknown();
+    const original = sentBody(0);
+    unmountLast();
+    jest.setSystemTime(T0 + 47 * HOUR);
+
+    const result = setup();
+    expect(result.current.form.pendingOrder).toMatchObject({ itemCount: 4, total: 550, persisted: true });
+    orderReply = () => reply(200, SAVED);
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+
+    expect(sentBody(1)).toEqual(original);
+    expect(result.current.form.orderSuccess).toEqual(SAVED);
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBeNull();
+  });
+
+  test('a page that is reloaded again keeps the same expired record', async () => {
+    await placeUnknown();
+    unmountLast();
+    jest.setSystemTime(T0 + 50 * HOUR);
+    setup();
+    const first = localStorage.getItem(ATTEMPT_KEY);
+    unmountLast();
+    jest.setSystemTime(T0 + 90 * HOUR);
+
+    const result = setup();
+
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBe(first);
+    expect(result.current.form.pendingOrder).toMatchObject({ expired: true, submittedAt: T0 });
+  });
+
+  test('time runs out while a resend is in flight: the answer decides, and if it is unknown the details go', async () => {
+    const result = await placeUnknown();
+    await advance(48 * HOUR - 1000);
+    orderReply = (url, options) => new Promise((_, reject) => {
+      options.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })));
+    });
+
+    let pending;
+    act(() => { pending = result.current.form.retryPendingOrder(); });
+    expect(result.current.form.submittingOrder).toBe(true);
+    await advance(1000); // 48 h: the retention timer fires while the request is out
+    expect(stored().body).toEqual(sentBody(0)); // the request in flight is not cut off from its attempt
+    await act(async () => { jest.advanceTimersByTime(20_000); await pending; }); // the client timeout: unknown outcome
+
+    expect(result.current.form.pendingOrder.expired).toBe(true);
+    expect(stored()).toEqual(EXPIRED_RECORD(sentBody(0).request_id));
+    noPersonalData();
+    expect(orderCalls()).toHaveLength(2);
+  });
+
+  test('time runs out while a resend is in flight and the server confirms it: the order is simply done', async () => {
+    const result = await placeUnknown();
+    await advance(48 * HOUR - 1000);
+    let answer;
+    orderReply = () => new Promise((resolve) => { answer = resolve; });
+
+    let pending;
+    act(() => { pending = result.current.form.retryPendingOrder(); });
+    await advance(1000);
+    await act(async () => { answer({ ok: true, status: 200, json: async () => SAVED }); await pending; });
+
+    expect(result.current.form.orderSuccess).toEqual(SAVED);
+    expect(result.current.form.pendingOrder).toBeNull();
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBeNull();
+  });
+
+  test('cancelling an expired order removes the record, and the next order has a NEW request id', async () => {
+    const result = await placeUnknown();
+    const first = sentBody(0).request_id;
+    await advance(49 * HOUR);
+
+    act(() => { result.current.form.cancelPendingOrder(); });
+    expect(result.current.form.pendingOrder).toBeNull();
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBeNull();
+    expect(orderCalls()).toHaveLength(1);
+
+    orderReply = () => reply(201, SAVED);
+    await place(result);
+
+    expect(orderCalls()).toHaveLength(2);
+    expect(sentBody(1).request_id).toMatch(UUID_V4);
+    expect(sentBody(1).request_id).not.toBe(first);
+    expect(result.current.form.orderSuccess).toEqual(SAVED);
+  });
+
+  test('a 429 that is kept expires like any other kept attempt, and a 4xx still ends it at once', async () => {
+    orderReply = () => reply(429, { error: 'יותר מדי הזמנות בזמן קצר (עוד 60 שניות)' });
+    const limited = setup();
+    await place(limited);
+    expect(stored()).toMatchObject({ submittedAt: T0 });
+    await advance(48 * HOUR);
+    expect(limited.current.form.pendingOrder.expired).toBe(true);
+    unmountLast();
+    localStorage.clear();
+
+    orderReply = () => reply(400, { error: 'הטלפון לא תקין' });
+    const refused = setup();
+    await place(refused);
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBeNull();
+    expect(refused.current.form.pendingOrder).toBeNull();
+  });
+
+  test('a conflict (422) keeps its cancel-only state and expires like the others', async () => {
+    orderReply = () => reply(422, { error: 'מזהה בשימוש', details: { reason: 'request_id_reused' } });
+    const result = setup();
+    await place(result);
+    expect(result.current.form.pendingOrder.conflict).toBe(true);
+
+    await advance(48 * HOUR);
+
+    expect(result.current.form.pendingOrder.expired).toBe(true);
+    expect(stored()).toEqual(EXPIRED_RECORD(sentBody(0).request_id));
+    noPersonalData();
+  });
+
+  test.each([
+    ['corrupted JSON', '{not json', null],
+    ['a record without a valid request id', JSON.stringify({ requestId: 'x', body: {}, submittedAt: T0 }), null],
+  ])('%s on load: removed, no notice, and ordering works', async (_label, text) => {
+    localStorage.setItem(ATTEMPT_KEY, text);
+
+    const result = setup();
+
+    expect(result.current.form.pendingOrder).toBeNull();
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBeNull();
+    orderReply = () => reply(201, SAVED);
+    await place(result);
+    expect(result.current.form.orderSuccess).toEqual(SAVED);
+  });
+
+  test.each([
+    ['a record without a time', (a) => { const { submittedAt, ...rest } = a; return rest; }],
+    ['a record whose time is not a number', (a) => ({ ...a, submittedAt: 'yesterday' })],
+    ['a record older than 48 hours, written before this change', (a) => ({ ...a, submittedAt: T0 - 5 * 24 * HOUR })],
+  ])('%s on load: the details are removed and the order cannot be sent again', async (_label, damage) => {
+    await placeUnknown();
+    const original = JSON.parse(localStorage.getItem(ATTEMPT_KEY));
+    unmountLast();
+    localStorage.setItem(ATTEMPT_KEY, JSON.stringify(damage(original)));
+
+    const result = setup();
+
+    expect(result.current.form.pendingOrder).toMatchObject({ expired: true, itemCount: 4, total: 550 });
+    noPersonalData();
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+    expect(orderCalls()).toHaveLength(1);
+  });
+
+  /** The ids of the timers set for a delay of more than 20 minutes (the retention timer; the request timeout is 20 s). */
+  function retentionTimers(setSpy) {
+    return setSpy.mock.calls
+      .map(([, delay], i) => (delay > 20 * 60 * 1000 ? setSpy.mock.results[i].value : undefined))
+      .filter((id) => id !== undefined);
+  }
+
+  test('the retention timer is set once for the attempt, and cleared when the component unmounts', async () => {
+    const setSpy = jest.spyOn(global, 'setTimeout');
+    const clearSpy = jest.spyOn(global, 'clearTimeout');
+    const result = setup();
+    await place(result);
+    const timers = retentionTimers(setSpy);
+    expect(timers.length).toBeGreaterThan(0);
+    const clearedBefore = clearSpy.mock.calls.length;
+
+    unmountLast();
+
+    const lastTimer = timers[timers.length - 1];
+    expect(clearSpy.mock.calls.slice(clearedBefore).map(([id]) => id)).toContain(lastTimer);
+  });
+
+  test('a successful order clears the retention timer and leaves no record behind', async () => {
+    const setSpy = jest.spyOn(global, 'setTimeout');
+    const clearSpy = jest.spyOn(global, 'clearTimeout');
+    orderReply = () => reply(201, SAVED);
+    const result = setup();
+
+    await place(result);
+
+    const cleared = clearSpy.mock.calls.map(([id]) => id);
+    retentionTimers(setSpy).forEach((id) => expect(cleared).toContain(id));
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBeNull();
+    expect(result.current.form.orderSuccess).toEqual(SAVED);
+  });
 });
