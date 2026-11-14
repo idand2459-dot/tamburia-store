@@ -56,14 +56,10 @@ function injectFake(resolvedPath, fakeExports) {
  * טוען את השירות מחדש מעל כפילים טריים ומחזיר אותם יחד איתו.
  * מחיקת השירות מה-cache הכרחית: בלעדיה הייתה חוזרת ההרצה הקודמת,
  * שכבר קשורה לכפילים של הבדיקה הקודמת.
- *
- * digitsOnly מקבל את ההתנהגות האמיתית (השמטת כל מה שאינו ספרה),
- * כי הבדיקה כאן היא שהשירות מעביר הלאה את התוצאה המנורמלת.
  */
 function loadService({ order = {}, mail = {}, pricing = {} } = {}) {
   const Order = {
     findById: spy(null),
-    findByPhone: spy([]),
     create: spy(null),
     createOnce: spy(null),
     findByRequestId: spy(null),
@@ -72,7 +68,6 @@ function loadService({ order = {}, mail = {}, pricing = {} } = {}) {
     list: spy([]),
     count: spy(0),
     statsByStatus: spy([]),
-    digitsOnly: spy((value) => String(value).replace(/\D/g, '')),
     ...order,
   };
 
@@ -451,26 +446,18 @@ async function testRemoveOrder() {
   check('מחיקה של הזמנה שאינה קיימת → 404', err && err.status === 404, err && err.status);
 }
 
-/** findOrdersByPhone — נרמול ובדיקת אורך לפני הפנייה למודל. */
-async function testFindOrdersByPhone() {
-  console.log('\n── findOrdersByPhone');
+/** The public order lookup was removed (P8.2): the service offers no way to read orders by phone. */
+function testNoPublicLookup() {
+  console.log('\n── no public lookup');
 
-  const short = loadService();
-  const err = await captureError(() => short.service.findOrdersByPhone('123'));
-  check('טלפון קצר → 400', err && err.status === 400, err && err.status);
-  check('טלפון קצר — לא פונים למודל',
-    short.Order.findByPhone.calls.length === 0, short.Order.findByPhone.calls.length);
-
-  const orders = [sampleOrder()];
-  const ok = loadService({ order: { findByPhone: spy(orders) } });
-  const result = await ok.service.findOrdersByPhone('050-000-0000');
-  check('טלפון מנוקד עובר נרמול לפני החיפוש',
-    ok.Order.findByPhone.calls[0][0] === '0500000000', ok.Order.findByPhone.calls[0]);
-  check('מוחזרות ההזמנות מהמודל', result.length === 1 && result[0].id === orders[0].id, result);
-
-  const internal = loadService({ order: { findByPhone: spy([sampleOrder({ picked_items: [0] })]) } });
-  const [shown] = await internal.service.findOrdersByPhone('0500000000');
-  check('picked_items אינו מגיע ללקוח', !('picked_items' in shown), Object.keys(shown));
+  const { service } = loadService();
+  const names = Object.keys(service);
+  check('the service has no lookup by phone', !names.some((name) => /phone/i.test(name)), names);
+  check('the service exports exactly the order operations',
+    JSON.stringify(names.sort()) === JSON.stringify([
+      'createOrder', 'getOrder', 'getStats', 'listOrders', 'removeOrder',
+      'setItemPicked', 'updateOrder', 'updateOrderStatus',
+    ]), names);
 }
 
 /** setItemPicked — רשימת הליקוט. */
@@ -509,7 +496,7 @@ async function main() {
   await testUpdateOrderStatus();
   await testStatusFitsDeliveryMethod();
   await testRemoveOrder();
-  await testFindOrdersByPhone();
+  testNoPublicLookup();
   await testSetItemPicked();
 
   console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);

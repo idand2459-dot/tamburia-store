@@ -99,3 +99,18 @@ test('the unknown-outcome message from the hook is shown above the notice', () =
 
   expect(screen.getByRole('alert').textContent).toContain('לא קיבלנו אישור מהשרת');
 });
+
+test('a conflict sends the customer to the store, not to a removed order lookup', () => {
+  renderFooter({ pendingOrder: { ...PENDING, conflict: true } });
+
+  expect(document.body.textContent).toContain('התקשרו לחנות');
+  expect(document.body.textContent).not.toContain('ההזמנות שלי');
+});
+
+test('the cancel warning points to the store, not to a removed order lookup', () => {
+  renderFooter({ pendingOrder: PENDING });
+  fireEvent.click(screen.getByRole('button', { name: 'בטלו והתחילו מחדש' }));
+
+  expect(document.body.textContent).toContain('לברר מול החנות בטלפון');
+  expect(document.body.textContent).not.toContain('ההזמנות שלי');
+});

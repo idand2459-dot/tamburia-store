@@ -87,7 +87,6 @@ function AppRoutes() {
         {/* מודאלים עם כתובת — המסגרת מציגה אותם מעל עמוד הבית */}
         <Route path="cart" element={<HomePage />} />
         <Route path="checkout" element={<HomePage />} />
-        <Route path="orders/lookup" element={<HomePage />} />
         <Route path="wishlist" element={<HomePage />} />
 
         <Route path="*" element={<NotFoundPage />} />

@@ -25,6 +25,7 @@ import {
 import { selectUnavailableLines, isLineUnavailable } from '../../store/availability/availabilitySelectors';
 import { PriceChangeNotice } from './CartStepView';
 import { formatPrice } from '../../utils/pricing';
+import { PHONES } from '../../utils/storeInfo';
 import { checkAllowedCity } from '../../utils/delivery';
 
 /** האם הכתובת שהוזנה מחוץ לאזור החלוקה. */
@@ -242,7 +243,7 @@ function PendingOrderNotice({ pendingOrder, submitting, onRetry, onCancel }) {
       </p>
       <p>
         {conflict
-          ? 'מזהה ההזמנה כבר שימש בשרת להזמנה אחרת, ולכן אי אפשר לשלוח אותה שוב. בדקו ב"ההזמנות שלי" לפי מספר הטלפון לפני שתבטלו.'
+          ? `מזהה ההזמנה כבר שימש בשרת להזמנה אחרת, ולכן אי אפשר לשלוח אותה שוב. התקשרו לחנות (${PHONES.store.display}) כדי לברר אם ההזמנה התקבלה לפני שתבטלו.`
           : 'ייתכן שההזמנה התקבלה. שליחה חוזרת מחזירה את אותה הזמנה ולא יוצרת הזמנה נוספת. עד שמטפלים בה אי אפשר לשלוח הזמנה חדשה.'}
       </p>
       {!persisted && (
@@ -251,7 +252,7 @@ function PendingOrderNotice({ pendingOrder, submitting, onRetry, onCancel }) {
 
       {confirming ? (
         <div className="checkout-pending-confirm" role="alertdialog" aria-label="אישור ביטול">
-          <p>אם ההזמנה כבר התקבלה, שליחה חדשה תיצור הזמנה נוספת. אפשר לבדוק ב"ההזמנות שלי" לפי מספר הטלפון.</p>
+          <p>אם ההזמנה כבר התקבלה, שליחה חדשה תיצור הזמנה נוספת. אפשר לברר מול החנות בטלפון {PHONES.store.display} לפני שמבטלים.</p>
           <button type="button" className="cart-cta" onClick={onCancel}>כן, בטלו את ההזמנה הקודמת</button>
           <button type="button" className="cart-cta cart-cta--outline" onClick={() => setConfirming(false)}>חזרה</button>
         </div>

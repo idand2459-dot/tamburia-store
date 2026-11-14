@@ -168,11 +168,10 @@ async function testRead(id) {
   const badId = await call('GET', '/orders/abc');
   check('מזהה לא מספרי → 400', badId.status === 400, badId.status);
 
-  const byPhone = await call('GET', '/orders/by-phone/0500000000');
-  check('חיפוש לפי טלפון מנוקד מוצא', byPhone.body.some((o) => o.id === id), byPhone.body.length);
-
-  const badPhone = await call('GET', '/orders/by-phone/123');
-  check('טלפון קצר בחיפוש → 400', badPhone.status === 400, badPhone.status);
+  // the admin list keeps its phone filter (authenticated; it is not the removed public lookup)
+  const byPhone = await call('GET', '/orders?phone=050-000-0000');
+  check('the admin phone filter finds the order, with the number normalized',
+    byPhone.status === 200 && Array.isArray(byPhone.body) && byPhone.body.some((o) => o.id === id), byPhone.body.length);
 
   const paged = await call('GET', '/orders?limit=1');
   check('limit מחזיר אובייקט עם pagination',
@@ -539,10 +538,6 @@ async function testPicked(id) {
   check('בלי התחברות → 401', anon.status === 401, anon.status);
   const after = await call('GET', `/orders/${id}`);
   check('בקשה בלי התחברות לא שינתה דבר', JSON.stringify(after.body.picked_items) === '[1]', after.body.picked_items);
-
-  const byPhone = await call('GET', '/orders/by-phone/0500000000');
-  check('החיפוש של הלקוח לפי טלפון אינו חושף picked_items',
-    byPhone.body.length > 0 && byPhone.body.every((o) => !('picked_items' in o)), byPhone.body.map(Object.keys));
 }
 
 /** מספר ההזמנות השמורות כרגע; מוכיח שהזמנה שנדחתה לא כתבה כלום. */
@@ -706,8 +701,6 @@ async function testIdempotency() {
   check('the admin read does not expose the internal columns', !hasInternal(stored.body), Object.keys(stored.body));
   const listed = await call('GET', '/orders');
   check('the admin list does not expose them', listed.body.every((o) => !hasInternal(o)), null);
-  const byPhone = await call('GET', `/orders/by-phone/${first.body.customer_phone.replace(/\D/g, '')}`);
-  check('the phone lookup does not expose them', byPhone.body.length > 0 && byPhone.body.every((o) => !hasInternal(o)), null);
 
   // the same id with a different order is refused, and the original stays as it was
   const different = await call('POST', '/orders', withKey(key, { customer_name: 'מישהו אחר' }));
@@ -857,6 +850,59 @@ async function testProductOptions() {
   await call('PUT', `/products/${P.paint.id}`, { colors: [{ name: 'לבן', hex: '#ffffff' }] });
 }
 
+/**
+ * The public order lookup is gone (P8.2): no route matches it, with or without the admin cookie and
+ * under any spelling of the path, and every order route that remains is for the admin only.
+ */
+async function testNoPublicLookup(id) {
+  console.log('\n── no public order lookup');
+  const saved = authCookie;
+  const phone = '0500000000';
+
+  const paths = [
+    `/orders/by-phone/${phone}`, `/orders/by-phone/050-000-0000`, `/orders/by-phone/${phone}/`,
+    `/orders/by-phone/${phone}?phone=${phone}`, `/orders/BY-PHONE/${phone}`, `/orders/lookup/${phone}`,
+    `/orders/phone/${phone}`, `/orders/by-phone/${phone}/${id}`,
+  ];
+  for (const withAdmin of [false, true]) {
+    authCookie = withAdmin ? saved : null;
+    for (const path of paths) {
+      const res = await call('GET', path);
+      check(`GET ${path} → 404${withAdmin ? ' (admin)' : ''}`, res.status === 404 && !Array.isArray(res.body), `${res.status}`);
+      check(`GET ${path} returns no order data${withAdmin ? ' (admin)' : ''}`,
+        !JSON.stringify(res.body).includes('customer_'), Object.keys(res.body));
+    }
+    const post = await call('POST', `/orders/by-phone/${phone}`, { phone });
+    check(`POST /orders/by-phone → 404${withAdmin ? ' (admin)' : ''}`, post.status === 404, post.status);
+    const lookup = await call('POST', '/orders/lookup', { order_id: id, phone });
+    check(`POST /orders/lookup → 404${withAdmin ? ' (admin)' : ''}`, lookup.status === 404, lookup.status);
+  }
+
+  // A one-segment path can only match /:id, which is admin only: never data, with or without a session.
+  authCookie = null;
+  const bare = await call('GET', '/orders/by-phone');
+  check('GET /orders/by-phone matches only /:id: 401 without a session', bare.status === 401, bare.status);
+  authCookie = saved;
+  const bareAdmin = await call('GET', '/orders/by-phone');
+  check('GET /orders/by-phone as admin is a bad id (400), not a list',
+    bareAdmin.status === 400 && !Array.isArray(bareAdmin.body), bareAdmin.status);
+
+  // the remaining order routes still need the admin session
+  authCookie = null;
+  const admin = [
+    ['GET', '/orders'], ['GET', '/orders?phone=' + phone], ['GET', '/orders/stats'], ['GET', `/orders/${id}`],
+    ['PUT', `/orders/${id}`, { notes: 'x' }], ['PUT', `/orders/${id}/status`, { status: 'processing' }],
+    ['PUT', `/orders/${id}/items/0/picked`, { picked: true }], ['DELETE', `/orders/${id}`],
+  ];
+  for (const [method, path, body] of admin) {
+    const res = await call(method, path, body);
+    check(`${method} ${path} without a session → 401`, res.status === 401 && !JSON.stringify(res.body).includes('customer_'), res.status);
+  }
+  authCookie = saved;
+  const still = await call('GET', `/orders/${id}`);
+  check('the order is untouched and the admin still reads it', still.status === 200 && still.body.id === id, still.status);
+}
+
 /** מוחק את כל מה שהבדיקה יצרה ומאמת שלא נשארו שאריות. */
 async function cleanup() {
   console.log('\n── ניקוי');
@@ -898,6 +944,7 @@ async function main() {
   await testConcurrentIdempotency();
   await testUpdate(deliveryId);
   await testPicked(deliveryId);
+  await testNoPublicLookup(deliveryId);
   await cleanup();
 
   console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);

@@ -1,5 +1,5 @@
 /**
- * קריאות ההזמנות של חזית החנות: שליחת הזמנה, ו"ההזמנות שלי" לפי טלפון.
+ * קריאת ההזמנות של חזית החנות: שליחת הזמנה. אין חיפוש הזמנות ציבורי.
  *
  * הסכום שהלקוח רואה נשלח לשרת, אבל השרת אינו סומך עליו: הוא מתמחר
  * מחדש מתוך הפריטים ומחזיר 409 כשהמחירים השתנו, עם המחירים העדכניים
@@ -8,7 +8,7 @@
  *
  * הזמנות הניהול אינן כאן — הן עוברות דרך api() של מסך הניהול.
  */
-import { ApiError, TimeoutError, getJson, postJson } from './http';
+import { ApiError, TimeoutError, postJson } from './http';
 
 export { ApiError, TimeoutError };
 
@@ -28,13 +28,4 @@ export const ORDER_TIMEOUT_MS = 20_000;
  */
 export async function createOrder(order, { signal } = {}) {
   return postJson('/api/orders', order, { signal, fallback: REJECTED, timeoutMs: ORDER_TIMEOUT_MS });
-}
-
-/**
- * GET /api/orders/by-phone/:phone — ההזמנות של מספר טלפון.
- *
- * רק הספרות נשלחות: "050-123 4567" ו-"0501234567" הם אותו לקוח.
- */
-export async function getOrdersByPhone(phone, { signal } = {}) {
-  return getJson(`/api/orders/by-phone/${String(phone).replace(/\D/g, '')}`, { signal });
 }

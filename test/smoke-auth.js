@@ -113,7 +113,6 @@ async function testPublicRoutes() {
     ['GET', '/reviews'],
     ['GET', '/reviews/stats'],
     ['GET', '/pigment-formulas'],
-    ['GET', '/orders/by-phone/0501234567'],
     ['GET', '/health'],
   ];
 
@@ -127,6 +126,10 @@ async function testPublicRoutes() {
 
   const review = await call('POST', '/reviews', { body: {} });
   check('POST /reviews נגיש ללקוח (400 על גוף ריק, לא 401)', review.status === 400, review.status);
+
+  // No public read of orders is left: the phone lookup was removed (P8.2).
+  const lookup = await call('GET', '/orders/by-phone/0501234567');
+  check('GET /orders/by-phone/:phone → 404 (removed, not open)', lookup.status === 404, lookup.status);
 }
 
 /** בודק שאסימון מזויף או פגום נדחה. */

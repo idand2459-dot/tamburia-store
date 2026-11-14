@@ -1,5 +1,5 @@
 /**
- * גישה לטבלת orders: שליפה מסוננת, חיפוש לפי טלפון, יצירה,
+ * גישה לטבלת orders: שליפה מסוננת, יצירה,
  * עדכון, סימון שורות שהוכנו, מחיקה וסיכום לפי סטטוס.
  */
 const { query } = require('../../config/db');
@@ -86,11 +86,6 @@ async function count(options = {}) {
 async function findById(id) {
   const { rows } = await query(`SELECT ${COLUMNS} FROM orders WHERE id = $1`, [id]);
   return rows[0] || null;
-}
-
-/** מחזיר את כל ההזמנות של מספר טלפון נתון. */
-async function findByPhone(phone) {
-  return list({ phone });
 }
 
 /** מכניס הזמנה. conflict הוא סעיף ON CONFLICT אופציונלי; בלעדיו שורה תמיד נוצרת. */
@@ -215,6 +210,6 @@ async function statsByStatus() {
 }
 
 module.exports = {
-  list, count, findById, findByPhone,
-  create, createOnce, findByRequestId, update, setLinePicked, remove, statsByStatus, countByProductId, digitsOnly,
+  list, count, findById,
+  create, createOnce, findByRequestId, update, setLinePicked, remove, statsByStatus, countByProductId,
 };

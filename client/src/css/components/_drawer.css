@@ -1,13 +1,10 @@
 /* ==========================================================
-   Drawer — the side panel the cart, the order lookup and the
-   wishlist all open in
+   Drawer — the side panel the cart and the wishlist open in
 
-   Replaces three copies of the same thing: .cart-overlay /
-   .cart-modal / .cart-modal-header, .order-history-overlay /
-   .order-history-modal / .order-history-header, and
-   .wishlist-overlay / .wishlist-modal / .wishlist-header, plus
-   the one .cart-close-btn all three borrowed. Those rules are
-   gone from components/_modals.css, features/cart/_order-history.css
+   Replaces the copies of the same thing: .cart-overlay /
+   .cart-modal / .cart-modal-header and .wishlist-overlay /
+   .wishlist-modal / .wishlist-header, plus the one .cart-close-btn
+   they borrowed. Those rules are gone from components/_modals.css
    and features/cart/_wishlist.css.
 
    The panel sits on the inline-start edge, which in this RTL

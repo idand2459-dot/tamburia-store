@@ -13,7 +13,7 @@ const {
   assertDeliveryCityAllowed, assertDeliveryAddressPresent,
   assertStatusFitsDeliveryMethod,
 } = require('./order.rules');
-const { badRequest, notFound, conflict, unprocessable } = require('../../utils/AppError');
+const { notFound, conflict, unprocessable } = require('../../utils/AppError');
 const { toAgorot, fromAgorot } = require('../../utils/money');
 
 /** שולף הזמנה או זורק 404. משמש כל פעולה שדורשת הזמנה קיימת. */
@@ -39,19 +39,6 @@ async function listOrders(options) {
 /** מחזיר הזמנה בודדת, או זורק 404. */
 function getOrder(id) {
   return requireOrder(id);
-}
-
-/**
- * מחזיר את ההזמנות של מספר טלפון, אחרי נרמול ובדיקת תקינות.
- *
- * בלי picked_items: זה הנתיב הפתוח ללקוח, ומה שהוכן במחסן הוא מצב
- * פנימי של הטיפול — לקוח שרואה "2 מתוך 3" יתקשר לשאול על השלישי.
- */
-async function findOrdersByPhone(rawPhone) {
-  const phone = orderRepository.digitsOnly(rawPhone);
-  if (phone.length < 9) throw badRequest('מספר טלפון לא תקין');
-  const orders = await orderRepository.findByPhone(phone);
-  return orders.map(({ picked_items, ...order }) => order);
 }
 
 /**
@@ -81,7 +68,7 @@ function sameHash(a, b) {
 
 /**
  * ההזמנה שכבר נוצרה עבור המזהה הזה, בצורה שמתאימה ללקוח: בלי request_hash, בלי
- * picked_items (מצב פנימי של הליקוט, כמו ב-findOrdersByPhone) ובלי request_id.
+ * picked_items (מצב פנימי של הליקוט) ובלי request_id.
  * מזהה שהגיע עם הזמנה אחרת הוא 422 — זה לא ניסיון חוזר, ואסור להחזיר לו את ההזמנה.
  */
 function replayOf(existing, hash) {
@@ -232,7 +219,6 @@ async function getStats() {
 module.exports = {
   listOrders,
   getOrder,
-  findOrdersByPhone,
   createOrder,
   updateOrder,
   updateOrderStatus,

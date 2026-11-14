@@ -41,7 +41,7 @@
      It used to be position: absolute with left: 50%, which takes no space — so
      it could paint straight over the icon row beside it, and did: at iPhone
      landscape width (844px) the text links are shown, the left group reaches
-     past the centre, and the heart and "ההזמנות שלי" disappeared behind
+     past the centre, and the heart and the order link disappeared behind
      "טכניק טמבור". Two extra breakpoints existed only to manage that collision.
 
      1fr auto 1fr keeps the brand optically centred whenever the two side groups
@@ -331,13 +331,6 @@
 
   .navbar-left {
       gap: 2px;
-    }
-
-  /* The three page links are already gone by here (the xl block above). This is
-     the one that keeps "ההזמנות שלי" as far down as it fits; below this width
-     the drawer is where it lives. */
-  .navbar-link--orders {
-      display: none;
     }
 
   .navbar-brand,
