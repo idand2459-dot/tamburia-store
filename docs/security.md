@@ -16,8 +16,8 @@ that it is ready for a live shop.
 | Login limit | 10 attempts per 15 minutes per client address; a good login resets the counter | `server/api/auth/auth.routes.js` |
 | Order creation limit | 10 requests per 15 minutes per client address (`ORDER_RATE_*`) | `server/api/order/order.routes.js` |
 | Review creation limit | 5 requests per hour per client address (`REVIEW_RATE_*`) | `server/api/review/review.routes.js` |
-| Order lookup limit | 20 requests per 15 minutes per client address; fixed in code, not configurable | `order.routes.js` |
-| Errors | The client sees only text this API wrote. PostgreSQL text, the JSON parser's text and the message of any unexpected error are never sent, at any status; no response has a stack trace in any environment; 5xx errors are logged in full on the server | `server/middleware/errorHandler.js` |
+| No public order read | There is no public route that returns an order. The lookup by phone number (`GET /api/orders/by-phone/:phone`) was removed in P8.2 and answers 404; every other order route needs the admin session. `POST /api/orders` only creates | `server/api/order/order.routes.js` |
+| Errors | The client sees only text this API wrote. PostgreSQL text, the JSON parser's text and the message of any unexpected error are never sent, at any status; no response has a stack trace in any environment; a 5xx is logged as one line of safe fields (method, route template, status, category, SQLSTATE or system code, order request id), never the error object, its message, its stack or the URL | `server/middleware/errorHandler.js` |
 | Numbers | An id or an offset above 2147483647 (the largest PostgreSQL `INTEGER`) is a 400 and never reaches a query; the same check backs `sort_order` and the item ids of an order | `server/utils/ids.js`, the validators |
 | Input size | JSON body up to 200 KB; order `notes` up to 1000 characters, `delivery_address` 200, an item name 255, customer name 30 | `server/app.js`, `order.validator.js` |
 | Configuration | Invalid values stop the server at start, with a message that names the variable and never a secret (table below) | `server/config/env.js` |
@@ -148,19 +148,31 @@ None of these is fixed by P8.1. They are listed so that nobody assumes otherwise
 
 **Customer data**
 
-- **The public order lookup exposes customer information.** `GET /api/orders/by-phone/:phone`
-  needs only a phone number and returns the name, delivery address, email, notes, items and
-  totals of every order under it. The limit of 20 requests per 15 minutes makes scanning
-  expensive, not impossible, and does not protect a number someone already knows. Closing it
-  needs a product decision (return less, ask for the order number as well, or verify the number).
-- **Personal data in logs.** The 5xx log line contains the request URL, and the lookup URL
-  contains the phone number; the logged error object can include the fields of a PostgreSQL error,
-  which can include values. The email sender logs the recipient address and the subject, and the
-  new-order subject contains the customer's name. The PostgreSQL 4xx warning added in P8.1 logs
-  only the method and the error code.
-- **Personal data in the browser.** The unresolved order stays in `localStorage` (name, phone,
-  email, address, notes and items) with no expiry until the customer settles it. On a shared device
-  it stays after the customer leaves. The cart and the wishlist are stored there too.
+- **Closed in P8.2: the public order lookup.** It returned the name, address, email, notes, items
+  and totals of every order under a phone number. It was removed completely (no replacement): a
+  customer who needs to know about an order phones the store, using the order number from the
+  confirmation screen or email.
+- **Closed in P8.2: personal data in the error and mail logs.** A 5xx is logged as one line:
+  method, route template (`/api/orders/:id`, never the URL), status, a category (`app`, `database`,
+  `system`, `unexpected`), the SQLSTATE or system code, the class name of an unexpected error, and
+  the request id of an order attempt. The error object, its message, its stack, the query and
+  the parameters are not logged. A PostgreSQL 4xx is one warning with the method and the code. A
+  mail is logged by a fixed label (`new-order store #12`) and its outcome, with the SMTP codes of a
+  failure: never the recipient, the subject, or the text of an error. The cost is that a log no
+  longer holds a stack trace; a failure that needs one is reproduced with a test order.
+  What is still logged and is not customer data: the migration and start-up messages, the
+  connection pool's error message, the image service's file names, and the first line of each SQL
+  statement (never its parameters) when `DB_LOG_QUERIES` is on. How long the host keeps logs is
+  still the host's decision.
+- **Closed in P8.2: personal data in the browser, with a limit.** An unresolved order (name,
+  phone, email, address, notes and items) stays in `localStorage` for 48 hours after it was first
+  submitted, so that the same body can be sent again with the same `request_id`; a resend does not
+  move that time. After that the details are removed and only `{ requestId, submittedAt, expired,
+  itemCount, total }` stays, until the customer cancels it. It is never sent again, and it does not
+  say the order failed: it says the outcome is unknown and points to the store. On a shared device
+  the details can still be read for up to 48 hours after an order whose outcome was unknown (a
+  confirmed or refused order removes them at once). The cart and the wishlist are stored in
+  `localStorage` too and have no expiry; they hold products, not personal details.
 
 **Server**
 

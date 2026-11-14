@@ -56,7 +56,7 @@ yet; everything below runs locally.
 - Catalogue browsing by category and subcategory, with search, sorting and stock status
 - Product pages with an image gallery, colour, size and variant selection, and product reviews
 - Cart persisted in `localStorage`, pickup or delivery, with a delivery-area check
-- Wishlist, recently viewed products, and order lookup by phone number
+- Wishlist and recently viewed products
 - Reviews for the store and for individual products. The home page rating is computed
   from approved reviews and hides itself when there are none
 - Real URLs throughout: every page, filter and modal is linkable and survives a refresh
@@ -189,11 +189,11 @@ current prices so the cart can correct itself. Money is integer agorot in code a
 
 **Routing: real URLs, not component state.** react-router with `/`, `/category/:slug`,
 `/product/:id`, `/about`, `/contact`, `/returns`, `/accessibility`, `/cart`, `/checkout`,
-`/orders/lookup`, `/wishlist` and `/admin/:tab`.
+`/wishlist` and `/admin/:tab`. Any other address, `/orders/lookup` included, is the 404 page.
 
 - **Deep links load their own data.** `/product/:id` fetches the product by id, showing a
   skeleton while loading and a 404 for an unknown one.
-- **Modal as route.** The cart, wishlist and order lookup are overlays whose open state
+- **Modal as route.** The cart and wishlist are overlays whose open state
   is the URL. `/cart` renders the cart over the storefront, and `/checkout` renders the
   same drawer one step further on. They get shareable URLs, and the browser back button
   closes them.
@@ -239,7 +239,7 @@ checkout rejects hidden products again. A product that has orders cannot be dele
 
 **The pick list is its own column.** Picked lines are `orders.picked_items`, a set of line
 indexes (migration 011), and not a flag inside the `items` JSONB. That keeps the record of
-the sale untouched and keeps warehouse state out of the customer's order lookup. Each toggle
+the sale untouched and keeps warehouse state out of what the customer is told. Each toggle
 is one atomic `UPDATE`. See [ARCHITECTURE.md](docs/ARCHITECTURE.md#main-design-decisions).
 
 **Content-hashed images, long cache.** Every uploaded image is named after a hash of its
@@ -275,7 +275,7 @@ The rules are in [client/src/css/CONVENTIONS.md](client/src/css/CONVENTIONS.md).
 - **Secrets live only in the environment.** `.env` is gitignored, `.env.example` holds
   placeholders only, and `test/unit-repo-hygiene.js` fails the suite if `.env` is tracked
   or any secret value from it appears in a tracked file.
-- **Login, order lookup and public writes are rate limited**, per client address, with
+- **Login and public writes are rate limited**, per client address, with
   `RateLimit-*` and `Retry-After` headers on a `429`:
 
   | Route | Default limit | Variables |
@@ -283,7 +283,6 @@ The rules are in [client/src/css/CONVENTIONS.md](client/src/css/CONVENTIONS.md).
   | `POST /auth/login` | 10 per 15 minutes (a good login resets the counter) | `LOGIN_MAX_ATTEMPTS`, `LOGIN_WINDOW_MS` |
   | `POST /orders` | 10 per 15 minutes | `ORDER_RATE_MAX`, `ORDER_RATE_WINDOW_MS` |
   | `POST /reviews` | 5 per hour | `REVIEW_RATE_MAX`, `REVIEW_RATE_WINDOW_MS` |
-  | `GET /orders/by-phone/:phone` | 20 per 15 minutes (fixed in code) | none |
 
   Every request counts, a retry of the same order included. The counters live in the memory of
   the Node process, so a restart clears them and several instances would not share them. A `429`
@@ -313,8 +312,7 @@ It is not ready to enable: as written it would also block the Google Fonts style
 files that `client/public/index.html` loads, and the note in `securityHeaders.js` about the
 `application/ld+json` block has not been checked in a browser.
 
-**What is not solved yet** (public order lookup that returns customer details, personal data in
-logs and in `localStorage`, in-memory counters, upload hardening, database TLS), and
+**What is not solved yet** (in-memory counters, upload hardening, database TLS), and
 the checklist to go through before deploying, are in [docs/security.md](docs/security.md).
 
 ---
@@ -511,7 +509,7 @@ Everything is under `/api`. Routes marked 🔒 require an admin session.
 |---|---|
 | **Auth** | `POST /auth/login` · `POST /auth/logout` · 🔒 `GET /auth/me` |
 | **Products** | `GET /products` · `GET /products/:id` · `GET /products/categories` · 🔒 `POST` `PUT /:id` `DELETE /:id` |
-| **Orders** | `POST /orders` (optional `request_id`: one order per id, a retry gets the original back with 200 and `Idempotent-Replayed: true`, the same id with a different order is 422; rate limited, 429 with `Retry-After`) · `GET /orders/by-phone/:phone` · 🔒 `GET /orders` `GET /:id` `GET /stats` `PUT /:id` `PUT /:id/status` `DELETE /:id` |
+| **Orders** | `POST /orders` (optional `request_id`: one order per id, a retry gets the original back with 200 and `Idempotent-Replayed: true`, the same id with a different order is 422; rate limited, 429 with `Retry-After`) · 🔒 `GET /orders` `GET /:id` `GET /stats` `PUT /:id` `PUT /:id/status` `DELETE /:id` |
 | **Reviews** | `GET /reviews` · `GET /reviews/stats` · `POST /reviews` (rate limited, 429) · 🔒 `GET /reviews/all` `GET /:id` `PUT /:id` `PUT /:id/approve` `DELETE /:id` |
 | **Pigment formulas** | `GET /pigment-formulas` · `GET /pigment-formulas/:id` · `GET /pigment-formulas/code/:code` · 🔒 `POST` `PUT /:id` `DELETE /:id` |
 | **Settings** | 🔒 `GET /settings/:key` · 🔒 `PUT /settings/:key` |
@@ -546,8 +544,7 @@ Known gaps, in rough order of how much they matter:
    page and leads to an empty category page.
 4. **Rate limiting is in-process.** Counters live in the Node process's memory, which is
    correct for a single server but would not hold behind more than one instance.
-5. **Security and privacy gaps are open** beyond that: the order lookup by phone number returns
-   the customer's details, personal data reaches some logs and `localStorage`, the CSP is off,
+5. **Security and privacy gaps are open** beyond that: the CSP is off,
    and uploads and database TLS are not hardened. They are listed, with the
    deployment checklist, in [docs/security.md](docs/security.md). There is also no privacy policy
    or terms page yet.
