@@ -12,7 +12,6 @@ import { render, screen, fireEvent, within, waitFor, act } from '@testing-librar
 import { MemoryRouter } from 'react-router-dom';
 import App from '../App';
 
-jest.mock('../hooks/useWebSocket', () => ({ useWebSocket: () => {} }));
 // require.context exists only under webpack; CategoryPage.test.js stubs this module the same way.
 jest.mock('../features/catalog/CategoryBanner', () => () => null);
 

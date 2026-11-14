@@ -2,7 +2,7 @@
  * בדיקות לסימון ברשימת הליקוט ב-useAdminOrders: העדכון האופטימי,
  * וההחזרה של השורה בלבד כשהשמירה נכשלה.
  *
- * ה-WebSocket מוחלף בכפיל: הבדיקה היא על ה-state ולא על התעבורה.
+ * The 30-second polling is pinned in useAdminOrders.polling.test.js.
  *
  * מריצים עם `npm run test:client` מהשורש.
  */
@@ -10,8 +10,6 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { useAdminOrders } from '../../hooks/useAdminOrders';
 import { createAdminApi } from '../../services/adminService';
 import { NETWORK_ERROR } from '../../utils/apiErrors';
-
-jest.mock('../../hooks/useWebSocket', () => ({ useWebSocket: () => {} }));
 
 const ORDER = { id: 12, status: 'processing', items: [{ name: 'א' }, { name: 'ב' }], picked_items: [0] };
 

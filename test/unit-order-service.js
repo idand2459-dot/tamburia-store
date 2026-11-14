@@ -194,7 +194,7 @@ const storedOrder = (over = {}) => ({ ...sampleOrder({ delivery_method: 'pickup'
 async function testIdempotentCreate() {
   console.log('\n── createOrder עם request_id');
 
-  // יצירה ראשונה: ה-hash נכתב עם השורה, ושליחה ושידור רצים פעם אחת
+  // יצירה ראשונה: ה-hash נכתב עם השורה, ושליחה רצה פעם אחת
   const first = loadService({ order: { findByRequestId: spy(null), createOnce: spy(storedOrder()) } });
   const data = parsedOrder();
   const created = await first.service.createOrder(data);
@@ -206,7 +206,7 @@ async function testIdempotentCreate() {
   check('נשלחו שני מיילים', first.mailer.sendNewOrderToStore.calls.length === 1
     && first.mailer.sendOrderConfirmationToCustomer.calls.length === 1, null);
 
-  // הפעלה חוזרת: אותו מזהה ואותו גוף → ההזמנה המקורית, בלי תמחור, מיילים ושידור
+  // הפעלה חוזרת: אותו מזהה ואותו גוף → ההזמנה המקורית, בלי תמחור ומיילים
   const hash = written.request_hash;
   const existing = { ...storedOrder({ picked_items: [0, 1] }), request_hash: hash };
   const replay = loadService({ order: { findByRequestId: spy(existing), createOnce: spy(null) } });

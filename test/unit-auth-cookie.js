@@ -15,13 +15,10 @@ process.env.MAIL_ENABLED = 'false';
 delete process.env.NODE_ENV;
 
 const crypto = require('crypto');
-const http = require('http');
-const { WebSocket } = require('ws');
 const cookieParser = require('cookie-parser');
 const config = require('../server/config/env');
 const { createToken } = require('../server/api/auth/auth.service');
 const { requireAdmin, markAdmin } = require('../server/middleware/requireAdmin');
-const { attachRealtime } = require('../server/services/realtime.service');
 
 const NAME = config.auth.cookieName;
 
@@ -131,41 +128,6 @@ console.log('\n── cookie-parser runs once');
   check('an already parsed req.cookies is left alone', req.cookies[NAME] === 'already-parsed', req.cookies);
 }
 
-/** Opens /ws with the given Cookie header; resolves 'open' or the status the upgrade was refused with. */
-function openSocket(port, cookie) {
-  return new Promise((resolve) => {
-    const ws = new WebSocket(`ws://127.0.0.1:${port}/ws`, { headers: cookie ? { Cookie: cookie } : {} });
-    ws.on('open', () => { ws.close(); resolve('open'); });
-    ws.on('unexpected-response', (req, res) => { res.resume(); resolve(res.statusCode); });
-    ws.on('error', () => {});
-  });
-}
-
-/** The WebSocket upgrade never passes through Express, so it reads the cookie on its own. */
-async function testWebSocket() {
-  console.log('\n── WebSocket /ws (the upgrade runs cookie-parser by hand)');
-  const server = http.createServer();
-  attachRealtime(server);
-  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-  const { port } = server.address();
-
-  try {
-    check('a valid cookie → the connection opens', await openSocket(port, `${NAME}=${valid}`) === 'open', null);
-    check('a URL-encoded valid cookie → the connection opens', await openSocket(port, `${NAME}=${valid.replace('.', '%2E')}`) === 'open', null);
-    check('no cookie → 401', await openSocket(port, null) === 401, null);
-    check('an expired token → 401', await openSocket(port, `${NAME}=${expired}`) === 401, null);
-    check('a tampered token → 401', await openSocket(port, `${NAME}=${forgedClaims}`) === 401, null);
-    check('a malformed percent sequence → 401', await openSocket(port, `${NAME}=%E0%A4%A`) === 401, null);
-  } finally {
-    server.closeAllConnections?.();
-    await new Promise((resolve) => server.close(resolve));
-  }
-}
-
-testWebSocket().then(() => {
-  console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);
-  process.exit(failed === 0 ? 0 : 1);
-}).catch((err) => {
-  console.error('הבדיקה קרסה:', err);
-  process.exit(1);
-});
+console.log(`
+${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);
+process.exit(failed === 0 ? 0 : 1);

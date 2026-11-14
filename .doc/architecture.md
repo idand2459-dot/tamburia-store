@@ -7,7 +7,7 @@
 ## System Overview
 - One Node process (`server/server.js:19`) serves the API under `/api` and, with `SERVE_CLIENT` on, the React build from `client/build` (`server/config/env.js:175-176`).
 - State lives in PostgreSQL (`server/config/db.js`, migrations run by `server/db/migrate.js`); uploaded images live on disk in `uploads/` and `uploads-originals/`; the cart lives in the browser's `localStorage` (`README.md:58`).
-- The admin's live order feed runs over WebSocket (`ws`, `README.md:76`).
+- The admin finds new orders by polling `GET /api/orders` every 30 seconds while the tab is visible (`client/src/js/hooks/useAdminOrders.js`).
 - Layers and folders: [docs/ARCHITECTURE.md — Folder structure](../docs/ARCHITECTURE.md).
 
 ## Primary Components
@@ -75,7 +75,7 @@ Tool settings: `TEST_DATABASE_URL` (a separate local database for `npm test` and
 - Failure handling: errors are mapped centrally to a status and a message (`server/middleware/errorHandler.js`): the client gets only text this API wrote, never PostgreSQL's or the parser's, and never a stack trace; the server retries nothing, and sends `Retry-After` with `429` (`server/middleware/rateLimit.js:99`); see the [error-handling skill](../.claude/skills/error-handling/SKILL.md).
 - Limits: an order has at most 50 lines, at most 999 units per line, a total of at most 99,999,999.99 (`NUMERIC(10,2)`), notes up to 1000 characters, a delivery address up to 200 and an item name up to 255 (`server/api/order/order.validator.js`, `pricing.service.js`); a request body up to 200 KB (`server/app.js:80`); ids and offsets up to 2147483647 (`server/utils/ids.js`); uploads up to 15 MB per file and 5 files (`server/services/image.service.js:22`, `server/middleware/upload.js:25`); per client address, in the process's memory: login `LOGIN_MAX_ATTEMPTS` per `LOGIN_WINDOW_MS`, orders `ORDER_RATE_MAX` per `ORDER_RATE_WINDOW_MS`, reviews `REVIEW_RATE_MAX` per `REVIEW_RATE_WINDOW_MS`, and order lookup 20 per 15 minutes (fixed, `server/api/order/order.routes.js:25-26`); sessions expire after `SESSION_TTL_HOURS`.
 - Rate limits and checkout: every request counts, a retry of the same order included, and a `429` is answered before the order code runs, so it never creates or changes an order. The checkout keeps the attempt (same body, same `request_id`) and the customer sends it again by hand ([docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md), [docs/security.md](../docs/security.md)). Behind a proxy the counted address depends on `TRUST_PROXY_HOPS`, which must match the hosting.
-- Known limitations: the store runs locally only and is not live; there is no online payment (`client/src/js/features/home/FAQ.js:23`); the tests run against a separate local database (`TEST_DATABASE_URL`); the rate-limit counters are not shared between instances; the public order lookup returns the customer's details; the CSP, the WebSocket, uploads and database TLS are not hardened. The deployment checklist and the full list: [docs/security.md](../docs/security.md).
+- Known limitations: the store runs locally only and is not live; there is no online payment (`client/src/js/features/home/FAQ.js:23`); the tests run against a separate local database (`TEST_DATABASE_URL`); the rate-limit counters are not shared between instances; the public order lookup returns the customer's details; the CSP, uploads and database TLS are not hardened. The deployment checklist and the full list: [docs/security.md](../docs/security.md).
 
 ## API Contract
 - Base URL in development: `http://localhost:3000/api`.

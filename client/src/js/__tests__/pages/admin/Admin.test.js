@@ -13,7 +13,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Admin from '../../../pages/admin/Admin';
 
-jest.mock('../../../hooks/useWebSocket', () => ({ useWebSocket: () => {} }));
 
 const ORDER = {
   id: 12,
