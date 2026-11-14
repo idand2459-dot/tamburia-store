@@ -28,9 +28,12 @@
  * most one order per request_id, so sending that same body again is always safe.
  *   - The attempt is removed once the outcome is known: the order was created (also when the server
  *     answers a retry with the original), or the server refused it with a 4xx, which proves that no
- *     order was created.
+ *     order was created. A 429 is not such a refusal: see below.
  *   - It is kept when the outcome is unknown: a timeout, a network failure, a 5xx or an answer that
  *     is not JSON. There is no expiry; only the customer's own decision resolves it.
+ *   - It is kept on a 429 too (the rate limit), with the server's message shown. The limit refuses
+ *     a request without looking at it, so it does not tell whether an earlier send of this order
+ *     was saved. The customer sends the same attempt again later; nothing retries by itself.
  *   - While one is kept a new order cannot be sent. The customer chooses between sending the
  *     original again (retryPendingOrder) and cancelling it (cancelPendingOrder), whose
  *     confirmation warns that an order may be duplicated. Nothing here ever makes a new request_id
@@ -61,7 +64,9 @@ const UNCERTAIN_SAVED = 'לא קיבלנו אישור מהשרת, וייתכן �
 const UNCERTAIN_UNSAVED = 'לא קיבלנו אישור מהשרת, וייתכן שההזמנה כבר התקבלה. '
   + 'אפשר לשלוח אותה שוב: לא תיווצר הזמנה כפולה. אל תרעננו ואל תסגרו את הדף עד שנקבל אישור, '
   + 'כי לא הצלחנו לשמור את ההזמנה במכשיר.';
-const CANNOT_START = 'לא ניתן לשלוח הזמנה בדפדפן הזה. נסו דפדפן אחר או התקשרו לחנות.';
+/** Added after the server's own text when it refused the order because of the rate limit (429). */
+const RATE_LIMITED_HINT = 'אפשר לשלוח את אותה הזמנה שוב בעוד כמה דקות: לא תיווצר הזמנה כפולה.';
+const CANNOT_START ='לא ניתן לשלוח הזמנה בדפדפן הזה. נסו דפדפן אחר או התקשרו לחנות.';
 
 /** Whether the cart lines are the lines of the order body that was sent (the same products, options and counts). */
 function sameLines(cartItems, sentItems) {
@@ -153,6 +158,15 @@ export function useCheckoutForm() {
     } catch (error) {
       inFlight.current = false;
       setSubmittingOrder(false);
+
+      // A 429 is the rate limit refusing this request before it was looked at. It says nothing
+      // about an earlier send of the same order (one that timed out may have been saved), so the
+      // attempt stays exactly as it was: same body, same request_id. Nothing is sent again by
+      // itself; the customer sends it again by hand, later, from the unresolved-order notice.
+      if (error instanceof ApiError && error.status === 429) {
+        setOrderError(`${error.message} ${RATE_LIMITED_HINT}`);
+        return;
+      }
 
       // The server refused: for a 4xx it never created the order, so the attempt is over. 408 is
       // the exception, since a proxy may send it for a request the server did receive.

@@ -180,6 +180,7 @@ function CheckoutFormView({ setCartStep, checkout, showErrors = false }) {
               })}
               aria-invalid={errors.address || deliveryInvalid ? true : undefined}
               placeholder="רחוב, מספר, עיר"
+              maxLength={200}
               autoComplete="street-address"
               value={deliveryAddress}
               onChange={handleAddressChange}
@@ -210,6 +211,7 @@ function CheckoutFormView({ setCartStep, checkout, showErrors = false }) {
           <textarea
             id={fieldId('notes')}
             placeholder="הערות מיוחדות..."
+            maxLength={1000}
             value={orderNotes}
             onChange={e => setOrderNotes(e.target.value)}
             rows={2}

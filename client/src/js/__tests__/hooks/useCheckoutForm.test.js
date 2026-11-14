@@ -394,7 +394,6 @@ describe('4xx rejections — the server proves that no order was created', () =>
     ['a 400 shows the server message', 400, { error: 'הטלפון לא תקין' }, 'הטלפון לא תקין'],
     ['a 404 without a message shows the fallback', 404, {}, REJECTED],
     ['a blank message shows the fallback', 400, { error: '  ' }, REJECTED],
-    ['a 429 shows the server message', 429, { error: 'יותר מדי בקשות' }, 'יותר מדי בקשות'],
   ])('%s, keeps the cart and the form, and ends the attempt', async (_label, status, body, expected) => {
     orderReply = () => reply(status, body);
     const result = setup();
@@ -432,6 +431,177 @@ describe('4xx rejections — the server proves that no order was created', () =>
 
 /** The order body of the n-th request. */
 const sentBody = (n) => JSON.parse(orderCalls()[n][1].body);
+
+/**
+ * 429 — the rate limit. It refuses a request before looking at it, so unlike another 4xx it does not
+ * prove that no order exists: the attempt is kept, byte for byte, and the customer sends it again by
+ * hand later. Nothing here may retry by itself or make a new request_id.
+ */
+describe('429 — the rate limit refused the request', () => {
+  const LIMITED = { error: 'יותר מדי הזמנות בזמן קצר (עוד 840 שניות)' };
+  const HINT = 'אפשר לשלוח את אותה הזמנה שוב בעוד כמה דקות: לא תיווצר הזמנה כפולה.';
+  const MESSAGE = `${LIMITED.error} ${HINT}`;
+
+  test('keeps the attempt: the same request id and the exact body that was sent, stored unchanged', async () => {
+    orderReply = () => reply(429, LIMITED);
+    const result = setup();
+
+    await place(result);
+
+    const storedText = localStorage.getItem(ATTEMPT_KEY);
+    expect(storedText).not.toBeNull();
+    const stored = JSON.parse(storedText);
+    expect(stored.requestId).toBe(sentBody(0).request_id);
+    expect(stored.body).toEqual(sentBody(0));
+    expect(Object.keys(stored).sort()).toEqual(['body', 'requestId', 'submittedAt']);
+    expect(result.current.form.pendingOrder).toMatchObject({ itemCount: 4, total: 550, persisted: true, conflict: false });
+  });
+
+  test('shows the server message and the hint, and leaves the cart, the form and the success state alone', async () => {
+    orderReply = () => reply(429, LIMITED);
+    const result = setup();
+
+    await place(result);
+
+    expect(result.current.form.orderError).toBe(MESSAGE);
+    expect(result.current.form.orderSuccess).toBeNull();
+    expect(result.current.form.submittingOrder).toBe(false);
+    expect(result.current.cart).toEqual(CART);
+    expect(result.current.deliveryMethod).toBe('delivery');
+    expect(result.current.form.customerName).toBe('דנה כהן');
+    expect(result.current.form.orderNotes).toBe('להתקשר לפני');
+  });
+
+  test('a 429 whose body is not the server\'s still gives an understandable message', async () => {
+    orderReply = () => reply(429, undefined); // for example an answer from a proxy
+    const result = setup();
+
+    await place(result);
+
+    expect(result.current.form.orderError).toBe(`${REJECTED} ${HINT}`);
+    expect(result.current.form.pendingOrder).not.toBeNull();
+    expect(localStorage.getItem(ATTEMPT_KEY)).not.toBeNull();
+  });
+
+  test('sends nothing by itself afterwards, however long it waits', async () => {
+    jest.useFakeTimers();
+    try {
+      orderReply = () => reply(429, LIMITED);
+      const result = setup();
+
+      await place(result);
+      await act(async () => { jest.advanceTimersByTime(60 * 60 * 1000); });
+
+      expect(orderCalls()).toHaveLength(1);
+      expect(result.current.form.pendingOrder).not.toBeNull();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  test('a new order cannot be started over it, and the request id is not replaced', async () => {
+    orderReply = () => reply(429, LIMITED);
+    const result = setup();
+    await place(result);
+    const stored = localStorage.getItem(ATTEMPT_KEY);
+
+    orderReply = () => reply(201, SAVED);
+    await place(result);
+
+    expect(orderCalls()).toHaveLength(1);
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBe(stored);
+    expect(result.current.form.orderSuccess).toBeNull();
+  });
+
+  test('a later manual retry sends the same request id and the same body, and the answer settles it', async () => {
+    orderReply = () => reply(429, LIMITED);
+    const result = setup();
+    await place(result);
+
+    orderReply = () => reply(201, SAVED);
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+
+    expect(orderCalls()).toHaveLength(2);
+    expect(orderCalls()[1][1].body).toBe(orderCalls()[0][1].body);
+    expect(sentBody(1).request_id).toBe(sentBody(0).request_id);
+    expect(result.current.form.orderSuccess).toEqual(SAVED);
+    expect(result.current.form.pendingOrder).toBeNull();
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBeNull();
+    expect(result.current.cart).toEqual([]);
+  });
+
+  test('a retry that is limited again keeps the very same attempt, once more', async () => {
+    orderReply = () => reply(429, LIMITED);
+    const result = setup();
+    await place(result);
+    const stored = localStorage.getItem(ATTEMPT_KEY);
+
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+
+    expect(orderCalls()).toHaveLength(3);
+    expect(orderCalls().map((c) => JSON.parse(c[1].body).request_id)).toEqual(Array(3).fill(sentBody(0).request_id));
+    expect(new Set(orderCalls().map((c) => c[1].body)).size).toBe(1);
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBe(stored);
+    expect(result.current.form.orderError).toBe(MESSAGE);
+  });
+
+  test('after an unknown outcome, a limited retry keeps the attempt, and the replay that follows does not duplicate the order', async () => {
+    // 1: the first send is lost (the order may have been saved). 2: the retry is limited.
+    // 3: the retry later is answered with the original order, a replay (200), not a second order.
+    orderReply = () => Promise.reject(new TypeError('Failed to fetch'));
+    const result = setup();
+    await place(result);
+    expect(result.current.form.orderError).toBe(UNCERTAIN);
+    const stored = localStorage.getItem(ATTEMPT_KEY);
+
+    orderReply = () => reply(429, LIMITED);
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+    expect(result.current.form.orderError).toBe(MESSAGE);
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBe(stored);
+    expect(result.current.form.pendingOrder).not.toBeNull();
+
+    orderReply = () => reply(200, SAVED);
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+
+    expect(orderCalls()).toHaveLength(3);
+    expect(new Set(orderCalls().map((c) => c[1].body)).size).toBe(1);
+    expect(result.current.form.orderSuccess).toEqual(SAVED);
+    expect(result.current.form.pendingOrder).toBeNull();
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBeNull();
+  });
+
+  test('after a reload the limited attempt is recovered and sent again as it was', async () => {
+    orderReply = () => reply(429, LIMITED);
+    const first = setup();
+    await place(first);
+    const original = sentBody(0);
+    unmountLast();
+
+    const result = setup();
+    expect(result.current.form.pendingOrder).toMatchObject({ itemCount: 4, total: 550, persisted: true });
+
+    orderReply = () => reply(200, SAVED);
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+
+    expect(sentBody(1)).toEqual(original);
+    expect(result.current.form.orderSuccess).toEqual(SAVED);
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBeNull();
+  });
+
+  test('other 4xx answers on a retry still end the attempt (only 408 and 429 keep it)', async () => {
+    orderReply = () => reply(429, LIMITED);
+    const result = setup();
+    await place(result);
+
+    orderReply = () => reply(400, { error: 'הטלפון לא תקין' });
+    await act(async () => { await result.current.form.retryPendingOrder(); });
+
+    expect(result.current.form.orderError).toBe('הטלפון לא תקין');
+    expect(result.current.form.pendingOrder).toBeNull();
+    expect(localStorage.getItem(ATTEMPT_KEY)).toBeNull();
+  });
+});
 
 describe('an order that may or may not have been created', () => {
   test.each([

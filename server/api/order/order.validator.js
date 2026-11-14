@@ -45,7 +45,12 @@ const EDITABLE = [
   'delivery_method', 'delivery_address', 'notes', 'status',
 ];
 
-const MAX = { customer_name: 30, customer_phone: 50, customer_email: 200 };
+const MAX = {
+  customer_name: 30, customer_phone: 50, customer_email: 200, notes: 1000, delivery_address: 200,
+};
+
+/** The longest item name an order line may carry: the same limit as a product's own name. */
+const MAX_ITEM_NAME = 255;
 
 /** מוודא שהערך טקסט, מקצץ רווחים ובודק אורך מרבי. */
 function asTrimmedString(value, field, { maxLength } = {}) {
@@ -127,6 +132,9 @@ function asItems(value) {
     }
     const name = String(item.name ?? '').trim();
     if (!name) throw badRequest(`items[${i}].name חסר`);
+    if (name.length > MAX_ITEM_NAME) {
+      throw badRequest(`items[${i}].name ארוך מדי (מקסימום ${MAX_ITEM_NAME} תווים)`);
+    }
 
     // המחיר שהלקוח ראה על המסך. הוא אינו נכנס להזמנה כמו שהוא —
     // pricing.service משווה אותו למחיר שבמסד ודוחה הזמנה שהם נפרדו בה.
@@ -182,7 +190,7 @@ function parseCreate(body = {}) {
 
   let delivery_address = null;
   if (delivery_method === 'delivery') {
-    delivery_address = asTrimmedString(body.delivery_address ?? '', 'delivery_address');
+    delivery_address = asTrimmedString(body.delivery_address ?? '', 'delivery_address', { maxLength: MAX.delivery_address });
     if (!delivery_address) throw badRequest('חסרה כתובת למשלוח');
     assertDeliveryCityAllowed(delivery_method, delivery_address);
   }
@@ -196,7 +204,7 @@ function parseCreate(body = {}) {
     customer_email: asOptionalEmail(body.customer_email),
     delivery_method,
     delivery_address,
-    notes: body.notes == null ? null : (asTrimmedString(body.notes, 'notes') || null),
+    notes: body.notes == null ? null : (asTrimmedString(body.notes, 'notes', { maxLength: MAX.notes }) || null),
     items,
     status: 'new',
   };
@@ -222,7 +230,7 @@ function parseEditableField(field, value) {
     case 'delivery_address':
     case 'notes':
       if (value == null) return null;
-      return asTrimmedString(value, field) || null;
+      return asTrimmedString(value, field, { maxLength: MAX[field] }) || null;
     default:
       return value;
   }

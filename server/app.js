@@ -71,7 +71,9 @@ function createApp() {
   // true היה גורם לאמון בכל שרשרת X-Forwarded-For, ואז פונה יכול
   // לשלוח כותרת מזויפת ולהמציא לעצמו כתובת.
   // בפיתוח false, כי אין פרוקסי מקומי ואסור שבקשה תזייף כתובת.
-  app.set('trust proxy', config.isProduction ? 1 : false);
+  // The number of hops is config.trustProxyHops (TRUST_PROXY_HOPS): 1 in production and none
+  // elsewhere unless set, as the comment above explains. 0 turns it off.
+  app.set('trust proxy', config.trustProxyHops > 0 ? config.trustProxyHops : false);
 
   app.use(securityHeaders);
   app.use(cors(corsOptions()));
