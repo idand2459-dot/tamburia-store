@@ -3,10 +3,11 @@
  *
  * What it pins: the client is told only what this API wrote (an AppError, or a message defined in
  * server/middleware/errorHandler.js); the text of PostgreSQL, the body parser and any other library
- * is never sent, at any status; no response carries a stack trace; failures of 500 and above are
- * still logged with the full error.
+ * is never sent, at any status; no response carries a stack trace. Failures of 500 and above are
+ * logged as one line of safe fields (P8.2 part B): never the error object, its message or stack, never
+ * the request URL, and never anything a customer typed. All data below is synthetic.
  */
-const { errorHandler } = require('../server/middleware/errorHandler');
+const { errorHandler, rememberMount } = require('../server/middleware/errorHandler');
 const { AppError, badRequest, notFound, conflict, unprocessable } = require('../server/utils/AppError');
 
 let passed = 0;
@@ -25,10 +26,11 @@ function check(name, condition, actual) {
 
 /** Sends an error through the real handler; returns the answer and what was logged. */
 function run(err, req = { method: 'POST', originalUrl: '/api/test?secret=1' }) {
-  const logged = { error: [], warn: [] };
-  const original = { error: console.error, warn: console.warn };
+  const logged = { error: [], warn: [], log: [] };
+  const original = { error: console.error, warn: console.warn, log: console.log };
   console.error = (...args) => logged.error.push(args);
   console.warn = (...args) => logged.warn.push(args);
+  console.log = (...args) => logged.log.push(args);
 
   let status;
   let body;
@@ -41,6 +43,7 @@ function run(err, req = { method: 'POST', originalUrl: '/api/test?secret=1' }) {
   } finally {
     console.error = original.error;
     console.warn = original.warn;
+    console.log = original.log;
   }
   return { status, body, text: JSON.stringify(body), logged };
 }
@@ -87,8 +90,9 @@ for (const [code, status, message] of [
   const out = run(pgError('ECONNREFUSED', 'connect ECONNREFUSED 10.0.0.5:5432'));
   check('ECONNREFUSED → 503 with the mapped text, nothing from the connection', out.status === 503
     && out.body.error === 'אין חיבור למסד הנתונים' && !/10\.0\.0\.5|5432/.test(out.text), out.body);
-  check('ECONNREFUSED is logged as an error with the full error object',
-    out.logged.error.length === 1 && out.logged.error[0][1] instanceof Error, out.logged.error.length);
+  check('ECONNREFUSED is logged as one safe line: method, status, category and code, not the address',
+    out.logged.error.length === 1 && out.logged.error[0].length === 1
+    && out.logged.error[0][0] === '✗ POST (no route) → 503 [database ECONNREFUSED]', out.logged.error);
 }
 
 console.log('\n── The PostgreSQL 4xx warning never logs the URL or the request');
@@ -133,6 +137,133 @@ console.log('\n── The PostgreSQL 4xx warning never logs the URL or the reque
     conflictOut.status === 409 && conflictOut.logged.warn.length === 1
     && conflictOut.logged.warn[0][0] === '⚠ POST → PostgreSQL 23505' && !JSON.stringify(conflictOut.logged.warn).includes(PHONE),
     conflictOut.logged.warn);
+}
+
+console.log('\n── 5xx log line: no personal data, whatever the error and the request carry');
+{
+  const PHONE = '0501234567';
+  const NAME = 'Dana Levi';
+  const EMAIL = 'dana.levi@example.com';
+  const ADDRESS = 'Herzl 12, Haifa';
+  const NOTES = 'leave with the neighbour';
+  const REQUEST_ID = '3f2b1c4e-8a9d-4e6f-b1a2-0c9d8e7f6a5b';
+  const PERSONAL = [PHONE, NAME, EMAIL, ADDRESS, NOTES, 'dana', 'Levi', 'Herzl', 'neighbour'];
+  const mentions = (text) => PERSONAL.filter((value) => String(text).includes(value));
+
+  /** A request on a route whose URL, params, query and body all hold personal data. */
+  const personalRequest = (extra = {}) => ({
+    method: 'POST',
+    originalUrl: `/api/orders/${PHONE}?email=${EMAIL}`,
+    url: `/${PHONE}?email=${EMAIL}`,
+    baseUrl: '/api/orders',
+    path: `/${PHONE}`,
+    params: { phone: PHONE },
+    query: { email: EMAIL },
+    body: {
+      request_id: REQUEST_ID, customer_name: NAME, customer_phone: PHONE, customer_email: EMAIL,
+      delivery_address: ADDRESS, notes: NOTES,
+    },
+    route: { path: '/' },
+    ...extra,
+  });
+
+  // A PostgreSQL error whose every text field repeats the values of the failed statement.
+  const pgWithValues = (code) => Object.assign(
+    new Error(`invalid input syntax for type integer: "${NAME}" in row (${PHONE}, ${EMAIL})`),
+    {
+      code, severity: 'ERROR', routine: 'pg_strtoint32', table: 'orders', column: 'customer_name',
+      detail: `Failing row contains (${NAME}, ${PHONE}, ${EMAIL}, ${ADDRESS}, ${NOTES}).`,
+      where: `PL/pgSQL function f(${EMAIL})`, hint: NOTES, internalQuery: `SELECT '${PHONE}'`,
+    },
+  );
+
+  {
+    const out = run(pgWithValues('54000'), personalRequest());
+    const text = JSON.stringify(out.logged);
+    check('PostgreSQL 5xx → logged once, as one string', out.logged.error.length === 1
+      && out.logged.error[0].length === 1 && typeof out.logged.error[0][0] === 'string', out.logged.error);
+    check('PostgreSQL 5xx: the line has the method, the route template, the status, the category, the SQLSTATE and the request id',
+      out.logged.error[0][0] === `✗ POST /api/orders/ → 500 [database 54000] request_id=${REQUEST_ID}`, out.logged.error);
+    check('PostgreSQL 5xx: no message, detail, where, hint or query in the log',
+      !/invalid input|Failing row|PL\/pgSQL|SELECT|pg_strtoint32|customer_name/.test(text), out.logged);
+    check('PostgreSQL 5xx: no phone, name, email, address or notes in the log', mentions(text).length === 0, mentions(text));
+    check('PostgreSQL 5xx: the URL, the params and the query are not in the log',
+      !/originalUrl|email=/.test(text) && !text.includes(`/api/orders/${PHONE}`), text);
+    check('PostgreSQL 5xx: the response is the unchanged generic 500',
+      out.status === 500 && out.body.error === 'שגיאת שרת פנימית' && JSON.stringify(Object.keys(out.body)) === '["error"]'
+      && mentions(out.text).length === 0, out.body);
+    check('PostgreSQL 5xx: nothing else is written to the log', out.logged.warn.length === 0 && out.logged.log.length === 0, out.logged);
+  }
+
+  {
+    const err = Object.assign(new TypeError(`Cannot read properties of null (reading '${NAME}') for ${EMAIL} at ${ADDRESS}`), {
+      customer: { name: NAME, phone: PHONE }, details: { notes: NOTES },
+    });
+    const out = run(err, personalRequest({ method: 'PUT', route: { path: '/:id' } }));
+    const text = JSON.stringify(out.logged);
+    check('an unexpected error → one line with the class name, not the message',
+      out.logged.error.length === 1 && out.logged.error[0].length === 1
+      && out.logged.error[0][0] === `✗ PUT /api/orders/:id → 500 [unexpected TypeError] request_id=${REQUEST_ID}`, out.logged.error);
+    check('an unexpected error: no personal data and no stack in the log',
+      mentions(text).length === 0 && !/\n\s+at |\.js:\d+/.test(text), text);
+    check('an unexpected error: the response is the unchanged generic 500',
+      out.status === 500 && out.body.error === 'שגיאת שרת פנימית' && mentions(out.text).length === 0, out.body);
+  }
+
+  {
+    const out = run(new AppError(500, `could not save the order of ${NAME} (${PHONE})`), personalRequest());
+    check('an AppError of 500: the category is app and its message is not logged',
+      out.logged.error.length === 1 && String(out.logged.error[0][0]).includes('[app]')
+      && mentions(JSON.stringify(out.logged)).length === 0, out.logged.error);
+    check('an AppError of 500: the response keeps its status and the generic text',
+      out.status === 500 && out.body.error === 'שגיאת שרת פנימית', out.body);
+  }
+
+  {
+    const out = run(Object.assign(new Error(`connect ECONNREFUSED 10.0.0.5:5432 for ${EMAIL}`), { code: 'ECONNREFUSED' }), personalRequest());
+    check('a connection failure keeps its status and code and logs nothing else',
+      out.status === 503 && out.logged.error[0][0] === `✗ POST /api/orders/ → 503 [database ECONNREFUSED] request_id=${REQUEST_ID}`
+      && mentions(JSON.stringify(out.logged)).length === 0, out.logged.error);
+  }
+
+  {
+    const out = run(Object.assign(new Error(`write ${NAME}`), { code: 'EPIPE' }), personalRequest());
+    check('a system error is the system category with its code', String(out.logged.error[0][0]).includes('[system EPIPE]'), out.logged.error);
+  }
+
+  {
+    const err = Object.assign(new Error('x'), { name: NAME, code: EMAIL });
+    const out = run(err, personalRequest({ body: { request_id: `${NAME}-${PHONE}`, customer_phone: PHONE } }));
+    check('a name or a code that is not a plain token is dropped, and so is a request id that is not a UUID',
+      out.logged.error[0][0] === '✗ POST /api/orders/ → 500 [unexpected]'
+      && mentions(JSON.stringify(out.logged)).length === 0, out.logged.error);
+  }
+
+  {
+    const out = run(new Error('x'), { method: 'GET', originalUrl: `/api/orders/${PHONE}`, baseUrl: `/api/${NAME}`, route: { path: '/by/:phone' }, body: undefined });
+    check('a mount path with unsafe characters is dropped, the route template stays',
+      out.logged.error[0][0] === '✗ GET /by/:phone → 500 [unexpected Error]'
+      && mentions(JSON.stringify(out.logged)).length === 0, out.logged.error);
+
+    const unmatched = run(new Error('x'), { method: 'GET', originalUrl: `/api/orders/${PHONE}`, route: undefined });
+    check('a request that matched no route is logged as (no route), never by its URL',
+      unmatched.logged.error[0][0] === '✗ GET (no route) → 500 [unexpected Error]', unmatched.logged.error);
+
+    const oddMethod = run(new Error('x'), { method: NAME, originalUrl: '/x' });
+    check('a method that is not a plain verb is logged as UNKNOWN',
+      String(oddMethod.logged.error[0][0]).startsWith('✗ UNKNOWN '), oddMethod.logged.error);
+  }
+
+  {
+    // Below 500 nothing changes: an AppError is not logged, a database 4xx is one warning with the code.
+    const four = run(pgWithValues('22P02'), personalRequest());
+    check('a PostgreSQL 4xx: one warning with the method and the code, no error line',
+      four.status === 400 && four.logged.error.length === 0 && four.logged.warn.length === 1
+      && four.logged.warn[0][0] === '⚠ POST → PostgreSQL 22P02' && mentions(JSON.stringify(four.logged)).length === 0, four.logged);
+    const app = run(badRequest('bad phone number'), personalRequest());
+    check('an AppError 400 is answered with its own text and is not logged',
+      app.status === 400 && app.body.error === 'bad phone number' && app.logged.error.length === 0 && app.logged.warn.length === 0, app);
+  }
 }
 
 console.log('\n── The body parser: Hebrew text, never its own');
@@ -197,15 +328,17 @@ for (const [status, text] of [
   check('details from an error that is not an AppError are not sent', !('details' in withDetails.body), withDetails.body);
 }
 
-console.log('\n── Everything else: 500, generic, logged with the stack');
+console.log('\n── Everything else: 500, generic, logged as safe fields');
 {
   const err = new TypeError('Cannot read properties of undefined (reading \'secretField\')');
   const out = run(err);
   check('an unexpected error → 500 with the generic text', out.status === 500 && out.body.error === 'שגיאת שרת פנימית'
     && JSON.stringify(Object.keys(out.body)) === '["error"]' && !/secretField|properties/.test(out.text), out.body);
-  check('it is logged once with the route and the error object (stack kept in the log)',
-    out.logged.error.length === 1 && String(out.logged.error[0][0]).includes('POST /api/test?secret=1')
-    && out.logged.error[0][1] === err && typeof err.stack === 'string' && err.stack.length > 0, out.logged.error);
+  check('it is logged once as a line of safe fields: method, status, category and the class name',
+    out.logged.error.length === 1 && out.logged.error[0].length === 1
+    && out.logged.error[0][0] === '✗ POST (no route) → 500 [unexpected TypeError]', out.logged.error);
+  check('the log has neither the URL, nor the message, nor the stack',
+    !/secret|secretField|properties|api\/test|\n\s+at /.test(JSON.stringify(out.logged)), out.logged.error);
 
   const unavailable = run(Object.assign(new Error('upstream said: secret'), { status: 503 }));
   check('a 503 from elsewhere keeps 503 with the generic text', unavailable.status === 503
@@ -247,5 +380,47 @@ console.log('\n── No stack in any response, whatever the environment');
     !Object.keys(require.cache).some((file) => /server[\\/]config[\\/]env\.js$/.test(file)));
 }
 
-console.log(`\n${failed === 0 ? '✓' : '✗'} passed ${passed}, failed ${failed}`);
-process.exitCode = failed === 0 ? 0 : 1;
+console.log('\n── Through a real Express app: the route template, not the URL, reaches the log');
+async function realApp() {
+  const express = require('express');
+  const PHONE = '0501234567';
+  const EMAIL = 'dana.levi@example.com';
+  const app = express();
+  app.use(express.json());
+  const orders = express.Router();
+  orders.post('/:id', () => {
+    throw Object.assign(new Error(`invalid input syntax: "${EMAIL}" (${PHONE})`), { code: '54000', severity: 'ERROR', detail: `(${PHONE})` });
+  });
+  app.use('/api/orders', rememberMount, orders);
+  app.use(errorHandler);
+
+  const server = await new Promise((resolve) => { const s = app.listen(0, () => resolve(s)); });
+  const logged = [];
+  const original = { error: console.error, warn: console.warn, log: console.log };
+  console.error = (...args) => logged.push(args);
+  console.warn = (...args) => logged.push(args);
+  console.log = (...args) => logged.push(args);
+  let res;
+  try {
+    res = await fetch(`http://127.0.0.1:${server.address().port}/api/orders/${PHONE}?email=${EMAIL}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ request_id: '3f2b1c4e-8a9d-4e6f-b1a2-0c9d8e7f6a5b', customer_phone: PHONE }),
+    });
+  } finally {
+    Object.assign(console, original);
+    await new Promise((resolve) => server.close(resolve));
+  }
+  const text = JSON.stringify(logged);
+  check('a real route error: the line is the method, the mounted route template and the request id',
+    logged.length === 1 && logged[0][0] === '✗ POST /api/orders/:id → 500 [database 54000] request_id=3f2b1c4e-8a9d-4e6f-b1a2-0c9d8e7f6a5b', logged);
+  check('a real route error: the phone number and the email are not in the log', !text.includes(PHONE) && !text.includes(EMAIL), text);
+  check('a real route error: the response is the generic 500', res.status === 500 && (await res.json()).error === 'שגיאת שרת פנימית', res.status);
+}
+
+realApp().then(() => {
+  console.log(`\n${failed === 0 ? '✓' : '✗'} passed ${passed}, failed ${failed}`);
+  process.exitCode = failed === 0 ? 0 : 1;
+}, (err) => {
+  console.log(`  ✗ the real-app check crashed — ${err.message}`);
+  process.exitCode = 1;
+});
