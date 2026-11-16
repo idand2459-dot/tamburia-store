@@ -164,7 +164,7 @@ client/src/
   js/services/   every server call the storefront makes
   js/utils/      pure helpers (pricing, store info, palette, icons)
 
-test/            15 server suites, 671 checks
+test/            server unit and smoke suites (npm test), and the browser suite in test/e2e/
 scripts/         catalogue import, demo data, the product-photo pipeline, the a11y audit
 docs/            ARCHITECTURE.md, the product-photo runbook, the accessibility audit, screenshots
 photos/          raw phone photos in, processed store images out — contents gitignored
@@ -332,8 +332,9 @@ written up in [docs/a11y-audit.md](docs/a11y-audit.md); the public statement is 
 
 ```bash
 npm test               # server: unit and smoke suites
-npm run test:client    # client: 40 suites, 736 tests
+npm run test:client    # client: Jest + Testing Library
 npm run a11y           # accessibility: serves client/build, so run npm run build:client first
+npm run test:e2e       # browser end-to-end: real storefront, admin, API and test database (needs client/build and Chrome)
 ```
 
 Each HTTP suite starts its own server on a port the operating system picks, so the suites can run while the real
@@ -363,6 +364,7 @@ port and address) before the first migration, and only then starts its own serve
 |---|---|---|
 | `unit-repo-hygiene` | 8 | `.env` not tracked, `.env.example` placeholders only, no secret value in any tracked file |
 | `unit-config` | 186 | Every startup rule of `server/config/env.js` (`NODE_ENV`, `DB_HOST` with `NODE_ENV` unset, session secret and password length, `ADMIN_URL`, `CORS_ORIGINS`, ports, session lifetime, limiter windows, rate-limit defaults and `TRUST_PROXY_HOPS`), no secret in any message, optional mail credentials, and the delivery fee agreeing across client, server default and `.env.example` |
+| `unit-e2e-refusal` | 16 | The E2E runner refuses to start on a missing, production, remote or non-test database |
 | `unit-test-database-guard` | 168 | The guard that keeps `npm test` and `npm run a11y` on a separate local database |
 | `unit-no-private-phone` | 5 | The shop owner's private number appears nowhere public |
 | `unit-numeric-ids` | 71 | Ids, offsets and `sort_order` above the PostgreSQL `INTEGER` maximum are a 400; the error handler maps numeric-range errors |
@@ -454,6 +456,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | `npm run dev:client` | React dev server with hot reload on port 3001, API proxied to 3000 |
 | `npm test` | Server test suites |
 | `npm run test:client` | Client tests (Jest) |
+| `npm run test:e2e` | Browser end-to-end suite (`test/e2e/`, plan `005`): customer, admin and checkout-failure journeys; `E2E_SPECS=customer,admin,failures` picks specs; `CHROME_PATH` picks the browser |
 | `npm run a11y` | Accessibility audit (`-- --report` writes `docs/a11y-report.md`) |
 | `npm run products:import` | Imports or merges the catalogue from a CSV (default: `scripts/products_import_template.csv`) |
 | `npm run seed:demo` | Inserts demo orders and reviews |
