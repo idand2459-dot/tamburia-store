@@ -33,6 +33,7 @@ import { useObjectUrls } from '../../hooks/useObjectUrls';
 import { asColors } from '../../utils/colorPalette';
 import { parsePriceInput, formatAmount } from '../../utils/pricing';
 import { subcategoriesOf, isSubcategoryOf } from '../../utils/subcategories';
+import { useDemoMode } from '../../hooks/useDemoMode';
 import ProductFormPreview from './ProductFormPreview';
 import ColorRows from './ColorRows';
 import VariantRows from './VariantRows';
@@ -105,6 +106,9 @@ function fieldsFromProduct(product) {
 function ProductFormTab({
   editingProduct, onCreate, onUpdate, onToggleActive, uploadingImages, onDone, productsError,
 }) {
+  // Image uploads are switched off in the portfolio demo for everyone (the server answers 403), so the
+  // upload control is not drawn there; a product made in the demo shows the category icon.
+  const { demo } = useDemoMode();
   const [name, setName] = useState(EMPTY.name);
   const [price, setPrice] = useState(EMPTY.price);
   const [inStock, setInStock] = useState(EMPTY.inStock);
@@ -289,6 +293,11 @@ function ProductFormTab({
           </div>
 
           {/* ── Images ── */}
+          {demo ? (
+            <p className="admin-form-group full admin-form-hint">
+              <Info size={16} aria-hidden="true" /> העלאת תמונות מושבתת באתר ההדגמה. מוצר חדש יוצג עם אייקון הקטגוריה.
+            </p>
+          ) : (
           <div className="admin-form-group full">
             <label>
               תמונות (עד {MAX_IMAGES})
@@ -348,6 +357,7 @@ function ProductFormTab({
               </p>
             )}
           </div>
+          )}
         </div>
 
         {(formError || productsError) && (

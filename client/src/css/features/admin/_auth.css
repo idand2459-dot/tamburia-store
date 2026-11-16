@@ -98,6 +98,30 @@
   background: var(--color-red);
 }
 
+/* the portfolio demo's public read-only entry, under the password form */
+.admin-login-viewer {
+  margin-top: 16px;
+  padding: 12px 20px;
+  background: transparent;
+  color: var(--color-navy);
+  border: 2px solid var(--color-navy);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: 'Heebo', 'Segoe UI', sans-serif;
+  cursor: pointer;
+}
+
+.admin-login-viewer:hover:not(:disabled) {
+  background: var(--color-navy);
+  color: white;
+}
+
+.admin-login-viewer:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* אנימציית רעידה */
 @keyframes shake {
   0%, 100% { transform: translateX(0); }

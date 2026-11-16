@@ -3,7 +3,9 @@
  */
 import { useState } from 'react';
 import { Lock } from 'lucide-react';
-import { login, ApiError } from '../services/authService';
+import { login, demoLogin, ApiError } from '../services/authService';
+import { useDemoMode } from '../hooks/useDemoMode';
+import DemoBanner from '../components/DemoBanner';
 
 /** מציג את טופס הכניסה ושולח את הסיסמה לשרת. */
 function AdminLogin({ onLogin }) {
@@ -11,6 +13,7 @@ function AdminLogin({ onLogin }) {
   const [error, setError] = useState('');
   const [shaking, setShaking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const { demo } = useDemoMode();
 
   /** מציג הודעת שגיאה ומנקה את שדה הסיסמה. */
   function fail(message) {
@@ -28,7 +31,21 @@ function AdminLogin({ onLogin }) {
     setSubmitting(true);
     try {
       await login(password);
-      onLogin();
+      onLogin('owner');
+    } catch (error) {
+      fail(error instanceof ApiError ? error.message : 'אין חיבור לשרת — נסה שוב');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  /** Enters the public read-only viewer session of the portfolio demo (no password). */
+  async function handleViewerEntry() {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await demoLogin();
+      onLogin('viewer');
     } catch (error) {
       fail(error instanceof ApiError ? error.message : 'אין חיבור לשרת — נסה שוב');
     } finally {
@@ -37,6 +54,8 @@ function AdminLogin({ onLogin }) {
   }
 
   return (
+    <>
+    <DemoBanner />
     <div className="admin-login-page">
       <div className={`admin-login-box ${shaking ? 'shake' : ''}`}>
         <div className="admin-login-icon"><Lock size={32} aria-hidden="true" /></div>
@@ -58,8 +77,15 @@ function AdminLogin({ onLogin }) {
             {submitting ? 'בודק…' : 'כניסה →'}
           </button>
         </form>
+
+        {demo && (
+          <button type="button" className="admin-login-viewer" onClick={handleViewerEntry} disabled={submitting}>
+            כניסה כצופה (הדגמה)
+          </button>
+        )}
       </div>
     </div>
+    </>
   );
 }
 

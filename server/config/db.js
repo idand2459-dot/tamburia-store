@@ -21,6 +21,9 @@ const pool = new Pool({
   max: 10,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 5_000,
+  // Verifies the certificate chain and the host name against Node's trusted authorities. Verification is
+  // never switched off here (unit-repo-hygiene enforces it).
+  ...(config.db.ssl ? { ssl: { rejectUnauthorized: true } } : {}),
 });
 
 pool.on('error', (err) => console.error('שגיאת Pool:', err.message));

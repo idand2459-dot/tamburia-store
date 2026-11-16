@@ -9,11 +9,14 @@ import reviewsPhoto1000 from '../../../assets/images/sections/reviews-photo-1000
 import { averageRating } from '../../utils/rating';
 import { getReviews } from '../../services/reviewService';
 import { useReviewSubmit } from '../../hooks/useReviewSubmit';
+import { useDemoMode } from '../../hooks/useDemoMode';
 
 const EMPTY_FORM = { reviewer_name: '', rating: 5, text: '', type: 'store' };
 
 /** מציג את קרוסלת חוות הדעת ואת טופס ההוספה. */
 function ReviewsCarousel() {
+  // The portfolio demo shows curated reviews only: the server refuses a new one, so the button is not drawn.
+  const { demo } = useDemoMode();
   const [reviews, setReviews] = useState([]);
   const [current, setCurrent] = useState(0);
   const [showForm, setShowForm] = useState(false);
@@ -132,9 +135,11 @@ function ReviewsCarousel() {
                   <span className="reviews-avg-count">({reviews.length} ביקורות)</span>
                 </div>
               )}
-              <button className="add-review-btn" onClick={toggleForm}>
-                {showForm ? <><X size={18} aria-hidden="true" /> סגור</> : <><PenLine size={18} aria-hidden="true" /> כתוב ביקורת</>}
-              </button>
+              {!demo && (
+                <button className="add-review-btn" onClick={toggleForm}>
+                  {showForm ? <><X size={18} aria-hidden="true" /> סגור</> : <><PenLine size={18} aria-hidden="true" /> כתוב ביקורת</>}
+                </button>
+              )}
             </div>
           </div>
 

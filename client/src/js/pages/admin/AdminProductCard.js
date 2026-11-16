@@ -38,6 +38,7 @@ import CATEGORY_ICONS from '../../utils/categoryIcons';
 import { hasPrice, parsePriceInput, toAgorot, formatAmount, formatPrice } from '../../utils/pricing';
 import { CATEGORIES } from './adminConstants';
 import { subcategoriesOf, subcategoryName, lacksSubcategory } from '../../utils/subcategories';
+import { useAdminAccess } from './adminAccess';
 
 /* כמה זמן נשאר סימון ה"נשמר" על השורה. מספיק כדי להיראות, קצר מכדי
    להיראות כמו מצב תקוע — אותו פרק זמן של הווי בכרטיס המוצר בחנות. */
@@ -47,6 +48,8 @@ const SAVED_MS = 1400;
 function AdminProductCard({
   product, onEdit, onDelete, onToggleStock, onToggleActive, onUpdatePrice, onUpdateSubcategory,
 }) {
+  // The read-only demo viewer sees the product but not the controls that change it.
+  const { readOnly } = useAdminAccess();
   const [editingPrice, setEditingPrice] = useState(false);
   const [assigning, setAssigning] = useState(false);
   const [assignFailed, setAssignFailed] = useState(false);
@@ -171,7 +174,7 @@ function AdminProductCard({
           {product.sku && <span className="admin-product-sku">מק"ט {product.sku}</span>}
         </p>
 
-        {onUpdateSubcategory && lacksSubcategory(product) && (
+        {onUpdateSubcategory && !readOnly && lacksSubcategory(product) && (
           <div className="admin-sub-assign">
             <select
               value=""
@@ -232,6 +235,11 @@ function AdminProductCard({
               <X size={20} aria-hidden="true" />
             </button>
           </div>
+        ) : readOnly ? (
+          <span className="admin-price-btn">
+            {hasVariants ? `מ-${formatPrice(product.price)}` : formatPrice(product.price)}
+            {hasVariants && <span className="admin-price-variants">{product.variants.length} גרסאות</span>}
+          </span>
         ) : (
           <button type="button" className="admin-price-btn" onClick={startPriceEdit}>
             {hasVariants ? `מ-${formatPrice(product.price)}` : formatPrice(product.price)}
@@ -249,13 +257,14 @@ function AdminProductCard({
           className="admin-stock-switch"
           role="switch"
           aria-checked={inStock}
+          disabled={readOnly}
           onClick={() => onToggleStock(product)}>
           <span className="admin-stock-knob" />
         </button>
         <span className="admin-stock-label">{inStock ? 'במלאי' : 'אזל'}</span>
       </div>
 
-      <div className="admin-product-actions">
+      {!readOnly && <div className="admin-product-actions">
         <button type="button" className="admin-edit-btn" onClick={() => onEdit(product)}>ערוך</button>
         <button
           type="button"
@@ -274,7 +283,7 @@ function AdminProductCard({
           aria-expanded={deletion !== null}>
           מחק
         </button>
-      </div>
+      </div>}
 
       {deletion && (
         <div

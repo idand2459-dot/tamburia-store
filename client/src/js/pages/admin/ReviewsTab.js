@@ -2,9 +2,12 @@
  * לשונית חוות הדעת: הרשימה המלאה, אישור פרסום ומחיקה.
  */
 import { AlertTriangle, Store, Package, Star, CheckCircle, Check } from 'lucide-react';
+import { useAdminAccess } from './adminAccess';
 
 /** מציג את לשונית חוות הדעת. */
 function ReviewsTab({ reviews, onApprove, onDelete, reviewsError }) {
+  // The read-only demo viewer reads the reviews but cannot approve or delete them.
+  const { readOnly } = useAdminAccess();
   return (
     <div className="admin-reviews">
       <p className="admin-tab-summary">
@@ -32,11 +35,11 @@ function ReviewsTab({ reviews, onApprove, onDelete, reviewsError }) {
               <p className="review-admin-text">{review.text}</p>
               <div className="review-admin-actions">
                 {!review.approved ? (
-                  <button type="button" className="review-approve-btn" onClick={() => onApprove(review.id)}><CheckCircle size={18} aria-hidden="true" /> אשר פרסום</button>
+                  !readOnly && <button type="button" className="review-approve-btn" onClick={() => onApprove(review.id)}><CheckCircle size={18} aria-hidden="true" /> אשר פרסום</button>
                 ) : (
                   <span className="review-approved-badge"><Check size={16} aria-hidden="true" /> מפורסם</span>
                 )}
-                <button type="button" className="review-delete-btn" onClick={() => onDelete(review.id)}>מחק</button>
+                {!readOnly && <button type="button" className="review-delete-btn" onClick={() => onDelete(review.id)}>מחק</button>}
               </div>
             </div>
           ))}

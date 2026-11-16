@@ -13,6 +13,7 @@ import MarqueeBanner from './components/MarqueeBanner';
 import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
 import ScrollToTop from './components/ScrollToTop';
+import DemoBanner from './components/DemoBanner';
 import PaintCalcBtn from './features/calculators/PaintCalcBtn';
 import CartModal from './features/cart/CartModal';
 import Wishlist from './features/cart/Wishlist';
@@ -118,6 +119,7 @@ function StoreLayout() {
           לא משנה דבר בפריסה. */}
       <div className="store-frame" inert={overlayOpen || undefined}>
         <a className="skip-link" href="#main-content">דלג לתוכן</a>
+        <DemoBanner />
         <Navbar menuOpen={menuOpen} setMenuOpen={setMenuOpen} />
 
         {/* כשהתפריט פתוח הוא לבדו פעיל, כמו המגירות */}

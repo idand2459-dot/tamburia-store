@@ -20,6 +20,7 @@ router.get('/health', async (req, res) => {
   });
 });
 
+router.use('/demo', rememberMount, require('./demo/demo.routes'));
 router.use('/auth', rememberMount, require('./auth/auth.routes'));
 router.use('/products', rememberMount, require('./product/product.routes'));
 router.use('/orders', rememberMount, require('./order/order.routes'));

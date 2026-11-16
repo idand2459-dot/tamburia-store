@@ -24,13 +24,30 @@ function sign(payloadPart) {
     .digest();
 }
 
-/** יוצר אסימון אדמין חדש עם תוקף לפי הקונפיגורציה. */
-function createToken() {
+/**
+ * The two admin roles. `owner` edits everything; `viewer` is the public read-only demo admin and
+ * exists only when DEMO_MODE is on (POST /api/auth/demo-login). The role is a signed claim: a client
+ * cannot change it without SESSION_SECRET, because the signature covers the payload.
+ */
+const ROLES = ['owner', 'viewer'];
+
+/** How long a viewer login lasts. A constant and not a setting: a stolen viewer token only reads demo data. */
+const VIEWER_TTL_HOURS = 4;
+
+/** The login lifetime of a role, in hours. */
+function ttlHoursFor(role) {
+  return role === 'viewer' ? VIEWER_TTL_HOURS : config.auth.ttlHours;
+}
+
+/** יוצר אסימון אדמין חדש עם תוקף לפי התפקיד: owner לפי הקונפיגורציה, viewer ארבע שעות. */
+function createToken(role) {
+  if (!ROLES.includes(role)) throw new Error('createToken דורש תפקיד: owner או viewer.');
   const now = Math.floor(Date.now() / 1000);
   const payload = {
     sub: 'admin',
+    role,
     iat: now,
-    exp: now + config.auth.ttlHours * 3600,
+    exp: now + ttlHoursFor(role) * 3600,
   };
   const payloadPart = base64url(JSON.stringify(payload));
   return `${payloadPart}${SEPARATOR}${base64url(sign(payloadPart))}`;
@@ -65,6 +82,8 @@ function verifyToken(token) {
   }
 
   if (payload.sub !== 'admin') return null;
+  // A token without a role (issued before roles existed) is invalid: the owner logs in again once.
+  if (!ROLES.includes(payload.role)) return null;
   if (typeof payload.exp !== 'number' || payload.exp <= Math.floor(Date.now() / 1000)) return null;
 
   return payload;
@@ -80,15 +99,15 @@ function passwordMatches(attempt) {
   return crypto.timingSafeEqual(digestA, digestB);
 }
 
-/** מחזיר את אפשרויות עוגיית ההתחברות, זהות בהתחברות ובניתוק. */
-function cookieOptions() {
+/** מחזיר את אפשרויות עוגיית ההתחברות; ה-maxAge לפי התפקיד (owner כברירת מחדל), ושאר הערכים זהים בהתחברות ובניתוק. */
+function cookieOptions(role = 'owner') {
   return {
     httpOnly: true,
     sameSite: 'strict',
     secure: config.isProduction,
     path: '/',
-    maxAge: config.auth.ttlHours * 3600 * 1000,
+    maxAge: ttlHoursFor(role) * 3600 * 1000,
   };
 }
 
-module.exports = { createToken, verifyToken, passwordMatches, cookieOptions };
+module.exports = { ROLES, VIEWER_TTL_HOURS, createToken, verifyToken, passwordMatches, cookieOptions, ttlHoursFor };

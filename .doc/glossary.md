@@ -28,6 +28,15 @@ The naming rule ([naming.md](../.claude/rules/naming.md)) requires every shared 
 - selector — a pure function `(state) => value` that reads or derives a value from the store (for example `selectCartCount`); components read the store only through selectors. Not getter.
 - thunk — an action creator that returns a function, run by `redux-thunk`, for the one flow with a side effect, `checkAvailability` (a server request). The wishlist toggle is a plain action: the reducer changes the list and `store/persistence.js` copies it to localStorage. Not async action, saga.
 - availability — which products saved in the customer's cart are no longer in the catalog (`unavailableIds`); fetched from the server by id (`client/src/js/hooks/useAvailability.js`, moved to the store in P4R). Not stock, in-stock status.
+- demo mode — the portfolio demonstration: `DEMO_MODE=true`, a public site with fictional data only, a read-only public admin and a banner; not a commercial launch (`server/config/env.js`, `server/api/demo/`, [docs/demo-deployment.md](../docs/demo-deployment.md)). Not sandbox, trial.
+- demo database — a PostgreSQL database that carries the demo marker and holds only fictional data; the only database a demo server starts on. Not test database (the separate local database of `npm test`).
+- demo marker — the one-row table `demo_database_marker` (a random id and a state, `bootstrapping` or `ready`) that identifies a demo database; created only by the bootstrap, never by a migration or the server (`scripts/demo-bootstrap.js`). Not flag, stamp.
+- bootstrap — the owner-run first-time setup of a new empty database as a demo database: identity checks, claim, migrations, seed (`npm run demo:bootstrap`). Not install, deploy.
+- demo identity — one of the three fixed fictional customers (name, phone, email, address) a demo order may carry (`server/api/demo/demo.rules.js`). UI label: "מילוי פרטי הדגמה". Not test customer.
+- owner — the admin role with full access, entered with the admin password (`role: owner` in the session token). Not administrator, manager.
+- viewer — the public read-only demo admin role, entered without a password in demo mode only (`role: viewer`, `POST /api/auth/demo-login`). UI label: "כניסה כצופה (הדגמה)". Not guest, visitor.
+- visitor order — an order placed by someone using the demo: it carries a demo identity phone and is not a seeded order; kept at most 72 hours and at most 100 at a time (`server/api/demo/demo.service.js`). Not test order.
+- seeded order — a curated demo order written by the seed, tagged `request_id = demo-seed:NN`, never deleted by cleanup (`scripts/lib/demoSeed.js`). Not sample order.
 
 ## Naming Alignment
 - Keep this glossary aligned with naming decisions in [naming.md](../.claude/rules/naming.md).

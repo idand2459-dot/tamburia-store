@@ -40,6 +40,10 @@ const PROJECT_DENY_PATTERNS = [
   startsWith(String.raw`(?:npm\s+run\s+products:import-new|node\s+\S*products-import-new\.js)\b[^;&|\n]*\s--(?:apply|revert)\b`),
   startsWith(String.raw`(?:npm\s+run\s+products:hide-unphotographed|node\s+\S*products-hide-unphotographed\.js)\b[^;&|\n]*\s--(?:apply|revert)\b`),
   startsWith(String.raw`(?:npm\s+run\s+images:products|node\s+\S*images-products\.js)\b[^;&|\n]*\s--(?:apply|revert)\b`),
+  // Demo database: the first-time bootstrap claims a database and writes the seed, demo:seed rewrites
+  // the curated rows and (with --reset) deletes visitor orders. Owner-run only, against a remote host.
+  startsWith(String.raw`npm\s+run\s+demo:(?:bootstrap|seed)(?![\w:-])`),
+  startsWith(String.raw`node\s+(?:\S*[\\/])?demo-(?:bootstrap|seed)\.js`),
   // PostgreSQL: drop a whole database
   startsWith(String.raw`dropdb\b`),
   // git clean of ignored files would delete uploads/ and uploads-originals/

@@ -23,6 +23,8 @@ import { useState, useRef, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Volume2, VolumeX } from 'lucide-react';
 import Confetti from '../../components/Confetti';
+import DemoBanner from '../../components/DemoBanner';
+import { ReadOnlyNote } from './adminAccess';
 import { useAdminProducts } from '../../hooks/useAdminProducts';
 import { useAdminOrders } from '../../hooks/useAdminOrders';
 import { useAdminReviews } from '../../hooks/useAdminReviews';
@@ -112,6 +114,7 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
 
   return (
     <div className="admin">
+      <DemoBanner />
       <a className="skip-link" href="#admin-content">דלג לתוכן</a>
       {showConfetti && <Confetti onDone={dismissConfetti} />}
 
@@ -143,6 +146,8 @@ function Admin({ onBack, onExpired, tab = 'orders', onTabChange }) {
       />
 
       <main id="admin-content" tabIndex={-1}>
+        <ReadOnlyNote />
+
         {activeTab === 'stats' && (
           <StatsTab
             adminApi={adminApi}

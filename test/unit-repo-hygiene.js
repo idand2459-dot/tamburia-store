@@ -76,5 +76,33 @@ if (!fs.existsSync(envPath)) {
   }
 }
 
+console.log('\n── TLS של PostgreSQL');
+{
+  // Nothing may switch certificate verification off, in the server, the scripts or the tests. The
+  // patterns are built from pieces so that this file does not match itself.
+  const FORBIDDEN = [
+    new RegExp('reject' + 'Unauthorized\\s*:\\s*false'),
+    new RegExp('NODE_TLS_' + 'REJECT_UNAUTHORIZED'),
+  ];
+
+  /** Every .js, .mjs and .cjs file under a directory (node_modules excluded). */
+  const sourceFiles = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) return entry.name === 'node_modules' ? [] : sourceFiles(full);
+    return /\.(?:js|mjs|cjs)$/.test(entry.name) ? [full] : [];
+  });
+
+  const offenders = ['server', 'scripts', 'test']
+    .flatMap((dir) => sourceFiles(path.join(ROOT, dir)))
+    .filter((file) => file !== __filename)
+    .filter((file) => FORBIDDEN.some((pattern) => pattern.test(fs.readFileSync(file, 'utf8'))))
+    .map((file) => path.relative(ROOT, file));
+  check('אין כיבוי של אימות תעודת TLS ב-server, scripts ו-test', offenders.length === 0, offenders);
+
+  const db = fs.readFileSync(path.join(ROOT, 'server/config/db.js'), 'utf8');
+  check('db.js מעביר ssl עם אימות מלא כש-DB_SSL פעיל',
+    /ssl:\s*\{\s*rejectUnauthorized:\s*true\s*\}/.test(db));
+}
+
 console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);
 process.exitCode = failed === 0 ? 0 : 1;

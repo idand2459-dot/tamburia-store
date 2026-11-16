@@ -8,8 +8,36 @@ const { pool } = require('../config/db');
 
 const MIGRATIONS_DIR = path.join(__dirname, 'migrations');
 
-/** מריץ כל קובץ .sql שטרם רץ, לפי סדר השם, כל אחד בטרנזקציה נפרדת. */
+/**
+ * The advisory lock that keeps two processes from migrating at once (a zero-downtime deploy starts the
+ * new instance beside the old one). A session-level lock: it needs a direct PostgreSQL connection, not
+ * a transaction-mode pooler such as PgBouncer.
+ */
+const MIGRATION_LOCK_KEY = 7_447_100_001;
+
+/**
+ * Runs the pending migrations while holding the advisory lock, on one dedicated connection that is
+ * released in `finally`. A second process waits for the lock and then finds nothing pending.
+ */
 async function runMigrations() {
+  const lockClient = await pool.connect();
+  let unlocked = false;
+  try {
+    await lockClient.query('SELECT pg_advisory_lock($1)', [MIGRATION_LOCK_KEY]);
+    await applyPendingMigrations();
+  } finally {
+    try {
+      await lockClient.query('SELECT pg_advisory_unlock($1)', [MIGRATION_LOCK_KEY]);
+      unlocked = true;
+    } finally {
+      // A connection that could not release the lock is destroyed, which releases it.
+      lockClient.release(unlocked ? undefined : true);
+    }
+  }
+}
+
+/** מריץ כל קובץ .sql שטרם רץ, לפי סדר השם, כל אחד בטרנזקציה נפרדת. */
+async function applyPendingMigrations() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       name       VARCHAR(255) PRIMARY KEY,

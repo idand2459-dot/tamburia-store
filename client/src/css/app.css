@@ -47,6 +47,8 @@
 @import './components/_page-header.css';
 /* the opening hours, rendered on the contact page and reused by about */
 @import './components/_hours-table.css';
+/* the persistent notice of the portfolio demo, on every page and in the admin */
+@import './components/_demo-banner.css';
 
 /* 4. Feature modules */
 /* The admin dashboard, one partial per tab. No two of these carry the same
@@ -85,6 +87,8 @@
 @import './features/admin/_admin-pick-list.css';
 @import './features/admin/_admin-stats.css';
 @import './features/admin/_auth.css';
+/* the note a read-only demo viewer sees at the top of the admin */
+@import './features/admin/_admin-readonly.css';
 /* Two unrelated calculators that shared one file. In the order their rules had
    inside it; no selector appears in more than one of the six. */
 /* The dark band, its background photograph and the section header, split out

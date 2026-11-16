@@ -138,7 +138,8 @@ test('a 401 on the first load calls onExpired once for each of the three loads',
   );
 
   await waitFor(() => expect(onExpired).toHaveBeenCalledTimes(3));
-  expect(global.fetch.mock.calls.map(([url]) => url).sort()).toEqual([
+  // /api/demo is the banner asking whether this is the portfolio demo, not one of the three loads
+  expect(global.fetch.mock.calls.map(([url]) => url).filter((url) => url !== '/api/demo').sort()).toEqual([
     '/api/orders', '/api/products?active=all', '/api/reviews/all',
   ]);
 });

@@ -1,0 +1,262 @@
+{
+  "note": "Real products chosen for the portfolio demo (owner approval 2026-11-16: use the existing catalogue and images). ids = every sellable product with a valid photograph, plus the real products the calculators and the admin demo need. overrides = reassignments into the store category tree, listed in the report for the owner.",
+  "ids": [
+    237,
+    241,
+    242,
+    243,
+    245,
+    278,
+    280,
+    281,
+    282,
+    283,
+    294,
+    297,
+    298,
+    311,
+    315,
+    317,
+    321,
+    329,
+    332,
+    334,
+    337,
+    339,
+    340,
+    347,
+    349,
+    355,
+    356,
+    405,
+    406,
+    408,
+    416,
+    418,
+    424,
+    427,
+    430,
+    431,
+    432,
+    433,
+    434,
+    435,
+    436,
+    437,
+    439,
+    442,
+    466,
+    469,
+    470,
+    570,
+    571,
+    574,
+    576,
+    580,
+    582,
+    583,
+    588,
+    591,
+    593,
+    597,
+    598,
+    601,
+    608,
+    609,
+    612,
+    613,
+    618,
+    619,
+    620,
+    627,
+    628,
+    1032,
+    1033,
+    1034,
+    1035,
+    1036,
+    1037,
+    1087,
+    1088,
+    1111,
+    1112,
+    1113,
+    1114,
+    1115,
+    1116,
+    1117,
+    1118,
+    1119,
+    1120,
+    1121,
+    1122,
+    1123,
+    1124,
+    1125,
+    1126,
+    1127,
+    1128,
+    1129,
+    1130,
+    1131,
+    1132,
+    1133,
+    1134,
+    1135,
+    1137,
+    1140,
+    1141,
+    1142,
+    1143,
+    1144,
+    1145,
+    1194,
+    1195,
+    1196,
+    1197,
+    1198,
+    1199,
+    1200,
+    1201
+  ],
+  "overrides": {
+    "237": {
+      "demo_subcategory": "sealants"
+    },
+    "241": {
+      "demo_subcategory": "sealants"
+    },
+    "242": {
+      "demo_subcategory": "cartridges"
+    },
+    "243": {
+      "demo_subcategory": "cartridges"
+    },
+    "294": {
+      "demo_subcategory": "spackle_adhesive"
+    },
+    "405": {
+      "demo_subcategory": "rollers_pads"
+    },
+    "406": {
+      "demo_subcategory": "rollers_pads"
+    },
+    "408": {
+      "demo_subcategory": "rollers_pads"
+    },
+    "418": {
+      "demo_subcategory": "paints"
+    },
+    "424": {
+      "demo_subcategory": "paints"
+    },
+    "427": {
+      "demo_subcategory": "paints"
+    },
+    "430": {
+      "demo_subcategory": "spackle_adhesive"
+    },
+    "431": {
+      "demo_subcategory": "spackle_adhesive"
+    },
+    "439": {
+      "demo_subcategory": "chemicals"
+    },
+    "442": {
+      "demo_subcategory": "chemicals"
+    },
+    "466": {
+      "demo_subcategory": "general_tools"
+    },
+    "469": {
+      "demo_subcategory": "general_tools"
+    },
+    "470": {
+      "demo_subcategory": "general_tools"
+    },
+    "1032": {
+      "demo_subcategory": "chemicals"
+    },
+    "1033": {
+      "demo_subcategory": "chemicals"
+    },
+    "1034": {
+      "demo_subcategory": "chemicals"
+    },
+    "1035": {
+      "demo_subcategory": "chemicals"
+    },
+    "1036": {
+      "demo_subcategory": "chemicals"
+    },
+    "1037": {
+      "demo_subcategory": "chemicals"
+    },
+    "1087": {
+      "demo_subcategory": "brushes"
+    },
+    "1088": {
+      "demo_subcategory": "brushes"
+    },
+    "1111": {
+      "demo_subcategory": "mops"
+    },
+    "1113": {
+      "demo_subcategory": "cloths"
+    },
+    "1114": {
+      "demo_subcategory": "spackle_adhesive"
+    },
+    "1116": {
+      "demo_subcategory": "spackle_adhesive"
+    },
+    "1120": {
+      "demo_subcategory": "spackle_adhesive"
+    },
+    "1121": {
+      "demo_subcategory": "spackle_adhesive"
+    },
+    "1122": {
+      "demo_subcategory": "spackle_adhesive"
+    },
+    "1123": {
+      "demo_subcategory": "spackle_adhesive"
+    },
+    "1125": {
+      "demo_subcategory": "spackle_adhesive"
+    },
+    "1128": {
+      "demo_subcategory": "spackle_adhesive"
+    },
+    "1129": {
+      "demo_subcategory": "foams"
+    },
+    "1130": {
+      "demo_subcategory": "sealants"
+    },
+    "1131": {
+      "demo_subcategory": "sealants"
+    },
+    "1132": {
+      "demo_subcategory": "spackle_adhesive"
+    },
+    "1135": {
+      "demo_subcategory": "spackle_adhesive"
+    },
+    "1140": {
+      "demo_subcategory": "spackle_adhesive"
+    },
+    "1141": {
+      "demo_subcategory": "watering"
+    },
+    "1142": {
+      "demo_subcategory": "garden_tools"
+    },
+    "1144": {
+      "demo_subcategory": "watering"
+    },
+    "1145": {
+      "demo_subcategory": "garden_tools"
+    }
+  }
+}

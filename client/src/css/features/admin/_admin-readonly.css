@@ -1,0 +1,29 @@
+/* ==========================================================
+   Admin read-only note — what the public demo viewer sees
+
+   Rendered by ReadOnlyNote (pages/admin/adminAccess.js) at the
+   top of the admin content, only for the viewer role. The
+   write controls are not drawn for a viewer; the server also
+   refuses every write, so this only explains the empty space.
+   ========================================================== */
+
+/* ---- Block --------------------------------------------------------------- */
+
+.admin-readonly-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-inline-start: 4px solid var(--color-blue);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+
+.admin-readonly-note svg {
+  flex-shrink: 0;
+  color: var(--color-blue);
+}

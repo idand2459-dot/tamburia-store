@@ -6,7 +6,7 @@ const express = require('express');
 const config = require('../../config/env');
 const controller = require('./review.controller');
 const { idParam } = require('../../middleware/validate');
-const { requireAdmin } = require('../../middleware/requireAdmin');
+const { requireAdmin, requireAdminRead } = require('../../middleware/requireAdmin');
 const { rateLimit } = require('../../middleware/rateLimit');
 
 const router = express.Router();
@@ -26,8 +26,9 @@ router.get('/stats', controller.stats);
 router.get('/', controller.list);
 router.post('/', createLimiter, controller.create);
 
-router.get('/all', requireAdmin, controller.listAll);
-router.get('/:id', requireAdmin, idParam, controller.getOne);
+// Reads: owner and viewer. Every other route below is owner only.
+router.get('/all', requireAdminRead, controller.listAll);
+router.get('/:id', requireAdminRead, idParam, controller.getOne);
 router.put('/:id', requireAdmin, idParam, controller.update);
 router.delete('/:id', requireAdmin, idParam, controller.remove);
 

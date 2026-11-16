@@ -34,6 +34,11 @@ client/build/
 design-assets/product-list.csv
 design-assets/product-list.html
 
+# The demo candidate sheet (npm run demo:candidates): the owner's working copy, with real product
+# data; only the approved result (scripts/demo-data/catalogue.json, demo-assets/) is ever committed.
+design-assets/demo-candidates.csv
+design-assets/demo-candidates.html
+
 # גיבויי image_url מלפני --apply — מקומיים, לא נכנסים לגיט
 design-assets/image-backup-*.json
 

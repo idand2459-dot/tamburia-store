@@ -4,7 +4,7 @@
   "description": "Full-stack store for a hardware shop: Express 5 + PostgreSQL API and a React 19 storefront and admin, served from one Node process",
   "main": "server/server.js",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
     "start": "node server/server.js",
@@ -23,7 +23,11 @@
     "products:hide-unphotographed": "node scripts/products-hide-unphotographed.js",
     "products:new-template": "node scripts/products-new-template.js",
     "products:import-new": "node scripts/products-import-new.js",
-    "a11y": "node scripts/a11y-audit.js"
+    "a11y": "node scripts/a11y-audit.js",
+    "demo:bootstrap": "node scripts/demo-bootstrap.js",
+    "demo:seed": "node scripts/demo-seed.js",
+    "demo:candidates": "node scripts/demo-candidates.js",
+    "demo:catalogue": "node scripts/demo-catalogue-build.js"
   },
   "repository": {
     "type": "git",
