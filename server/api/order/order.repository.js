@@ -2,7 +2,8 @@
  * גישה לטבלת orders: שליפה מסוננת, יצירה,
  * עדכון, סימון שורות שהוכנו, מחיקה וסיכום לפי סטטוס.
  */
-const { query } = require('../../config/db');
+const { query, withTransaction } = require('../../config/db');
+const { conflict } = require('../../utils/AppError');
 
 const COLUMNS = `
   id, customer_name, customer_phone, customer_email,
@@ -88,20 +89,62 @@ async function findById(id) {
   return rows[0] || null;
 }
 
-/** מכניס הזמנה. conflict הוא סעיף ON CONFLICT אופציונלי; בלעדיו שורה תמיד נוצרת. */
-async function insert(data, conflict = '') {
+/**
+ * Locks the ordered products (FOR SHARE) and refuses the order if one of them is gone, hidden
+ * or marked unavailable. It runs in the same transaction as the INSERT, so it closes the gap
+ * between pricing (which reads the catalogue without a lock) and the write:
+ * - the admin delete takes FOR UPDATE on the product row, so it waits until this order commits
+ *   and then sees it (has_orders) instead of deleting a product that was just sold;
+ * - an availability change waits the same way, and one that committed first is seen here,
+ *   because FOR SHARE re-reads the current row.
+ * FOR SHARE does not block other orders, so two customers ordering the same product never wait
+ * for each other. There is no quantity to reserve: availability is only available / unavailable.
+ */
+async function assertProductsOrderable(client, items) {
+  const ids = [...new Set(items.map((item) => item.id).filter(Number.isInteger))];
+  if (ids.length === 0) return;
+
+  const { rows } = await client.query(
+    'SELECT id, active, in_stock FROM products WHERE id = ANY($1::int[]) ORDER BY id FOR SHARE',
+    [ids]
+  );
+  const byId = new Map(rows.map((row) => [row.id, row]));
+
+  const unavailable = items
+    .filter((item) => {
+      const product = byId.get(item.id);
+      return !product || product.active === false || product.in_stock === false;
+    })
+    .map((item) => ({ id: item.id, selectedVariant: item.selectedVariant, name: item.name }));
+
+  if (unavailable.length > 0) {
+    throw conflict(
+      `המוצר "${unavailable[0].name}" אינו זמין כרגע. ניתן להסיר אותו מהעגלה או ליצור קשר עם החנות לבירור זמינות.`,
+      { reason: 'out_of_stock', unavailable }
+    );
+  }
+}
+
+/**
+ * מכניס הזמנה. conflictClause הוא סעיף ON CONFLICT אופציונלי; בלעדיו שורה תמיד נוצרת.
+ * The product check and the INSERT share one transaction (see assertProductsOrderable).
+ */
+async function insert(data, conflictClause = '') {
   const columns = Object.keys(data);
   const values = columns.map((col) => toDbValue(col, data[col]));
   const placeholders = columns.map((_, i) => `$${i + 1}`);
 
-  const { rows } = await query(
-    `INSERT INTO orders (${columns.join(', ')})
-     VALUES (${placeholders.join(', ')})
-     ${conflict}
-     RETURNING ${COLUMNS}`,
-    values
-  );
-  return rows[0] || null;
+  return withTransaction(async (client) => {
+    await assertProductsOrderable(client, Array.isArray(data.items) ? data.items : []);
+    const { rows } = await client.query(
+      `INSERT INTO orders (${columns.join(', ')})
+       VALUES (${placeholders.join(', ')})
+       ${conflictClause}
+       RETURNING ${COLUMNS}`,
+      values
+    );
+    return rows[0] || null;
+  });
 }
 
 /** יוצר הזמנה חדשה ומחזיר אותה כפי שנשמרה. */
