@@ -15,9 +15,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { MoreHorizontal, Pencil, X } from 'lucide-react';
 import { ADMIN_TABS, PRIMARY_TAB_COUNT } from './adminConstants';
-
-const PRIMARY = ADMIN_TABS.slice(0, PRIMARY_TAB_COUNT);
-const SECONDARY = ADMIN_TABS.slice(PRIMARY_TAB_COUNT);
+import { useAdminAccess, VIEWER_HIDDEN_TABS } from './adminAccess';
 
 /** מחזיר את תג הסימון של לשונית, או null כשאין מה לסמן. */
 function badgeFor(id, badges) {
@@ -28,6 +26,11 @@ function badgeFor(id, badges) {
 
 /** מציג את הניווט של מסך הניהול. */
 function AdminTabs({ activeTab, onSelect, badges = {}, editing, onBack }) {
+  // The read-only demo viewer does not get the two tabs that only write; the rest keep their order.
+  const { readOnly } = useAdminAccess();
+  const tabs = ADMIN_TABS.filter((tab) => !(readOnly && VIEWER_HIDDEN_TABS.includes(tab.id)));
+  const PRIMARY = tabs.slice(0, PRIMARY_TAB_COUNT);
+  const SECONDARY = tabs.slice(PRIMARY_TAB_COUNT);
   const [sheetOpen, setSheetOpen] = useState(false);
   const sheetRef = useRef(null);
 
@@ -60,7 +63,7 @@ function AdminTabs({ activeTab, onSelect, badges = {}, editing, onBack }) {
     <>
       {/* מסך רחב */}
       <nav className="admin-tabs" aria-label="לשוניות הניהול">
-        {ADMIN_TABS.map((tab) => {
+        {tabs.map((tab) => {
           const Icon = IconOf(tab);
           return (
             <button

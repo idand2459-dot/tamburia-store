@@ -103,9 +103,12 @@ test('שתי הבקשות מקבלות signal, ומבוטלות בפירוק ה�
   global.fetch.mockResolvedValue(respond([]));
 
   const { unmount } = renderPage(PRODUCT_A);
-  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+  // /api/demo (the page-wide "is this the portfolio demo" read, cached for the page) is not one of the two
+  // requests of this product, and has no signal on purpose: it outlives any one component.
+  const productCalls = () => global.fetch.mock.calls.filter(([url]) => url !== '/api/demo');
+  await waitFor(() => expect(productCalls()).toHaveLength(2));
 
-  const signals = global.fetch.mock.calls.map(([, options]) => options.signal);
+  const signals = productCalls().map(([, options]) => options.signal);
   expect(signals.every(Boolean)).toBe(true);
   expect(signals.every((s) => s.aborted === false)).toBe(true);
 

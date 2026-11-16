@@ -16,17 +16,25 @@ import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import Admin from '../pages/admin/Admin';
 import AdminLogin from '../pages/AdminLogin';
 import { ADMIN_TAB_IDS } from '../pages/admin/adminConstants';
-import { isLoggedIn, logout } from '../services/authService';
+import { getSession, logout } from '../services/authService';
+import { AdminAccessContext, VIEWER_HIDDEN_TABS } from '../pages/admin/adminAccess';
 
 /** מציג את אזור הניהול למי שמחובר, ומסך התחברות לכל השאר. */
 function AdminRoute() {
   const { tab } = useParams();
   const navigate = useNavigate();
   const [auth, setAuth] = useState('checking'); // checking | out | in
+  // 'owner' edits; 'viewer' is the public read-only demo session. Only chooses what is shown: the
+  // server refuses every write from a viewer.
+  const [role, setRole] = useState('owner');
 
   useEffect(() => {
     let cancelled = false;
-    isLoggedIn().then((ok) => { if (!cancelled) setAuth(ok ? 'in' : 'out'); });
+    getSession().then((session) => {
+      if (cancelled) return;
+      setRole(session ? session.role : 'owner');
+      setAuth(session ? 'in' : 'out');
+    });
     return () => { cancelled = true; };
   }, []);
 
@@ -45,15 +53,20 @@ function AdminRoute() {
   // שלא תהבהב התחברות למי שכבר מחובר.
   if (auth === 'checking') return <div className="admin-login-page" />;
 
-  if (auth === 'out') return <AdminLogin onLogin={() => setAuth('in')} />;
+  if (auth === 'out') return <AdminLogin onLogin={(nextRole = 'owner') => { setRole(nextRole); setAuth('in'); }} />;
+
+  // The two tabs that only write do not exist for a viewer.
+  if (role === 'viewer' && VIEWER_HIDDEN_TABS.includes(tab)) return <Navigate to="/admin/orders" replace />;
 
   return (
-    <Admin
-      tab={tab}
-      onTabChange={(next, search = '') => navigate(`/admin/${next}${search}`)}
-      onBack={handleLogout}
-      onExpired={() => setAuth('out')}
-    />
+    <AdminAccessContext.Provider value={{ role, readOnly: role === 'viewer' }}>
+      <Admin
+        tab={tab}
+        onTabChange={(next, search = '') => navigate(`/admin/${next}${search}`)}
+        onBack={handleLogout}
+        onExpired={() => setAuth('out')}
+      />
+    </AdminAccessContext.Provider>
   );
 }
 

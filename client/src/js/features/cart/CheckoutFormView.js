@@ -27,6 +27,7 @@ import { PriceChangeNotice } from './CartStepView';
 import { formatPrice } from '../../utils/pricing';
 import { PHONES } from '../../utils/storeInfo';
 import { checkAllowedCity } from '../../utils/delivery';
+import { useDemoMode } from '../../hooks/useDemoMode';
 
 /** האם הכתובת שהוזנה מחוץ לאזור החלוקה. */
 function isDeliveryInvalid({ deliveryMethod, deliveryAddress }) {
@@ -96,8 +97,25 @@ function CheckoutFormView({ setCartStep, checkout, showErrors = false }) {
     deliveryAddress, setDeliveryAddress,
     orderNotes, setOrderNotes,
   } = checkout;
+  // The portfolio demo accepts only three fictional customers: the fields are filled by a button, not typed.
+  const { demo, identities } = useDemoMode();
+  const [identityIndex, setIdentityIndex] = useState(0);
+  const [filledName, setFilledName] = useState('');
   // What the form checks: the typed fields and the delivery method chosen in the cart.
   const form = { ...checkout, deliveryMethod };
+
+  /** Fills the fields from the next demo identity (each click moves to the next of the three). */
+  function fillDemoDetails() {
+    if (identities.length === 0) return;
+    const identity = identities[identityIndex % identities.length];
+    setCustomerName(identity.customer_name);
+    setCustomerPhone(identity.customer_phone);
+    setCustomerEmail(identity.customer_email);
+    setDeliveryAddress(identity.delivery_address);
+    setOrderNotes('');
+    setFilledName(identity.customer_name);
+    setIdentityIndex(identityIndex + 1);
+  }
 
   /** מעדכן את הכתובת למשלוח. */
   function handleAddressChange(e) {
@@ -127,6 +145,16 @@ function CheckoutFormView({ setCartStep, checkout, showErrors = false }) {
         <span className="visually-hidden">כוכבית</span> הם שדות חובה
       </p>
 
+      {demo && (
+        <div className="checkout-demo">
+          <p>זהו אתר הדגמה: אפשר להזמין רק עם פרטי הדגמה פיקטיביים, ואין צורך להקליד פרטים אישיים.</p>
+          <button type="button" className="cart-cta cart-cta--outline" onClick={fillDemoDetails}>
+            מילוי פרטי הדגמה
+          </button>
+          <p role="status">{filledName ? `מולאו פרטי ההדגמה של ${filledName}. לחצו שוב כדי לעבור ללקוח הדגמה אחר.` : ''}</p>
+        </div>
+      )}
+
       <div className="checkout-fields">
         <div className="checkout-field">
           <label htmlFor={fieldId('name')}>שם מלא <span className="checkout-req" aria-hidden="true">*</span></label>
@@ -136,6 +164,7 @@ function CheckoutFormView({ setCartStep, checkout, showErrors = false }) {
             maxLength={30}
             autoComplete="name"
             className={errors.name ? 'is-invalid' : ''}
+            readOnly={demo}
             value={customerName}
             onChange={e => setCustomerName(e.target.value)}
           />
@@ -151,6 +180,7 @@ function CheckoutFormView({ setCartStep, checkout, showErrors = false }) {
             inputMode="tel"
             autoComplete="tel"
             className={errors.phone ? 'is-invalid' : ''}
+            readOnly={demo}
             value={customerPhone}
             onChange={e => setCustomerPhone(e.target.value)}
           />
@@ -165,6 +195,7 @@ function CheckoutFormView({ setCartStep, checkout, showErrors = false }) {
             type="email"
             autoComplete="email"
             className={errors.email ? 'is-invalid' : ''}
+            readOnly={demo}
             value={customerEmail}
             onChange={e => setCustomerEmail(e.target.value)}
           />
@@ -183,6 +214,7 @@ function CheckoutFormView({ setCartStep, checkout, showErrors = false }) {
               placeholder="רחוב, מספר, עיר"
               maxLength={200}
               autoComplete="street-address"
+              readOnly={demo}
               value={deliveryAddress}
               onChange={handleAddressChange}
               className={errors.address || deliveryInvalid ? 'is-invalid' : ''}
@@ -207,17 +239,20 @@ function CheckoutFormView({ setCartStep, checkout, showErrors = false }) {
           </div>
         )}
 
-        <div className="checkout-field">
-          <label htmlFor={fieldId('notes')}>הערות להזמנה</label>
-          <textarea
-            id={fieldId('notes')}
-            placeholder="הערות מיוחדות..."
-            maxLength={1000}
-            value={orderNotes}
-            onChange={e => setOrderNotes(e.target.value)}
-            rows={2}
-          />
-        </div>
+        {/* free text would store what a visitor typed, so the demo has no notes field */}
+        {!demo && (
+          <div className="checkout-field">
+            <label htmlFor={fieldId('notes')}>הערות להזמנה</label>
+            <textarea
+              id={fieldId('notes')}
+              placeholder="הערות מיוחדות..."
+              maxLength={1000}
+              value={orderNotes}
+              onChange={e => setOrderNotes(e.target.value)}
+              rows={2}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -294,6 +329,7 @@ function PendingOrderNotice({ pendingOrder, submitting, onRetry, onCancel }) {
  * onInvalid מדליק את הצגת השגיאות בטופס שמעליו (CartModal מחזיק אותה).
  */
 function CheckoutFormFooter({ onInvalid, checkout }) {
+  const { demo } = useDemoMode();
   const deliveryMethod = useSelector(selectDeliveryMethod);
   const cart = useSelector(selectCartItems);
   const unavailableLines = useSelector(selectUnavailableLines);
@@ -355,6 +391,12 @@ function CheckoutFormFooter({ onInvalid, checkout }) {
             ? <><Spinner size="small" color="white" /> שולח הזמנה…</>
             : <><CheckCircle size={18} aria-hidden="true" /> שלח הזמנה</>}
         </button>
+      )}
+
+      {demo && (
+        <p className="checkout-demo-note">
+          הזמנת הדגמה: לא תטופל, לא יישלחו מוצרים, לא ייגבה תשלום ולא יישלח מייל.
+        </p>
       )}
     </div>
   );

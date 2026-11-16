@@ -27,6 +27,7 @@ import { STATUS_CONFIG, statusesForMethod, formatDate, timeAgo } from './adminCo
 import { formatPrice } from '../../utils/pricing';
 import { pickProgress } from '../../utils/pickList';
 import PickList, { PickProgress } from './PickList';
+import { useAdminAccess } from './adminAccess';
 
 /* הצעד הבא לכל סטטוס. ב-processing הוא תלוי באופן הקבלה — הזמנת
    איסוף עצמי הופכת למוכנה בחנות, הזמנת משלוח יוצאת לדרך — ולכן שם
@@ -59,6 +60,8 @@ function methodOf(order) {
 
 /** מציג כרטיס הזמנה אחת. */
 function OrderCard({ order, productsById, isOpen, onToggle, onStatusChange, onTogglePicked, onDelete }) {
+  // The read-only demo viewer sees the order but not the controls that change it.
+  const { readOnly } = useAdminAccess();
   const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG.new;
   const next = nextStepOf(order);
   const method = methodOf(order);
@@ -108,7 +111,7 @@ function OrderCard({ order, productsById, isOpen, onToggle, onStatusChange, onTo
       </p>
 
       <div className="order-card-actions">
-        {next && (
+        {next && !readOnly && (
           <button
             type="button"
             className={`order-next-btn ${allPicked ? 'is-ready' : ''}`}
@@ -155,22 +158,24 @@ function OrderCard({ order, productsById, isOpen, onToggle, onStatusChange, onTo
             )}
           </dl>
 
-          <div className="order-card-fix">
-            <label className="order-status-fix">
-              שנה סטטוס
-              <select
-                value={order.status}
-                onChange={(e) => onStatusChange(order.id, e.target.value)}>
-                {statusesForMethod(order.delivery_method).map(key => (
-                  <option key={key} value={key}>{STATUS_CONFIG[key].label}</option>
-                ))}
-              </select>
-            </label>
+          {!readOnly && (
+            <div className="order-card-fix">
+              <label className="order-status-fix">
+                שנה סטטוס
+                <select
+                  value={order.status}
+                  onChange={(e) => onStatusChange(order.id, e.target.value)}>
+                  {statusesForMethod(order.delivery_method).map(key => (
+                    <option key={key} value={key}>{STATUS_CONFIG[key].label}</option>
+                  ))}
+                </select>
+              </label>
 
-            <button type="button" className="order-delete-btn" onClick={() => onDelete(order.id)}>
-              מחק הזמנה
-            </button>
-          </div>
+              <button type="button" className="order-delete-btn" onClick={() => onDelete(order.id)}>
+                מחק הזמנה
+              </button>
+            </div>
+          )}
         </div>
       )}
     </article>

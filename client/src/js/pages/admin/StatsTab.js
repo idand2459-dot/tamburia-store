@@ -20,9 +20,12 @@ import { Spinner } from '../../components/LoadingStates';
 import { useStatsBaseline } from '../../hooks/useStatsBaseline';
 import { formatDate } from './adminConstants';
 import { formatPrice } from '../../utils/pricing';
+import { useAdminAccess } from './adminAccess';
 
 /** מציג את לשונית הסטטיסטיקות. */
 function StatsTab({ adminApi, products, getStats, onToggleStock, productsError }) {
+  // The read-only demo viewer sees the numbers but cannot reset them or restock a product.
+  const { readOnly } = useAdminAccess();
   const { since, loading, baselineError, resetStats, clearBaseline } = useStatsBaseline(adminApi);
 
   const stats = getStats(products, since);
@@ -54,16 +57,20 @@ function StatsTab({ adminApi, products, getStats, onToggleStock, productsError }
         {since ? (
           <>
             <span className="stats-reset-since">סופרים מ-{formatDate(since)}</span>
-            <button type="button" className="stats-reset-undo" onClick={clearBaseline}>
-              <Undo2 size={18} aria-hidden="true" /> בטל איפוס
-            </button>
+            {!readOnly && (
+              <button type="button" className="stats-reset-undo" onClick={clearBaseline}>
+                <Undo2 size={18} aria-hidden="true" /> בטל איפוס
+              </button>
+            )}
           </>
         ) : (
           <>
             <span className="stats-reset-since">סופרים מההזמנה הראשונה</span>
-            <button type="button" className="stats-reset-btn" onClick={handleReset}>
-              <RotateCcw size={18} aria-hidden="true" /> אפס סיכומים
-            </button>
+            {!readOnly && (
+              <button type="button" className="stats-reset-btn" onClick={handleReset}>
+                <RotateCcw size={18} aria-hidden="true" /> אפס סיכומים
+              </button>
+            )}
           </>
         )}
       </div>
@@ -153,7 +160,7 @@ function StatsTab({ adminApi, products, getStats, onToggleStock, productsError }
                 {stats.outOfStock.slice(0, 8).map(p => (
                   <div key={p.id} className="out-of-stock-item">
                     <span>{p.name}</span>
-                    <button className="restock-btn" onClick={() => onToggleStock(p)}>החזר למלאי</button>
+                    {!readOnly && <button className="restock-btn" onClick={() => onToggleStock(p)}>החזר למלאי</button>}
                   </div>
                 ))}
                 {stats.outOfStock.length > 8 && (

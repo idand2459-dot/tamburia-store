@@ -215,6 +215,32 @@
   width: 100%;
 }
 
+/* the portfolio demo: the intro and the fill button above the fields, and the notice under the submit button */
+.checkout-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px dashed rgba(var(--color-navy-rgb), 0.35);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+
+.checkout-demo p {
+  margin: 0;
+}
+
+.checkout-demo .cart-cta {
+  width: 100%;
+}
+
+.checkout-demo-note {
+  margin: 0;
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
 /* ---- States -------------------------------------------------------------- */
 
 .checkout-back:hover {
@@ -231,6 +257,12 @@
 .checkout-field input:focus,
 .checkout-field textarea:focus {
   border-color: rgba(var(--color-purple-rgb), 0.5);
+}
+
+/* a demo field is filled by the button, not typed */
+.checkout-field input[readonly] {
+  background: var(--color-surface-alt);
+  cursor: default;
 }
 
 /* ---- Variants ------------------------------------------------------------ */

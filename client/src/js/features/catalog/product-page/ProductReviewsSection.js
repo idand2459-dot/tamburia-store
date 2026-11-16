@@ -25,6 +25,7 @@ import { X, PenLine, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import Stars from './Stars';
 import { averageRating } from '../../../utils/rating';
 import { useReviewSubmit } from '../../../hooks/useReviewSubmit';
+import { useDemoMode } from '../../../hooks/useDemoMode';
 
 const EMPTY_FORM = { reviewer_name: '', rating: 5, text: '' };
 
@@ -41,6 +42,8 @@ function ReviewFormToggle({ open, onToggle }) {
 
 /** מציג את רשימת חוות הדעת ואת טופס הכתיבה. */
 function ProductReviewsSection({ productId, reviews, ref }) {
+  // The portfolio demo shows curated reviews only: the server refuses a new one, so no form is offered.
+  const { demo } = useDemoMode();
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewForm, setReviewForm] = useState(EMPTY_FORM);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
@@ -91,7 +94,7 @@ function ProductReviewsSection({ productId, reviews, ref }) {
           )}
         </div>
 
-        {reviews.length > 0 && <ReviewFormToggle open={showReviewForm} onToggle={toggleForm} />}
+        {!demo && reviews.length > 0 && <ReviewFormToggle open={showReviewForm} onToggle={toggleForm} />}
       </div>
 
       {showReviewForm && (
@@ -135,8 +138,8 @@ function ProductReviewsSection({ productId, reviews, ref }) {
 
       {reviews.length === 0 ? (
         <div className="product-reviews-empty">
-          <p>עדיין אין ביקורות — היה הראשון</p>
-          <ReviewFormToggle open={showReviewForm} onToggle={toggleForm} />
+          <p>{demo ? 'עדיין אין ביקורות' : 'עדיין אין ביקורות — היה הראשון'}</p>
+          {!demo && <ReviewFormToggle open={showReviewForm} onToggle={toggleForm} />}
         </div>
       ) : (
         <div className="product-reviews-list">

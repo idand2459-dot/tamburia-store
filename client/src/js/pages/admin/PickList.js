@@ -23,6 +23,7 @@ import { Check, Package } from 'lucide-react';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
 import { formatPrice, lineTotal } from '../../utils/pricing';
 import { isPicked, pickProgress } from '../../utils/pickList';
+import { useAdminAccess } from './adminAccess';
 
 /** בונה את שורת הגרסה, הצבע והמידה של פריט, או מחרוזת ריקה. */
 function itemOptions(item) {
@@ -46,6 +47,8 @@ function PickThumb({ product }) {
 /** שורה אחת ברשימה: תיבה, תמונה, שם, פרטים, כמות וסכום. */
 function PickLine({ item, product, picked, onChange }) {
   const options = itemOptions(item);
+  // A read-only demo viewer sees what was picked but cannot tick a line.
+  const { readOnly } = useAdminAccess();
 
   return (
     <li className={`pick-line ${picked ? 'is-picked' : ''}`}>
@@ -54,6 +57,7 @@ function PickLine({ item, product, picked, onChange }) {
           type="checkbox"
           className="pick-input"
           checked={picked}
+          disabled={readOnly}
           onChange={(e) => onChange(e.target.checked)}
         />
         <span className="pick-box" aria-hidden="true">
