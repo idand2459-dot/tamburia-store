@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "reviewer_name": "לקוח לדוגמה",
+    "rating": 5,
+    "text": "שירות מהיר ומוצרים טובים. מצאתי הכול במקום אחד.",
+    "type": "store",
+    "product_id": null,
+    "approved": true,
+    "daysAgo": 40
+  },
+  {
+    "id": 2,
+    "reviewer_name": "לקוחה לדוגמה",
+    "rating": 4,
+    "text": "מבחר רחב וצוות עוזר. המשלוח הגיע בזמן.",
+    "type": "store",
+    "product_id": null,
+    "approved": true,
+    "daysAgo": 33
+  },
+  {
+    "id": 3,
+    "reviewer_name": "קבלן לדוגמה",
+    "rating": 5,
+    "text": "קניתי צבע וכלי עבודה לפרויקט שלם, המחירים הוגנים.",
+    "type": "store",
+    "product_id": null,
+    "approved": true,
+    "daysAgo": 25
+  },
+  {
+    "id": 4,
+    "reviewer_name": "דיירת לדוגמה",
+    "rating": 5,
+    "text": "הסיליקון נשמר מצוין באמבטיה, ממליצה.",
+    "type": "product",
+    "product_id": 2,
+    "approved": true,
+    "daysAgo": 18
+  },
+  {
+    "id": 5,
+    "reviewer_name": "בעל בית לדוגמה",
+    "rating": 4,
+    "text": "צילינדר איכותי, ההתקנה הייתה קלה.",
+    "type": "product",
+    "product_id": 17,
+    "approved": true,
+    "daysAgo": 12
+  },
+  {
+    "id": 6,
+    "reviewer_name": "לקוח לדוגמה",
+    "rating": 5,
+    "text": "המחשבון עזר לי לבחור כמות צבע נכונה.",
+    "type": "store",
+    "product_id": null,
+    "approved": true,
+    "daysAgo": 6
+  },
+  {
+    "id": 7,
+    "reviewer_name": "לקוחה לדוגמה",
+    "rating": 3,
+    "text": "חיכיתי קצת בקופה, אבל המוצרים טובים.",
+    "type": "store",
+    "product_id": null,
+    "approved": false,
+    "daysAgo": 2
+  },
+  {
+    "id": 8,
+    "reviewer_name": "בעל בית לדוגמה",
+    "rating": 5,
+    "text": "מזמרה חדה ונוחה לאחיזה.",
+    "type": "product",
+    "product_id": 108,
+    "approved": false,
+    "daysAgo": 1
+  }
+]

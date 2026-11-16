@@ -1,0 +1,182 @@
+[
+  {
+    "color_code": "cream",
+    "color_name_he": "שמנת",
+    "hex": "#F5E6C8",
+    "ml_per_liter_light": 20,
+    "ml_per_liter_medium": 45,
+    "ml_per_liter_dark": 90,
+    "sort_order": 1
+  },
+  {
+    "color_code": "yellow",
+    "color_name_he": "צהוב",
+    "hex": "#FFD700",
+    "ml_per_liter_light": 23,
+    "ml_per_liter_medium": 49,
+    "ml_per_liter_dark": 96,
+    "sort_order": 2
+  },
+  {
+    "color_code": "mustard",
+    "color_name_he": "חרדל",
+    "hex": "#C8960C",
+    "ml_per_liter_light": 26,
+    "ml_per_liter_medium": 53,
+    "ml_per_liter_dark": 102,
+    "sort_order": 3
+  },
+  {
+    "color_code": "orange",
+    "color_name_he": "כתום",
+    "hex": "#FF6B35",
+    "ml_per_liter_light": 29,
+    "ml_per_liter_medium": 57,
+    "ml_per_liter_dark": 108,
+    "sort_order": 4
+  },
+  {
+    "color_code": "red",
+    "color_name_he": "אדום",
+    "hex": "#DC2626",
+    "ml_per_liter_light": 32,
+    "ml_per_liter_medium": 61,
+    "ml_per_liter_dark": 114,
+    "sort_order": 5
+  },
+  {
+    "color_code": "pink",
+    "color_name_he": "ורוד",
+    "hex": "#FF69B4",
+    "ml_per_liter_light": 20,
+    "ml_per_liter_medium": 45,
+    "ml_per_liter_dark": 90,
+    "sort_order": 6
+  },
+  {
+    "color_code": "terracotta",
+    "color_name_he": "טרקוטה",
+    "hex": "#C2674E",
+    "ml_per_liter_light": 23,
+    "ml_per_liter_medium": 49,
+    "ml_per_liter_dark": 96,
+    "sort_order": 7
+  },
+  {
+    "color_code": "lilac",
+    "color_name_he": "לילך",
+    "hex": "#C084FC",
+    "ml_per_liter_light": 26,
+    "ml_per_liter_medium": 53,
+    "ml_per_liter_dark": 102,
+    "sort_order": 8
+  },
+  {
+    "color_code": "purple",
+    "color_name_he": "סגול",
+    "hex": "#7B2FBE",
+    "ml_per_liter_light": 29,
+    "ml_per_liter_medium": 57,
+    "ml_per_liter_dark": 108,
+    "sort_order": 9
+  },
+  {
+    "color_code": "sky_blue",
+    "color_name_he": "תכלת",
+    "hex": "#38BDF8",
+    "ml_per_liter_light": 32,
+    "ml_per_liter_medium": 61,
+    "ml_per_liter_dark": 114,
+    "sort_order": 10
+  },
+  {
+    "color_code": "blue",
+    "color_name_he": "כחול",
+    "hex": "#1D4ED8",
+    "ml_per_liter_light": 20,
+    "ml_per_liter_medium": 45,
+    "ml_per_liter_dark": 90,
+    "sort_order": 11
+  },
+  {
+    "color_code": "turquoise",
+    "color_name_he": "טורקיז",
+    "hex": "#0D9488",
+    "ml_per_liter_light": 23,
+    "ml_per_liter_medium": 49,
+    "ml_per_liter_dark": 96,
+    "sort_order": 12
+  },
+  {
+    "color_code": "green",
+    "color_name_he": "ירוק",
+    "hex": "#16A34A",
+    "ml_per_liter_light": 26,
+    "ml_per_liter_medium": 53,
+    "ml_per_liter_dark": 102,
+    "sort_order": 13
+  },
+  {
+    "color_code": "olive",
+    "color_name_he": "ירוק זית",
+    "hex": "#6B7C2E",
+    "ml_per_liter_light": 29,
+    "ml_per_liter_medium": 57,
+    "ml_per_liter_dark": 108,
+    "sort_order": 14
+  },
+  {
+    "color_code": "beige",
+    "color_name_he": "בז'",
+    "hex": "#D4A96A",
+    "ml_per_liter_light": 32,
+    "ml_per_liter_medium": 61,
+    "ml_per_liter_dark": 114,
+    "sort_order": 15
+  },
+  {
+    "color_code": "khaki",
+    "color_name_he": "חאקי",
+    "hex": "#8B8456",
+    "ml_per_liter_light": 20,
+    "ml_per_liter_medium": 45,
+    "ml_per_liter_dark": 90,
+    "sort_order": 16
+  },
+  {
+    "color_code": "brown",
+    "color_name_he": "חום",
+    "hex": "#92400E",
+    "ml_per_liter_light": 23,
+    "ml_per_liter_medium": 49,
+    "ml_per_liter_dark": 96,
+    "sort_order": 17
+  },
+  {
+    "color_code": "chocolate",
+    "color_name_he": "שוקולד",
+    "hex": "#5C3317",
+    "ml_per_liter_light": 26,
+    "ml_per_liter_medium": 53,
+    "ml_per_liter_dark": 102,
+    "sort_order": 18
+  },
+  {
+    "color_code": "gray",
+    "color_name_he": "אפור",
+    "hex": "#6B7280",
+    "ml_per_liter_light": 29,
+    "ml_per_liter_medium": 57,
+    "ml_per_liter_dark": 108,
+    "sort_order": 19
+  },
+  {
+    "color_code": "black",
+    "color_name_he": "שחור",
+    "hex": "#1C1C1C",
+    "ml_per_liter_light": 32,
+    "ml_per_liter_medium": 61,
+    "ml_per_liter_dark": 114,
+    "sort_order": 20
+  }
+]

@@ -1,0 +1,147 @@
+[
+  {
+    "key": "01",
+    "identity": "demo-1",
+    "delivery_method": "delivery",
+    "status": "new",
+    "notes": null,
+    "daysAgo": 0,
+    "items": [
+      {
+        "product": 627,
+        "quantity": 2
+      },
+      {
+        "product": 28,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "key": "02",
+    "identity": "demo-2",
+    "delivery_method": "pickup",
+    "status": "new",
+    "notes": null,
+    "daysAgo": 0,
+    "items": [
+      {
+        "product": 17,
+        "quantity": 1
+      },
+      {
+        "product": 20,
+        "quantity": 3
+      }
+    ]
+  },
+  {
+    "key": "03",
+    "identity": "demo-3",
+    "delivery_method": "delivery",
+    "status": "processing",
+    "notes": null,
+    "daysAgo": 1,
+    "items": [
+      {
+        "product": 60,
+        "quantity": 1
+      },
+      {
+        "product": 55,
+        "quantity": 2,
+        "color": "כרום",
+        "size": "כפול"
+      }
+    ]
+  },
+  {
+    "key": "04",
+    "identity": "demo-1",
+    "delivery_method": "pickup",
+    "status": "processing",
+    "notes": null,
+    "daysAgo": 2,
+    "items": [
+      {
+        "product": 46,
+        "quantity": 1,
+        "size": "50mm/12oz"
+      },
+      {
+        "product": 21,
+        "quantity": 2
+      }
+    ]
+  },
+  {
+    "key": "05",
+    "identity": "demo-2",
+    "delivery_method": "pickup",
+    "status": "ready_for_pickup",
+    "notes": "הזמנת הדגמה — לא תטופל ולא תישלח",
+    "daysAgo": 3,
+    "items": [
+      {
+        "product": 1,
+        "quantity": 2,
+        "color": "לבן"
+      }
+    ]
+  },
+  {
+    "key": "06",
+    "identity": "demo-3",
+    "delivery_method": "delivery",
+    "status": "shipped",
+    "notes": null,
+    "daysAgo": 4,
+    "items": [
+      {
+        "product": 107,
+        "quantity": 1
+      },
+      {
+        "product": 108,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "key": "07",
+    "identity": "demo-1",
+    "delivery_method": "delivery",
+    "status": "completed",
+    "notes": null,
+    "daysAgo": 9,
+    "items": [
+      {
+        "product": 7,
+        "quantity": 2,
+        "color": "כחול"
+      },
+      {
+        "product": 10,
+        "quantity": 1
+      }
+    ]
+  },
+  {
+    "key": "08",
+    "identity": "demo-2",
+    "delivery_method": "pickup",
+    "status": "completed",
+    "notes": null,
+    "daysAgo": 14,
+    "items": [
+      {
+        "product": 64,
+        "quantity": 1
+      },
+      {
+        "product": 65,
+        "quantity": 2
+      }
+    ]
+  }
+]
