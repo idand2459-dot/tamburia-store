@@ -12,6 +12,53 @@ Node process serves both the API and the React app.
 **How it is built, and why:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). It covers the
 layers, a request traced from a click to the database and back, and the design decisions.
 
+**Live demo:** not deployed yet. The demo mode is implemented and tested locally; the owner's
+steps to put it online are in [docs/demo-deployment.md](docs/demo-deployment.md), and the link
+goes here once the deployment has been done and checked. See [Portfolio demo](#portfolio-demo).
+
+---
+
+## Portfolio demo
+
+This repository can run as a public **portfolio demonstration** (`DEMO_MODE=true`, plan
+`.plan/006-2026-11-16-p10-portfolio-demo.md`): one Node service on Render and a Neon database that
+holds only fictional data. It is not a commercial launch. A visitor always sees a banner saying so;
+orders are not processed, nothing is shipped or charged, and no email is sent. Because the checkout
+is not assumed safe to expose, demo mode is enforced by the **server and the database**, not by
+hiding buttons.
+
+### How the demo works (for interviews)
+
+- **One origin.** Express serves `/api`, `/uploads` and the React build from one process; the client
+  calls relative `/api` paths and the admin session is an `httpOnly`, `SameSite=Strict` cookie.
+- **A demo database cannot be confused with a real one.** The first-time setup is an owner-run
+  script (`npm run demo:bootstrap`). It refuses anything but a **pristine** database, requires the
+  owner to type the host and database name again, and only then creates a one-row table,
+  `demo_database_marker` (a random id and a state, `bootstrapping` then `ready`), runs the
+  migrations and seeds the data. The server never creates the marker. At startup, **before any
+  write**, a demo server must find that table with the id in `DEMO_DATABASE_ID` and state `ready`, and
+  a normal server refuses a database that has it. A half-finished bootstrap is left in
+  `bootstrapping` and is never served; `--resume` completes it.
+- **Two admin roles in the same signed token.** `owner` edits everything; `viewer` is the public
+  read-only demo admin (`POST /api/auth/demo-login`, which exists only in demo mode, 4-hour
+  session). Authorization is **default-deny**: `requireAdmin` is owner-only, so every write route (and every
+  future route) is closed to a viewer, and a separate `requireAdminRead` opens an explicit list of
+  seven `GET` routes (and `HEAD`). A table-driven test runs every protected endpoint as nobody, a
+  viewer and the owner, and a source scan fails if a route is added without a row.
+- **Only fictional data is stored.** In demo mode an order is accepted only if its name, phone, email
+  and address exactly match one of three fixed fictional identities (the checkout has a "fill demo
+  details" button), and its notes are empty or one fixed sentence. So a read-only viewer can safely
+  see every order: there is nothing private in the database. Image uploads and public review
+  submission answer 403 for everyone, the owner included.
+- **Cleanup that survives sleeping.** A free instance sleeps, so no timer is relied on. Visitor orders
+  (identified by phone and by not being a `demo-seed:NN` tagged seed order) older than 72 hours are
+  deleted, at most 200 per run, when the process wakes, when an order is created at the cap and when an
+  admin reads orders (throttled); at most 100 visitor orders are kept.
+
+The deployment steps, the environment list and the live checks are in
+[docs/demo-deployment.md](docs/demo-deployment.md); the security model is in
+[docs/security.md](docs/security.md).
+
 ---
 
 ## Screenshots
@@ -265,6 +312,13 @@ The rules are in [client/src/css/CONVENTIONS.md](client/src/css/CONVENTIONS.md).
   JWT attack does not apply. Signatures are compared with `crypto.timingSafeEqual`.
 - **The token is delivered in an `httpOnly`, `SameSite=Strict` cookie**, never in the
   response body. `Secure` is set automatically in production.
+- **The token carries a signed role, `owner` or `viewer`.** `requireAdmin` is owner-only; the
+  read-only `viewer` exists only in demo mode and is limited to an explicit allowlist of `GET`
+  routes. A token without a role is invalid (the owner logs in again once). See
+  [Portfolio demo](#portfolio-demo).
+- **The database connection can be encrypted and verified.** `DB_SSL=true` makes the pool verify the
+  certificate chain and host name; nothing in the code can turn verification off
+  (`unit-repo-hygiene` fails on it).
 - **The server refuses unsafe configuration.** It will not start with an invalid `NODE_ENV`
   (only `development`, `test` and `production` are allowed), with `NODE_ENV` unset next to a
   database that is not on this machine, or with a malformed `CORS_ORIGINS`, `PORT`,
@@ -312,8 +366,8 @@ It is not ready to enable: as written it would also block the Google Fonts style
 files that `client/public/index.html` loads, and the note in `securityHeaders.js` about the
 `application/ld+json` block has not been checked in a browser.
 
-**What is not solved yet** (in-memory counters, upload hardening, database TLS), and
-the checklist to go through before deploying, are in [docs/security.md](docs/security.md).
+**What is not solved yet** (in-memory counters, upload hardening, no server-side revocation of a
+token), and the checklist to go through before deploying, are in [docs/security.md](docs/security.md).
 
 ---
 
@@ -362,8 +416,8 @@ port and address) before the first migration, and only then starts its own serve
 
 | Suite | Checks | Covers |
 |---|---|---|
-| `unit-repo-hygiene` | 8 | `.env` not tracked, `.env.example` placeholders only, no secret value in any tracked file |
-| `unit-config` | 186 | Every startup rule of `server/config/env.js` (`NODE_ENV`, `DB_HOST` with `NODE_ENV` unset, session secret and password length, `ADMIN_URL`, `CORS_ORIGINS`, ports, session lifetime, limiter windows, rate-limit defaults and `TRUST_PROXY_HOPS`), no secret in any message, optional mail credentials, and the delivery fee agreeing across client, server default and `.env.example` |
+| `unit-repo-hygiene` | 10 | `.env` not tracked, `.env.example` placeholders only, no secret value in any tracked file, and nothing in `server/`, `scripts/` or `test/` switches off database certificate verification |
+| `unit-config` | 210 | Every startup rule of `server/config/env.js`, the demo mode rules and `DB_SSL` included (`NODE_ENV`, `DB_HOST` with `NODE_ENV` unset, session secret and password length, `ADMIN_URL`, `CORS_ORIGINS`, ports, session lifetime, limiter windows, rate-limit defaults and `TRUST_PROXY_HOPS`), no secret in any message, optional mail credentials, and the delivery fee agreeing across client, server default and `.env.example` |
 | `unit-e2e-refusal` | 16 | The E2E runner refuses to start on a missing, production, remote or non-test database |
 | `unit-test-database-guard` | 168 | The guard that keeps `npm test` and `npm run a11y` on a separate local database |
 | `unit-no-private-phone` | 5 | The shop owner's private number appears nowhere public |
@@ -375,7 +429,11 @@ port and address) before the first migration, and only then starts its own serve
 | `unit-email-delivery` | 16 | The email sender never throws and never waits forever: transport timeouts, the 10-second deadline, a timed-out send reported as an unknown outcome, its timer cleared, no unhandled rejection |
 | `unit-product-service` | 14 | Hidden-product visibility for customers and admins, with a fake repository |
 | `unit-review-service` | 13 | Moderation: public reads approved-only, new reviews unapproved |
-| `unit-auth-cookie` | 33 | Reading the admin cookie through cookie-parser: missing, expired, tampered, URL-encoded, malformed, quoted and duplicated cookies, and `requireAdmin` / `markAdmin` |
+| `unit-auth-cookie` | 56 | Reading the admin cookie through cookie-parser: missing, expired, tampered, URL-encoded, malformed, quoted and duplicated cookies, the signed role (owner, viewer, legacy, unknown, escalated), and `requireAdmin` / `requireAdminRead` / `markAdmin` |
+| `unit-demo-target` | 32 | Which databases the demo scripts may touch: URL parsing, the typed host and database name, local hosts, the development and test databases (fake URLs only) |
+| `unit-demo-catalogue` | 38 | The demo data files (catalogue, pigment dosages, reviews, orders) and the catalogue tooling: valid products, no real SKU, no phone, URL or email, bundled images by content hash |
+| `unit-admin-routes-covered` | 31 | A source scan: every route that uses `requireAdmin` or `requireAdminRead` has a row in the authorization table, the viewer allowlist is exactly seven GET routes |
+| `unit-deploy-config` | 25 | The deployment runbook against `.env.example` and `package.json`, the build inputs, what is and is not deployed, and the guard hook patterns |
 | `unit-money` | 23 | Agorot arithmetic and price parsing |
 | `unit-originals` | 14 | Keeping and finding the full-resolution original of an upload |
 | `smoke-fresh-db` | 13 | An empty database: every migration, the catalogue import, and a column-by-column schema match with the real one |
@@ -387,6 +445,11 @@ port and address) before the first migration, and only then starts its own serve
 | `smoke-pigments` | 48 | The 20 shades, ordering, search, the light < medium < dark invariant |
 | `smoke-contract` | 267 | Black-box HTTP contract of every route (REFACTOR_PLAN P5): 401 on every admin route, side-effect-free probes with exact status and message, list/pagination shapes, error shape, security headers, CORS, parser errors in Hebrew, no database text, numeric limits, field-length limits, and the database effects of product, order, review and pigment flows |
 | `smoke-rate-limits` | 41 | The order and review limits on the real routes (low limits, set before the server starts): 429 with `Retry-After`, separate counters, nothing else limited, and a refused or replayed order never creating a second one |
+| `smoke-demo-bootstrap` | 38 | `demo:bootstrap` and `demo:seed` as real processes on scratch databases the suite creates and drops (needs `CREATEDB`): every refusal, claim, seed, idempotent reseed, failed seed and resume, concurrent migrations |
+| `smoke-demo-database` | 16 | Which database each server may start on: a demo server without, with the wrong or with a half-finished marker, and a normal server with one; a refusal changes nothing |
+| `smoke-admin-roles` | 103 | Every admin route as nobody, viewer and owner against a real demo server, the exposure proof and the escalation attempts |
+| `smoke-demo-checkout` | 54 | Only fictional identities are accepted and stored; idempotency, availability and rate limits unchanged; reviews and uploads are 403; no mail |
+| `smoke-demo-cleanup` | 27 | What cleanup deletes and never deletes, the bounded batch, the cap and the marker conditions |
 | `smoke-auth` | 46 | Login, cookie flags, every guarded route, logout, rate limiting |
 
 ---
@@ -435,6 +498,10 @@ The full list with comments is in [`.env.example`](.env.example). The ones that 
 | `LOGIN_MAX_ATTEMPTS` / `LOGIN_WINDOW_MS` | `10` / 15 minutes | Login attempts per client address and window |
 | `TRUST_PROXY_HOPS` | `1` in production, `0` elsewhere | Proxies in front of the server, 0 to 5; decides which address the limits count |
 | `DELIVERY_FEE` | `20` | Delivery fee in shekels (must match `client/src/js/utils/delivery.js`) |
+| `DB_SSL` | `false` | `true` encrypts the database connection and verifies the certificate chain and host name (a managed host needs it) |
+| `DEMO_MODE` | `false` | The portfolio demo. The server refuses to start in it unless `NODE_ENV=production`, `MAIL_ENABLED=false` (explicit), `DEMO_DATABASE_ID` is a UUID, `ADMIN_PASSWORD` has 20 or more characters, `SERVE_CLIENT` is true and `CORS_ORIGINS` is empty |
+| `DEMO_DATABASE_ID` | — | The id `npm run demo:bootstrap` printed; must equal the demo database marker |
+| `DEMO_MAX_VISITOR_ORDERS` / `DEMO_ORDER_TTL_HOURS` | `100` / `72` | Visitor demo orders kept at once, and for how many hours (at most 168) |
 | `CSP_ENABLED` | `false` | Content Security Policy (see Security) |
 
 A limiter window is at most 24 hours. The rules, the reasons, and the checklist for deploying
@@ -459,6 +526,10 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | `npm run test:e2e` | Browser end-to-end suite (`test/e2e/`, plan `005`): customer, admin and checkout-failure journeys; `E2E_SPECS=customer,admin,failures` picks specs; `CHROME_PATH` picks the browser |
 | `npm run a11y` | Accessibility audit (`-- --report` writes `docs/a11y-report.md`) |
 | `npm run products:import` | Imports or merges the catalogue from a CSV (default: `scripts/products_import_template.csv`) |
+| `npm run demo:bootstrap` | **Owner-run, once, on a new empty database:** claims it as the demo database, migrates and seeds it (see [docs/demo-deployment.md](docs/demo-deployment.md)); `-- --resume --database-id <id>` completes an interrupted run |
+| `npm run demo:seed` | **Owner-run:** refreshes the curated demo rows of a marked database (`-- --reset` also deletes visitor orders) |
+| `npm run demo:candidates` | Read-only against the development database: writes the candidate sheet the owner approves the demo catalogue from |
+| `npm run demo:catalogue` | Builds `scripts/demo-data/catalogue.json` and `demo-assets/uploads/` from the approved sheet |
 | `npm run seed:demo` | Inserts demo orders and reviews |
 | `npm run seed:demo:clear` | Removes exactly that demo data again |
 | `npm run images:categories` | Converts the category banner PNGs in `design-assets/` to WebP |
@@ -506,11 +577,15 @@ npm run dev:client     # React with hot reload, port 3001 (set in client/.env.de
 
 ## API
 
-Everything is under `/api`. Routes marked 🔒 require an admin session.
+Everything is under `/api`. Routes marked 🔒 require an admin session; a 🔒 route is **owner only**
+unless it is one of the seven reads the demo `viewer` may call (`GET /orders`, `/orders/stats`,
+`/orders/:id`, `/reviews/all`, `/reviews/:id`, `/settings/:key`, `/auth/me`). In demo mode
+`POST /reviews` and `POST /upload-multiple` answer 403 `demo_disabled` for everyone.
 
 | Domain | Routes |
 |---|---|
-| **Auth** | `POST /auth/login` · `POST /auth/logout` · 🔒 `GET /auth/me` |
+| **Auth** | `POST /auth/login` · `POST /auth/logout` · 🔒 `GET /auth/me` (returns the role) · `POST /auth/demo-login` (demo mode only, 404 otherwise: the read-only viewer session) |
+| **Demo** | `GET /demo` — `{ demo: false }`, or `{ demo: true, identities }` in demo mode |
 | **Products** | `GET /products` · `GET /products/:id` · `GET /products/categories` · 🔒 `POST` `PUT /:id` `DELETE /:id` |
 | **Orders** | `POST /orders` (optional `request_id`: one order per id, a retry gets the original back with 200 and `Idempotent-Replayed: true`, the same id with a different order is 422; rate limited, 429 with `Retry-After`) · 🔒 `GET /orders` `GET /:id` `GET /stats` `PUT /:id` `PUT /:id/status` `DELETE /:id` |
 | **Reviews** | `GET /reviews` · `GET /reviews/stats` · `POST /reviews` (rate limited, 429) · 🔒 `GET /reviews/all` `GET /:id` `PUT /:id` `PUT /:id/approve` `DELETE /:id` |
@@ -535,7 +610,11 @@ statistics tab counts its sums from. `PUT` with `value: null` deletes it, which 
 ## Status and known issues
 
 This is a working application running locally against a real database. It is **not
-deployed** yet, and the screenshots use seeded demo data.
+deployed** yet, and the screenshots use seeded demo data. The portfolio demo (see above) is
+implemented and tested locally; putting it online is the owner's step
+([docs/demo-deployment.md](docs/demo-deployment.md)), and the catalogue it seeds is a curated
+selection of 117 real shop products (81 with their own photographs; prices are demonstration prices),
+built from `scripts/demo-data/catalogue-selection.json`.
 
 Known gaps, in rough order of how much they matter:
 
@@ -548,7 +627,7 @@ Known gaps, in rough order of how much they matter:
 4. **Rate limiting is in-process.** Counters live in the Node process's memory, which is
    correct for a single server but would not hold behind more than one instance.
 5. **Security and privacy gaps are open** beyond that: the CSP is off,
-   and uploads and database TLS are not hardened. They are listed, with the
+   uploads are not hardened, and there is no server-side revocation of a login. They are listed, with the
    deployment checklist, in [docs/security.md](docs/security.md). There is also no privacy policy
    or terms page yet.
 

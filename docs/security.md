@@ -5,7 +5,32 @@ the first two sections is checked against the code and has tests; the section on
 has none, and is the part to read before putting the store in front of real traffic.
 
 This is a portfolio project that runs locally. It is not deployed, and nothing here is a claim
-that it is ready for a live shop.
+that it is ready for a live shop. It has a **portfolio demo mode** (below) that is meant to be put
+online with fictional data only; that is not a commercial launch, and the commercial checkout is
+not assumed safe to expose.
+
+## The portfolio demo model
+
+`DEMO_MODE=true` (plan `.plan/006-2026-11-16-p10-portfolio-demo.md`, runbook in
+[demo-deployment.md](demo-deployment.md)). The protections are enforced by the server and the database,
+and are tested (`smoke-demo-*`, `smoke-admin-roles`, `unit-admin-routes-covered`, `unit-config`):
+
+| Area | Protection | Where |
+|---|---|---|
+| Startup | The server refuses to start in demo mode unless `NODE_ENV=production`, `MAIL_ENABLED=false` is set explicitly, `DEMO_DATABASE_ID` is a UUID, `ADMIN_PASSWORD` has 20 or more characters, `SERVE_CLIENT` is true and `CORS_ORIGINS` is empty; the messages name the variable and never a value | `server/config/env.js` |
+| Which database | A demo server starts only on a database with the `demo_database_marker` table whose id equals `DEMO_DATABASE_ID` and whose state is `ready`; a normal server exits when the table exists. The check runs before any write. Only `npm run demo:bootstrap` creates the marker, only on a pristine database, with the host and database name typed again by the owner; the development and test databases and a local host (without `--allow-local`) are refused | `server/api/demo/demo.service.js`, `scripts/demo-bootstrap.js`, `scripts/lib/demoTarget.js` |
+| Roles | The signed token carries `role`: `owner` or `viewer`. A token without a role is invalid. `requireAdmin` is owner-only, so every write and every route nobody opened to a viewer is 403 for a viewer (reason `demo_read_only`). `requireAdminRead` accepts both roles for `GET` and `HEAD` only, on seven routes. `POST /api/auth/demo-login` issues a 4-hour viewer session and is mounted only in demo mode (404 otherwise); it shares the login limiter and does not reset it | `server/middleware/requireAdmin.js`, `server/api/auth/` |
+| What a viewer sees | Orders, reviews, hidden products, statistics and one timestamp setting, all from `SELECT`s with explicit column lists. `request_id` and `request_hash` are never returned. This is safe only because a demo database holds only fictional values, which the checkout rules and the data-invariant check guarantee | `test/smoke-admin-roles.js` |
+| Stored data | An order is accepted only when name, phone, email and (for delivery) address together equal one of three fixed fictional identities, and `notes` is empty or one fixed text; the owner's edit follows the same rule on the merged state. Seeded orders carry `request_id = demo-seed:NN`, which the public API cannot produce (it accepts only a UUID v4) | `server/api/demo/demo.rules.js` |
+| Switched off | `POST /api/upload-multiple` (it would write to the host's ephemeral disk) and `POST /api/reviews` answer 403 `demo_disabled` for every caller, the owner included | `server/middleware/demoDisabled.js`, `review.service.js` |
+| Cleanup and abuse | Visitor orders (an identity phone and not a seed tag) older than `DEMO_ORDER_TTL_HOURS` are deleted in batches of 200 on wake, on an order at the cap and on an admin read (once per 5 minutes); at most `DEMO_MAX_VISITOR_ORDERS` are kept (429 `demo_order_cap`); cleanup does nothing unless the marker is present, matching and `ready` | `demo.service.js` |
+| Mail | None: `MAIL_ENABLED=false` is mandatory, and the transporter then only logs a label | `server/services/email/transporter.js` |
+| Database link | `DB_SSL=true` passes `ssl: { rejectUnauthorized: true }`; nothing in `server/`, `scripts/` or `test/` may disable verification (`unit-repo-hygiene`) | `server/config/db.js` |
+
+Residual risks: a viewer or owner token cannot be revoked (rotate `SESSION_SECRET`); the seed-tag
+convention is enforced by tests and not by a constraint; the rate limits are per process, so run one
+instance. A real database must never run in demo mode: the marker, the pristine rule and the typed
+confirmations are what prevent it.
 
 ## What is in place
 
@@ -102,8 +127,10 @@ second is what only a person on the deployed site can check.
 
 - [ ] The site is served over HTTPS and plain HTTP redirects to it. The app does not terminate TLS.
 - [ ] HSTS is on only after HTTPS works: it is sent for 180 days with `includeSubDomains`.
-- [ ] The database connection is encrypted where the host requires it. **The app has no setting for
-  this yet** (see the gaps), so use a private network, or add one before deploying.
+- [ ] The database connection is encrypted where the host requires it: set `DB_SSL=true`, which
+  verifies the certificate chain and host name. If a provider's chain does not verify, the answer is a
+  documented CA path, never switching verification off. A managed host's **direct** (not pooled)
+  address is needed for the migration lock (see [demo-deployment.md](demo-deployment.md)).
 - [ ] `uploads/` and `uploads-originals/` are on persistent storage and backed up.
 - [ ] The reverse proxy accepts bodies of at least 200 KB, and its timeouts exceed the 20 s the
   checkout waits for an order.
@@ -190,9 +217,9 @@ None of these is fixed by P8.1. They are listed so that nobody assumes otherwise
 - **Uploads.** Admin only and re-encoded, but there is no explicit pixel limit for decoding (the
   library default applies), no check of the real image format beyond the decoder accepting it, no
   check of the contents of a product's `images` list, and no quota.
-- **Database TLS.** The connection pool has no `ssl` option and there is no `DB_SSL` variable. A
-  database that requires TLS cannot be reached, and one that does not require it is reached
-  unencrypted.
+- **Database TLS.** Closed by P10: `DB_SSL=true` encrypts and verifies the connection. It is off by
+  default, so a deployment has to set it; the first live proof is the owner-run bootstrap against the
+  managed database (the Neon certificate must verify with Node's default trust).
 - **Dependencies.** No CI runs `npm audit`.
 
 **Outside this document**
@@ -207,5 +234,10 @@ address keys and the limiter), `smoke-rate-limits` (the real routes with low lim
 headers, separate counters, and that a refused or replayed order never creates a second one),
 `unit-error-handler` and `smoke-contract` (no database or parser text, no stack trace),
 `unit-numeric-ids` (ids and offsets) and `unit-order-limits` (field lengths). The client side of a
-429 is in `client/src/js/__tests__/hooks/useCheckoutForm.test.js`. None of these can check the real
+429 is in `client/src/js/__tests__/hooks/useCheckoutForm.test.js`. The demo model is covered by
+`unit-demo-target` and `smoke-demo-bootstrap` (which database may be claimed), `smoke-demo-database`
+(which database each server may run on), `smoke-admin-roles` and `unit-admin-routes-covered` (the
+role table, escalation attempts, no writes), `smoke-demo-checkout` (only fictional identities, nothing
+real stored), `smoke-demo-cleanup` (what cleanup deletes and never deletes) and `unit-deploy-config`
+(the runbook against `.env.example`). None of these can check the real
 hosting: the checklist above can.

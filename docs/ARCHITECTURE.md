@@ -8,7 +8,7 @@ from the same origin.
 
 | Layer | Technology |
 |---|---|
-| Server | Node.js ≥ 18, Express 5 |
+| Server | Node.js ≥ 20, Express 5 |
 | Database | PostgreSQL through `pg`. No ORM; plain SQL in repository files |
 | Client | React 19 (Create React App), react-router 7, lucide-react icons |
 | Images | `multer` for uploads, `sharp` to resize, square and re-encode them to WebP |
@@ -25,7 +25,7 @@ server/
   config/          env.js (reads and validates every variable), db.js (the one pg Pool)
   db/              migrate.js (the runner) and migrations/000–012 (.sql, applied in order)
   api/             index.js (mounts the domains, GET /health) and one folder per domain:
-                   product, order, review, pigmentFormula, setting, auth, upload. A domain folder holds
+                   product, order, review, pigmentFormula, setting, auth, upload, demo. A domain folder holds
                    <d>.routes (public vs admin endpoints), <d>.validator (parse and bound input, 400),
                    <d>.controller (HTTP to a service call and back; no SQL, no repository import, no
                    try/catch), <d>.service (business rules) and <d>.repository (all SQL, parameterised,
@@ -49,7 +49,9 @@ client/src/
   js/utils/        pure helpers: pricing, store info, colour palette, category icons…
 
 test/              server suites (unit-*, smoke-*), run by run-all.js
-scripts/           catalog import, demo data, the product-photo pipeline, the a11y audit
+scripts/           catalog import, demo data, the product-photo pipeline, the a11y audit, and the
+                   portfolio-demo tooling (demo-bootstrap, demo-seed, demo-candidates, demo-catalogue-build,
+                   demo-copy-images; data in scripts/demo-data/, bundled images in demo-assets/)
 ```
 
 ## A request, end to end: placing an order
@@ -255,7 +257,9 @@ also without a `SESSION_SECRET` of at least 32 characters, an admin password of 
 `.env.example` holds placeholders, and `unit-repo-hygiene` fails if `.env` or any of its secret
 values appears in a tracked file. The rules, the deployment checklist and the gaps that are not
 closed yet (personal data in logs, the CSP, uploads,
-database TLS) are in [security.md](security.md).
+no server-side revocation of a login) are in [security.md](security.md). The portfolio demo's own model
+(the roles, which database may run, what is stored) is in the same file and in
+[The portfolio demo](#the-portfolio-demo) below.
 
 **Accessibility.** The storefront targets IS 5568 / WCAG 2.1 AA. `npm run a11y` audits
 the 12 storefront pages and the admin's orders screen (logged in, pick list open, with two
@@ -285,10 +289,53 @@ development database itself (`test/lib/testDatabase.js`):
   backend restructuring: it imports nothing from `server/` and covers every route, including
   all admin routes without a cookie.
 
+The demo suites: **unit-demo-target** (which databases the demo scripts may touch), **unit-demo-catalogue**
+(the demo data files and the catalogue tooling), **unit-admin-routes-covered** (a source scan that keeps
+`test/lib/adminRoutes.js` equal to the routes that use `requireAdmin` or `requireAdminRead`),
+**unit-deploy-config** (the runbook against `.env.example` and `package.json`), **smoke-demo-bootstrap**
+(the bootstrap matrix on scratch databases the suite creates and drops; it needs `CREATEDB`),
+**smoke-demo-database**, **smoke-admin-roles**, **smoke-demo-checkout** and **smoke-demo-cleanup**. The
+last four start the real server (`server/server.js`) as a child process in production mode with
+`DEMO_MODE=true` against the guarded test database (`test/lib/demoServer.js`), because demo mode requires
+`NODE_ENV=production`, which the test guard refuses in the suite process itself.
+
 `npm run test:client` runs the Jest tests (services, the Redux store, pricing, the admin
 hooks and tabs, the pure utils, App routing). They live in `client/src/js/__tests__/`, in folders that
 mirror the code they cover. `npm run test:e2e` drives the real build in Chrome against the guarded test database (see `test/e2e/run.js`). `npm run a11y` is the
 accessibility gate (it serves `client/build`, so build first).
+
+## The portfolio demo
+
+With `DEMO_MODE=true` the same process runs as a public, fictional-data-only demonstration (plan
+`.plan/006-2026-11-16-p10-portfolio-demo.md`; deployment in [demo-deployment.md](demo-deployment.md), the
+security model in [security.md](security.md)). Nothing in it is a new layer: it is the usual
+route → controller → service → repository chain, with these additions.
+
+- **`server/api/demo/`** — `demo.rules.js` (the three fictional identities, the fixed note, the seed tag),
+  `demo.service.js` (the startup identity check, the cleanup, the cap), `demo.repository.js` (the only SQL:
+  the marker table and the visitor orders), and `GET /api/demo`, which tells the storefront whether it is the
+  demo and which identities its checkout accepts.
+- **Which database.** `server.js` calls `assertDatabaseIdentity()` after connecting and before `runMigrations()`:
+  a demo server needs the `demo_database_marker` table with the id in `DEMO_DATABASE_ID` and state `ready`; a
+  normal server exits when that table exists. The table is created only by `npm run demo:bootstrap` (never by a
+  migration or the server), on a pristine database. `runMigrations()` holds a `pg_advisory_lock` on one
+  dedicated connection, so two overlapping deploys do not migrate together (it needs a direct, not pooled,
+  connection).
+- **Roles.** The session token carries `role` (`owner` or `viewer`). `requireAdmin` is owner-only;
+  `requireAdminRead` (GET and HEAD, both roles) is applied to an explicit list of seven routes;
+  `POST /api/auth/demo-login` exists only in demo mode. The client reads the role from `GET /api/auth/me`
+  (`AdminAccessContext`) only to choose what to draw.
+- **Stored data.** `order.service.js` calls `assertDemoOrder` first in demo mode (and on the merged state of
+  an owner edit); `review.service.js` and the upload route are switched off (`demoDisabled`).
+- **Cleanup.** `demo.service.js` deletes expired visitor orders in batches of 200 (on startup, on an order at
+  the cap, and on an admin read, at most once per five minutes), and only while the marker is present,
+  matching and `ready`.
+- **Client.** `useDemoMode` reads `GET /api/demo` once (no Redux slice); `DemoBanner` is on every storefront
+  page and in the admin; the checkout fills its read-only fields from an identity; the review and upload
+  controls are not drawn.
+- **Data and scripts.** `scripts/demo-data/` holds the pigment demonstration dosages, the curated reviews and
+  the seeded orders, and the owner-approved `catalogue.json` (real products, built from `catalogue-selection.json`).
+  The Render build copies `demo-assets/uploads/` into `uploads/` (`scripts/demo-copy-images.js`).
 
 ## Running it
 
