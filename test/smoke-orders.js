@@ -728,7 +728,7 @@ async function testIdempotency() {
 
   // malformed ids are refused before anything is looked up or stored
   const mark = await storedOrderCount();
-  for (const bad of ['1', 'abc', '', ' ', 123, {}, [], newRequestId().replace(/-4/, '-1'), `${newRequestId()}x`, 'a'.repeat(300)]) {
+  for (const bad of ['1', 'abc', '', ' ', 123, {}, [], newRequestId().replace(/^(.{14})4/, '$11'), `${newRequestId()}x`, 'a'.repeat(300)]) {
     const res = await call('POST', '/orders', withKey(bad));
     check(`malformed request_id ${JSON.stringify(bad).slice(0, 20)} → 400`, res.status === 400, `${res.status} ${res.body.error || ''}`);
   }
@@ -793,6 +793,91 @@ async function testConcurrentIdempotency() {
   check('mixed orders: only the winner\'s payload succeeded',
     winners.every((r) => r.body.customer_name === winnerName), winners.map((r) => r.body.customer_name));
   check('mixed orders: exactly one more order stored', (await storedOrderCount()) === before + 2, null);
+}
+
+/**
+ * An admin change that is still uncommitted when the order reaches the INSERT. Pricing reads the
+ * catalogue without a lock and still sees the product as orderable, so only the lock taken in the
+ * same transaction as the INSERT (order.repository assertProductsOrderable) can stop the order.
+ * The admin transaction is held open by hand to make the interleaving deterministic.
+ */
+async function testAdminChangeRacesOrder() {
+  console.log('\n── admin delete / availability change racing an order');
+  const { pool } = require('../server/config/db');
+  const line = (product) => ({ id: product.id, name: product.name, price: product.price, quantity: 1 });
+
+  /** Holds `adminSql` open in a transaction, sends the order, then commits. */
+  async function orderDuring(product, adminSql) {
+    const admin = await pool.connect();
+    try {
+      await admin.query('BEGIN');
+      await admin.query(adminSql, [product.id]);
+      const pending = call('POST', '/orders', { ...validOrder(), items: [line(product)] });
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      await admin.query('COMMIT');
+      return await pending;
+    } catch (err) {
+      await admin.query('ROLLBACK').catch(() => {});
+      throw err;
+    } finally {
+      admin.release();
+    }
+  }
+
+  const before = await storedOrderCount();
+
+  const toggled = await makeProduct('raceToggle', { name: 'מוצר מרוץ זמינות', price: 20, sku: 'TEST-ORD-RACE-1' });
+  const refusedToggle = await orderDuring(toggled, 'UPDATE products SET in_stock = false WHERE id = $1');
+  check('marked unavailable while the order is in flight → 409 out_of_stock',
+    refusedToggle.status === 409 && refusedToggle.body.details?.reason === 'out_of_stock', refusedToggle.body);
+
+  const doomed = await makeProduct('raceDelete', { name: 'מוצר מרוץ מחיקה', price: 20, sku: 'TEST-ORD-RACE-2' });
+  const refusedDelete = await orderDuring(doomed, 'DELETE FROM products WHERE id = $1');
+  check('deleted while the order is in flight → 409 out_of_stock, no order for a missing product',
+    refusedDelete.status === 409 && refusedDelete.body.details?.reason === 'out_of_stock', refusedDelete.body);
+  createdProducts.splice(createdProducts.indexOf(doomed.id), 1);
+
+  check('neither refused order was stored', (await storedOrderCount()) === before, null);
+
+  // the other direction: an order holding the lock makes the admin delete wait, and then see it
+  const sold = await makeProduct('raceSold', { name: 'מוצר מרוץ נמכר', price: 20, sku: 'TEST-ORD-RACE-3' });
+  const buyer = await pool.connect();
+  let deletion;
+  try {
+    await buyer.query('BEGIN');
+    await buyer.query('SELECT id FROM products WHERE id = $1 FOR SHARE', [sold.id]);
+    deletion = call('DELETE', `/products/${sold.id}`);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    await buyer.query(
+      `INSERT INTO orders (customer_name, customer_phone, delivery_method, items, subtotal, total)
+       VALUES ('race', '0500000000', 'pickup', $1::jsonb, 20, 20)`,
+      [JSON.stringify([{ id: sold.id, name: sold.name, price: 20, quantity: 1 }])]
+    );
+    await buyer.query('COMMIT');
+  } finally {
+    buyer.release();
+  }
+  const blocked = await deletion;
+  check('delete waiting on an in-flight order → 409 has_orders, product kept',
+    blocked.status === 409 && blocked.body.details?.reason === 'has_orders', blocked.body);
+  const { rows: [raceOrder] } = await pool.query("SELECT id FROM orders WHERE customer_name = 'race'");
+  created.push(raceOrder.id);
+
+  // multi-product orders listing the products in opposite orders, while the admin changes both:
+  // the locks are taken in id order, so none of them may deadlock (PostgreSQL 40P01 would be a 500)
+  const a = await makeProduct('lockA', { name: 'מוצר נעילה א', price: 20, sku: 'TEST-ORD-LOCK-A' });
+  const b = await makeProduct('lockB', { name: 'מוצר נעילה ב', price: 20, sku: 'TEST-ORD-LOCK-B' });
+  const requests = [];
+  for (let i = 0; i < 12; i++) {
+    const items = i % 2 === 0 ? [line(a), line(b)] : [line(b), line(a)];
+    requests.push(call('POST', '/orders', { ...validOrder(), items }));
+    requests.push(call('PUT', `/products/${i % 2 === 0 ? a.id : b.id}`, { description: `d${i}` }));
+  }
+  const results = await Promise.all(requests);
+  const orders = results.filter((r, i) => i % 2 === 0);
+  created.push(...orders.map((r) => r.body.id));
+  check('12 concurrent two-product orders in opposite line order, with admin updates: all 201, no deadlock',
+    orders.every((r) => r.status === 201) && results.every((r) => r.status < 500), results.map((r) => r.status));
 }
 
 /** selectedColor and selectedSize must be options of the product; null stays allowed. */
@@ -942,6 +1027,7 @@ async function main() {
   await testProductOptions();
   await testIdempotency();
   await testConcurrentIdempotency();
+  await testAdminChangeRacesOrder();
   await testUpdate(deliveryId);
   await testPicked(deliveryId);
   await testNoPublicLookup(deliveryId);

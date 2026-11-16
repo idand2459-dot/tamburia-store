@@ -90,7 +90,15 @@ scripts/           catalog import, demo data, the product-photo pipeline, the a1
      converting to shekels only at the end. Whatever totals the request carried are ignored.
 5. **Repository.** `orderRepository.create` inserts the priced order with one parameterised `INSERT`.
    With a `request_id` it is `createOnce`: `INSERT … ON CONFLICT (request_id) DO NOTHING`, see
-   *One order per request id* below.
+   *One order per request id* below. The insert runs in **one transaction** that first locks the
+   ordered product rows with `SELECT … ORDER BY id FOR SHARE` (`assertProductsOrderable`) and
+   keeps the locks until `COMMIT`. If a product was deleted, hidden or marked unavailable after
+   pricing, the order is refused with **409** `out_of_stock` and nothing is written. The admin
+   delete takes `FOR UPDATE` on the same row, so it waits for an in-flight order and then sees it
+   (`has_orders`); an availability change waits the same way. `FOR SHARE` locks do not conflict
+   with each other, so customers ordering the same product never block one another, and the
+   `ORDER BY id` fixes the locking order. There is still no stock quantity: a product is only
+   available or unavailable, and the owner changes that by hand.
 6. **Side effects.** The service sends the store and the customer their emails. Nothing is
    pushed to the admin: the open admin screen polls `GET /api/orders` every 30 seconds while
    its tab is visible and announces ids it has not seen. A mail
