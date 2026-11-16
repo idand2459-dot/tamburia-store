@@ -111,6 +111,18 @@ const mailCredential = (key) => (mailEnabled ? required(key) : process.env[key] 
 /** האורך המינימלי של סיסמת האדמין בייצור. */
 const MIN_ADMIN_PASSWORD = 12;
 
+/** The shortest ADMIN_PASSWORD when DEMO_MODE is on: the public site has a password-guessing surface. */
+const MIN_DEMO_ADMIN_PASSWORD = 20;
+
+/** The most visitor orders a demo keeps, and the longest it keeps them (a week), as upper bounds. */
+const MAX_DEMO_VISITOR_ORDERS = 10000;
+const MAX_DEMO_ORDER_TTL_HOURS = 168;
+
+/** Whether the text is a UUID (any version): the shape of DEMO_DATABASE_ID. */
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value));
+}
+
 const config = {
   nodeEnv,
   isProduction,
@@ -123,6 +135,18 @@ const config = {
     user: process.env.DB_USER || 'postgres',
     password: required('DB_PASSWORD'),
     logQueries: flag('DB_LOG_QUERIES', nodeEnv !== 'production'),
+    // true verifies the server certificate chain and host name (db.js); a managed host needs it.
+    ssl: flag('DB_SSL', false),
+  },
+
+  // The portfolio demo (docs/security.md, plan 006). Off by default: with DEMO_MODE unset the
+  // application behaves as the commercial store. DEMO_DATABASE_ID must equal the id the bootstrap
+  // script wrote to the demo database marker (server/api/demo).
+  demo: {
+    enabled: flag('DEMO_MODE', false),
+    databaseId: process.env.DEMO_DATABASE_ID || '',
+    maxVisitorOrders: number('DEMO_MAX_VISITOR_ORDERS', 100, { max: MAX_DEMO_VISITOR_ORDERS }),
+    orderTtlHours: number('DEMO_ORDER_TTL_HOURS', 72, { max: MAX_DEMO_ORDER_TTL_HOURS }),
   },
 
   mail: {
@@ -233,6 +257,19 @@ if (isProduction) {
   } else if (!isHttpsUrl(config.adminUrl)) {
     problems.push('ADMIN_URL חייב להיות כתובת https תקינה בייצור (למשל https://example.com/admin).');
   }
+}
+
+// A demo is a public site with a public (read-only) admin, so it only starts in a configuration
+// that cannot send mail, serve a second origin or accept a weak owner password. Names only.
+if (config.demo.enabled) {
+  if (!isProduction) problems.push('DEMO_MODE=true דורש NODE_ENV=production.');
+  if (process.env.MAIL_ENABLED !== 'false') problems.push('DEMO_MODE=true דורש MAIL_ENABLED=false במפורש.');
+  if (!isUuid(config.demo.databaseId)) problems.push('DEMO_MODE=true דורש DEMO_DATABASE_ID בצורת UUID.');
+  if (config.auth.password.length < MIN_DEMO_ADMIN_PASSWORD) {
+    problems.push(`ADMIN_PASSWORD קצרה מדי: ב-DEMO_MODE נדרשים לפחות ${MIN_DEMO_ADMIN_PASSWORD} תווים.`);
+  }
+  if (!config.client.serve) problems.push('DEMO_MODE=true דורש SERVE_CLIENT=true.');
+  if (config.corsOrigins.length > 0) problems.push('DEMO_MODE=true דורש CORS_ORIGINS ריק.');
 }
 
 if (problems.length > 0) throw new Error(problems.join('\n'));

@@ -360,5 +360,67 @@ console.log('\n── דמי משלוח: לקוח, שרת ותיעוד');
   // והלקוח לא יודע אותו בזמן ריצה — ראו את הפריט ב-.plan/000-backlog.md.
 }
 
+console.log('\n── DB_SSL ו-DEMO_MODE');
+{
+  const DEMO_ID = '3f2b8c1e-9d4a-4e7b-8a61-5c0d2f7e9b14';
+  const DEMO_PASSWORD = 'demo-owner-password-0123456789';
+  const demoEnv = {
+    NODE_ENV: 'production', DEMO_MODE: 'true', MAIL_ENABLED: 'false', DEMO_DATABASE_ID: DEMO_ID,
+    ADMIN_PASSWORD: DEMO_PASSWORD, SERVE_CLIENT: 'true', CORS_ORIGINS: '',
+  };
+
+  /** Loads the config with the demo and TLS values, and returns them or the failure. */
+  const loadDemo = (overrides) => {
+    const code = `const c = require(${JSON.stringify(ENV_JS)});`
+      + 'console.log(JSON.stringify({ ssl: c.db.ssl, demo: c.demo }));';
+    const run = spawnSync(process.execPath, ['-e', code], {
+      env: {
+        ...process.env, ...BASE_ENV,
+        DB_SSL: '', DEMO_MODE: '', DEMO_DATABASE_ID: '', DEMO_MAX_VISITOR_ORDERS: '', DEMO_ORDER_TTL_HOURS: '', SERVE_CLIENT: '',
+        ...overrides,
+      },
+      encoding: 'utf8',
+    });
+    return { ok: run.status === 0, message: run.stderr, values: run.status === 0 ? JSON.parse(run.stdout) : null };
+  };
+
+  const plain = loadDemo({ NODE_ENV: 'development' });
+  check('ברירות המחדל: בלי TLS, בלי מצב הדגמה, 100 הזמנות ו-72 שעות', plain.ok && plain.values.ssl === false
+    && plain.values.demo.enabled === false && plain.values.demo.maxVisitorOrders === 100
+    && plain.values.demo.orderTtlHours === 72, plain.values || plain.message);
+  check('DB_SSL=true מתקבל', loadDemo({ NODE_ENV: 'development', DB_SSL: 'true' }).values?.ssl === true);
+  const badSsl = loadDemo({ NODE_ENV: 'development', DB_SSL: 'yes' });
+  check('DB_SSL=yes — מסרב ונוקב בשם המשתנה', !badSsl.ok && badSsl.message.includes('DB_SSL'), badSsl.message);
+
+  const ok = loadDemo(demoEnv);
+  check('מצב הדגמה עם כל הדרישות — עולה', ok.ok && ok.values.demo.enabled === true && ok.values.demo.databaseId === DEMO_ID,
+    ok.values || ok.message);
+
+  for (const [name, overrides, key] of [
+    ['בלי NODE_ENV=production', { NODE_ENV: 'development' }, 'NODE_ENV'],
+    ['MAIL_ENABLED לא מוגדר', { MAIL_ENABLED: '' }, 'MAIL_ENABLED'],
+    ['MAIL_ENABLED=true', { MAIL_ENABLED: 'true', MAIL_USER: 'u', MAIL_PASS: 'p' }, 'MAIL_ENABLED'],
+    ['בלי DEMO_DATABASE_ID', { DEMO_DATABASE_ID: '' }, 'DEMO_DATABASE_ID'],
+    ['DEMO_DATABASE_ID שאינו UUID', { DEMO_DATABASE_ID: 'not-a-uuid' }, 'DEMO_DATABASE_ID'],
+    ['ADMIN_PASSWORD של 19 תווים', { ADMIN_PASSWORD: 'x'.repeat(19) }, 'ADMIN_PASSWORD'],
+    ['SERVE_CLIENT=false', { SERVE_CLIENT: 'false' }, 'SERVE_CLIENT'],
+    ['CORS_ORIGINS לא ריק', { CORS_ORIGINS: 'https://a.com' }, 'CORS_ORIGINS'],
+  ]) {
+    const bad = loadDemo({ ...demoEnv, ...overrides });
+    check(`DEMO_MODE ${name} — מסרב ונוקב בשם המשתנה`, !bad.ok && bad.message.includes(key), bad.message);
+    check(`ההודעה (${name}) אינה מדפיסה ערך`, !bad.ok && !bad.message.includes(DEMO_PASSWORD) && !bad.message.includes(DEMO_ID)
+      && !bad.message.includes('not-a-uuid'), bad.message);
+  }
+
+  check('ADMIN_PASSWORD של 20 תווים בדיוק — עולה', loadDemo({ ...demoEnv, ADMIN_PASSWORD: 'x'.repeat(20) }).ok);
+  const custom = loadDemo({ ...demoEnv, DEMO_MAX_VISITOR_ORDERS: '40', DEMO_ORDER_TTL_HOURS: '24' });
+  check('DEMO_MAX_VISITOR_ORDERS ו-DEMO_ORDER_TTL_HOURS נדרסים', custom.ok && custom.values.demo.maxVisitorOrders === 40
+    && custom.values.demo.orderTtlHours === 24, custom.values || custom.message);
+  const badCap = loadDemo({ ...demoEnv, DEMO_MAX_VISITOR_ORDERS: '0' });
+  check('DEMO_MAX_VISITOR_ORDERS=0 — מסרב ונוקב בשם המשתנה', !badCap.ok && badCap.message.includes('DEMO_MAX_VISITOR_ORDERS'), badCap.message);
+  const prodNoDemo = loadDemo({ NODE_ENV: 'production', ADMIN_PASSWORD: 'x'.repeat(12) });
+  check('ייצור בלי DEMO_MODE אינו דורש את כללי ההדגמה', prodNoDemo.ok, prodNoDemo.message);
+}
+
 console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);
 process.exitCode = failed === 0 ? 0 : 1;
