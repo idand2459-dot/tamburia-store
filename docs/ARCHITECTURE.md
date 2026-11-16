@@ -277,9 +277,9 @@ development database itself (`test/lib/testDatabase.js`):
   backend restructuring: it imports nothing from `server/` and covers every route, including
   all admin routes without a cookie.
 
-`npm run test:client` runs 736 Jest tests in 40 suites (services, the Redux store, pricing, the admin
+`npm run test:client` runs the Jest tests (services, the Redux store, pricing, the admin
 hooks and tabs, the pure utils, App routing). They live in `client/src/js/__tests__/`, in folders that
-mirror the code they cover. `npm run a11y` is the
+mirror the code they cover. `npm run test:e2e` drives the real build in Chrome against the guarded test database (see `test/e2e/run.js`). `npm run a11y` is the
 accessibility gate (it serves `client/build`, so build first).
 
 ## Running it
