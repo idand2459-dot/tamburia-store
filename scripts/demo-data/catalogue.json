@@ -1,0 +1,2706 @@
+[
+  {
+    "id": 1,
+    "name": "תרמיל סניטרי עמיד לעובש",
+    "category": "adhesives",
+    "subcategory": "sealants",
+    "sku": "DEMO-001",
+    "description": "תרמיל/שפומפרת סניטרי עם הגנת אנטי-עובש , מתאים למקלחות, אמבטיות, כיורים, שירותים, אריחים ועוד",
+    "price": 34,
+    "colors": [
+      {
+        "hex": "",
+        "name": "שקוף"
+      },
+      {
+        "hex": "#ffffff",
+        "name": "לבן"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/01bc1a41587d7117.webp",
+    "images": [
+      "/uploads/01bc1a41587d7117.webp",
+      "/uploads/6d449f2eff97528b.webp"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "תרמיל סיליקון רגיל",
+    "category": "adhesives",
+    "subcategory": "sealants",
+    "sku": "DEMO-002",
+    "description": "תרמיל סיליקון רגיל לשימוש כללי, עמיד ואיכותי לאיטום פנים וחוץ",
+    "price": 14,
+    "colors": [
+      {
+        "hex": "",
+        "name": "שקוף"
+      },
+      {
+        "hex": "#ffffff",
+        "name": "לבן"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/484fd1d85907c22c.webp",
+    "images": [
+      "/uploads/484fd1d85907c22c.webp"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "תרמיל סופר 7",
+    "category": "adhesives",
+    "subcategory": "cartridges",
+    "sku": "DEMO-003",
+    "description": "תרמיל איטום מקצועי סופר 7, עמיד לטמפרטורות קיצוניות ומציע הגנה מושלמת",
+    "price": 34,
+    "colors": [
+      {
+        "hex": "#ffffff",
+        "name": "לבן"
+      },
+      {
+        "hex": "",
+        "name": "שקוף"
+      },
+      {
+        "hex": "#1a1a1a",
+        "name": "שחור"
+      },
+      {
+        "hex": "#eab308",
+        "name": "קרם"
+      },
+      {
+        "hex": "#888888",
+        "name": "אפור"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/ffd6485a848b0d71.webp",
+    "images": [
+      "/uploads/ffd6485a848b0d71.webp",
+      "/uploads/b58e3f3f1794092f.webp",
+      "/uploads/758f63feb31d83b1.webp",
+      "/uploads/17886661a7cba4e3.webp",
+      "/uploads/6011819a550a1cae.webp"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "תרמיל היטק",
+    "category": "adhesives",
+    "subcategory": "cartridges",
+    "sku": "DEMO-004",
+    "description": "תרמיל היטק — הדבקה מיידית לחומרים קשים, הטוב ביותר בסדרה",
+    "price": 36,
+    "colors": [
+      {
+        "hex": "#ffffff",
+        "name": "לבן"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/64098330bf8e42e0.webp",
+    "images": [
+      "/uploads/64098330bf8e42e0.webp"
+    ]
+  },
+  {
+    "id": 5,
+    "name": "שפרפרת סופר 7",
+    "category": "adhesives",
+    "subcategory": null,
+    "sku": "DEMO-005",
+    "description": "שפרפרת איטום סופר 7 לשימוש מדויק בפינות וחריצים",
+    "price": 25,
+    "colors": [
+      {
+        "hex": "#ffffff",
+        "name": "לבן"
+      },
+      {
+        "hex": "",
+        "name": "שקוף"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/6db0dbb2ab43c7df.webp",
+    "images": [
+      "/uploads/6db0dbb2ab43c7df.webp",
+      "/uploads/8b72fb8df672e537.webp"
+    ]
+  },
+  {
+    "id": 6,
+    "name": "מגב חד להב סיליקון כולל תפסן",
+    "category": "cleaning",
+    "subcategory": "mops",
+    "sku": "DEMO-006",
+    "description": "מגב חד להב עם תפסן, לניקוי מקצועי של משטחים,",
+    "price": 41,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/939155094e3fe655.webp",
+    "images": [
+      "/uploads/939155094e3fe655.webp"
+    ]
+  },
+  {
+    "id": 7,
+    "name": "מגב מתכת הברגה",
+    "category": "cleaning",
+    "subcategory": "mops",
+    "sku": "DEMO-007",
+    "description": "מגב מתכת איכותי עם הברגה, זמין ב-40 ו-60 ס\"מ המקל עץ באורך מטר וחצי",
+    "price": 34,
+    "colors": [
+      {
+        "hex": "#2563eb",
+        "name": "כחול"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/8a334fb9cffea8de.webp",
+    "images": [
+      "/uploads/8a334fb9cffea8de.webp"
+    ]
+  },
+  {
+    "id": 8,
+    "name": "מגב שיש",
+    "category": "cleaning",
+    "subcategory": "mops",
+    "sku": "DEMO-008",
+    "description": "מגב שיש עיצובי ואיכותי לניקוי משטחי שיש, 20 ס\"מ צבעים משתנים בהתאם למלאי",
+    "price": 9,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/39eeb7ef6322e171.webp",
+    "images": [
+      "/uploads/39eeb7ef6322e171.webp"
+    ]
+  },
+  {
+    "id": 9,
+    "name": "מגב פלסטיק",
+    "category": "cleaning",
+    "subcategory": "mops",
+    "sku": "DEMO-009",
+    "description": "מגב פלסטיק עמיד לשימוש אינטנסיבי, זמין ב-44 ו-60 ס\"מ מקל העץ באורך מטר וחצי מגיע בצבעים משתנים בהתאם למלאי",
+    "price": 22,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/64d4e8a29d83c31d.webp",
+    "images": [
+      "/uploads/64d4e8a29d83c31d.webp"
+    ]
+  },
+  {
+    "id": 10,
+    "name": "מארז 3 מטליות מיקרופייבר",
+    "category": "cleaning",
+    "subcategory": "cloths",
+    "sku": "DEMO-010",
+    "description": "מארז 3 מטליות מיקרופייבר איכותיות לניקוי יסודי ועדין",
+    "price": 18,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/6c799cf6af80e825.webp",
+    "images": [
+      "/uploads/6c799cf6af80e825.webp"
+    ]
+  },
+  {
+    "id": 11,
+    "name": "דבק שפכטל לעץ וקירות",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-011",
+    "description": "דבק שפכטל מקצועי למריחה חלקה ואיכותית",
+    "price": 18,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/3c83d94afd876b2a.webp",
+    "images": [
+      "/uploads/3c83d94afd876b2a.webp"
+    ]
+  },
+  {
+    "id": 12,
+    "name": "סודה קאוסטיק",
+    "category": "cleaning",
+    "subcategory": "chemicals",
+    "sku": "DEMO-012",
+    "description": "סודה קאוסטיק לניקוי עמוק ופתיחת סתימות",
+    "price": 27,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/ab5a695d1c8fa3ac.webp",
+    "images": [
+      "/uploads/ab5a695d1c8fa3ac.webp"
+    ]
+  },
+  {
+    "id": 13,
+    "name": "חומצת מלח",
+    "category": "cleaning",
+    "subcategory": "chemicals",
+    "sku": "DEMO-013",
+    "description": "חומצת מלח 30% לניקוי מקצועי, זמין ב-4 ליטר",
+    "price": 27,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/02aa30895055f05b.webp",
+    "images": [
+      "/uploads/02aa30895055f05b.webp"
+    ]
+  },
+  {
+    "id": 14,
+    "name": "שקיות אשפה 90*75",
+    "category": "cleaning",
+    "subcategory": "bags_packaging",
+    "sku": "DEMO-014",
+    "description": "שקיות אשפה גדולות במיוחד 75X90 ס\"מ, עמידות ואיכותיות לשימוש ביתי ותעשייתי",
+    "price": 18,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/335a5fc3f6d9b14a.webp",
+    "images": [
+      "/uploads/335a5fc3f6d9b14a.webp"
+    ]
+  },
+  {
+    "id": 15,
+    "name": "עשר זוויות פרגולה 30/50/50",
+    "category": "home",
+    "subcategory": "pergola",
+    "sku": "DEMO-015",
+    "description": "סט 10 זוויות מחיבור מקצועיות לפרגולות ומבנים עשויות פלדה מגולוונת",
+    "price": 36,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 16,
+    "name": "מנעול שריון אלבה 45מ\"מ",
+    "category": "locks",
+    "subcategory": "door_locks",
+    "sku": "DEMO-016",
+    "description": "מנעול שריון מקצועי מבית אלבה, עשוי נירוסטה עמידה בפני חיתוך ושבירה",
+    "price": 54,
+    "colors": [
+      {
+        "hex": "",
+        "name": "12/45"
+      },
+      {
+        "hex": "",
+        "name": "16/45"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 17,
+    "name": "צילינדר משונן 80מ\"מ כפתור בבליסטר",
+    "category": "locks",
+    "subcategory": "cylinders",
+    "sku": "DEMO-017",
+    "description": "צילינדר משונן 80מ\"מ עם כפתור, מגיע באריזת בליסטר. עמיד ומאובטח",
+    "price": 36,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 18,
+    "name": "זוג ידיות בטחון חברת פלד",
+    "category": "locks",
+    "subcategory": "door_hardware",
+    "sku": "DEMO-018",
+    "description": "זוג ידיות בטחון מקצועיות מבית פלד, עשויות ממתכת איכותית. עיצוב ארגונומי",
+    "price": 31,
+    "colors": [
+      {
+        "hex": "#92400e",
+        "name": "חום"
+      },
+      {
+        "hex": "#1a1a1a",
+        "name": "שחור"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 19,
+    "name": "צילינדר 76 גלגל רב בריח כפתור",
+    "category": "locks",
+    "subcategory": "cylinders",
+    "sku": "DEMO-019",
+    "description": "צילינדר 76 גלגל רב בריח עם כפתור, כולל 3 מפתחות. אבטחה ברמה גבוהה",
+    "price": 104,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 20,
+    "name": "שלוש יחידות מפתח אפס",
+    "category": "locks",
+    "subcategory": "keys_accessories",
+    "sku": "DEMO-020",
+    "description": "סט 3 מפתחות אפס איכותיים, מתאימים למנעולים ישנים וחדשים",
+    "price": 9,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 21,
+    "name": "דיבל 7 מארז בבליסטר עם ברגים",
+    "category": "home",
+    "subcategory": "anchors_dowels",
+    "sku": "DEMO-021",
+    "description": "מארז דיבלים מידה 7 עם ברגים תואמים, מתאים לקירות בטון וגבס",
+    "price": 4,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 22,
+    "name": "10 יחידות סרגל חיזוק פרגולה 140*55מ\"מ",
+    "category": "home",
+    "subcategory": "pergola",
+    "sku": "DEMO-022",
+    "description": "סט 10 סרגלי חיזוק לפרגולה בגודל 140*55מ\"מ, עשויים פלדה מגולוונת",
+    "price": 53,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 23,
+    "name": "דיבל 6 מארז בבליסטר עם ברגים",
+    "category": "home",
+    "subcategory": "anchors_dowels",
+    "sku": "DEMO-023",
+    "description": "מארז דיבלים מידה 6 עם ברגים תואמים, מגיע באריזת בליסטר נוחה",
+    "price": 8,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 24,
+    "name": "ידית 236 חברת Yale",
+    "category": "locks",
+    "subcategory": "door_hardware",
+    "sku": "DEMO-024",
+    "description": "ידית דלת מקצועית מבית Yale, עיצוב ארגונומי ועמידות גבוהה",
+    "price": 27,
+    "colors": [
+      {
+        "hex": "#1a1a1a",
+        "name": "שחור"
+      },
+      {
+        "hex": "#9aa0a6",
+        "name": "ניקל"
+      },
+      {
+        "hex": "#ffffff",
+        "name": "לבן"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 25,
+    "name": "מנעול תליה רב בריח",
+    "category": "locks",
+    "subcategory": "door_locks",
+    "sku": "DEMO-025",
+    "description": "מנעול תליה רב בריח מקצועי, אבטחה מרבית עם מנגנון ייחודי",
+    "price": 89,
+    "colors": [
+      {
+        "hex": "",
+        "name": "10"
+      },
+      {
+        "hex": "",
+        "name": "13"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 26,
+    "name": "מנעול תליה אלבה 30א",
+    "category": "locks",
+    "subcategory": "door_locks",
+    "sku": "DEMO-026",
+    "description": "מנעול תליה קומפקטי מבית אלבה, עשוי פליז איכותי. עמיד ומאובטח",
+    "price": 23,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 27,
+    "name": "שרשרת מחוסמת לאופנוע מגנום",
+    "category": "locks",
+    "subcategory": "security_chains",
+    "sku": "DEMO-027",
+    "description": "שרשרת מחוסמת 12מ\"מ לאופנועים, אורך 180 ס\"מ. עמידה בפני חיתוך ושבירה",
+    "price": 252,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 28,
+    "name": "רולר אוניברסלי עם שרוול שניתן להחלפה",
+    "category": "painting",
+    "subcategory": "rollers_pads",
+    "sku": "DEMO-028",
+    "description": "רולר אוניברסלי הכולל יחידה אחת, שרוול ניתן להחלפה",
+    "price": 16,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 29,
+    "name": "רולר PRO – לשימוש אוניברסלי",
+    "category": "painting",
+    "subcategory": "rollers_pads",
+    "sku": "DEMO-029",
+    "description": "רולר PRO מקצועי לשימוש אוניברסלי, גימור מושלם לכל משטח",
+    "price": 32,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 30,
+    "name": "רולר דקור+מגש – איכותי",
+    "category": "painting",
+    "subcategory": "rollers_pads",
+    "sku": "DEMO-030",
+    "description": "רולר מיקרופייבר איכותי עם מגש, מתאים לקירות, כולל מנש+רולר",
+    "price": 33,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 416,
+    "name": "קולור MIX – מגוון צבע",
+    "category": "painting",
+    "subcategory": null,
+    "sku": "DEMO-031",
+    "description": "פיגמנט לצביעה על בסיס מים, ליטר אחד מכסה 4 מ\"ר ב-2 שכבות, זמין ב-20 גוונים",
+    "price": 23,
+    "colors": [
+      {
+        "hex": "#ffffff",
+        "name": "לבן"
+      },
+      {
+        "hex": "#ec4899",
+        "name": "ורוד"
+      },
+      {
+        "hex": "#d4af37",
+        "name": "זהב"
+      },
+      {
+        "hex": "#2563eb",
+        "name": "כחול כהה"
+      },
+      {
+        "hex": "#16a34a",
+        "name": "ירוק"
+      },
+      {
+        "hex": "#16a34a",
+        "name": "ירוק כהה"
+      },
+      {
+        "hex": "#92400e",
+        "name": "חום"
+      },
+      {
+        "hex": "#888888",
+        "name": "אפור"
+      },
+      {
+        "hex": "#92400e",
+        "name": "חום אדמה"
+      },
+      {
+        "hex": "#92400e",
+        "name": "חום כהה"
+      },
+      {
+        "hex": "#6b7a3a",
+        "name": "זית"
+      },
+      {
+        "hex": "#38bdf8",
+        "name": "תכלת"
+      },
+      {
+        "hex": "#6b1e2e",
+        "name": "בורדו"
+      },
+      {
+        "hex": "#dc2626",
+        "name": "אדום"
+      },
+      {
+        "hex": "#888888",
+        "name": "אפור כהה"
+      },
+      {
+        "hex": "#ec4899",
+        "name": "ורוד בהיר"
+      },
+      {
+        "hex": "#ea580c",
+        "name": "כתום"
+      },
+      {
+        "hex": "#eab308",
+        "name": "צהוב"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 31,
+    "name": "הידרו אמאייל – צבע לעץ ומתכת",
+    "category": "painting",
+    "subcategory": "paints",
+    "sku": "DEMO-032",
+    "description": "צבע אמאייל איכותי על בסיס מים לעץ ומתכת, גימור חלק, ללא ריח לואי",
+    "price": 53,
+    "colors": [
+      {
+        "hex": "#ffffff",
+        "name": "לבן נוצה"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 32,
+    "name": "המרייט – צבע למתכת – גימור חלק",
+    "category": "painting",
+    "subcategory": "paints",
+    "sku": "DEMO-033",
+    "description": "צבע למתכת ישירות על החלודה, 8 שנות הגנה, גימור חלק, זמין ב-4 גדלים ו-10 צבעים",
+    "price": 36,
+    "colors": [
+      {
+        "hex": "#1a1a1a",
+        "name": "שחור"
+      },
+      {
+        "hex": "#ffffff",
+        "name": "לבן שמנת"
+      },
+      {
+        "hex": "#eab308",
+        "name": "צהוב"
+      },
+      {
+        "hex": "#d4af37",
+        "name": "זהב"
+      },
+      {
+        "hex": "#ffffff",
+        "name": "לבן"
+      },
+      {
+        "hex": "#888888",
+        "name": "אפור"
+      },
+      {
+        "hex": "#2563eb",
+        "name": "כחול כהה"
+      },
+      {
+        "hex": "#2563eb",
+        "name": "כחול"
+      },
+      {
+        "hex": "#16a34a",
+        "name": "ירוק"
+      },
+      {
+        "hex": "#16a34a",
+        "name": "ירוק כהה"
+      },
+      {
+        "hex": "#6b7a3a",
+        "name": "זית"
+      },
+      {
+        "hex": "#dc2626",
+        "name": "אדום"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 33,
+    "name": "מאטקס – צבע לבן לקירות פנים",
+    "category": "painting",
+    "subcategory": "paints",
+    "sku": "DEMO-034",
+    "description": "צבע לקירות פנים עם כיסוי גבוה, מוסמך בסיליקון, ללא ריח לואי",
+    "price": 53,
+    "colors": [
+      {
+        "hex": "#ffffff",
+        "name": "לבן שלג"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 34,
+    "name": "לוקטייט – סופר גלו 5 גרם",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-035",
+    "description": "דבק סופר גלו 5 גרם בצינור ארוך, מדויק לעבודה מדויקת",
+    "price": 18,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/ece03b544c3b725b.webp",
+    "images": [
+      "/uploads/ece03b544c3b725b.webp"
+    ]
+  },
+  {
+    "id": 35,
+    "name": "דבק לעץ",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-036",
+    "description": "דבק איכותי לעץ",
+    "price": 14,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/3d7628daccfd3706.webp",
+    "images": [
+      "/uploads/3d7628daccfd3706.webp"
+    ]
+  },
+  {
+    "id": 36,
+    "name": "מלרוד – מרסס משמיד עובש",
+    "category": "cleaning",
+    "subcategory": "disinfectants",
+    "sku": "DEMO-037",
+    "description": "מרסס משמיד עובש מקצועי של מלרוד לטיפול בפטריות ועובש",
+    "price": 44,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/9d50dda61b26c513.webp",
+    "images": [
+      "/uploads/9d50dda61b26c513.webp"
+    ]
+  },
+  {
+    "id": 37,
+    "name": "דורגול – מסיר אבנית במקלחון",
+    "category": "cleaning",
+    "subcategory": "disinfectants",
+    "sku": "DEMO-038",
+    "description": "מסיר אבנית יעיל במיוחד למקלחונים של דורגול",
+    "price": 35,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/2319bc6f4d59a028.webp",
+    "images": [
+      "/uploads/2319bc6f4d59a028.webp"
+    ]
+  },
+  {
+    "id": 38,
+    "name": "אסטוניש – לניקוי רב תכליתי תפוז",
+    "category": "cleaning",
+    "subcategory": "chemicals",
+    "sku": "DEMO-039",
+    "description": "ניקוי רב תכליתי בריח תפוז של אסטוניש לכל משטח",
+    "price": 18,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/3e349f99cd336495.webp",
+    "images": [
+      "/uploads/3e349f99cd336495.webp"
+    ]
+  },
+  {
+    "id": 39,
+    "name": "חלוניקס – ברק קריסטלי לשמשות",
+    "category": "cleaning",
+    "subcategory": "chemicals",
+    "sku": "DEMO-040",
+    "description": "ניקוי שמשות ומשטחים זכוכית בברק קריסטלי ללא פסים",
+    "price": 13,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/74b975f02062238f.webp",
+    "images": [
+      "/uploads/74b975f02062238f.webp"
+    ]
+  },
+  {
+    "id": 40,
+    "name": "דורגול – מסיר אבנית מקומקומים",
+    "category": "cleaning",
+    "subcategory": "disinfectants",
+    "sku": "DEMO-041",
+    "description": "מסיר אבנית לקומקומים וגייזרים של דורגול",
+    "price": 29,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/ede5a74cd1b534d2.webp",
+    "images": [
+      "/uploads/ede5a74cd1b534d2.webp"
+    ]
+  },
+  {
+    "id": 41,
+    "name": "דזיטול – נגד קרדית האבק ופשפשים",
+    "category": "cleaning",
+    "subcategory": "disinfectants",
+    "sku": "DEMO-042",
+    "description": "תרסיס נגד קרדית האבק ופשפשים של דזיטול",
+    "price": 43,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/51570f594a967fef.webp",
+    "images": [
+      "/uploads/51570f594a967fef.webp"
+    ]
+  },
+  {
+    "id": 42,
+    "name": "חלודה OUT – מסיר כתמי חלודה",
+    "category": "cleaning",
+    "subcategory": "chemicals",
+    "sku": "DEMO-043",
+    "description": "מסיר כתמי חלודה עוצמתי לכל סוגי המשטחים",
+    "price": 44,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/75fc21f7d094edf7.webp",
+    "images": [
+      "/uploads/75fc21f7d094edf7.webp"
+    ]
+  },
+  {
+    "id": 43,
+    "name": "פיק – משחה להברקת כל סוגי המתכות",
+    "category": "cleaning",
+    "subcategory": "chemicals",
+    "sku": "DEMO-044",
+    "description": "משחה מקצועית להברקת כל סוגי המתכות של פיק",
+    "price": 35,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/2cc6226d37134613.webp",
+    "images": [
+      "/uploads/2cc6226d37134613.webp"
+    ]
+  },
+  {
+    "id": 44,
+    "name": "פטיש פלדה ידית עץ Klips",
+    "category": "tools",
+    "subcategory": "general_tools",
+    "sku": "DEMO-045",
+    "description": "פטיש פלדה ידית עץ, זמין במגוון גדלים ומשקלות לבחירה",
+    "price": 14,
+    "colors": [],
+    "sizes": [
+      "100 גר'",
+      "200 גר'",
+      "300 גר'",
+      "400 גר'",
+      "500 גר'",
+      "800 גר'",
+      "1 ק\"ג",
+      "1.5 ק\"ג",
+      "2 ק\"ג",
+      "2 ק\"ג+"
+    ],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 45,
+    "name": "פטיש טופון ידית פיברגלס",
+    "category": "tools",
+    "subcategory": "general_tools",
+    "sku": "DEMO-046",
+    "description": "פטיש טופון ידית פיברגלס מקצועי",
+    "price": 32,
+    "colors": [],
+    "sizes": [
+      "סטנדרטי"
+    ],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 46,
+    "name": "פטיש גומי ידית עץ",
+    "category": "tools",
+    "subcategory": "general_tools",
+    "sku": "DEMO-047",
+    "description": "פטיש גומי ידית עץ, זמין במגוון גדלים ומשקלות לבחירה",
+    "price": 17,
+    "colors": [],
+    "sizes": [
+      "40mm/8oz",
+      "50mm/12oz",
+      "60mm/16oz",
+      "70mm/24oz",
+      "80mm/32oz"
+    ],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 47,
+    "name": "צינור לפתיחת סתימות – זרנוק",
+    "category": "plumbing",
+    "subcategory": "drainage",
+    "sku": "DEMO-048",
+    "description": "צינור זרנוק לפתיחת סתימות",
+    "price": 133,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 48,
+    "name": "צינור לברז נשלף תואם גרואה",
+    "category": "faucets",
+    "subcategory": "accessories_faucets",
+    "sku": "DEMO-049",
+    "description": "צינור לברז נשלף תואם גרואה",
+    "price": 150,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 49,
+    "name": "צינור מתכת שרשורי 70 ס\"מ למקלחת",
+    "category": "bathroom",
+    "subcategory": "accessories_bath",
+    "sku": "DEMO-050",
+    "description": "צינור מתכת שרשורי איכותי למערכות פינוק",
+    "price": 44,
+    "colors": [],
+    "sizes": [
+      "70 ס\"מ"
+    ],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/63a5eac000051c47.webp",
+    "images": [
+      "/uploads/63a5eac000051c47.webp"
+    ]
+  },
+  {
+    "id": 50,
+    "name": "צינור מתכת שרשורי למקלחת",
+    "category": "bathroom",
+    "subcategory": "accessories_bath",
+    "sku": "DEMO-051",
+    "description": "צינור מתכת שרשורי בגימור כרום איכותי, מצורף מפתח להתקנה נוחה",
+    "price": 34,
+    "colors": [],
+    "sizes": [
+      "1.5מ'",
+      "1.75מ'",
+      "2מ'"
+    ],
+    "variants": [
+      {
+        "label": "1.5 מטר",
+        "price": 34
+      },
+      {
+        "label": "2 מטר",
+        "price": 39
+      }
+    ],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/eb1401106419f6fa.webp",
+    "images": [
+      "/uploads/eb1401106419f6fa.webp",
+      "/uploads/73d7c3329df07a42.webp"
+    ]
+  },
+  {
+    "id": 51,
+    "name": "כוס מברשת שיניים ספירלה",
+    "category": "bathroom",
+    "subcategory": "accessories_bath",
+    "sku": "DEMO-052",
+    "description": "כוס מברשת שיניים בגימור כרום עם כוס זכוכית מט, סדרת ספירלה",
+    "price": 45,
+    "colors": [
+      {
+        "hex": "#b8bcc0",
+        "name": "כרום"
+      },
+      {
+        "hex": "#1a1a1a",
+        "name": "שחור"
+      }
+    ],
+    "sizes": [],
+    "variants": [
+      {
+        "label": "צבע אלומיניום",
+        "price": 45
+      },
+      {
+        "label": "צבע מחזיק שחור",
+        "price": 54
+      }
+    ],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/bd3c5ae977d37ed7.webp",
+    "images": [
+      "/uploads/bd3c5ae977d37ed7.webp",
+      "/uploads/0e1b651db41e4a22.webp"
+    ]
+  },
+  {
+    "id": 52,
+    "name": "סבוניה רשת ספירל",
+    "category": "bathroom",
+    "subcategory": "accessories_bath",
+    "sku": "DEMO-053",
+    "description": "סבוניה רשת מגיעה בצבע שחור ואלומיניום",
+    "price": 62,
+    "colors": [
+      {
+        "hex": "#b8bcc0",
+        "name": "כרום"
+      },
+      {
+        "hex": "#1a1a1a",
+        "name": "שחור"
+      }
+    ],
+    "sizes": [],
+    "variants": [
+      {
+        "label": "אלומיניום",
+        "price": 62
+      },
+      {
+        "label": "שחור",
+        "price": 62
+      }
+    ],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/b63c40136bd92ffd.webp",
+    "images": [
+      "/uploads/b63c40136bd92ffd.webp",
+      "/uploads/3de738c705a3a220.webp"
+    ]
+  },
+  {
+    "id": 53,
+    "name": "סבוניית ספירל אלגנט",
+    "category": "bathroom",
+    "subcategory": "accessories_bath",
+    "sku": "DEMO-054",
+    "description": "סבוניית מגיע עם דבק דו צדדי וברגים בצבע אלומיניום וצבע שחור",
+    "price": 57,
+    "colors": [
+      {
+        "hex": "#1a1a1a",
+        "name": "שחור"
+      },
+      {
+        "hex": "",
+        "name": "אלומיניום"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/9c86686eebb4936e.webp",
+    "images": [
+      "/uploads/9c86686eebb4936e.webp",
+      "/uploads/5d9b3f262a3c89f8.webp"
+    ]
+  },
+  {
+    "id": 54,
+    "name": "מחזיק נייר טואלט סגור ספירל",
+    "category": "bathroom",
+    "subcategory": "accessories_bath",
+    "sku": "DEMO-055",
+    "description": "מחזיק נייר טואלט סגור ,, כולל דבק דו-צדדי 3M-VHB מגיע גם בצבע שחור",
+    "price": 63,
+    "colors": [
+      {
+        "hex": "#c0c0c0",
+        "name": "כסף"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/bf4868f5dd31ff96.webp",
+    "images": [
+      "/uploads/bf4868f5dd31ff96.webp",
+      "/uploads/a03625e3e01ce7b6.webp"
+    ]
+  },
+  {
+    "id": 55,
+    "name": "מוט מגבות 45 ספירל",
+    "category": "bathroom",
+    "subcategory": "towel_hooks",
+    "sku": "DEMO-056",
+    "description": "מוט מגבות סדרת ספירל",
+    "price": 137,
+    "colors": [
+      {
+        "hex": "#b8bcc0",
+        "name": "כרום"
+      },
+      {
+        "hex": "#36454f",
+        "name": "פחם"
+      }
+    ],
+    "sizes": [
+      "כפול",
+      "תלת"
+    ],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 56,
+    "name": "מוט מגבות תלת 45 ספירל",
+    "category": "bathroom",
+    "subcategory": "towel_hooks",
+    "sku": "DEMO-057",
+    "description": "מוט מגבות תלת זרועות 45 ס\"מ, סדרת ספירל בגימור כרום",
+    "price": 160,
+    "colors": [
+      {
+        "hex": "#b8bcc0",
+        "name": "כרום"
+      }
+    ],
+    "sizes": [
+      "45"
+    ],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 57,
+    "name": "מערכת רחצה דאלאס",
+    "category": "bathroom",
+    "subcategory": "accessories_bath",
+    "sku": "DEMO-058",
+    "description": "מערכת רחצה כוללת ראש מקלח, צינור שרשורי ומחזיק קיר",
+    "price": 70,
+    "colors": [
+      {
+        "hex": "#b8bcc0",
+        "name": "כרום"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/dbd53093bbe312fe.webp",
+    "images": [
+      "/uploads/dbd53093bbe312fe.webp"
+    ]
+  },
+  {
+    "id": 58,
+    "name": "מערכת רחצה וגאס",
+    "category": "bathroom",
+    "subcategory": "accessories_bath",
+    "sku": "DEMO-059",
+    "description": "מערכת רחצה כוללת ראש מקלח, צינור שרשורי ומחזיק קיר",
+    "price": 79,
+    "colors": [
+      {
+        "hex": "#b8bcc0",
+        "name": "כרום"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/921f1dbaf49c9f56.webp",
+    "images": [
+      "/uploads/921f1dbaf49c9f56.webp"
+    ]
+  },
+  {
+    "id": 59,
+    "name": "מערכת רחצה הרמוניה",
+    "category": "bathroom",
+    "subcategory": "accessories_bath",
+    "sku": "DEMO-060",
+    "description": "מערכת רחצה הרמוניה כוללת ראש מקלח, צינור שרשורי ומחזיק קיר",
+    "price": 125,
+    "colors": [
+      {
+        "hex": "#b8bcc0",
+        "name": "כרום"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/a1f73e70e66eea74.webp",
+    "images": [
+      "/uploads/a1f73e70e66eea74.webp"
+    ]
+  },
+  {
+    "id": 60,
+    "name": "וילון אמבטיה פוליאסטר עם טבעות",
+    "category": "bathroom",
+    "subcategory": "shower_curtains",
+    "sku": "DEMO-061",
+    "description": "וילון מקלחת עמיד פוליאסטר 180x180 סמ, כולל טבעות חלקות, עמיד במים",
+    "price": 74,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 61,
+    "name": "מראת אמבטיה מלבנית",
+    "category": "bathroom",
+    "subcategory": "mirrors",
+    "sku": "DEMO-062",
+    "description": "מראה לאמבטיה מלבנית זכוכית מחוסמת, מסגרת נירוסטה, מידות 60x80 סמ",
+    "price": 126,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 62,
+    "name": "ראש מקלחת עגול 25 סמ",
+    "category": "faucets",
+    "subcategory": "accessories_faucets",
+    "sku": "DEMO-063",
+    "description": "ראש מקלחת עגול קוטר 25 סמ, זרם אחיד, חיבור רגיל, גימור כרום",
+    "price": 89,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 63,
+    "name": "מנעול תליה קומבינציה 4 ספרות",
+    "category": "locks",
+    "subcategory": "code_locks",
+    "sku": "DEMO-064",
+    "description": "מנעול תליה קומבינציה 4 ספרות, גוף פלדה מחוסמת, ניתן לאיפוס קוד",
+    "price": 50,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 64,
+    "name": "ברז זוויתי כדורי חצי אינץ",
+    "category": "plumbing",
+    "subcategory": "feed_valves",
+    "sku": "DEMO-065",
+    "description": "ברז זוויתי כדורי פליז, לניתוק מהיר של כניסת מים, מתאים לאסלות וברזים",
+    "price": 24,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 65,
+    "name": "סט פיטינגים PVC לצנרת",
+    "category": "plumbing",
+    "subcategory": "plastic_connectors",
+    "sku": "DEMO-066",
+    "description": "סט פיטינגים PVC 10 חלקים: אבגת, מרפקים, תומים, לצנרת חצי ושלושת רבע אינץ",
+    "price": 36,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 66,
+    "name": "סרט טפלון PTFE גליל",
+    "category": "plumbing",
+    "subcategory": "waterproofing",
+    "sku": "DEMO-067",
+    "description": "סרט טפלון PTFE לאיטום חוטי ברז, 12mm x 10m, מניעת נזילות בחיבורים",
+    "price": 7,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 627,
+    "name": "דלי צבע 5 ליטר לבן",
+    "category": "painting",
+    "subcategory": null,
+    "sku": "DEMO-068",
+    "description": "",
+    "price": 108,
+    "colors": [
+      {
+        "hex": "#ffffff",
+        "name": "לבן"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 628,
+    "name": "18 ליטר דלי צבע לבן",
+    "category": "painting",
+    "subcategory": null,
+    "sku": "DEMO-069",
+    "description": "",
+    "price": 288,
+    "colors": [
+      {
+        "hex": "#ffffff",
+        "name": "לבן"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "",
+    "images": []
+  },
+  {
+    "id": 67,
+    "name": "השיפוצניק MAX",
+    "category": "cleaning",
+    "subcategory": "chemicals",
+    "sku": "DEMO-070",
+    "description": "השיפוצניק Max-חומר הניקוי הכי חזק לרצפות-1.75 ליטר\nיעקבי",
+    "price": 62,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/b9d7ec82b2525cde.webp",
+    "images": [
+      "/uploads/b9d7ec82b2525cde.webp"
+    ]
+  },
+  {
+    "id": 68,
+    "name": "KH-7 סופר מסיר כתמים",
+    "category": "cleaning",
+    "subcategory": "chemicals",
+    "sku": "DEMO-071",
+    "description": "",
+    "price": 20,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/33b07cce2355b60a.webp",
+    "images": [
+      "/uploads/33b07cce2355b60a.webp"
+    ]
+  },
+  {
+    "id": 69,
+    "name": "KH-7 מסיר שומנים טוטאלי",
+    "category": "cleaning",
+    "subcategory": "chemicals",
+    "sku": "DEMO-072",
+    "description": "מתאים לשימוש למנגלים, תנורים, תבניות צלייה ,גרילים",
+    "price": 26,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/bb5007e7540e38e1.webp",
+    "images": [
+      "/uploads/bb5007e7540e38e1.webp"
+    ]
+  },
+  {
+    "id": 70,
+    "name": "KH-7 סופר קלינר למטבח",
+    "category": "cleaning",
+    "subcategory": "chemicals",
+    "sku": "DEMO-073",
+    "description": "",
+    "price": 20,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/ca28a37a4650c69e.webp",
+    "images": [
+      "/uploads/ca28a37a4650c69e.webp",
+      "/uploads/2d38a47607c5281f.webp"
+    ]
+  },
+  {
+    "id": 71,
+    "name": "מג’יק נירוסטה",
+    "category": "cleaning",
+    "subcategory": "chemicals",
+    "sku": "DEMO-074",
+    "description": "תרסיס לניקוי והברקת נירוסטה ומתכות אחרות",
+    "price": 36,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/0a1d6651c88dfab7.webp",
+    "images": [
+      "/uploads/0a1d6651c88dfab7.webp"
+    ]
+  },
+  {
+    "id": 72,
+    "name": "אסטוניש- למשטחי זכוכית יעקבי",
+    "category": "cleaning",
+    "subcategory": "chemicals",
+    "sku": "DEMO-075",
+    "description": "",
+    "price": 13,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/92ccbe5f393a738f.webp",
+    "images": [
+      "/uploads/92ccbe5f393a738f.webp"
+    ]
+  },
+  {
+    "id": 73,
+    "name": "מטאטא",
+    "category": "cleaning",
+    "subcategory": "brushes",
+    "sku": "DEMO-076",
+    "description": "אורך מקל העץ הוא מטר וחצי",
+    "price": 34,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/a05c59d5adf5cc49.webp",
+    "images": [
+      "/uploads/a05c59d5adf5cc49.webp"
+    ]
+  },
+  {
+    "id": 74,
+    "name": "מברשת מגהץ",
+    "category": "cleaning",
+    "subcategory": "brushes",
+    "sku": "DEMO-077",
+    "description": "מברשת עם שיערות קשיחות לצחצוח",
+    "price": 9,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/ce2fbf9302922563.webp",
+    "images": [
+      "/uploads/ce2fbf9302922563.webp"
+    ]
+  },
+  {
+    "id": 75,
+    "name": "דלי סחיטה סיבובי עם סחבת מיקרופייבר (מוט טלסקופי)",
+    "category": "cleaning",
+    "subcategory": "mops",
+    "sku": "DEMO-078",
+    "description": "כולל מוט טלסקופי מתכוונן, מנגנון סחיטה נוח ללא צורך במגע יד מלוכלכת, וראש סחבה ממיקרופייבר שמתאים לכל סוגי הרצפות.",
+    "price": 90,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/117541c8b48900dd.webp",
+    "images": [
+      "/uploads/117541c8b48900dd.webp"
+    ]
+  },
+  {
+    "id": 76,
+    "name": "יעה עם מוט",
+    "category": "cleaning",
+    "subcategory": null,
+    "sku": "DEMO-079",
+    "description": "",
+    "price": 18,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/26638044d8d1c6a5.webp",
+    "images": [
+      "/uploads/26638044d8d1c6a5.webp"
+    ]
+  },
+  {
+    "id": 77,
+    "name": "מטליות מיקרופייבר קטנות חמישייה",
+    "category": "cleaning",
+    "subcategory": "cloths",
+    "sku": "DEMO-080",
+    "description": "",
+    "price": 14,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/6e70748291100255.webp",
+    "images": [
+      "/uploads/6e70748291100255.webp"
+    ]
+  },
+  {
+    "id": 78,
+    "name": "דבק שיש",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-081",
+    "description": "",
+    "price": 27,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/79a48b1a412dae9d.webp",
+    "images": [
+      "/uploads/79a48b1a412dae9d.webp"
+    ]
+  },
+  {
+    "id": 79,
+    "name": "משחה לתיקוני פחחות",
+    "category": "adhesives",
+    "subcategory": null,
+    "sku": "DEMO-082",
+    "description": "מיועד לתיקוני פח,סירות וגלשנים על בסיס פוליאסטר",
+    "price": 41,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/443f8b28979ddbb9.webp",
+    "images": [
+      "/uploads/443f8b28979ddbb9.webp"
+    ]
+  },
+  {
+    "id": 80,
+    "name": "שפכטל אמריקאי ליטר",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-083",
+    "description": "חומר למילוי והחלקת חורים וסדקים בקירות פנימיים כהכנה לצבע",
+    "price": 22,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/862e13fa5ecba42d.webp",
+    "images": [
+      "/uploads/862e13fa5ecba42d.webp"
+    ]
+  },
+  {
+    "id": 81,
+    "name": "אקדח מקצועי לסיליקון",
+    "category": "adhesives",
+    "subcategory": null,
+    "sku": "DEMO-084",
+    "description": "אקדח מקצועי לכל סוגי התרמילים",
+    "price": 45,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/4b72bba7bbf6c49e.webp",
+    "images": [
+      "/uploads/4b72bba7bbf6c49e.webp"
+    ]
+  },
+  {
+    "id": 82,
+    "name": "ספריי סיליקון 500 מ״ל",
+    "category": "adhesives",
+    "subcategory": null,
+    "sku": "DEMO-085",
+    "description": "משמן ומגן, אינו משאיר כתמים, אינו משאיר שאריות דביקות",
+    "price": 26,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/6f4cc02ed46e4b97.webp",
+    "images": [
+      "/uploads/6f4cc02ed46e4b97.webp"
+    ]
+  },
+  {
+    "id": 83,
+    "name": "איזולירבנד",
+    "category": "adhesives",
+    "subcategory": null,
+    "sku": "DEMO-086",
+    "description": "",
+    "price": 5,
+    "colors": [
+      {
+        "hex": "#1a1a1a",
+        "name": "שחור"
+      },
+      {
+        "hex": "#2563eb",
+        "name": "כחול"
+      },
+      {
+        "hex": "#dc2626",
+        "name": "אדום"
+      },
+      {
+        "hex": "#ffffff",
+        "name": "לבן"
+      },
+      {
+        "hex": "#eab308",
+        "name": "צהוב"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/d6d8301b4a04b3cb.webp",
+    "images": [
+      "/uploads/d6d8301b4a04b3cb.webp"
+    ]
+  },
+  {
+    "id": 84,
+    "name": "דבר מגע שפורפרת",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-087",
+    "description": "",
+    "price": 5,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/473646beb7a3b788.webp",
+    "images": [
+      "/uploads/473646beb7a3b788.webp"
+    ]
+  },
+  {
+    "id": 85,
+    "name": "דבר פרופוקסי פלסטלינה",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-088",
+    "description": "",
+    "price": 25,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/de689e5ccf4e1255.webp",
+    "images": [
+      "/uploads/de689e5ccf4e1255.webp"
+    ]
+  },
+  {
+    "id": 86,
+    "name": "דבק פוקסיפיל 70 ml",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-089",
+    "description": "",
+    "price": 67,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/43a73fb941e8758d.webp",
+    "images": [
+      "/uploads/43a73fb941e8758d.webp"
+    ]
+  },
+  {
+    "id": 87,
+    "name": "דבק אפוקסי מזרק",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-090",
+    "description": "",
+    "price": 25,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/a8441fefc62ae90e.webp",
+    "images": [
+      "/uploads/a8441fefc62ae90e.webp"
+    ]
+  },
+  {
+    "id": 88,
+    "name": "פס איטום לחלונות",
+    "category": "adhesives",
+    "subcategory": null,
+    "sku": "DEMO-091",
+    "description": "",
+    "price": 26,
+    "colors": [
+      {
+        "hex": "#ffffff",
+        "name": "לבן"
+      },
+      {
+        "hex": "#7c4a2d",
+        "name": "ערמון"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/7ba75aa42d6f78a5.webp",
+    "images": [
+      "/uploads/7ba75aa42d6f78a5.webp"
+    ]
+  },
+  {
+    "id": 89,
+    "name": "דבק דו צדדי שקוף",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-092",
+    "description": "",
+    "price": 25,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/1f80851c6933ba97.webp",
+    "images": [
+      "/uploads/1f80851c6933ba97.webp"
+    ]
+  },
+  {
+    "id": 90,
+    "name": "סרט מונע החלקה",
+    "category": "adhesives",
+    "subcategory": null,
+    "sku": "DEMO-093",
+    "description": "סרט הדבקה מיוחד למניעת החלקה עמיד לתנאי חוץ ופנים",
+    "price": 34,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/3e82ea0adbea1ce4.webp",
+    "images": [
+      "/uploads/3e82ea0adbea1ce4.webp"
+    ]
+  },
+  {
+    "id": 91,
+    "name": "סרט חבלה רחב",
+    "category": "adhesives",
+    "subcategory": null,
+    "sku": "DEMO-094",
+    "description": "",
+    "price": 23,
+    "colors": [
+      {
+        "hex": "#1a1a1a",
+        "name": "שחור"
+      },
+      {
+        "hex": "#ffffff",
+        "name": "לבן"
+      },
+      {
+        "hex": "#888888",
+        "name": "אפור"
+      },
+      {
+        "hex": "#dc2626",
+        "name": "אדום"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/015f8eae156801df.webp",
+    "images": [
+      "/uploads/015f8eae156801df.webp"
+    ]
+  },
+  {
+    "id": 92,
+    "name": "פרופילה שפכטל מקצועי רב שימושי",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-095",
+    "description": "שפכטל מקצועי לקירות פנים מגיע בקילו וחצי וחמש קילו",
+    "price": 18,
+    "colors": [],
+    "sizes": [],
+    "variants": [
+      {
+        "label": "5 ק״ג",
+        "price": 36
+      },
+      {
+        "label": "1.5 ק״ג",
+        "price": 18
+      }
+    ],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/5705c442562265cc.webp",
+    "images": [
+      "/uploads/5705c442562265cc.webp",
+      "/uploads/6ed2f79f0912239c.webp"
+    ]
+  },
+  {
+    "id": 93,
+    "name": "קצף פוליאריתן",
+    "category": "adhesives",
+    "subcategory": "foams",
+    "sku": "DEMO-096",
+    "description": "",
+    "price": 23,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/32239ac2c26e15a4.webp",
+    "images": [
+      "/uploads/32239ac2c26e15a4.webp"
+    ]
+  },
+  {
+    "id": 94,
+    "name": "מסטיק אקרילי",
+    "category": "adhesives",
+    "subcategory": "sealants",
+    "sku": "DEMO-097",
+    "description": "",
+    "price": 9,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/3f20d089b3f2dde5.webp",
+    "images": [
+      "/uploads/3f20d089b3f2dde5.webp"
+    ]
+  },
+  {
+    "id": 95,
+    "name": "סיליקון לאקווריום",
+    "category": "adhesives",
+    "subcategory": "sealants",
+    "sku": "DEMO-098",
+    "description": "",
+    "price": 41,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/80df8d05f6ca230f.webp",
+    "images": [
+      "/uploads/80df8d05f6ca230f.webp"
+    ]
+  },
+  {
+    "id": 96,
+    "name": "שפכטל אמריקאי 4 ליטר",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-099",
+    "description": "",
+    "price": 44,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/0433d362c7458334.webp",
+    "images": [
+      "/uploads/0433d362c7458334.webp"
+    ]
+  },
+  {
+    "id": 97,
+    "name": "מסיר סיליקון ודבקים",
+    "category": "adhesives",
+    "subcategory": null,
+    "sku": "DEMO-100",
+    "description": "",
+    "price": 44,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/b26c51cca020d66c.webp",
+    "images": [
+      "/uploads/b26c51cca020d66c.webp"
+    ]
+  },
+  {
+    "id": 98,
+    "name": "wd-40",
+    "category": "adhesives",
+    "subcategory": null,
+    "sku": "DEMO-101",
+    "description": "",
+    "price": 23,
+    "colors": [],
+    "sizes": [],
+    "variants": [
+      {
+        "label": "200ml",
+        "price": 23
+      },
+      {
+        "label": "330ml",
+        "price": 39
+      }
+    ],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/88a55f04a0547c01.webp",
+    "images": [
+      "/uploads/88a55f04a0547c01.webp",
+      "/uploads/b700138568614e57.webp"
+    ]
+  },
+  {
+    "id": 99,
+    "name": "דבק מגע",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-102",
+    "description": "",
+    "price": 32,
+    "colors": [],
+    "sizes": [],
+    "variants": [
+      {
+        "label": "500ml",
+        "price": 32
+      },
+      {
+        "label": "1 L",
+        "price": 50
+      }
+    ],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/d615b7fcb5e82c91.webp",
+    "images": [
+      "/uploads/d615b7fcb5e82c91.webp",
+      "/uploads/ef2129165a9b2c3b.webp"
+    ]
+  },
+  {
+    "id": 100,
+    "name": "מסקנטייפ",
+    "category": "adhesives",
+    "subcategory": null,
+    "sku": "DEMO-103",
+    "description": "",
+    "price": 6,
+    "colors": [
+      {
+        "hex": "",
+        "name": "שקוף"
+      },
+      {
+        "hex": "#7c4a2d",
+        "name": "חום"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/88256764647e2899.webp",
+    "images": [
+      "/uploads/88256764647e2899.webp",
+      "/uploads/446db24649f0dd1d.webp"
+    ]
+  },
+  {
+    "id": 101,
+    "name": "דבק נייר",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-104",
+    "description": "",
+    "price": 7,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/454096677c18a346.webp",
+    "images": [
+      "/uploads/454096677c18a346.webp"
+    ]
+  },
+  {
+    "id": 102,
+    "name": "צינור גינה קפיץ",
+    "category": "garden",
+    "subcategory": "watering",
+    "sku": "DEMO-105",
+    "description": "כולל אביזרים",
+    "price": 77,
+    "colors": [],
+    "sizes": [],
+    "variants": [
+      {
+        "label": "7.5 מטר",
+        "price": 77
+      },
+      {
+        "label": "15 מטר",
+        "price": 109
+      }
+    ],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/01fae59b74c160b7.webp",
+    "images": [
+      "/uploads/01fae59b74c160b7.webp",
+      "/uploads/7328a803ec72bd41.webp"
+    ]
+  },
+  {
+    "id": 103,
+    "name": "חוט לחרמש",
+    "category": "garden",
+    "subcategory": "garden_tools",
+    "sku": "DEMO-106",
+    "description": "",
+    "price": 52,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/73440479cef587c4.webp",
+    "images": [
+      "/uploads/73440479cef587c4.webp"
+    ]
+  },
+  {
+    "id": 104,
+    "name": "רובה איכותית מוכנה לשימוש",
+    "category": "adhesives",
+    "subcategory": null,
+    "sku": "DEMO-107",
+    "description": "",
+    "price": 31,
+    "colors": [
+      {
+        "hex": "#ffffff",
+        "name": "לבן"
+      },
+      {
+        "hex": "#888888",
+        "name": "אפור"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/6ef848ac8a9c67fb.webp",
+    "images": [
+      "/uploads/6ef848ac8a9c67fb.webp"
+    ]
+  },
+  {
+    "id": 105,
+    "name": "ברז גינה עם ידית",
+    "category": "garden",
+    "subcategory": "watering",
+    "sku": "DEMO-108",
+    "description": "",
+    "price": 31,
+    "colors": [],
+    "sizes": [],
+    "variants": [
+      {
+        "label": "1/2",
+        "price": 31
+      },
+      {
+        "label": "3/4",
+        "price": 36
+      }
+    ],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/5815dd1c7a072d49.webp",
+    "images": [
+      "/uploads/5815dd1c7a072d49.webp"
+    ]
+  },
+  {
+    "id": 106,
+    "name": "מגרפה מתרחבת ברזל",
+    "category": "garden",
+    "subcategory": "garden_tools",
+    "sku": "DEMO-109",
+    "description": "מגיע עם מקל עץ מטר וחצי",
+    "price": 50,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/20d277324effcbcc.webp",
+    "images": [
+      "/uploads/20d277324effcbcc.webp"
+    ]
+  },
+  {
+    "id": 107,
+    "name": "סט צינור גינה עם אביזרים",
+    "category": "garden",
+    "subcategory": "watering",
+    "sku": "DEMO-110",
+    "description": "",
+    "price": 89,
+    "colors": [],
+    "sizes": [],
+    "variants": [
+      {
+        "label": "20 מטר",
+        "price": 89
+      },
+      {
+        "label": "25 מטר",
+        "price": 108
+      }
+    ],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/601418adc1f5ff9a.webp",
+    "images": [
+      "/uploads/601418adc1f5ff9a.webp",
+      "/uploads/230963130dadc14e.webp"
+    ]
+  },
+  {
+    "id": 108,
+    "name": "מזמרה",
+    "category": "garden",
+    "subcategory": "garden_tools",
+    "sku": "DEMO-111",
+    "description": "",
+    "price": 89,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/f86ebe63e042d1c8.webp",
+    "images": [
+      "/uploads/f86ebe63e042d1c8.webp"
+    ]
+  },
+  {
+    "id": 109,
+    "name": "שפכטל",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-112",
+    "description": "",
+    "price": 9,
+    "colors": [],
+    "sizes": [],
+    "variants": [
+      {
+        "label": "2׳׳",
+        "price": 9
+      },
+      {
+        "label": "3׳׳",
+        "price": 11
+      },
+      {
+        "label": "4׳׳",
+        "price": 13
+      },
+      {
+        "label": "5׳׳",
+        "price": 15
+      },
+      {
+        "label": "6׳׳",
+        "price": 17
+      },
+      {
+        "label": "8׳׳",
+        "price": 22
+      },
+      {
+        "label": "10׳׳",
+        "price": 25
+      }
+    ],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/d8ab828387a11005.webp",
+    "images": [
+      "/uploads/d8ab828387a11005.webp",
+      "/uploads/2773ae41166a3fb6.webp",
+      "/uploads/5c816a2b315ccac2.webp",
+      "/uploads/4dd537a459c2f75f.webp",
+      "/uploads/d7550188e284b9c9.webp"
+    ]
+  },
+  {
+    "id": 110,
+    "name": "שפכטל גמיש יעקבי",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-113",
+    "description": "",
+    "price": 22,
+    "colors": [],
+    "sizes": [],
+    "variants": [
+      {
+        "label": "2׳׳",
+        "price": 22
+      },
+      {
+        "label": "4׳׳",
+        "price": 26
+      },
+      {
+        "label": "5׳׳",
+        "price": 31
+      },
+      {
+        "label": "6׳׳",
+        "price": 35
+      }
+    ],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/f0efcec211b5670c.webp",
+    "images": [
+      "/uploads/f0efcec211b5670c.webp",
+      "/uploads/29606ffadd4479ff.webp",
+      "/uploads/69cb735e7dc5a375.webp",
+      "/uploads/ffbe45850eb7e46b.webp"
+    ]
+  },
+  {
+    "id": 111,
+    "name": "מגרדת עם ידית",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-114",
+    "description": "",
+    "price": 25,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/2b2887cd58003158.webp",
+    "images": [
+      "/uploads/2b2887cd58003158.webp"
+    ]
+  },
+  {
+    "id": 112,
+    "name": "מגרד לרובה",
+    "category": "adhesives",
+    "subcategory": "spackle_adhesive",
+    "sku": "DEMO-115",
+    "description": "",
+    "price": 25,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/a2ae332ef6c09fd1.webp",
+    "images": [
+      "/uploads/a2ae332ef6c09fd1.webp"
+    ]
+  },
+  {
+    "id": 113,
+    "name": "מערכת רחצה Delalo 5 מצבי זרימה",
+    "category": "bathroom",
+    "subcategory": "accessories_bath",
+    "sku": "DEMO-116",
+    "description": "מערכת רחצה כולל ראש דוש צינור מטר וחצי ומחזיק לקיר",
+    "price": 99,
+    "colors": [],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": false,
+    "image_url": "/uploads/1243bea2a3613fbb.webp",
+    "images": [
+      "/uploads/1243bea2a3613fbb.webp"
+    ]
+  },
+  {
+    "id": 114,
+    "name": "מערכת רחצה צבע שחור",
+    "category": "bathroom",
+    "subcategory": "accessories_bath",
+    "sku": "DEMO-117",
+    "description": "כולל ראש דוש צינור ומחזיק לקיר",
+    "price": 80,
+    "colors": [
+      {
+        "hex": "#1a1a1a",
+        "name": "שחור"
+      }
+    ],
+    "sizes": [],
+    "variants": [],
+    "in_stock": true,
+    "active": true,
+    "image_illustrative": true,
+    "image_url": "/uploads/4f78fb32a99d0089.webp",
+    "images": [
+      "/uploads/4f78fb32a99d0089.webp"
+    ]
+  }
+]
