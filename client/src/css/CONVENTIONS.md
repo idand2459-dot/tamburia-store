@@ -37,9 +37,10 @@ with these rules, follow these rules and say so in the report.
   never appended to a large shared file.
 
 ## 2. File size
-- Target: **≤ 300 lines** per partial. Hard ceiling: **400**.
-- Above that, split by sub-component (e.g. `_admin.css` →
-  `_admin-layout.css`, `_admin-orders.css`, `_admin-products.css`, …).
+- There is **no line limit**. A partial is as long as the one component it styles needs.
+- Split by responsibility, never by size: a partial that styles two independent components
+  (e.g. `_admin.css` → `_admin-layout.css`, `_admin-orders.css`, …) is split along that line.
+  Do not cut one component's rules into several tiny files just to keep them short.
 
 ## 3. Order inside every partial (always the same)
 ```

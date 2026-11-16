@@ -1,17 +1,19 @@
 /**
  * סרגל הניווט העליון, כולל חיפוש מוצרים.
  *
- * מושך את מצב העגלה והתפריט מ-StoreContext ואת הניווט מהראוטר, ולא
- * מקבל אותם בפרופס: הערכים האלה זמינים בכל מקום ממילא, והעברתם דרך
- * StoreLayout רק החזירה את אותו prop-drilling שההקשר בא לבטל.
+ * Reads the cart count and the wishlist ids from the Redux store with selectors, and the
+ * navigation from the router. The menu state is the only thing it receives as props
+ * (menuOpen, setMenuOpen): StoreLayout, its parent, shares it with the page frame.
  */
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Home, Store, Phone, Undo2, ClipboardList, Heart,
+  Home, Store, Phone, Undo2, Heart,
   Search, X, ImageOff, Wrench, ShoppingCart,
 } from 'lucide-react';
-import { useStore } from '../context/storeContext';
+import { useSelector } from 'react-redux';
+import { selectCartCount } from '../store/cart/cartSelectors';
+import { selectWishlistIds } from '../store/wishlist/wishlistSelectors';
 import { useScrolled } from '../hooks/useScrolled';
 import { useModalFocus } from '../hooks/useModalFocus';
 import { priceLabel } from '../utils/pricing';
@@ -34,10 +36,11 @@ function currentPageOf(pathname) {
 }
 
 /** מציג את סרגל הניווט והחיפוש. */
-function Navbar() {
+function Navbar({ menuOpen, setMenuOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { cartCount, wishlistIds, menuOpen, setMenuOpen } = useStore();
+  const cartCount = useSelector(selectCartCount);
+  const wishlistIds = useSelector(selectWishlistIds);
   const scrolled = useScrolled(8);
 
   const [searchOpen, setSearchOpen] = useState(false);
@@ -113,8 +116,6 @@ function Navbar() {
   function handleSelectProduct(product) { closeSearch(); navigate(`/product/${product.id}`); }
   /** עובר לעמוד המבוקש וסוגר את התפריט. */
   function handleNav(path) { navigate(path); setMenuOpen(false); }
-  /** פותח את איתור ההזמנות וסוגר את התפריט. */
-  function openOrderHistory() { navigate('/orders/lookup'); setMenuOpen(false); }
   /** פותח את רשימת המשאלות וסוגר את התפריט. */
   function openWishlist() { navigate('/wishlist'); setMenuOpen(false); }
 
@@ -209,9 +210,6 @@ function Navbar() {
               <span className="nav-item-icon"><Icon size={18} aria-hidden="true" /></span>{label}
             </button>
           ))}
-          <button className="nav-drawer-item" onClick={openOrderHistory}>
-            <span className="nav-item-icon"><ClipboardList size={18} aria-hidden="true" /></span>ההזמנות שלי
-          </button>
           <button className="nav-drawer-item" onClick={openWishlist}>
             <span className="nav-item-icon"><Heart size={18} fill="currentColor" aria-hidden="true" /></span>רשימת המשאלות שלי
           </button>
@@ -237,10 +235,7 @@ function Navbar() {
         </div>
         <div className="navbar-left">
           <button className="navbar-icon-btn" onClick={() => setSearchOpen(true)} title="חיפוש" aria-label="חיפוש"><Search size={20} aria-hidden="true" /></button>
-          {/* --orders ו---page נבדלים במחלקה כי הם נעלמים ברוחב אחר:
-              שלושת קישורי העמודים יורדים מתחת ל-1200px, וההזמנות שלי
-              מחזיק עד 768px. שניהם נמצאים גם במגירה. */}
-          <button className="navbar-link navbar-link--orders" onClick={openOrderHistory} title="ההזמנות שלי"><ClipboardList size={18} aria-hidden="true" /> ההזמנות שלי</button>
+          {/* שלושת קישורי העמודים יורדים מתחת ל-1200px, והם נמצאים גם במגירה. */}
           <button className="navbar-icon-btn" onClick={openWishlist} title="רשימת משאלות" aria-label={`רשימת משאלות${wishlistCount > 0 ? ` — ${wishlistCount} מוצרים` : ''}`}>
             <Heart size={20} aria-hidden="true" />
             {wishlistCount > 0 && (

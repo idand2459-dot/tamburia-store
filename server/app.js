@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const config = require('./config/env');
 const { securityHeaders } = require('./middleware/securityHeaders');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
@@ -70,11 +71,14 @@ function createApp() {
   // true היה גורם לאמון בכל שרשרת X-Forwarded-For, ואז פונה יכול
   // לשלוח כותרת מזויפת ולהמציא לעצמו כתובת.
   // בפיתוח false, כי אין פרוקסי מקומי ואסור שבקשה תזייף כתובת.
-  app.set('trust proxy', config.isProduction ? 1 : false);
+  // The number of hops is config.trustProxyHops (TRUST_PROXY_HOPS): 1 in production and none
+  // elsewhere unless set, as the comment above explains. 0 turns it off.
+  app.set('trust proxy', config.trustProxyHops > 0 ? config.trustProxyHops : false);
 
   app.use(securityHeaders);
   app.use(cors(corsOptions()));
   app.use(express.json({ limit: '200kb' }));
+  app.use(cookieParser());
 
   app.use('/uploads', express.static(path.join(ROOT, 'uploads'), {
     index: false,
@@ -86,7 +90,7 @@ function createApp() {
   // את index.html עם 200 — תשובה שנראית תקינה ומסתירה קישור שבור.
   app.use('/uploads', notFoundHandler);
 
-  app.use('/api', require('./routes'));
+  app.use('/api', require('./api/index'));
   app.use('/api', notFoundHandler);
 
   if (config.client.serve) mountClient(app);

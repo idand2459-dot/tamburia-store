@@ -60,6 +60,13 @@
   margin: 4px 0 22px;
 }
 
+/* Shown when the confirmed order is not the cart the customer has open now. */
+.order-success-kept {
+  margin: 0 0 14px;
+  color: var(--color-navy);
+  font-size: 0.9rem;
+}
+
 .order-success-details {
   width: 100%;
   margin: 0;

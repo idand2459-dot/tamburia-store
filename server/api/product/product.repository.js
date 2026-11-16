@@ -1,0 +1,221 @@
+/**
+ * גישה לטבלת products: שליפה מסוננת, ספירה, יצירה, עדכון ומחיקה.
+ * זהו המקום היחיד בדומיין המוצרים שכותב SQL.
+ */
+const { query, withTransaction } = require('../../config/db');
+
+const COLUMNS = `
+  id, name, price, stock, image_url, images, colors, sizes,
+  category, subcategory, sku, description, in_stock, variants,
+  image_illustrative, active
+`;
+
+const JSON_COLUMNS = new Set(['images', 'variants', 'colors']);
+
+/** ממיר ערך לפורמט שמתאים לעמודה, כולל JSON למקום שצריך. */
+function toDbValue(column, value) {
+  return JSON_COLUMNS.has(column) ? JSON.stringify(value ?? []) : value;
+}
+
+/**
+ * בונה את תנאי ה-WHERE ואת הפרמטרים שלהם מאפשרויות הסינון. list ו-count משתמשים
+ * באותה פונקציה, כך שמספר הרשומות שדפדוף מדווח תמיד זהה למה ש-list מחזיר.
+ */
+function buildFilters({ category, subcategory, inStock, active, ids, search }) {
+  const conditions = [];
+  const params = [];
+
+  if (active !== undefined) {
+    params.push(active);
+    conditions.push(`active = $${params.length}`);
+  }
+  if (Array.isArray(ids)) {
+    // רשימה ריקה היא תשובה ריקה, ולא "בלי סינון": מי שביקש מזהים
+    // מסוימים ולא נקב באף אחד לא ביקש את כל הקטלוג.
+    params.push(ids);
+    conditions.push(`id = ANY($${params.length}::int[])`);
+  }
+  if (category) {
+    params.push(category);
+    conditions.push(`category = $${params.length}`);
+  }
+  if (subcategory) {
+    params.push(subcategory);
+    conditions.push(`subcategory = $${params.length}`);
+  }
+  if (inStock !== undefined) {
+    params.push(inStock);
+    conditions.push(`COALESCE(in_stock, true) = $${params.length}`);
+  }
+  if (search) {
+    params.push(`%${search}%`);
+    conditions.push(`(name ILIKE $${params.length} OR sku ILIKE $${params.length} OR description ILIKE $${params.length})`);
+  }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  return { where, params };
+}
+
+/** מחזיר מוצרים לפי הסינון, המיון והדפדוף שהתבקשו. */
+async function list(options = {}) {
+  const { sort = 'id', order = 'ASC', limit, offset } = options;
+  const { where, params } = buildFilters(options);
+
+  let sql = `SELECT ${COLUMNS} FROM products ${where} ORDER BY ${sort} ${order}, id ASC`;
+
+  if (limit !== undefined) {
+    params.push(limit);
+    sql += ` LIMIT $${params.length}`;
+  }
+  if (offset !== undefined) {
+    params.push(offset);
+    sql += ` OFFSET $${params.length}`;
+  }
+
+  const { rows } = await query(sql, params);
+  return rows;
+}
+
+/** סופר מוצרים לפי אותם תנאי סינון, לצורך דפדוף. */
+async function count(options = {}) {
+  const { where, params } = buildFilters(options);
+  const { rows } = await query(`SELECT COUNT(*)::int AS total FROM products ${where}`, params);
+  return rows[0].total;
+}
+
+/** מחזיר מוצר לפי מזהה, או null אם אינו קיים. */
+async function findById(id) {
+  const { rows } = await query(`SELECT ${COLUMNS} FROM products WHERE id = $1`, [id]);
+  return rows[0] || null;
+}
+
+/**
+ * מחזיר מחיר וגרסאות עבור רשימת מזהים, בשאילתה אחת.
+ *
+ * זה כל מה שבדיקת המחיר שלפני יצירת הזמנה צריכה, ולכן לא findById
+ * בלופ: עגלה של עשרה פריטים הייתה עשר שאילתות. מזהה שאינו קיים פשוט
+ * לא יחזור, וזו גם התשובה על "האם המוצר הזה עוד קיים".
+ */
+async function findPricesByIds(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) return [];
+  const { rows } = await query(
+    'SELECT id, name, price, variants, colors, sizes, active, in_stock FROM products WHERE id = ANY($1::int[])',
+    [ids]
+  );
+  return rows;
+}
+
+/** יוצר מוצר חדש ומחזיר אותו כפי שנשמר. */
+async function create(data) {
+  const columns = Object.keys(data);
+  const values = columns.map((col) => toDbValue(col, data[col]));
+  const placeholders = columns.map((_, i) => `$${i + 1}`);
+
+  const { rows } = await query(
+    `INSERT INTO products (${columns.join(', ')}, stock)
+     VALUES (${placeholders.join(', ')}, 0)
+     RETURNING ${COLUMNS}`,
+    values
+  );
+  return rows[0];
+}
+
+/** מעדכן את השדות שנשלחו בלבד, ומחזיר null אם המוצר אינו קיים. */
+async function update(id, data) {
+  const columns = Object.keys(data);
+  if (columns.length === 0) return findById(id);
+
+  const assignments = columns.map((col, i) => `${col} = $${i + 1}`);
+  const values = columns.map((col) => toDbValue(col, data[col]));
+  values.push(id);
+
+  const { rows } = await query(
+    `UPDATE products SET ${assignments.join(', ')}
+     WHERE id = $${values.length}
+     RETURNING ${COLUMNS}`,
+    values
+  );
+  return rows[0] || null;
+}
+
+/** מוחק מוצר ומחזיר אותו, או null אם לא היה קיים. */
+async function remove(id) {
+  const { rows } = await query(`DELETE FROM products WHERE id = $1 RETURNING ${COLUMNS}`, [id]);
+  return rows[0] || null;
+}
+
+/**
+ * מוחק מוצר יחד עם הביקורות שלו — אלא אם יש לו הזמנות.
+ *
+ * הזמנה מחזיקה את הפריטים כצילום ב-orders.items (JSONB), בלי מפתח זר,
+ * ולכן המסד עצמו לא היה עוצר מחיקה של מוצר שנמכר: ההזמנה הייתה נשארת
+ * עם מזהה שאינו מוביל לשום דבר. הבדיקה כאן, באותה טרנזקציה עם המחיקה
+ * ועם נעילה על שורת המוצר, היא שעוצרת.
+ *
+ * הביקורות נמחקות במפורש ולא רק דרך ה-ON DELETE CASCADE שבמסד: כך
+ * המספר חוזר לקורא, וההתנהגות אינה תלויה בכך שה-CASCADE הוגדר בכל
+ * סביבה.
+ *
+ * מחזיר { product: null } כשהמוצר אינו קיים; { product, orders } כשיש
+ * לו הזמנות ולא נמחק דבר; ו-{ product, orders: 0, reviews } אחרי מחיקה.
+ */
+async function removeUnlessOrdered(id) {
+  return withTransaction(async (client) => {
+    const { rows: [product] } = await client.query(
+      `SELECT ${COLUMNS} FROM products WHERE id = $1 FOR UPDATE`, [id]
+    );
+    if (!product) return { product: null };
+
+    const { rows: [{ total: orders }] } = await client.query(
+      'SELECT COUNT(*)::int AS total FROM orders WHERE items @> $1::jsonb',
+      [JSON.stringify([{ id }])]
+    );
+    if (orders > 0) return { product, orders };
+
+    const { rowCount: reviews } = await client.query('DELETE FROM reviews WHERE product_id = $1', [id]);
+    await client.query('DELETE FROM products WHERE id = $1', [id]);
+    return { product, orders: 0, reviews };
+  });
+}
+
+/**
+ * מתוך רשימת כתובות תמונה, מחזיר את אלה שאף מוצר אינו מפנה אליהן —
+ * לא כתמונה ראשית ולא ברשימת התמונות. שם הקובץ נגזר מהתוכן, ולכן
+ * אותה תמונה יכולה לשמש כמה מוצרים, ואסור למחוק אותה עם הראשון.
+ */
+async function findUnreferencedImages(urls) {
+  if (urls.length === 0) return [];
+  const { rows } = await query(
+    `SELECT u.url
+     FROM unnest($1::text[]) AS u(url)
+     WHERE NOT EXISTS (
+       SELECT 1 FROM products p
+       WHERE p.image_url = u.url OR p.images @> jsonb_build_array(u.url)
+     )`,
+    [urls]
+  );
+  return rows.map((row) => row.url);
+}
+
+/**
+ * מחזיר את הקטגוריות ותתי-הקטגוריות הקיימות בפועל, עם ספירה.
+ *
+ * activeOnly הוא מה שהחנות שואלת: הספירה שמוצגת ללקוח היא של מה
+ * שאפשר לקנות. מסך הניהול שואל בלי הסינון, כדי לראות גם קטגוריה
+ * שכל המוצרים בה מוסתרים.
+ */
+async function listCategories({ activeOnly = false } = {}) {
+  const { rows } = await query(`
+    SELECT category, subcategory, COUNT(*)::int AS product_count
+    FROM products
+    WHERE category IS NOT NULL ${activeOnly ? 'AND active' : ''}
+    GROUP BY category, subcategory
+    ORDER BY category, subcategory NULLS FIRST
+  `);
+  return rows;
+}
+
+module.exports = {
+  list, count, findById, findPricesByIds, create, update, remove, listCategories,
+  removeUnlessOrdered, findUnreferencedImages,
+};

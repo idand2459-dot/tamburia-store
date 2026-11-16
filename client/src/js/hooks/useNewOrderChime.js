@@ -73,7 +73,7 @@ export function useNewOrderChime() {
 
   // המשמיע נקרא מתוך useAdminOrders, שמחזיק אותו ב-ref. קריאת המצב
   // דרך ref ולא מה-closure שומרת את playChime יציב לאורך כל הריצה,
-  // ולכן ההוק שקורא לו אינו נרשם מחדש ל-WebSocket בכל שינוי.
+  // so the polling effect in that hook is not restarted on every change.
   const soundOnRef = useRef(soundOn);
   soundOnRef.current = soundOn;
 

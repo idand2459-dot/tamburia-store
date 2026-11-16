@@ -46,7 +46,7 @@ Applies to unit and integration tests.
 | Suite | Location | Command |
 |---|---|---|
 | Server: unit and smoke, against the real local database | `test/` | `npm test` |
-| Client: unit (Jest + Testing Library) | `client/src/js/**/*.test.js`, next to the code | `npm run test:client` |
+| Client: unit (Jest + Testing Library) | `client/src/js/__tests__/**/*.test.js`, mirroring the code folders | `npm run test:client` |
 | Accessibility gate (browser, axe-core; not an end-to-end suite) | `scripts/a11y-audit.js` | `npm run build:client`, then `npm run a11y` |
 
 When a test fails, fix the code — not the test.

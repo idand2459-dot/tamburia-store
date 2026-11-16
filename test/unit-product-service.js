@@ -1,6 +1,6 @@
 /**
- * בודק את כלל הנראות של services/product.service בבידוד, בלי מסד:
- * מודל מזויף נטען למקום של models/product.model, ורושם מה השירות ביקש.
+ * בודק את כלל הנראות של api/product/product.service בבידוד, בלי מסד:
+ * מודל מזויף נטען למקום של api/product/product.repository, ורושם מה השירות ביקש.
  *
  * הכלל: לקוח רואה גלויים בלבד; אדמין רואה גלויים בלבד אלא אם ביקש
  * ?active במפורש; מוצר מוסתר בודד הוא 404 ללקוח ונגיש לאדמין.
@@ -34,10 +34,10 @@ const fakeModel = {
   update: async (id, data) => (PRODUCTS[id] ? { ...PRODUCTS[id], ...data } : null),
   listCategories: async (opts) => { calls.push(['listCategories', opts]); return []; },
 };
-const modelPath = require.resolve(path.join(__dirname, '../server/models/product.model'));
+const modelPath = require.resolve(path.join(__dirname, '../server/api/product/product.repository'));
 require.cache[modelPath] = { id: modelPath, filename: modelPath, loaded: true, exports: fakeModel };
 
-const service = require('../server/services/product.service');
+const service = require('../server/api/product/product.service');
 const lastFilters = () => calls.filter(([op]) => op === 'list').pop()[1];
 
 async function main() {

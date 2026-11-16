@@ -4,9 +4,8 @@
 
    One card is features/admin/_admin-order-card.css; this file owns
    nothing inside a card. The customer-facing screens are
-   different components again: features/cart/_order-success.css is the
-   cart's confirmation step and features/cart/_order-history.css is
-   the lookup page.
+   different component again: features/cart/_order-success.css is the
+   cart's confirmation step.
 
    Replaces the stat row and the pill filter that were here.
    Gone with them: .orders-stats, .orders-stat-card, .stat-number

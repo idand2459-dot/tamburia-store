@@ -14,14 +14,14 @@
  */
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Share2 } from 'lucide-react';
-import { toggleWishlist, isInWishlist } from '../../../utils/wishlistUtils';
+import { useDispatch, useSelector } from 'react-redux';
+import { Check, Share2, Truck, Store, RotateCcw } from 'lucide-react';
+import { toggleWishlist } from '../../../store/wishlist/wishlistActions';
+import { selectWishlistIds } from '../../../store/wishlist/wishlistSelectors';
 import categories from '../categories';
-import ProductBreadcrumb from './ProductBreadcrumb';
 import ProductGallery from './ProductGallery';
 import ProductVariantSelector from './ProductVariantSelector';
 import ProductBuyRow from './ProductBuyRow';
-import ProductTrustRow from './ProductTrustRow';
 import ProductBuyBar from './ProductBuyBar';
 import ProductReviewsSection from './ProductReviewsSection';
 import RelatedProducts from './RelatedProducts';
@@ -90,7 +90,8 @@ function ProductDetails({ product, onAddToCart }) {
   const [addedToCart, setAddedToCart] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
-  const [inWishlist, setInWishlist] = useState(false);
+  const dispatch = useDispatch();
+  const inWishlist = useSelector(selectWishlistIds).includes(product.id);
 
   const addBtnRef = useRef(null);
   const reviewsRef = useRef(null);
@@ -127,7 +128,6 @@ function ProductDetails({ product, onAddToCart }) {
 
     addToRecentlyViewed(product);
     setRecentlyViewed(getRecentlyViewed().filter(p => p.id !== product.id));
-    setInWishlist(isInWishlist(product.id));
 
     // הסינון לפי קטגוריה נעשה בשרת ולא כאן. קודם נשלף כל הקטלוג רק
     // כדי למצוא ארבעה מוצרים — חמישה מבוקשים כדי שאפשר יהיה להוציא את
@@ -276,7 +276,7 @@ function ProductDetails({ product, onAddToCart }) {
             addRef={addBtnRef}
             productName={product.name}
             inWishlist={inWishlist}
-            onToggleWishlist={() => setInWishlist(toggleWishlist(product))}
+            onToggleWishlist={() => dispatch(toggleWishlist(product))}
           />
 
           <ProductTrustRow />
@@ -301,6 +301,71 @@ function ProductDetails({ product, onAddToCart }) {
         />
       )}
     </div>
+  );
+}
+
+/**
+ * שביל הניווט שמעל המוצר: ראשי ← קטגוריה ← שם המוצר.
+ *
+ * שם הקטגוריה נשלף מ-categories.js ולא ממפה מקומית של תרגומים: זה
+ * מקור האמת לשמות הקטגוריות, וכל מפה נוספת הייתה נתון שני שצריך
+ * לתחזק. מזהה שאינו מוכר פשוט לא מקבל חוליה.
+ *
+ * הקישורים אמיתיים ולא כפתורים שחוזרים בהיסטוריה, כי בקישור ישיר
+ * למוצר אין היסטוריה באתר — חוליית הקטגוריה מובילה ל-/category/:id
+ * וגם עובדת בלחיצה אמצעית ובפתיחה בלשונית חדשה.
+ */
+function ProductBreadcrumb({ categoryId, productName }) {
+  const category = categories.find((c) => c.id === categoryId);
+
+  return (
+    <nav className="breadcrumb" aria-label="מסלול ניווט">
+      <Link to="/">ראשי</Link>
+      <span className="breadcrumb-sep" aria-hidden="true">←</span>
+
+      {category && (
+        <>
+          <Link to={`/category/${category.id}`}>{category.name}</Link>
+          <span className="breadcrumb-sep" aria-hidden="true">←</span>
+        </>
+      )}
+
+      <span className="breadcrumb-current" aria-current="page">{productName}</span>
+    </nav>
+  );
+}
+
+/**
+ * שלוש ההבטחות שמתחת לכפתור ההוספה: משלוח, איסוף והחזרה.
+ *
+ * הטקסטים כתובים כאן ולא ב-utils/storeInfo.js, כי אף אחד מהם אינו
+ * נתון שקיים שם: הקובץ ההוא מחזיק כתובת, טלפונים ושעות, והשלושה האלה
+ * הם ניסוח של מדיניות — בדיוק כמו בעמוד השאלות הנפוצות ובטופס
+ * ההזמנה, שכותבים אותם באותה צורה. האייקונים מגיעים מאותה שפה
+ * שהאתר משתמש בה לשלושת הרעיונות האלה בכל מקום אחר.
+ */
+function ProductTrustRow() {
+  return (
+    <ul className="product-trust">
+      <li>
+        <span className="product-trust-icon" aria-hidden="true">
+          <Truck size={17} />
+        </span>
+        משלוח לפתח תקווה, גני תקווה וקריית אונו — ₪20
+      </li>
+      <li>
+        <span className="product-trust-icon" aria-hidden="true">
+          <Store size={17} />
+        </span>
+        איסוף עצמי באותו יום
+      </li>
+      <li>
+        <span className="product-trust-icon" aria-hidden="true">
+          <RotateCcw size={17} />
+        </span>
+        <Link to="/returns">החזרה עד 14 יום</Link>
+      </li>
+    </ul>
   );
 }
 

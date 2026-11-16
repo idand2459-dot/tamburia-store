@@ -15,7 +15,7 @@
  *
  * הוולידציה כאן היא שתי שכבות. הראשונה היא כללי הגיליון: קובץ תמונה
  * שקיים, קטגוריה מהעץ, תת-קטגוריה ששייכת לה, ומחיר או גדלים. השנייה
- * היא server/validators/product.validator.js — בדיוק אותו קוד שטופס
+ * היא server/api/product/product.validator.js — בדיוק אותו קוד שטופס
  * האדמין עובר דרכו. הוא נקרא ישירות ולא משוכפל, ולכן אם השתיים
  * חלוקות, שלו קובע.
  *
@@ -28,12 +28,12 @@ const fs = require('fs');
 const path = require('path');
 const ExcelJS = require('exceljs');
 const db = require('../server/config/db');
-const productModel = require('../server/models/product.model');
-const orderModel = require('../server/models/order.model');
-const { parseCreate } = require('../server/validators/product.validator');
+const productRepository = require('../server/api/product/product.repository');
+const orderRepository = require('../server/api/order/order.repository');
+const { parseCreate } = require('../server/api/product/product.validator');
 const { formatPrice } = require('../server/utils/money');
 const { UPLOADS_DIR, pathToUrl, uploadName } = require('./lib/uploads');
-const { load: loadCategories } = require('./lib/categories');
+const { load: loadCategories } = require('../server/utils/categories');
 const { parseColors } = require('./lib/palette');
 
 const ROOT = path.join(__dirname, '..');
@@ -322,7 +322,7 @@ async function apply(entries) {
   console.log(`\nגיבוי:  ${rel(backupPath)}`);
 
   for (const entry of entries) {
-    const product = await productModel.create(entry.body);
+    const product = await productRepository.create(entry.body);
 
     // התמונה אחרי היצירה: שם הקובץ נגזר מה-id, והוא נודע רק עכשיו.
     const source = path.join(NEW_DIR, entry.raw.image);
@@ -331,7 +331,7 @@ async function apply(entries) {
     fs.writeFileSync(path.join(UPLOADS_DIR, fileName), contents);
 
     const url = pathToUrl(fileName);
-    await productModel.update(product.id, { image_url: url, images: [url] });
+    await productRepository.update(product.id, { image_url: url, images: [url] });
 
     created.push({ id: product.id, name: product.name, image: entry.raw.image, url });
     saveBackup();
@@ -369,10 +369,10 @@ async function revert(file) {
   let missing = 0;
 
   for (const row of rows) {
-    const orders = await orderModel.countByProductId(row.id);
+    const orders = await orderRepository.countByProductId(row.id);
 
     if (orders > 0) {
-      const updated = await productModel.update(row.id, { active: false });
+      const updated = await productRepository.update(row.id, { active: false });
       if (updated) {
         hidden += 1;
         console.log(
@@ -385,7 +385,7 @@ async function revert(file) {
       continue;
     }
 
-    const deleted = await productModel.remove(row.id);
+    const deleted = await productRepository.remove(row.id);
     if (deleted) {
       removed += 1;
       console.log(`  ✗  ${row.id}  ${row.name}  — נמחק`);

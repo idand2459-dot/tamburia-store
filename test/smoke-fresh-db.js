@@ -11,7 +11,10 @@
 const path = require('path');
 const { spawnSync } = require('child_process');
 const { Pool } = require('pg');
-const config = require('../server/config/env');
+const { IDENTITY_SQL, assertServerIdentity, loadGuardedConfig } = require('./lib/testDatabase');
+// Runs the guard first, so this suite reads (and creates a database on) only the test database,
+// also when it is started directly; it exits when the loaded configuration is not the test one.
+const config = loadGuardedConfig();
 
 let passed = 0;
 let failed = 0;
@@ -56,6 +59,22 @@ async function schemaOf(pool) {
 
 async function main() {
   const admin = poolFor(config.db.name);
+
+  // Before anything is created: the server on the other end must be the test database's
+  // server (the identity PostgreSQL itself reports), and that database must already carry
+  // the schema this suite compares against. A refusal here has created nothing.
+  try {
+    const { rows } = await admin.query(IDENTITY_SQL);
+    assertServerIdentity(config.db, rows[0]);
+    const migrated = await admin.query("SELECT to_regclass('public.schema_migrations') AS found");
+    if (!migrated.rows[0] || !migrated.rows[0].found) {
+      throw new Error('מסד הבדיקות עדיין ריק: הרץ קודם חבילת HTTP אחת (למשל smoke-static), שמריצה את המיגרציות עליו.');
+    }
+  } catch (err) {
+    await admin.end();
+    throw err;
+  }
+
   await admin.query(`CREATE DATABASE ${FRESH}`);
 
   try {
@@ -68,6 +87,10 @@ async function main() {
 
     const fresh = poolFor(FRESH);
     try {
+      // The new database must be on the same verified server (same port, user and loopback address).
+      const freshIdentity = await fresh.query(IDENTITY_SQL);
+      assertServerIdentity({ ...config.db, name: FRESH }, freshIdentity.rows[0]);
+
       const real = await schemaOf(admin);
       const got = await schemaOf(fresh);
 

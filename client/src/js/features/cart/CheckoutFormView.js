@@ -1,12 +1,13 @@
 /**
  * שלב הפרטים: טופס הלקוח, בדיקת אזור החלוקה ושליחת ההזמנה.
  *
- * מושך את שדות הטופס מ-StoreContext ומקבל בפרופס רק את מעבר השלבים,
- * שהוא עניין של הניתוב ולא של המצב המשותף.
+ * The form fields arrive as the `checkout` prop (owned by StoreLayout, so they survive the drawer
+ * being closed); the cart count, total and delivery method are read from the Redux store. The
+ * step change is a prop too, because it belongs to the routing.
  *
  * הכפתור אינו כאן אלא ב-CheckoutFormFooter שלמטה, כי הוא יושב בשורה
  * התחתונה הדביקה של המגירה. שני הרכיבים מחשבים את השגיאות מאותה
- * פונקציה טהורה ומאותו קונטקסט, ולכן מה שהכפתור דוחה הוא בדיוק מה
+ * פונקציה טהורה ומאותם נתונים, ולכן מה שהכפתור דוחה הוא בדיוק מה
  * שהשדות מציגים.
  *
  * הכפתור לא חסום כשחסר משהו, כמו שהיה. כפתור חסום לא אומר למה, וקורא
@@ -14,19 +15,18 @@
  * שדה, מסמנת אותו aria-invalid, ומעבירה את המיקוד לראשון שבהם — קורא
  * המסך מקריא את התווית ואת ההודעה יחד, דרך aria-describedby.
  */
+import { useState } from 'react';
 import { Ban, Check, AlertTriangle, AlertCircle, CheckCircle } from 'lucide-react';
 import { Spinner } from '../../components/LoadingStates';
-import { useStore } from '../../context/storeContext';
+import { useSelector } from 'react-redux';
+import {
+  selectCartItems, selectCartCount, selectTotal, selectDeliveryMethod, selectPendingPriceChanges,
+} from '../../store/cart/cartSelectors';
+import { selectUnavailableLines, isLineUnavailable } from '../../store/availability/availabilitySelectors';
+import { PriceChangeNotice } from './CartStepView';
 import { formatPrice } from '../../utils/pricing';
-
-const ALLOWED_CITIES = ['פתח תקווה', 'פתח-תקווה', 'גני תקווה', 'גני-תקווה', 'קריית אונו', 'קרית אונו', 'קריית-אונו', 'קרית-אונו'];
-
-/** בודק אם הכתובת נמצאת באזור החלוקה. */
-function checkAllowedCity(address) {
-  if (!address) return true;
-  const lower = address.toLowerCase();
-  return ALLOWED_CITIES.some(city => lower.includes(city.toLowerCase()));
-}
+import { PHONES } from '../../utils/storeInfo';
+import { checkAllowedCity } from '../../utils/delivery';
 
 /** האם הכתובת שהוזנה מחוץ לאזור החלוקה. */
 function isDeliveryInvalid({ deliveryMethod, deliveryAddress }) {
@@ -85,26 +85,29 @@ function FieldError({ name, error }) {
 }
 
 /** מציג את טופס ההזמנה. showErrors נדלק בלחיצה הראשונה על "שלח". */
-function CheckoutFormView({ setCartStep, showErrors = false }) {
-  const store = useStore();
+function CheckoutFormView({ setCartStep, checkout, showErrors = false }) {
+  const cartCount = useSelector(selectCartCount);
+  const total = useSelector(selectTotal);
+  const deliveryMethod = useSelector(selectDeliveryMethod);
   const {
-    cartCount, total, deliveryMethod,
     customerName, setCustomerName,
     customerPhone, setCustomerPhone,
     customerEmail, setCustomerEmail,
     deliveryAddress, setDeliveryAddress,
     orderNotes, setOrderNotes,
-  } = store;
+  } = checkout;
+  // What the form checks: the typed fields and the delivery method chosen in the cart.
+  const form = { ...checkout, deliveryMethod };
 
   /** מעדכן את הכתובת למשלוח. */
   function handleAddressChange(e) {
     setDeliveryAddress(e.target.value);
   }
 
-  const deliveryInvalid = isDeliveryInvalid(store);
+  const deliveryInvalid = isDeliveryInvalid(form);
   // השגיאות מוצגות רק אחרי ניסיון שליחה — טופס שצועק על שדות ריקים
   // לפני שהתחילו למלא אותו רק מפריע. אחרי זה הן מתעדכנות בזמן ההקלדה.
-  const errors = showErrors ? checkoutErrors(store) : {};
+  const errors = showErrors ? checkoutErrors(form) : {};
 
   return (
     <div className="checkout-form">
@@ -116,6 +119,8 @@ function CheckoutFormView({ setCartStep, showErrors = false }) {
         <span>{cartCount} פריטים</span>
         <span className="checkout-recap-total">סה"כ {formatPrice(total)}</span>
       </div>
+
+      <PriceChangeNotice />
 
       <p className="checkout-required-note">
         שדות המסומנים ב-<span className="checkout-req" aria-hidden="true">*</span>
@@ -176,6 +181,7 @@ function CheckoutFormView({ setCartStep, showErrors = false }) {
               })}
               aria-invalid={errors.address || deliveryInvalid ? true : undefined}
               placeholder="רחוב, מספר, עיר"
+              maxLength={200}
               autoComplete="street-address"
               value={deliveryAddress}
               onChange={handleAddressChange}
@@ -206,6 +212,7 @@ function CheckoutFormView({ setCartStep, showErrors = false }) {
           <textarea
             id={fieldId('notes')}
             placeholder="הערות מיוחדות..."
+            maxLength={1000}
             value={orderNotes}
             onChange={e => setOrderNotes(e.target.value)}
             rows={2}
@@ -217,17 +224,94 @@ function CheckoutFormView({ setCartStep, showErrors = false }) {
 }
 
 /**
+ * An order that was sent and not confirmed (see useCheckoutForm): until the customer settles it, no
+ * new order can be sent. Sending it again returns the original and never creates a second order;
+ * cancelling it can, if it was in fact received, so that takes a second, explicit click.
+ *
+ * Once 48 hours have passed (`expired`) the order's details have been removed from the device, so it
+ * cannot be sent again: the notice says the outcome is unknown, sends the customer to the store, and
+ * offers only the same two-step cancel. It never says the order failed.
+ */
+function PendingOrderNotice({ pendingOrder, submitting, onRetry, onCancel }) {
+  const [confirming, setConfirming] = useState(false);
+  const { submittedAt, itemCount, total, persisted, conflict, expired } = pendingOrder;
+  const sentAt = Number.isFinite(submittedAt)
+    ? new Date(submittedAt).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' })
+    : null;
+  const facts = [
+    sentAt && `נשלחה ב-${sentAt}`,
+    itemCount > 0 && `${itemCount} פריטים`,
+    Number.isFinite(total) && formatPrice(total),
+  ].filter(Boolean);
+
+  return (
+    <section className="checkout-pending" aria-labelledby="checkout-pending-title">
+      <h3 id="checkout-pending-title" className="checkout-pending-title">
+        <AlertTriangle size={17} aria-hidden="true" /> יש הזמנה שלא אושרה
+      </h3>
+      {facts.length > 0 && <p className="checkout-pending-summary">{facts.join(' · ')}</p>}
+      <p>
+        {expired
+          ? `עברו 48 שעות מאז ששלחתם את ההזמנה ולא קיבלנו אישור מהשרת, ולכן פרטי ההזמנה נמחקו מהמכשיר ואי אפשר לשלוח אותה שוב. לא ידוע אם ההזמנה התקבלה. התקשרו לחנות (${PHONES.store.display}) כדי לברר זאת לפני שתשלחו הזמנה חדשה.`
+          : conflict
+          ? `מזהה ההזמנה כבר שימש בשרת להזמנה אחרת, ולכן אי אפשר לשלוח אותה שוב. התקשרו לחנות (${PHONES.store.display}) כדי לברר אם ההזמנה התקבלה לפני שתבטלו.`
+          : 'ייתכן שההזמנה התקבלה. שליחה חוזרת מחזירה את אותה הזמנה ולא יוצרת הזמנה נוספת. עד שמטפלים בה אי אפשר לשלוח הזמנה חדשה.'}
+      </p>
+      {!persisted && !expired && (
+        <p>ההזמנה לא נשמרה במכשיר, ולכן אחרי רענון הדף אי אפשר יהיה לשחזר אותה.</p>
+      )}
+
+      {confirming ? (
+        <div className="checkout-pending-confirm" role="alertdialog" aria-label="אישור ביטול">
+          <p>אם ההזמנה כבר התקבלה, שליחה חדשה תיצור הזמנה נוספת. אפשר לברר מול החנות בטלפון {PHONES.store.display} לפני שמבטלים.</p>
+          <button type="button" className="cart-cta" onClick={onCancel}>כן, בטלו את ההזמנה הקודמת</button>
+          <button type="button" className="cart-cta cart-cta--outline" onClick={() => setConfirming(false)}>חזרה</button>
+        </div>
+      ) : (
+        <div className="checkout-pending-actions">
+          {!conflict && !expired && (
+            <button type="button" className="cart-cta" disabled={submitting} onClick={onRetry}>
+              {submitting
+                ? <><Spinner size="small" color="white" /> שולח הזמנה…</>
+                : <><CheckCircle size={18} aria-hidden="true" /> שלחו שוב את ההזמנה הקודמת</>}
+            </button>
+          )}
+          <button
+            type="button"
+            className="cart-cta cart-cta--outline"
+            disabled={submitting}
+            onClick={() => setConfirming(true)}>
+            בטלו והתחילו מחדש
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/**
  * הכפתור שיושב בשורה התחתונה של המגירה, והתראת השרת שמעליו.
  * onInvalid מדליק את הצגת השגיאות בטופס שמעליו (CartModal מחזיק אותה).
  */
-function CheckoutFormFooter({ onInvalid }) {
-  const store = useStore();
-  const { submittingOrder, handlePlaceOrder, orderError } = store;
+function CheckoutFormFooter({ onInvalid, checkout }) {
+  const deliveryMethod = useSelector(selectDeliveryMethod);
+  const cart = useSelector(selectCartItems);
+  const unavailableLines = useSelector(selectUnavailableLines);
+  const pendingChanges = useSelector(selectPendingPriceChanges);
+  const {
+    submittingOrder, handlePlaceOrder, orderError, pendingOrder, retryPendingOrder, cancelPendingOrder,
+  } = checkout;
+  const form = { ...checkout, deliveryMethod };
+
+  // The same two blockers as the cart step, so opening /checkout directly cannot skip them. The
+  // hook refuses as well (useCheckoutForm); the button only says why.
+  const hasUnavailable = cart.some((item) => isLineUnavailable(unavailableLines, item));
+  const blocked = hasUnavailable || pendingChanges.length > 0;
 
   /** בודק את הטופס, ושולח רק אם הוא תקין. */
   function handleSubmit() {
-    const firstInvalid = Object.keys(checkoutErrors(store))[0]
-      || (isDeliveryInvalid(store) ? 'address' : null);
+    const firstInvalid = Object.keys(checkoutErrors(form))[0]
+      || (isDeliveryInvalid(form) ? 'address' : null);
 
     if (firstInvalid) {
       onInvalid?.();
@@ -247,15 +331,31 @@ function CheckoutFormFooter({ onInvalid }) {
         </p>
       )}
 
-      <button
-        type="button"
-        className="cart-cta"
-        disabled={submittingOrder}
-        onClick={handleSubmit}>
-        {submittingOrder
-          ? <><Spinner size="small" color="white" /> שולח הזמנה…</>
-          : <><CheckCircle size={18} aria-hidden="true" /> שלח הזמנה</>}
-      </button>
+      {hasUnavailable && (
+        <p className="checkout-alert" role="alert">
+          <AlertTriangle size={17} aria-hidden="true" />
+          <span>יש בעגלה מוצרים שאינם זמינים כרגע. חזרו לעגלה, הסירו אותם או התקשרו לחנות.</span>
+        </p>
+      )}
+
+      {pendingOrder ? (
+        <PendingOrderNotice
+          pendingOrder={pendingOrder}
+          submitting={submittingOrder}
+          onRetry={retryPendingOrder}
+          onCancel={cancelPendingOrder}
+        />
+      ) : (
+        <button
+          type="button"
+          className="cart-cta"
+          disabled={submittingOrder || blocked}
+          onClick={handleSubmit}>
+          {submittingOrder
+            ? <><Spinner size="small" color="white" /> שולח הזמנה…</>
+            : <><CheckCircle size={18} aria-hidden="true" /> שלח הזמנה</>}
+        </button>
+      )}
     </div>
   );
 }

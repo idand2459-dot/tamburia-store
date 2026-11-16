@@ -1,8 +1,10 @@
 /**
  * בדיקות לאימות האדמין: התחברות, הגנה על הנתיבים והגבלת קצב.
  */
-const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
-const PASSWORD = process.env.ADMIN_PASSWORD;
+const { runHttpSuite } = require('./lib/testServer');
+// Set by runHttpSuite: the suite talks only to the server it started itself.
+let BASE;
+let PASSWORD; // read after the server started, when the environment file has been loaded
 
 let passed = 0;
 let failed = 0;
@@ -111,7 +113,6 @@ async function testPublicRoutes() {
     ['GET', '/reviews'],
     ['GET', '/reviews/stats'],
     ['GET', '/pigment-formulas'],
-    ['GET', '/orders/by-phone/0501234567'],
     ['GET', '/health'],
   ];
 
@@ -125,6 +126,10 @@ async function testPublicRoutes() {
 
   const review = await call('POST', '/reviews', { body: {} });
   check('POST /reviews נגיש ללקוח (400 על גוף ריק, לא 401)', review.status === 400, review.status);
+
+  // No public read of orders is left: the phone lookup was removed (P8.2).
+  const lookup = await call('GET', '/orders/by-phone/0501234567');
+  check('GET /orders/by-phone/:phone → 404 (removed, not open)', lookup.status === 404, lookup.status);
 }
 
 /** בודק שאסימון מזויף או פגום נדחה. */
@@ -177,6 +182,7 @@ async function testRateLimit() {
 
 /** מריץ את כל הבדיקות לפי הסדר. */
 async function main() {
+  PASSWORD = process.env.ADMIN_PASSWORD;
   if (!PASSWORD) throw new Error('חסר ADMIN_PASSWORD בסביבה');
 
   const cookie = await testLogin();
@@ -190,7 +196,7 @@ async function main() {
   process.exitCode = failed === 0 ? 0 : 1;
 }
 
-main().catch((err) => {
-  console.error('הבדיקה קרסה:', err);
-  process.exit(1);
+runHttpSuite(async (baseUrl) => {
+  BASE = baseUrl + '/api';
+  await main();
 });

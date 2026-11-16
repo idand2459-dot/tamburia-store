@@ -1,5 +1,5 @@
 /**
- * בודק את services/order.service.js בבידוד: בלי HTTP, בלי מסד ובלי
+ * בודק את api/order/order.service.js בבידוד: בלי HTTP, בלי מסד ובלי
  * מיילים. המודל ושירות המייל מוחלפים בכפילים שמתעדים איך נקראו.
  *
  * למה בנפרד מחבילות ה-smoke: שם הכל נבדק דרך הרשת מקצה לקצה, ולכן
@@ -14,10 +14,10 @@
 const path = require('path');
 const Module = require('module');
 
-const SERVICE_PATH = path.resolve(__dirname, '../server/services/order.service.js');
-const MODEL_PATH = path.resolve(__dirname, '../server/models/order.model.js');
+const SERVICE_PATH = path.resolve(__dirname, '../server/api/order/order.service.js');
+const MODEL_PATH = path.resolve(__dirname, '../server/api/order/order.repository.js');
 const MAILER_PATH = path.resolve(__dirname, '../server/services/email/index.js');
-const PRICING_PATH = path.resolve(__dirname, '../server/services/pricing.service.js');
+const PRICING_PATH = path.resolve(__dirname, '../server/api/order/pricing.service.js');
 
 let passed = 0;
 let failed = 0;
@@ -56,21 +56,18 @@ function injectFake(resolvedPath, fakeExports) {
  * טוען את השירות מחדש מעל כפילים טריים ומחזיר אותם יחד איתו.
  * מחיקת השירות מה-cache הכרחית: בלעדיה הייתה חוזרת ההרצה הקודמת,
  * שכבר קשורה לכפילים של הבדיקה הקודמת.
- *
- * digitsOnly מקבל את ההתנהגות האמיתית (השמטת כל מה שאינו ספרה),
- * כי הבדיקה כאן היא שהשירות מעביר הלאה את התוצאה המנורמלת.
  */
 function loadService({ order = {}, mail = {}, pricing = {} } = {}) {
   const Order = {
     findById: spy(null),
-    findByPhone: spy([]),
     create: spy(null),
+    createOnce: spy(null),
+    findByRequestId: spy(null),
     update: spy(null),
     remove: spy(null),
     list: spy([]),
     count: spy(0),
     statsByStatus: spy([]),
-    digitsOnly: spy((value) => String(value).replace(/\D/g, '')),
     ...order,
   };
 
@@ -121,12 +118,15 @@ const sampleOrder = (over = {}) => ({
 async function testCreateOrder() {
   console.log('\n── createOrder');
 
-  const created = sampleOrder();
+  const created = { ...sampleOrder(), picked_items: [] };
   const { service, Order, mailer, pricing } = loadService({ order: { create: spy(created) } });
 
   const data = { customer_name: 'ישראל ישראלי', items: [{ name: 'צבע', price: 100, quantity: 1 }] };
-  const result = await service.createOrder(data);
+  const { order: result, replayed } = await service.createOrder(data);
 
+  check('בלי request_id זו לא הפעלה חוזרת', replayed === false, replayed);
+  check('בלי request_id לא מחפשים מזהה ולא כותבים בהגנה', Order.findByRequestId.calls.length === 0
+    && Order.createOnce.calls.length === 0, null);
   check('Order.create נקרא פעם אחת', Order.create.calls.length === 1, Order.create.calls.length);
   check('Order.create קיבל את מה שהתמחור החזיר',
     Order.create.calls[0][0] === data, Order.create.calls[0][0]);
@@ -145,6 +145,8 @@ async function testCreateOrder() {
     null);
 
   check('ההזמנה מוחזרת עם שדותיה', result.id === 7 && result.total === 250, result);
+  check('picked_items אינו חלק מהתשובה ללקוח, והמיילים קיבלו את ההזמנה כמות שנשמרה',
+    !('picked_items' in result) && 'picked_items' in mailer.sendNewOrderToStore.calls[0][0], Object.keys(result));
   check('emails משקף את תוצאת השליחה',
     result.emails.store === true && result.emails.customer === true, result.emails);
 
@@ -159,9 +161,105 @@ async function testCreateOrder() {
   const err = await captureError(() => failing.service.createOrder(data));
   check('מייל שנכשל אינו זורק', err === null, err && err.message);
 
-  const degraded = await failing.service.createOrder(data);
+  const { order: degraded } = await failing.service.createOrder(data);
   check('emails מדווח false כששליחה נכשלה',
     degraded.emails.store === false && degraded.emails.customer === false, degraded.emails);
+}
+
+const REQUEST_ID = '3f2b8c1e-5d4a-4b6e-9a7c-1d2e3f4a5b6c';
+
+/** הזמנה כפי שהוולידטור מחזיר אותה, עם מזהה בקשה. */
+const parsedOrder = (over = {}) => ({
+  customer_name: 'ישראל ישראלי',
+  customer_phone: '0501234567',
+  customer_email: 'a@example.com',
+  delivery_method: 'pickup',
+  delivery_address: null,
+  notes: null,
+  items: [{ id: 1, name: 'צבע', price: 100, quantity: 2, selectedVariant: null, selectedColor: 'לבן', selectedSize: null }],
+  status: 'new',
+  request_id: REQUEST_ID,
+  ...over,
+});
+
+/** ההזמנה כפי שה-INSERT מחזיר אותה: בלי request_hash, עם picked_items. */
+const storedOrder = (over = {}) => ({ ...sampleOrder({ delivery_method: 'pickup' }), picked_items: [], ...over });
+
+/** createOrder עם request_id — יצירה חד-פעמית והפעלה חוזרת. */
+async function testIdempotentCreate() {
+  console.log('\n── createOrder עם request_id');
+
+  // יצירה ראשונה: ה-hash נכתב עם השורה, ושליחה רצה פעם אחת
+  const first = loadService({ order: { findByRequestId: spy(null), createOnce: spy(storedOrder()) } });
+  const data = parsedOrder();
+  const created = await first.service.createOrder(data);
+  const written = first.Order.createOnce.calls[0][0];
+  check('מחפשים את המזהה לפני התמחור', first.Order.findByRequestId.calls[0][0] === REQUEST_ID, null);
+  check('נכתב עם request_id ו-request_hash של 64 תווים',
+    written.request_id === REQUEST_ID && /^[0-9a-f]{64}$/.test(written.request_hash), written.request_hash);
+  check('יצירה ראשונה אינה הפעלה חוזרת', created.replayed === false, created.replayed);
+  check('נשלחו שני מיילים', first.mailer.sendNewOrderToStore.calls.length === 1
+    && first.mailer.sendOrderConfirmationToCustomer.calls.length === 1, null);
+
+  // הפעלה חוזרת: אותו מזהה ואותו גוף → ההזמנה המקורית, בלי תמחור ומיילים
+  const hash = written.request_hash;
+  const existing = { ...storedOrder({ picked_items: [0, 1] }), request_hash: hash };
+  const replay = loadService({ order: { findByRequestId: spy(existing), createOnce: spy(null) } });
+  const again = await replay.service.createOrder(parsedOrder());
+  check('הפעלה חוזרת מוחזרת כ-replayed', again.replayed === true, again.replayed);
+  check('ההזמנה המקורית מוחזרת', again.order.id === 7 && again.order.total === 250, again.order);
+  check('picked_items לא נחשף בהפעלה חוזרת', !('picked_items' in again.order), Object.keys(again.order));
+  check('request_hash ו-request_id לא נחשפים', !('request_hash' in again.order) && !('request_id' in again.order), Object.keys(again.order));
+  check('emails לא ידוע בהפעלה חוזרת', again.order.emails.store === null && again.order.emails.customer === null, again.order.emails);
+  check('בלי תמחור מחדש', replay.pricing.priceOrder.calls.length === 0, replay.pricing.priceOrder.calls.length);
+  check('בלי כתיבה', replay.Order.createOnce.calls.length === 0 && replay.Order.create.calls.length === 0, null);
+  check('בלי מיילים', replay.mailer.sendNewOrderToStore.calls.length === 0
+    && replay.mailer.sendOrderConfirmationToCustomer.calls.length === 0, null);
+
+  // אותו מזהה עם גוף אחר → 422, ואין החזרה של הזמנה זרה
+  const other = loadService({ order: { findByRequestId: spy(existing), createOnce: spy(null) } });
+  const differentItems = parsedOrder({ items: [{ ...parsedOrder().items[0], quantity: 3 }] });
+  const err = await captureError(() => other.service.createOrder(differentItems));
+  check('מזהה שנעשה בו שימוש עם גוף אחר → 422', err && err.status === 422, err && err.status);
+  check('עם reason ייעודי', err && err.details && err.details.reason === 'request_id_reused', err && err.details);
+  check('בלי תמחור ובלי כתיבה', other.pricing.priceOrder.calls.length === 0 && other.Order.createOnce.calls.length === 0, null);
+
+  // כל שדה בגוף משנה את ה-hash (צבע ושם לקוח לדוגמה); המזהה עצמו לא
+  const hashOf = async (over) => {
+    const s = loadService({ order: { findByRequestId: spy(null), createOnce: spy(storedOrder()) } });
+    await s.service.createOrder(parsedOrder(over));
+    return s.Order.createOnce.calls[0][0].request_hash;
+  };
+  const base = await hashOf({});
+  check('אותו גוף → אותו hash', base === hash, null);
+  check('שם לקוח אחר → hash אחר', (await hashOf({ customer_name: 'אחר' })) !== base, null);
+  check('צבע אחר → hash אחר', (await hashOf({ items: [{ ...parsedOrder().items[0], selectedColor: 'שחור' }] })) !== base, null);
+  check('מזהה אחר → אותו hash (המזהה אינו חלק מהתוכן)', (await hashOf({ request_id: '3f2b8c1e-5d4a-4b6e-9a7c-1d2e3f4a5b6d' })) === base, null);
+
+  // מרוץ: ה-INSERT לא החזיר שורה כי בקשה מקבילה ניצחה
+  const winnerRow = { ...storedOrder(), request_hash: hash };
+  // the first lookup (before pricing) finds nothing; the one after the lost INSERT finds the winner
+  const afterLoss = () => {
+    let lookups = 0;
+    return spy(() => (lookups++ === 0 ? null : winnerRow));
+  };
+  const racing = loadService({ order: { findByRequestId: afterLoss(), createOnce: spy(null) } });
+  const lost = await racing.service.createOrder(parsedOrder());
+  check('הפסד במרוץ מחזיר את הזמנת המנצחת', lost.replayed === true && lost.order.id === 7, lost);
+  check('ההפסד במרוץ לא שולח מיילים ולא משדר', racing.mailer.sendNewOrderToStore.calls.length === 0
+    && racing.mailer.sendOrderConfirmationToCustomer.calls.length === 0, null);
+
+  const differentLoser = loadService({ order: { findByRequestId: afterLoss(), createOnce: spy(null) } });
+  const loserErr = await captureError(() => differentLoser.service.createOrder(differentItems));
+  check('הפסד במרוץ עם גוף אחר → 422', loserErr && loserErr.status === 422, loserErr && loserErr.status);
+
+  // תמחור שנדחה אינו משאיר דבר
+  const rejected = loadService({
+    order: { findByRequestId: spy(null), createOnce: spy(storedOrder()) },
+    pricing: { priceOrder: spy(() => { const e = new Error('409'); e.status = 409; throw e; }) },
+  });
+  const rejectedErr = await captureError(() => rejected.service.createOrder(parsedOrder()));
+  check('דחיית תמחור → לא נכתב דבר', rejectedErr && rejected.Order.createOnce.calls.length === 0, null);
 }
 
 /** updateOrder — מתי נשלח מייל סטטוס ומתי לא. */
@@ -348,26 +446,18 @@ async function testRemoveOrder() {
   check('מחיקה של הזמנה שאינה קיימת → 404', err && err.status === 404, err && err.status);
 }
 
-/** findOrdersByPhone — נרמול ובדיקת אורך לפני הפנייה למודל. */
-async function testFindOrdersByPhone() {
-  console.log('\n── findOrdersByPhone');
+/** The public order lookup was removed (P8.2): the service offers no way to read orders by phone. */
+function testNoPublicLookup() {
+  console.log('\n── no public lookup');
 
-  const short = loadService();
-  const err = await captureError(() => short.service.findOrdersByPhone('123'));
-  check('טלפון קצר → 400', err && err.status === 400, err && err.status);
-  check('טלפון קצר — לא פונים למודל',
-    short.Order.findByPhone.calls.length === 0, short.Order.findByPhone.calls.length);
-
-  const orders = [sampleOrder()];
-  const ok = loadService({ order: { findByPhone: spy(orders) } });
-  const result = await ok.service.findOrdersByPhone('050-000-0099');
-  check('טלפון מנוקד עובר נרמול לפני החיפוש',
-    ok.Order.findByPhone.calls[0][0] === '0500000099', ok.Order.findByPhone.calls[0]);
-  check('מוחזרות ההזמנות מהמודל', result.length === 1 && result[0].id === orders[0].id, result);
-
-  const internal = loadService({ order: { findByPhone: spy([sampleOrder({ picked_items: [0] })]) } });
-  const [shown] = await internal.service.findOrdersByPhone('0500000099');
-  check('picked_items אינו מגיע ללקוח', !('picked_items' in shown), Object.keys(shown));
+  const { service } = loadService();
+  const names = Object.keys(service);
+  check('the service has no lookup by phone', !names.some((name) => /phone/i.test(name)), names);
+  check('the service exports exactly the order operations',
+    JSON.stringify(names.sort()) === JSON.stringify([
+      'createOrder', 'getOrder', 'getStats', 'listOrders', 'removeOrder',
+      'setItemPicked', 'updateOrder', 'updateOrderStatus',
+    ]), names);
 }
 
 /** setItemPicked — רשימת הליקוט. */
@@ -401,11 +491,12 @@ async function testSetItemPicked() {
 /** מריץ את כל הבדיקות לפי הסדר. */
 async function main() {
   await testCreateOrder();
+  await testIdempotentCreate();
   await testUpdateOrder();
   await testUpdateOrderStatus();
   await testStatusFitsDeliveryMethod();
   await testRemoveOrder();
-  await testFindOrdersByPhone();
+  testNoPublicLookup();
   await testSetItemPicked();
 
   console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);

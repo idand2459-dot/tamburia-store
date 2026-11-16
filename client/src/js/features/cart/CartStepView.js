@@ -1,12 +1,12 @@
 /**
  * שלב העגלה: רשימת הפריטים, אופן קבלת ההזמנה וסיכום הסכומים.
  *
- * מושך את מצב העגלה מ-StoreContext ומקבל בפרופס רק את מעבר השלבים
- * והסגירה, שהם עניין של הניתוב ולא של המצב המשותף.
+ * Reads the cart from the Redux store and receives as props only the step change and the
+ * closing, which belong to the routing and not to the shared state.
  *
  * הסיכום והכפתור אינם כאן אלא ב-CartStepFooter שלמטה, כי הם יושבים
- * בשורה התחתונה הדביקה של המגירה ולא בגוף הגולל. שני הרכיבים שואבים
- * מאותו קונטקסט, ולכן אין מצב שהסיכום למטה יסתור את השורות למעלה.
+ * בשורה התחתונה הדביקה של המגירה ולא בגוף הגולל. שני הרכיבים קוראים
+ * מאותו store, ולכן אין מצב שהסיכום למטה יסתור את השורות למעלה.
  *
  * פריט במחיר 0 הוא מוצר שהמחיר שלו במסד עוד לא הוקלד. באתר כבר אי
  * אפשר להוסיף מוצר כזה לעגלה, אבל עגלה נשמרת ב-localStorage וכזה
@@ -15,10 +15,16 @@
  *
  * ופריט של מוצר שהוסתר מהקטלוג מאז שנוסף מטופל בדיוק באותו אופן,
  * ומאותה סיבה: הוא נראה תקין בעגלה, השרת ידחה אותו, ועדיף שהלקוח
- * יבין למה כאן. מי אלה — useAvailability, דרך ההקשר.
+ * יבין למה כאן. מי אלה — store/availability, דרך ה-store.
  */
 import { Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
-import { useStore } from '../../context/storeContext';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  selectCartItems, selectDeliveryMethod, selectSubtotal, selectTotal, selectPendingPriceChanges,
+} from '../../store/cart/cartSelectors';
+import { removeItem, changeQuantity, clearCart, acknowledgePriceChanges } from '../../store/cart/cartActions';
+import { selectUnavailableLines, isLineUnavailable } from '../../store/availability/availabilitySelectors';
+import { DELIVERY_FEE } from '../../utils/delivery';
 import CATEGORY_ICONS from '../../utils/categoryIcons';
 import { NO_PRICE_LABEL, UNAVAILABLE_LABEL, formatPrice, lineTotal } from '../../utils/pricing';
 import DeliveryOptions from './DeliveryOptions';
@@ -35,8 +41,39 @@ function itemMeta(item) {
 }
 
 /** מציג את תוכן העגלה ואת בחירת אופן הקבלה. */
+/**
+ * ההודעה על מחירים שהתעדכנו, והכפתור שמאשר אותם. כל עוד יש שינוי שלא אושר אי אפשר להמשיך לפרטים
+ * ולשלוח הזמנה; הסכומים שמוצגים כבר מחושבים מהמחירים החדשים. אישור חל רק על השינויים שמוצגים:
+ * מחיר שישתנה שוב יחזיר את ההודעה. מוצגת גם בעגלה וגם בצעד הפרטים.
+ */
+function PriceChangeNotice() {
+  const dispatch = useDispatch();
+  const changes = useSelector(selectPendingPriceChanges);
+  if (changes.length === 0) return null;
+
+  return (
+    <div className="cart-summary-hint cart-summary-hint--blocking" role="alert">
+      <p>המחירים התעדכנו מאז שהוספתם לעגלה:</p>
+      <ul>
+        {changes.map((change) => (
+          <li key={`${change.id}:${change.selectedVariant || ''}`}>
+            {change.name}{change.selectedVariant ? ` (${change.selectedVariant})` : ''}: {formatPrice(change.from)} ← {formatPrice(change.to)}
+          </li>
+        ))}
+      </ul>
+      <button type="button" className="cart-clear" onClick={() => dispatch(acknowledgePriceChanges())}>
+        הבנתי, המחירים החדשים מקובלים עליי
+      </button>
+    </div>
+  );
+}
+
 function CartStepView({ closeCart }) {
-  const { cart, updateQuantity, removeFromCart, unavailableIds } = useStore();
+  const dispatch = useDispatch();
+  const cart = useSelector(selectCartItems);
+  const unavailableLines = useSelector(selectUnavailableLines);
+  const updateQuantity = (index, delta) => dispatch(changeQuantity(index, delta));
+  const removeFromCart = (index) => dispatch(removeItem(index));
 
   if (cart.length === 0) {
     return (
@@ -55,11 +92,12 @@ function CartStepView({ closeCart }) {
 
   return (
     <>
+      <PriceChangeNotice />
       <ul className="cart-rows">
         {cart.map((item, index) => {
           const Icon = CATEGORY_ICONS[item.category];
           const meta = itemMeta(item);
-          const unavailable = unavailableIds.has(item.id);
+          const unavailable = isLineUnavailable(unavailableLines, item);
           return (
             <li key={index} className={`cart-row ${unavailable ? 'is-unavailable' : ''}`}>
               <div className="cart-row-well">
@@ -120,15 +158,20 @@ function CartStepView({ closeCart }) {
  * מפסיק להיות בלוק אדום ברוחב מלא מתחת לכפתור האמיתי.
  */
 function CartStepFooter({ setCartStep }) {
-  const {
-    cart, setCart, subtotal, total, deliveryMethod, setDeliveryMethod, unavailableIds,
-  } = useStore();
+  const dispatch = useDispatch();
+  const cart = useSelector(selectCartItems);
+  const subtotal = useSelector(selectSubtotal);
+  const total = useSelector(selectTotal);
+  const deliveryMethod = useSelector(selectDeliveryMethod);
+  const unavailableLines = useSelector(selectUnavailableLines);
+  const pendingChanges = useSelector(selectPendingPriceChanges);
 
   const unpriced = cart.filter((item) => !itemPriced(item));
-  const unavailable = cart.filter((item) => unavailableIds.has(item.id));
+  const unavailable = cart.filter((item) => isLineUnavailable(unavailableLines, item));
   const canContinue = Boolean(deliveryMethod)
     && unpriced.length === 0
-    && unavailable.length === 0;
+    && unavailable.length === 0
+    && pendingChanges.length === 0;
 
   return (
     <div className="cart-summary">
@@ -141,7 +184,7 @@ function CartStepFooter({ setCartStep }) {
           <span>משלוח</span>
           {deliveryMethod === 'pickup'
             ? <span className="cart-summary-free">חינם</span>
-            : <span>₪20</span>}
+            : <span>{formatPrice(DELIVERY_FEE)}</span>}
         </div>
       )}
       <div className="cart-summary-total">
@@ -157,6 +200,10 @@ function CartStepFooter({ setCartStep }) {
           {unavailable.length === 1
             ? `"${unavailable[0].name}" ${UNAVAILABLE_LABEL} — הסירו אותו מהעגלה, או התקשרו לחנות לבירור`
             : `${unavailable.length} מוצרים בעגלה אינם זמינים כרגע — הסירו אותם, או התקשרו לחנות לבירור`}
+        </p>
+      ) : pendingChanges.length > 0 ? (
+        <p className="cart-summary-hint cart-summary-hint--blocking">
+          אשרו את שינויי המחיר שמוצגים למעלה לפני המשך
         </p>
       ) : unpriced.length > 0 ? (
         <p className="cart-summary-hint cart-summary-hint--blocking">
@@ -179,12 +226,12 @@ function CartStepFooter({ setCartStep }) {
       <button
         type="button"
         className="cart-clear"
-        onClick={() => { setCart([]); setDeliveryMethod(null); }}>
+        onClick={() => dispatch(clearCart())}>
         רוקן עגלה
       </button>
     </div>
   );
 }
 
-export { CartStepFooter };
+export { CartStepFooter, PriceChangeNotice };
 export default CartStepView;

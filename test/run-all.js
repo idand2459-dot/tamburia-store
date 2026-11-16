@@ -1,61 +1,55 @@
 /**
- * מריץ את כל חבילות הבדיקה מקצה לקצה עבור npm test.
- * מרים שרת משלו על פורט 3100, כדי שאפשר יהיה להריץ גם כשהשרת
- * האמיתי עובד על 3000. הבדיקות פונות למסד האמיתי, יוצרות רשומות
- * זמניות ומוחקות אותן בסוף.
+ * מריץ את כל חבילות הבדיקה עבור npm test, כתהליכים נפרדים, ברצף.
+ * This file only orchestrates: it opens no database connection and starts no HTTP
+ * server. Each HTTP suite starts its own server on a port the operating system picks,
+ * on the separate test database (TEST_DATABASE_URL, see test/lib/testDatabase.js and
+ * test/lib/testServer.js); the suites create temporary records and delete them at the end.
  *
- * חלון הגבלת ההתחברות מקוצר כאן, כי כל חבילה מתחברת פעם אחת
+ * חלון הגבלת ההתחברות מקוצר בכל שרת בדיקות, כי כל חבילה מתחברת פעם אחת
  * ואחרת המכסה הייתה נגמרת באמצע הריצה. smoke-auth רץ אחרון
  * מפני שהוא ממצה את המכסה בכוונה.
  */
 process.env.MAIL_ENABLED = 'false';
 process.env.DB_LOG_QUERIES = 'false';
-process.env.PORT = process.env.TEST_PORT || '3100';
-process.env.LOGIN_WINDOW_MS = '2000';
 
 const path = require('path');
 const { spawn } = require('child_process');
+const { resolveTestDatabase, publicTarget, describeTestDatabase } = require('./lib/testDatabase');
 
 // בדיקות ה-unit רצות ראשונות: הן אינן נוגעות ברשת או במסד, ולכן נותנות
 // את סימן הכישלון המהיר ביותר אם משהו בסיסי שבור — ובראשן השמירה
 // שאף סוד לא נכנס לגיט.
-const SUITES = ['unit-repo-hygiene', 'unit-config', 'unit-order-service', 'unit-product-service', 'unit-review-service', 'unit-money', 'unit-originals', 'smoke-fresh-db', 'smoke-static', 'smoke-orders', 'smoke-products', 'smoke-settings', 'smoke-reviews', 'smoke-pigments', 'smoke-auth'];
+const SUITES = ['unit-repo-hygiene', 'unit-config', 'unit-test-database-guard', 'unit-no-private-phone', 'unit-auth-cookie', 'unit-numeric-ids', 'unit-error-handler', 'unit-rate-limit', 'unit-order-limits', 'unit-order-service', 'unit-email-delivery', 'unit-product-service', 'unit-review-service', 'unit-money', 'unit-originals', 'unit-e2e-refusal', 'smoke-fresh-db', 'smoke-static', 'smoke-orders', 'smoke-products', 'smoke-settings', 'smoke-reviews', 'smoke-pigments', 'smoke-contract', 'smoke-rate-limits', 'smoke-auth'];
+
+/** The environment a suite inherits: ours, without anything that could point it at a server. */
+function suiteEnv() {
+  const env = { ...process.env };
+  delete env.NEW_URL;
+  return env;
+}
 
 /** מריץ חבילה אחת כתהליך נפרד ומחזיר את קוד היציאה. */
-function runSuite(name, baseUrl) {
+function runSuite(name) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [path.join(__dirname, `${name}.js`)], {
       stdio: 'inherit',
-      env: { ...process.env, NEW_URL: baseUrl },
+      env: suiteEnv(),
     });
     child.on('close', resolve);
   });
 }
 
-/** מעלה שרת בדיקות, מריץ את כל החבילות ומסכם את התוצאות. */
+/** מריץ את כל החבילות ומסכם את התוצאות. */
 async function main() {
-  const db = require('../server/config/db');
-  const { runMigrations } = require('../server/db/migrate');
-  const { createApp } = require('../server/app');
-
-  await db.assertConnection();
-  await runMigrations();
-
-  const port = Number(process.env.PORT);
-  const server = createApp().listen(port);
-  await new Promise((resolve) => server.once('listening', resolve));
-
-  const baseUrl = `http://127.0.0.1:${port}`;
-  console.log(`שרת בדיקות על ${baseUrl}`);
+  // Validates only, and changes nothing: each suite that needs the database runs the whole
+  // guard again for itself. This stops the run before the first suite on a bad setup.
+  console.log(describeTestDatabase(publicTarget(resolveTestDatabase())));
 
   const results = [];
   for (const suite of SUITES) {
     console.log(`\n═══ ${suite} ═══`);
-    results.push([suite, await runSuite(suite, baseUrl)]);
+    results.push([suite, await runSuite(suite)]);
   }
-
-  await new Promise((resolve) => server.close(resolve));
-  await db.close();
 
   console.log('\n═══ סיכום ═══');
   for (const [suite, code] of results) {

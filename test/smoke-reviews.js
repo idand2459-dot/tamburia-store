@@ -3,7 +3,9 @@
  * הציבורית לרשימת הניהול. מנקה בסוף כל רשומה שיצר.
  */
 const { login } = require('./helpers');
-const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
+const { runHttpSuite } = require('./lib/testServer');
+// Set by runHttpSuite: the suite talks only to the server it started itself.
+let BASE;
 
 let passed = 0;
 let failed = 0;
@@ -290,8 +292,9 @@ async function main() {
   process.exitCode = failed === 0 ? 0 : 1;
 }
 
-main().catch(async (err) => {
-  console.error('הבדיקה קרסה:', err);
+runHttpSuite(async (baseUrl) => {
+  BASE = baseUrl + '/api';
+  await main();
+}, async () => {
   for (const id of created) if (id) await call('DELETE', `/reviews/${id}`).catch(() => {});
-  process.exit(1);
 });

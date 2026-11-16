@@ -1,23 +1,22 @@
 /**
  * מסך התודה: מספר ההזמנה, פרטיה ודרכי יצירת קשר.
  *
- * מושך את תוצאת ההזמנה מ-StoreContext ומקבל בפרופס רק את הסגירה,
- * שהיא עניין של הניתוב ולא של המצב המשותף.
+ * The order result arrives in the `checkout` prop (owned by StoreLayout), and the closing as
+ * a prop too, since it belongs to the routing.
  *
  * "מה קורה עכשיו" מתאר רק מה שהמערכת באמת עושה: החנות מקבלת מייל על
  * כל הזמנה, והלקוח מקבל אישור רק אם השאיר כתובת מייל — שתי השורות
  * האלה נגזרות מ-server/services/order.service.js ולא מהבטחה.
  */
 import {
-  Check, ClipboardList, Store, Truck, Mail, Phone, Smartphone, MessageCircle,
+  Check, ClipboardList, Store, Truck, Mail, Phone, MessageCircle,
 } from 'lucide-react';
-import { useStore } from '../../context/storeContext';
-import { ADDRESS, PHONES, whatsappUrl } from '../../utils/storeInfo';
+import { ADDRESS, PHONES, WHATSAPP, whatsappUrl } from '../../utils/storeInfo';
 import { formatPrice } from '../../utils/pricing';
 
 /** מציג את אישור ההזמנה. */
-function OrderSuccessView({ closeCart }) {
-  const { orderSuccess } = useStore();
+function OrderSuccessView({ closeCart, checkout }) {
+  const { orderSuccess } = checkout;
 
   const isPickup = orderSuccess.delivery_method === 'pickup';
 
@@ -30,6 +29,13 @@ function OrderSuccessView({ closeCart }) {
 
       <h2 className="order-success-title">ההזמנה התקבלה!</h2>
       <p className="order-success-id">#{orderSuccess.id}</p>
+
+      {/* the order that was just confirmed is not the cart the customer is editing now */}
+      {checkout.cartKeptAfterOrder && (
+        <p className="order-success-kept">
+          זו ההזמנה שנשלחה קודם. העגלה הנוכחית לא נשלחה והיא נשארה בעגלה.
+        </p>
+      )}
 
       <dl className="order-success-details">
         <div>
@@ -71,20 +77,19 @@ function OrderSuccessView({ closeCart }) {
       <div className="order-success-contact">
         <p>לכל שאלה ניתן לפנות אלינו:</p>
         <div className="order-success-btns">
-          {/* טלפון החנות הוא הפנייה הראשית ולכן האדום; הפלאפון שלידו
-              והוואטסאפ הם אותו כפתור בשני צבעים אחרים. */}
+          {/* טלפון החנות הוא הפנייה הראשית ולכן האדום; הוואטסאפ, כשהוא פעיל,
+              הוא אותו כפתור בצבע אחר. */}
           <a href={`tel:${PHONES.store.tel}`} className="order-success-btn order-success-btn--primary">
             <Phone size={17} aria-hidden="true" /> {PHONES.store.display}
           </a>
-          <a href={`tel:${PHONES.mobile.tel}`} className="order-success-btn">
-            <Smartphone size={17} aria-hidden="true" /> {PHONES.mobile.display}
-          </a>
-          <a
-            href={whatsappUrl(`שלום, שאלה לגבי הזמנה מספר ${orderSuccess.id}`)}
-            target="_blank" rel="noopener noreferrer"
-            className="order-success-btn order-success-btn--whatsapp">
-            <MessageCircle size={17} aria-hidden="true" /> וואטסאפ
-          </a>
+          {WHATSAPP && (
+            <a
+              href={whatsappUrl(`שלום, שאלה לגבי הזמנה מספר ${orderSuccess.id}`)}
+              target="_blank" rel="noopener noreferrer"
+              className="order-success-btn order-success-btn--whatsapp">
+              <MessageCircle size={17} aria-hidden="true" /> וואטסאפ
+            </a>
+          )}
         </div>
       </div>
 

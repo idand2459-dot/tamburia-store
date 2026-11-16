@@ -1,9 +1,10 @@
 /**
  * חלון העגלה: העטיפה שמחליפה בין שלושת שלבי ההזמנה.
  *
- * מושך את מצב העגלה וההזמנה מ-StoreContext, ולא מקבל אותו בפרופס —
- * אותו כיוון שכבר נעשה ב-Navbar וב-Footer. מה שכן מגיע בפרופס הוא
- * שלב העגלה והסגירה, כי השלבים נגזרים מהכתובת ולכן שייכים למסגרת.
+ * Reads the cart from the Redux store. The checkout form (its fields, the submit state and the
+ * order result) arrives as the `checkout` prop from StoreLayout, which owns it so that it
+ * survives this drawer being unmounted. The cart step and the closing arrive as props too,
+ * because the steps follow the URL and so belong to the frame.
  *
  * המגירה נשארת מורכבת בין השלבים — רק הכותרת, הגוף והשורה התחתונה
  * מתחלפים. לכן מעבר מהעגלה לפרטים אינו מריץ את ההחלקה מחדש ואינו
@@ -11,7 +12,8 @@
  */
 import { useState } from 'react';
 import { ShoppingCart, ClipboardList, CheckCircle } from 'lucide-react';
-import { useStore } from '../../context/storeContext';
+import { useSelector } from 'react-redux';
+import { selectCartItems } from '../../store/cart/cartSelectors';
 import Drawer from '../../components/Drawer';
 import CartStepView, { CartStepFooter } from './CartStepView';
 import CheckoutFormView, { CheckoutFormFooter } from './CheckoutFormView';
@@ -24,8 +26,9 @@ const HEADS = {
 };
 
 /** מציג את חלון העגלה ואת השלב הפעיל. */
-function CartModal({ cartStep, setCartStep, closeCart }) {
-  const { cart, orderSuccess } = useStore();
+function CartModal({ cartStep, setCartStep, closeCart, checkout }) {
+  const cart = useSelector(selectCartItems);
+  const { orderSuccess } = checkout;
 
   const head = HEADS[cartStep] || HEADS.cart;
 
@@ -36,7 +39,7 @@ function CartModal({ cartStep, setCartStep, closeCart }) {
   // מסך התודה אינו מחזיק שורה תחתונה: הסגירה ודרכי הקשר הם התוכן שלו.
   // עגלה ריקה גם לא — אין מה לסכם.
   const footer = cartStep === 'details'
-    ? <CheckoutFormFooter onInvalid={() => setShowErrors(true)} />
+    ? <CheckoutFormFooter onInvalid={() => setShowErrors(true)} checkout={checkout} />
     : cartStep === 'cart' && cart.length > 0
       ? <CartStepFooter setCartStep={setCartStep} />
       : null;
@@ -45,9 +48,9 @@ function CartModal({ cartStep, setCartStep, closeCart }) {
     <Drawer title={head.title} icon={head.icon} onClose={closeCart} footer={footer}>
       {cartStep === 'cart' && <CartStepView closeCart={closeCart} />}
 
-      {cartStep === 'details' && <CheckoutFormView setCartStep={setCartStep} showErrors={showErrors} />}
+      {cartStep === 'details' && <CheckoutFormView setCartStep={setCartStep} showErrors={showErrors} checkout={checkout} />}
 
-      {cartStep === 'success' && orderSuccess && <OrderSuccessView closeCart={closeCart} />}
+      {cartStep === 'success' && orderSuccess && <OrderSuccessView closeCart={closeCart} checkout={checkout} />}
     </Drawer>
   );
 }

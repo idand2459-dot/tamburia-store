@@ -3,7 +3,7 @@
  */
 import { useState } from 'react';
 import { MessageCircle, Phone, Plus } from 'lucide-react';
-import { ADDRESS, PHONES, whatsappUrl, hoursSummary } from '../../utils/storeInfo';
+import { ADDRESS, PHONES, WHATSAPP, whatsappUrl, hoursSummary } from '../../utils/storeInfo';
 
 const FAQS = [
   {
@@ -32,7 +32,7 @@ const FAQS = [
   },
   {
     q: 'איך יוצרים קשר?',
-    a: `ניתן להתקשר ל-${PHONES.store.display} או ${PHONES.mobile.display}, לשלוח וואטסאפ, או להגיע לחנות. אנחנו זמינים ${hoursSummary(', ')}.`
+    a: `ניתן להתקשר ל-${PHONES.store.display}${WHATSAPP ? ', לשלוח וואטסאפ,' : ''} או להגיע לחנות. אנחנו זמינים ${hoursSummary(', ')}.`
   },
   {
     q: 'האם המחירים כוללים מע"מ?',
@@ -97,7 +97,9 @@ function FAQ() {
           <p>לא מצאתם תשובה? אנחנו כאן בשבילכם</p>
           <div className="faq-contact-btns">
             <a href={`tel:${PHONES.store.tel}`} className="faq-btn"><Phone size={18} aria-hidden="true" /> {PHONES.store.display}</a>
-            <a href={whatsappUrl()} target="_blank" rel="noopener noreferrer" className="faq-btn whatsapp"><MessageCircle size={18} aria-hidden="true" /> וואטסאפ</a>
+            {WHATSAPP && (
+              <a href={whatsappUrl()} target="_blank" rel="noopener noreferrer" className="faq-btn whatsapp"><MessageCircle size={18} aria-hidden="true" /> וואטסאפ</a>
+            )}
           </div>
         </div>
       </div>

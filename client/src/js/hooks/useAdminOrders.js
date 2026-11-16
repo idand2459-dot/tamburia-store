@@ -2,38 +2,51 @@
  * נתוני ההזמנות של מסך הניהול: הרשימה, הסקר התקופתי, הסטטוסים,
  * רשימת הליקוט, המחיקה, ייצוא האקסל וחישובי לשונית הסטטיסטיקות.
  *
- * מקבל את עוטף ה-fetch (api) כארגומנט, כמו שני ההוקים האחרים.
+ * Receives the admin API (adminApi, see services/adminService.js) as an argument.
  *
  * getStats מקבל את המוצרים כארגומנט ואינו מחזיק אותם: חישוב
  * הקטגוריות הנמכרות והמוצרים שאזלו זקוק לשתי הרשימות, וקבלת המוצרים
  * מבחוץ שומרת את ההוק עצמו בלתי תלוי ב-useAdminProducts.
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { CATEGORIES, STATUS_CONFIG, formatDate } from '../pages/admin/adminConstants';
-import { useWebSocket } from './useWebSocket';
 import { errorMessageFrom, NETWORK_ERROR } from '../utils/apiErrors';
-import { sumPrices } from '../utils/pricing';
+import { computeOrderStats, ordersToCsv } from '../utils/orderReports';
 import { withLine } from '../utils/pickList';
 
-// הסקר הוא מסלול חלופי בלבד מאז שיש WebSocket: הודעה על הזמנה חדשה
-// מגיעה תוך פחות משנייה, והסקר נשאר רק למקרה שהחיבור למטה.
-const POLL_MS = 120000;
+// How often the order list is polled while the tab is visible.
+const POLL_MS = 30000;
 
 /**
  * מנהל את ההזמנות, את זיהוי החדשות ואת חישובי הסטטיסטיקות.
  *
- * onNewOrder נקרא בשני המקומות שבהם מתגלית הזמנה חדשה — הודעת
- * ה-WebSocket והסקר החלופי — ליד הקונפטי. ההוק אינו יודע מה עושים
- * בהתראה, ולכן הצליל אינו כאן אלא ב-useNewOrderChime שהמסך מרכיב.
+ * onNewOrder נקרא בכל שליפה שמגלה הזמנה שלא נראתה קודם — ליד הקונפטי.
+ * ההוק אינו יודע מה עושים בהתראה, ולכן הצליל אינו כאן אלא
+ * ב-useNewOrderChime שהמסך מרכיב.
+ *
+ * New orders are found by polling GET /api/orders. The list is a flat array of every order (no
+ * limit), and `id` is the table's SERIAL primary key, which is never reused, so an order is new
+ * when its id is not in the set of ids already seen. That does not depend on the list order, on
+ * deletions, or on the order count. The first successful load only fills the set (no sound, no
+ * confetti). Every load, whether from the timer, the tab becoming visible again, or a manual
+ * refresh, goes through `loadOrders`, which orders the requests and discards a stale answer.
  */
-export function useAdminOrders(api, { onNewOrder } = {}) {
+export function useAdminOrders(adminApi, { onNewOrder } = {}) {
   const [orders, setOrders] = useState([]);
   const [showConfetti, setShowConfetti] = useState(false);
   const [ordersError, setOrdersError] = useState('');
-  const prevOrdersCount = useRef(null);
 
-  // דרך ref, כדי שפונקציה חדשה בכל רינדור לא תרשום מחדש את מאזין
-  // ה-WebSocket ולא תאפס את שעון הסקר.
+  // null until the first successful load; then the ids of every order seen so far.
+  const knownIdsRef = useRef(null);
+  // The number of the latest list request started; an older answer is dropped.
+  const requestSeqRef = useRef(0);
+  // How many list requests are running now; the timer never starts another one on top.
+  const activeRequestsRef = useRef(0);
+  // Set by a 401 answer: polling stays off for this hook instance (the admin screen is
+  // unmounted by the 401 handler and mounted again after the next login).
+  const unauthorizedRef = useRef(false);
+  const aliveRef = useRef(true);
+
+  // דרך ref, כדי שפונקציה חדשה בכל רינדור לא תאפס את שעון הסקר.
   const onNewOrderRef = useRef(onNewOrder);
   onNewOrderRef.current = onNewOrder;
 
@@ -44,53 +57,116 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
   }, []);
 
   /**
-   * שולף את ההזמנות. שלושת הקוראים צריכים אותו שליפה אבל התייחסות
-   * שונה לספירה שנראתה לאחרונה, ולכן הם נבדלים בדגלים ולא בעותק
-   * נוסף של אותו fetch:
-   * - detectNew — הסקר: גידול במספר ההזמנות מפעיל קונפטי.
-   * - markSeen — אחרי הודעת WebSocket: הספירה מסומנת כמעודכנת, כדי
-   *   שהסקר לא יפעיל קונפטי שוב על אותה הזמנה.
-   * בלי שניהם (עדכון סטטוס, מחיקה) הספירה לא נוגעת, כמו קודם.
+   * Loads the order list and returns what happened: 'ok', 'stale' (a newer request started, so
+   * this answer was dropped), 'unauthorized' (401) or 'failed'.
+   *
+   * `poll: true` is the timer and the visibility refresh. A poll never replaces the list with
+   * anything but an array from an OK answer: a 5xx or a network error keeps the list and waits
+   * for the next tick. The manual path (status change, delete) keeps the earlier behavior: it
+   * does not look at the status, only at whether the body is an array (pinned in
+   * useAdminOrders.test.js).
    */
-  const loadOrders = useCallback(async ({ detectNew = false, markSeen = false } = {}) => {
+  const loadOrders = useCallback(async ({ poll = false } = {}) => {
+    const seq = ++requestSeqRef.current;
+    activeRequestsRef.current += 1;
     let arr;
+    // True only for an OK answer whose body is a list: the only kind of answer that may set the
+    // baseline or add to the ids seen. (The manual path still shows any list body, OK or not.)
+    let isTrusted = false;
     try {
-      const res = await api('/api/orders');
+      const res = await adminApi.getOrders();
+      if (res.status === 401) {
+        unauthorizedRef.current = true;
+        // The manual path keeps its earlier behavior for a 401 (the list empties, see above).
+        if (poll) return 'unauthorized';
+      }
+      if (poll && !res.ok) return 'failed';
       const data = await res.json();
-      arr = Array.isArray(data) ? data : [];
+      const isList = Array.isArray(data);
+      if (poll && !isList) return 'failed';
+      arr = isList ? data : [];
+      isTrusted = isList && res.ok;
     } catch {
-      // תקלה ברשת אינה מפילה את הסקר — הוא ינסה שוב בפעימה הבאה.
-      return;
+      // A network error never breaks the screen; the next tick tries again.
+      return 'failed';
+    } finally {
+      activeRequestsRef.current -= 1;
     }
 
-    if (detectNew && prevOrdersCount.current !== null && arr.length > prevOrdersCount.current) {
-      announceNewOrder();
-    }
-    if (prevOrdersCount.current === null || detectNew || markSeen) {
-      prevOrdersCount.current = arr.length;
+    if (!aliveRef.current || seq !== requestSeqRef.current) return 'stale';
+
+    // An answer that is not an OK list (the manual path still shows its body) says nothing
+    // reliable about which orders exist, so it neither sets the baseline nor announces anything.
+    if (isTrusted) {
+      const ids = arr.map((order) => order?.id).filter((id) => id !== undefined && id !== null);
+      if (knownIdsRef.current === null) {
+        knownIdsRef.current = new Set(ids);
+      } else {
+        const known = knownIdsRef.current;
+        const hasNew = ids.some((id) => !known.has(id));
+        ids.forEach((id) => known.add(id));
+        if (hasNew) announceNewOrder();
+      }
     }
     setOrders(arr);
-  }, [api, announceNewOrder]);
+    return 'ok';
+  }, [adminApi, announceNewOrder]);
 
-  /** טוען את ההזמנות מחדש, בלי לגעת בספירה שנראתה לאחרונה. */
+  /** טוען את ההזמנות מחדש (עדכון סטטוס, מחיקה). */
   const fetchOrders = useCallback(() => loadOrders(), [loadOrders]);
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
-  // הזמנה חדשה מגיעה מהשרת בזמן אמת. ההוק שמביא אותה הוא תעבורה
-  // גנרית; המשמעות — קונפטי ורענון — נמצאת כאן, בשכבה שיודעת מה
-  // order:created אומר.
-  useWebSocket({
-    'order:created': () => {
-      announceNewOrder();
-      loadOrders({ markSeen: true });
-    },
-  });
-
-  // סקר תקופתי כמסלול חלופי, למקרה שה-WebSocket אינו מחובר.
   useEffect(() => {
-    const interval = setInterval(() => loadOrders({ detectNew: true }), POLL_MS);
-    return () => clearInterval(interval);
+    aliveRef.current = true;
+    return () => { aliveRef.current = false; };
+  }, []);
+
+  // Poll every POLL_MS while the tab is visible. A timeout chain, not an interval: the next
+  // tick is scheduled only after the previous one finished, so polls never overlap each other,
+  // and a tick is skipped while a manual request is still running.
+  useEffect(() => {
+    let timer = null;
+
+    const clear = () => {
+      if (timer !== null) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+
+    const schedule = () => {
+      clear();
+      if (!aliveRef.current || unauthorizedRef.current || document.hidden) return;
+      timer = setTimeout(tick, POLL_MS);
+    };
+
+    async function tick() {
+      timer = null;
+      if (activeRequestsRef.current === 0 && !unauthorizedRef.current && !document.hidden) {
+        await loadOrders({ poll: true });
+      }
+      schedule();
+    }
+
+    // Hidden: stop the timer. Visible again: refresh now, then continue every POLL_MS.
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        clear();
+        return;
+      }
+      if (unauthorizedRef.current) return;
+      clear();
+      tick();
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    schedule();
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      clear();
+    };
   }, [loadOrders]);
 
   /** מכבה את הקונפטי בסיום האנימציה. */
@@ -99,7 +175,7 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
   /** משנה את סטטוס ההזמנה. */
   const handleStatusChange = useCallback(async (orderId, status) => {
     try {
-      const res = await api(`/api/orders/${orderId}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+      const res = await adminApi.updateOrderStatus(orderId, status);
 
       if (!res.ok) {
         setOrdersError(await errorMessageFrom(res, `שינוי הסטטוס של הזמנה #${orderId} נכשל.`));
@@ -109,7 +185,7 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
     } catch {
       setOrdersError(NETWORK_ERROR);
     }
-  }, [api, fetchOrders]);
+  }, [adminApi, fetchOrders]);
 
   /** קובע במסך את הסימון של שורה אחת בהזמנה, בלי לגעת בשאר. */
   const setLinePickedLocally = useCallback((orderId, line, picked) => {
@@ -134,9 +210,7 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
   const togglePicked = useCallback(async (orderId, line, picked) => {
     setLinePickedLocally(orderId, line, picked);
     try {
-      const res = await api(`/api/orders/${orderId}/items/${line}/picked`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ picked }),
-      });
+      const res = await adminApi.setOrderLinePicked(orderId, line, picked);
       if (res.ok) return null;
       setLinePickedLocally(orderId, line, !picked);
       return await errorMessageFrom(res, 'הסימון לא נשמר. נסה שוב.');
@@ -144,14 +218,14 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
       setLinePickedLocally(orderId, line, !picked);
       return NETWORK_ERROR;
     }
-  }, [api, setLinePickedLocally]);
+  }, [adminApi, setLinePickedLocally]);
 
   /** מוחק הזמנה לאחר אישור המשתמש. */
   const handleDeleteOrder = useCallback(async (id) => {
     if (!window.confirm('למחוק את ההזמנה?')) return;
 
     try {
-      const res = await api('/api/orders/' + id, { method: 'DELETE' });
+      const res = await adminApi.deleteOrder(id);
       if (!res.ok) {
         setOrdersError(await errorMessageFrom(res, `מחיקת הזמנה #${id} נכשלה.`));
         return;
@@ -160,92 +234,14 @@ export function useAdminOrders(api, { onNewOrder } = {}) {
     } catch {
       setOrdersError(NETWORK_ERROR);
     }
-  }, [api, fetchOrders]);
+  }, [adminApi, fetchOrders]);
 
-  /**
-   * מחשב את נתוני לשונית הסטטיסטיקות.
-   *
-   * since הוא נקודת ההתחלה של הסיכומים (useStatsBaseline): הזמנות
-   * שקדמו לה יוצאות מהחישוב. הסינון נעשה פעם אחת בראש, ולכן כל מה
-   * שמתחתיו — החלונות של היום, השבוע והחודש, הגרף והקטגוריות — מכבד
-   * אותו בלי להזכיר אותו. outOfStock אינו מסונן: הוא נגזר מהמוצרים
-   * ולא מההזמנות, ולמוצר שאזל אין תאריך שאפשר לספור ממנו.
-   */
-  const getStats = useCallback((products, since = null) => {
-    const from = since ? new Date(since) : null;
-    const counted = from ? orders.filter(o => new Date(o.created_at) >= from) : orders;
-
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekStart = new Date(todayStart); weekStart.setDate(weekStart.getDate() - 7);
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    const todayOrders = counted.filter(o => new Date(o.created_at) >= todayStart);
-    const weekOrders = counted.filter(o => new Date(o.created_at) >= weekStart);
-    const monthOrders = counted.filter(o => new Date(o.created_at) >= monthStart);
-
-    const revenueToday = sumPrices(todayOrders.map(o => o.total));
-    const revenueWeek = sumPrices(weekOrders.map(o => o.total));
-    const revenueMonth = sumPrices(monthOrders.map(o => o.total));
-    const revenueTotal = sumPrices(counted.map(o => o.total));
-
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(todayStart);
-      d.setDate(d.getDate() - (6 - i));
-      return d;
-    });
-
-    const dailyOrders = last7Days.map(day => {
-      const nextDay = new Date(day); nextDay.setDate(nextDay.getDate() + 1);
-      const count = counted.filter(o => {
-        const d = new Date(o.created_at);
-        return d >= day && d < nextDay;
-      }).length;
-      return { day: day.toLocaleDateString('he-IL', { weekday: 'short', day: 'numeric' }), count };
-    });
-
-    const catCount = {};
-    counted.forEach(o => {
-      (Array.isArray(o.items) ? o.items : []).forEach(item => {
-        const p = products.find(p => p.id === item.id);
-        if (p?.category) catCount[p.category] = (catCount[p.category] || 0) + item.quantity;
-      });
-    });
-    const topCategories = Object.entries(catCount)
-      .sort((a, b) => b[1] - a[1]).slice(0, 5)
-      .map(([id, count]) => ({ ...CATEGORIES.find(c => c.id === id), count }));
-
-    const outOfStock = products.filter(p => p.in_stock === false);
-
-    // totalOrders ולא orders.length בלשונית: אחרי איפוס המספר הגדול
-    // והסיכום שלידו חייבים לספר את אותו סיפור.
-    return { todayOrders, weekOrders, monthOrders, revenueToday, revenueWeek, revenueMonth, revenueTotal, dailyOrders, topCategories, outOfStock, totalOrders: counted.length };
-  }, [orders]);
+  /** מחשב את נתוני לשונית הסטטיסטיקות (utils/orderReports.js). */
+  const getStats = useCallback((products, since = null) => computeOrderStats(orders, products, since), [orders]);
 
   /** מייצא את ההזמנות לקובץ CSV. */
   const exportOrdersToExcel = useCallback(() => {
-    const rows = orders.map(o => ({
-      'מספר הזמנה': `#${o.id}`,
-      'תאריך': formatDate(o.created_at),
-      'שם לקוח': o.customer_name,
-      'טלפון': o.customer_phone,
-      'אימייל': o.customer_email || '',
-      'אופן קבלה': o.delivery_method === 'pickup' ? 'איסוף עצמי' : 'משלוח',
-      'כתובת': o.delivery_address || '',
-      'פריטים': o.items.map(i => `${i.name} x${i.quantity}`).join(' | '),
-      'סכום מוצרים': o.subtotal,
-      'משלוח': o.delivery_fee,
-      'סה"כ': o.total,
-      'סטטוס': STATUS_CONFIG[o.status]?.label || o.status,
-      'הערות': o.notes || '',
-    }));
-
-    const headers = Object.keys(rows[0]);
-    const csvLines = [
-      headers.join(','),
-      ...rows.map(row => headers.map(h => `"${String(row[h]).replace(/"/g, '""')}"`).join(','))
-    ];
-    const csv = '﻿' + csvLines.join('\n');
+    const csv = ordersToCsv(orders);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

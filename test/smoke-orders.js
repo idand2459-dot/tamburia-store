@@ -9,7 +9,9 @@
  * ו-total נגזרת ממנו.
  */
 const { login } = require('./helpers');
-const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
+const { runHttpSuite } = require('./lib/testServer');
+// Set by runHttpSuite: the suite talks only to the server it started itself.
+let BASE;
 
 let passed = 0;
 let failed = 0;
@@ -40,7 +42,7 @@ async function call(method, path, body) {
     headers,
     body: body ? JSON.stringify(body) : undefined,
   });
-  return { status: res.status, body: await res.json() };
+  return { status: res.status, headers: res.headers, body: await res.json() };
 }
 
 /* המוצרים שהבדיקה יוצרת לעצמה, לפי מפתח. מתמלא ב-setupProducts. */
@@ -61,7 +63,11 @@ async function makeProduct(key, body) {
 async function setupProducts() {
   console.log('\n── מוצרי בדיקה');
 
-  await makeProduct('paint', { name: 'צבע לבן בדיקה', price: 100, sku: 'TEST-ORD-PAINT' });
+  // the colour and size the orders below choose must be options of the product (P7.4)
+  await makeProduct('paint', {
+    name: 'צבע לבן בדיקה', price: 100, sku: 'TEST-ORD-PAINT',
+    colors: [{ name: 'לבן', hex: '#ffffff' }], sizes: ['5 ליטר'],
+  });
   await makeProduct('brush', { name: 'מברשת בדיקה', price: 30, sku: 'TEST-ORD-BRUSH' });
   await makeProduct('thinner', { name: 'מדלל בדיקה', price: 45, sku: 'TEST-ORD-THINNER' });
   await makeProduct('roller', { name: 'רולר בדיקה', price: 12.9, sku: 'TEST-ORD-ROLLER' });
@@ -79,7 +85,7 @@ async function setupProducts() {
 
 const validOrder = () => ({
   customer_name: 'ישראל ישראלי',
-  customer_phone: '050-000-0099',
+  customer_phone: '050-000-0000',
   customer_email: 'test@example.com',
   delivery_method: 'delivery',
   delivery_address: 'בר כוכבא 52, פתח תקווה',
@@ -162,11 +168,10 @@ async function testRead(id) {
   const badId = await call('GET', '/orders/abc');
   check('מזהה לא מספרי → 400', badId.status === 400, badId.status);
 
-  const byPhone = await call('GET', '/orders/by-phone/0500000099');
-  check('חיפוש לפי טלפון מנוקד מוצא', byPhone.body.some((o) => o.id === id), byPhone.body.length);
-
-  const badPhone = await call('GET', '/orders/by-phone/123');
-  check('טלפון קצר בחיפוש → 400', badPhone.status === 400, badPhone.status);
+  // the admin list keeps its phone filter (authenticated; it is not the removed public lookup)
+  const byPhone = await call('GET', '/orders?phone=050-000-0000');
+  check('the admin phone filter finds the order, with the number normalized',
+    byPhone.status === 200 && Array.isArray(byPhone.body) && byPhone.body.some((o) => o.id === id), byPhone.body.length);
 
   const paged = await call('GET', '/orders?limit=1');
   check('limit מחזיר אובייקט עם pagination',
@@ -533,10 +538,454 @@ async function testPicked(id) {
   check('בלי התחברות → 401', anon.status === 401, anon.status);
   const after = await call('GET', `/orders/${id}`);
   check('בקשה בלי התחברות לא שינתה דבר', JSON.stringify(after.body.picked_items) === '[1]', after.body.picked_items);
+}
 
-  const byPhone = await call('GET', '/orders/by-phone/0500000099');
-  check('החיפוש של הלקוח לפי טלפון אינו חושף picked_items',
-    byPhone.body.length > 0 && byPhone.body.every((o) => !('picked_items' in o)), byPhone.body.map(Object.keys));
+/** מספר ההזמנות השמורות כרגע; מוכיח שהזמנה שנדחתה לא כתבה כלום. */
+async function storedOrderCount() {
+  const res = await call('GET', '/orders');
+  return res.body.length;
+}
+
+/** מוצר שאזל נדחה ב-409 שהלקוח יודע לזהות, ושום דבר לא נשמר. */
+async function testAvailability() {
+  console.log('\n── זמינות מלאי (in_stock)');
+
+  await makeProduct('stockout', { name: 'מוצר שאזל בדיקה', price: 60, sku: 'TEST-ORD-STOCKOUT' });
+  const order = (items) => ({ ...validOrder(), items });
+  const line = (product, extra = {}) => ({ id: product.id, name: product.name, price: product.price, quantity: 1, ...extra });
+
+  const before = await storedOrderCount();
+  const inStock = await call('POST', '/orders', order([line(P.stockout)]));
+  created.push(inStock.body.id);
+  check('מוצר במלאי מתקבל → 201', inStock.status === 201, `${inStock.status} ${inStock.body.error || ''}`);
+
+  await call('PUT', `/products/${P.stockout.id}`, { in_stock: false });
+
+  const refused = await call('POST', '/orders', order([line(P.paint, { price: 100 }), line(P.stockout)]));
+  check('מוצר שאזל → 409', refused.status === 409, `${refused.status} ${refused.body.error || ''}`);
+  check('התשובה ניתנת לזיהוי: details.reason = out_of_stock',
+    refused.body.details?.reason === 'out_of_stock', refused.body.details);
+  check('details.unavailable מונה את המוצר שאזל ורק אותו',
+    JSON.stringify(refused.body.details?.unavailable?.map((u) => u.id)) === JSON.stringify([P.stockout.id]), refused.body.details);
+  check('ההודעה היא ההודעה המוסכמת',
+    refused.body.error === `המוצר "${P.stockout.name}" אינו זמין כרגע. ניתן להסיר אותו מהעגלה או ליצור קשר עם החנות לבירור זמינות.`,
+    refused.body.error);
+  check('גוף התשובה נשאר { error, details }', Object.keys(refused.body).sort().join() === 'details,error', Object.keys(refused.body));
+
+  // זמינות מדווחת לפני מחיר שהשתנה; המחירים נבדקים בניסיון הבא.
+  const both = await call('POST', '/orders', order([line(P.paint, { price: 1 }), line(P.stockout)]));
+  check('מוצר שאזל ומחיר שהשתנה → דווח קודם על הזמינות',
+    both.status === 409 && both.body.details?.reason === 'out_of_stock' && !both.body.details?.prices, both.body.details);
+  const next = await call('POST', '/orders', order([line(P.paint, { price: 1 })]));
+  check('אחרי הסרת המוצר שאזל — 409 המחיר הרגיל נשמר', next.status === 409 && Array.isArray(next.body.details?.prices), next.body.details);
+
+  const after = await storedOrderCount();
+  check('הדחיות לא שמרו הזמנה', after === before + 1, { before, after });
+
+  // בקשה ישירה לא עוקפת את הבדיקה: מצב המוצר במסד מכריע ולא מה שהבקשה טוענת.
+  const lying = await call('POST', '/orders', order([{ ...line(P.stockout), in_stock: true, inStock: true }]));
+  check('בקשה ישירה שטוענת שהמוצר במלאי נדחית', lying.status === 409, lying.status);
+
+  // הסתרה היא שגיאה ישנה משלה ונשארת 400.
+  await call('PUT', `/products/${P.stockout.id}`, { active: false });
+  const hidden = await call('POST', '/orders', order([line(P.stockout)]));
+  check('מוצר מוסתר נשאר 400', hidden.status === 400, `${hidden.status} ${hidden.body.error || ''}`);
+  await call('PUT', `/products/${P.stockout.id}`, { active: true, in_stock: true });
+
+  const back = await call('POST', '/orders', order([line(P.stockout)]));
+  created.push(back.body.id);
+  check('חזר למלאי → מתקבל שוב', back.status === 201, `${back.status} ${back.body.error || ''}`);
+}
+
+/** תקרות הגודל ותקרת NUMERIC(10,2) נענות ב-400 מבוקר, לא ב-500 ממסד הנתונים. */
+async function testOrderLimits() {
+  console.log('\n── תקרות גודל הזמנה');
+
+  const order = (items, extra = {}) => ({ ...validOrder(), items, ...extra });
+  const brush = (quantity = 1) => ({ id: P.brush.id, name: P.brush.name, price: 30, quantity });
+  const before = await storedOrderCount();
+
+  const fifty = await call('POST', '/orders', order(Array.from({ length: 50 }, () => brush())));
+  created.push(fifty.body.id);
+  check('50 שורות → 201', fifty.status === 201 && fifty.body.items.length === 50 && fifty.body.subtotal === 1500,
+    `${fifty.status} ${fifty.body.error || ''}`);
+
+  const tooMany = await call('POST', '/orders', order(Array.from({ length: 51 }, () => brush())));
+  check('51 שורות → 400', tooMany.status === 400, tooMany.status);
+  check('ההודעה מציינת את התקרה', tooMany.body.error === 'ההזמנה יכולה לכלול עד 50 פריטים', tooMany.body.error);
+
+  const max = await call('POST', '/orders', order([brush(999)]));
+  created.push(max.body.id);
+  check('999 יחידות בשורה → 201 (30 × 999 + 20)', max.status === 201 && max.body.total === 29990,
+    `${max.status} ${max.body.error || ''} ${max.body.total}`);
+
+  const over = await call('POST', '/orders', order([brush(1000)]));
+  check('1000 יחידות → 400', over.status === 400, over.status);
+  check('ההודעה מציינת את התקרה', over.body.error === 'items[0].quantity מוגבל ל-999', over.body.error);
+
+  const zero = await call('POST', '/orders', order([brush(0)]));
+  check('כמות 0 עדיין 400 עם ההודעה הקיימת', zero.status === 400 && zero.body.error.includes('מספר שלם חיובי'), zero.body.error);
+  const fraction = await call('POST', '/orders', order([brush(1.5)]));
+  check('כמות לא שלמה → 400', fraction.status === 400, fraction.status);
+  const huge = await call('POST', '/orders', order([brush(1e21)]));
+  check('כמות 1e21 → 400 ולא 500', huge.status === 400, huge.status);
+
+  // orders.total הוא NUMERIC(10,2): 99,999,999.99 הוא הערך הגדול ביותר שהוא מחזיק.
+  await makeProduct('maxprice', { name: 'מוצר ביוקר מרבי בדיקה', price: 99999999.99, sku: 'TEST-ORD-MAXPRICE' });
+  const maxLine = (quantity) => ({ id: P.maxprice.id, name: P.maxprice.name, price: 99999999.99, quantity });
+  const pickup = (items) => order(items, { delivery_method: 'pickup', delivery_address: undefined });
+
+  const atLimit = await call('POST', '/orders', pickup([maxLine(1)]));
+  if (atLimit.body?.id) created.push(atLimit.body.id);
+  check('בדיוק הסכום המרבי באיסוף → 201', atLimit.status === 201 && atLimit.body.total === 99999999.99,
+    `${atLimit.status} ${atLimit.body.error || ''}`);
+
+  const withFee = await call('POST', '/orders', order([maxLine(1)]));
+  check('הסכום המרבי + דמי משלוח → 400 מבוקר', withFee.status === 400, `${withFee.status} ${withFee.body.error || ''}`);
+  check('ההודעה מסבירה את החריגה', typeof withFee.body.error === 'string' && withFee.body.error.includes('חורג'), withFee.body.error);
+
+  const twice = await call('POST', '/orders', pickup([maxLine(2)]));
+  check('פעמיים הסכום המרבי → 400, לא 500', twice.status === 400, `${twice.status} ${twice.body.error || ''}`);
+
+  const many = await call('POST', '/orders', pickup(Array.from({ length: 50 }, () => maxLine(999))));
+  check('50 שורות × 999 במחיר המרבי → 400, לא 500', many.status === 400, `${many.status} ${many.body.error || ''}`);
+
+  const after = await storedOrderCount();
+  check('רק ההזמנות התקינות נשמרו (50 שורות, 999 יחידות, הסכום המרבי)', after === before + 3, { before, after });
+}
+
+/** A fresh version-4 request id, like the storefront creates. */
+const newRequestId = () => require('crypto').randomUUID();
+
+/** Keys that must never appear in anything the API returns for an order. */
+const INTERNAL_KEYS = ['request_id', 'request_hash'];
+const hasInternal = (o) => INTERNAL_KEYS.some((key) => key in o);
+
+/**
+ * request_id: one order per id, a retry gets the original back, and the database (not the code)
+ * decides who wins when requests race.
+ */
+async function testIdempotency() {
+  console.log('\n── idempotency (request_id)');
+
+  const withKey = (key, extra = {}) => ({ ...validOrder(), request_id: key, ...extra });
+  const before = await storedOrderCount();
+
+  const key = newRequestId();
+  const first = await call('POST', '/orders', withKey(key));
+  created.push(first.body.id);
+  check('first request with an id → 201', first.status === 201, `${first.status} ${first.body.error || ''}`);
+  check('no Idempotent-Replayed header on the first', first.headers.get('idempotent-replayed') === null, null);
+  check('the created order does not expose request_id, request_hash or picked_items',
+    !hasInternal(first.body) && !('picked_items' in first.body), Object.keys(first.body));
+
+  const again = await call('POST', '/orders', withKey(key));
+  check('same id, same order → 200 with the original', again.status === 200 && again.body.id === first.body.id,
+    `${again.status} ${again.body.id}`);
+  check('marked Idempotent-Replayed', again.headers.get('idempotent-replayed') === 'true', null);
+  check('same totals as the original', again.body.total === first.body.total && again.body.subtotal === first.body.subtotal, again.body);
+  check('a replay hides request_id, request_hash and picked_items',
+    !hasInternal(again.body) && !('picked_items' in again.body), Object.keys(again.body));
+  check('a replay reports the email outcome as unknown', again.body.emails?.store === null && again.body.emails?.customer === null, again.body.emails);
+  check('no second order was stored', (await storedOrderCount()) === before + 1, null);
+
+  const upper = await call('POST', '/orders', withKey(key.toUpperCase()));
+  check('the id is case-insensitive', upper.status === 200 && upper.body.id === first.body.id, upper.status);
+
+  // what an admin does to the order afterwards is not leaked through a replay
+  await call('PUT', `/orders/${first.body.id}/items/0/picked`, { picked: true });
+  const afterPick = await call('POST', '/orders', withKey(key));
+  check('a replay after picking still hides picked_items', afterPick.status === 200 && !('picked_items' in afterPick.body), Object.keys(afterPick.body));
+
+  const stored = await call('GET', `/orders/${first.body.id}`);
+  check('the admin read does not expose the internal columns', !hasInternal(stored.body), Object.keys(stored.body));
+  const listed = await call('GET', '/orders');
+  check('the admin list does not expose them', listed.body.every((o) => !hasInternal(o)), null);
+
+  // the same id with a different order is refused, and the original stays as it was
+  const different = await call('POST', '/orders', withKey(key, { customer_name: 'מישהו אחר' }));
+  check('same id, different customer → 422', different.status === 422, `${different.status} ${different.body.error || ''}`);
+  check('the 422 says why: details.reason', different.body.details?.reason === 'request_id_reused', different.body.details);
+  const otherItems = await call('POST', '/orders', withKey(key, { items: [{ id: P.brush.id, name: P.brush.name, price: 30, quantity: 1 }] }));
+  check('same id, different items → 422', otherItems.status === 422, otherItems.status);
+  const otherColor = await call('POST', '/orders', withKey(key, {
+    items: validOrder().items.map((i, n) => (n === 0 ? { ...i, selectedColor: null } : i)),
+  }));
+  check('same id, a different option → 422', otherColor.status === 422, otherColor.status);
+  const unchanged = await call('GET', `/orders/${first.body.id}`);
+  check('the 422 left the original order untouched', unchanged.body.customer_name === first.body.customer_name, unchanged.body.customer_name);
+  check('and stored nothing', (await storedOrderCount()) === before + 1, null);
+
+  // the id is optional: orders without one are independent, as before
+  const plainA = await call('POST', '/orders', validOrder());
+  const plainB = await call('POST', '/orders', validOrder());
+  created.push(plainA.body.id, plainB.body.id);
+  check('without an id every request creates an order', plainA.status === 201 && plainB.status === 201 && plainA.body.id !== plainB.body.id, null);
+  check('and its 201 is customer-safe too', !hasInternal(plainA.body) && !('picked_items' in plainA.body), Object.keys(plainA.body));
+  const nullKey = await call('POST', '/orders', withKey(null));
+  created.push(nullKey.body.id);
+  check('request_id: null counts as no id', nullKey.status === 201, nullKey.status);
+
+  // malformed ids are refused before anything is looked up or stored
+  const mark = await storedOrderCount();
+  for (const bad of ['1', 'abc', '', ' ', 123, {}, [], newRequestId().replace(/^(.{14})4/, '$11'), `${newRequestId()}x`, 'a'.repeat(300)]) {
+    const res = await call('POST', '/orders', withKey(bad));
+    check(`malformed request_id ${JSON.stringify(bad).slice(0, 20)} → 400`, res.status === 400, `${res.status} ${res.body.error || ''}`);
+  }
+  check('malformed ids stored nothing', (await storedOrderCount()) === mark, null);
+
+  // a retry must not be re-priced: the order exists, so a later price change or a sold-out
+  // product is not a reason to refuse it
+  const priced = newRequestId();
+  const line = { id: P.thinner.id, name: P.thinner.name, price: 45, quantity: 1 };
+  const original = await call('POST', '/orders', withKey(priced, { items: [line] }));
+  created.push(original.body.id);
+  check('order for the price/stock replay checks → 201', original.status === 201, original.status);
+  await call('PUT', `/products/${P.thinner.id}`, { price: 50 });
+  const afterPrice = await call('POST', '/orders', withKey(priced, { items: [line] }));
+  check('replay after a price change → 200, not 409', afterPrice.status === 200 && afterPrice.body.id === original.body.id,
+    `${afterPrice.status} ${afterPrice.body.error || ''}`);
+  check('the replay keeps the original price', afterPrice.body.total === original.body.total, afterPrice.body.total);
+  await call('PUT', `/products/${P.thinner.id}`, { in_stock: false });
+  const afterStock = await call('POST', '/orders', withKey(priced, { items: [line] }));
+  check('replay after the product sold out → 200', afterStock.status === 200 && afterStock.body.id === original.body.id, afterStock.status);
+  const fresh = await call('POST', '/orders', withKey(newRequestId(), { items: [line] }));
+  check('a new id for that product is refused (409)', fresh.status === 409, fresh.status);
+  await call('PUT', `/products/${P.thinner.id}`, { price: 45, in_stock: true });
+
+  // a rejected request leaves no row, so the same id works once the cause is fixed
+  const retried = newRequestId();
+  const stale = await call('POST', '/orders', withKey(retried, { items: [{ ...line, price: 1 }] }));
+  check('a price change is refused (409) and the id is not consumed', stale.status === 409, stale.status);
+  const fixed = await call('POST', '/orders', withKey(retried, { items: [line] }));
+  created.push(fixed.body.id);
+  check('the same id then creates the order', fixed.status === 201, `${fixed.status} ${fixed.body.error || ''}`);
+}
+
+/** Requests that race with one id: the unique index lets exactly one of them create the order. */
+async function testConcurrentIdempotency() {
+  console.log('\n── concurrent requests with one request_id');
+
+  const body = (key, extra = {}) => ({ ...validOrder(), request_id: key, ...extra });
+  const before = await storedOrderCount();
+
+  const key = newRequestId();
+  const results = await Promise.all(Array.from({ length: 8 }, () => call('POST', '/orders', body(key))));
+  const ids = new Set(results.map((r) => r.body.id));
+  created.push(...ids);
+  const statuses = results.map((r) => r.status).sort();
+  check('8 identical concurrent requests → exactly one 201, the rest 200',
+    statuses.filter((s) => s === 201).length === 1 && statuses.filter((s) => s === 200).length === 7, statuses);
+  check('all of them answer with the same order', ids.size === 1, [...ids]);
+  check('one order was stored', (await storedOrderCount()) === before + 1, null);
+
+  // two different orders under one id: one wins, every request for the other is refused
+  const raced = newRequestId();
+  const orderA = body(raced);
+  const orderB = body(raced, { customer_name: 'לקוח אחר' });
+  const mixed = await Promise.all([orderA, orderB, orderA, orderB, orderA, orderB].map((o) => call('POST', '/orders', o)));
+  const winners = mixed.filter((r) => r.status === 201 || r.status === 200);
+  created.push(...new Set(winners.map((r) => r.body.id)));
+  const winnerName = winners[0].body.customer_name;
+  check('mixed orders: every success is the same order', new Set(winners.map((r) => r.body.id)).size === 1, winners.map((r) => r.body.id));
+  check('mixed orders: the others are 422', mixed.every((r) => [200, 201, 422].includes(r.status))
+    && mixed.filter((r) => r.status === 422).every((r) => r.body.details?.reason === 'request_id_reused'), mixed.map((r) => r.status));
+  check('mixed orders: only the winner\'s payload succeeded',
+    winners.every((r) => r.body.customer_name === winnerName), winners.map((r) => r.body.customer_name));
+  check('mixed orders: exactly one more order stored', (await storedOrderCount()) === before + 2, null);
+}
+
+/**
+ * An admin change that is still uncommitted when the order reaches the INSERT. Pricing reads the
+ * catalogue without a lock and still sees the product as orderable, so only the lock taken in the
+ * same transaction as the INSERT (order.repository assertProductsOrderable) can stop the order.
+ * The admin transaction is held open by hand to make the interleaving deterministic.
+ */
+async function testAdminChangeRacesOrder() {
+  console.log('\n── admin delete / availability change racing an order');
+  const { pool } = require('../server/config/db');
+  const line = (product) => ({ id: product.id, name: product.name, price: product.price, quantity: 1 });
+
+  /** Holds `adminSql` open in a transaction, sends the order, then commits. */
+  async function orderDuring(product, adminSql) {
+    const admin = await pool.connect();
+    try {
+      await admin.query('BEGIN');
+      await admin.query(adminSql, [product.id]);
+      const pending = call('POST', '/orders', { ...validOrder(), items: [line(product)] });
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      await admin.query('COMMIT');
+      return await pending;
+    } catch (err) {
+      await admin.query('ROLLBACK').catch(() => {});
+      throw err;
+    } finally {
+      admin.release();
+    }
+  }
+
+  const before = await storedOrderCount();
+
+  const toggled = await makeProduct('raceToggle', { name: 'מוצר מרוץ זמינות', price: 20, sku: 'TEST-ORD-RACE-1' });
+  const refusedToggle = await orderDuring(toggled, 'UPDATE products SET in_stock = false WHERE id = $1');
+  check('marked unavailable while the order is in flight → 409 out_of_stock',
+    refusedToggle.status === 409 && refusedToggle.body.details?.reason === 'out_of_stock', refusedToggle.body);
+
+  const doomed = await makeProduct('raceDelete', { name: 'מוצר מרוץ מחיקה', price: 20, sku: 'TEST-ORD-RACE-2' });
+  const refusedDelete = await orderDuring(doomed, 'DELETE FROM products WHERE id = $1');
+  check('deleted while the order is in flight → 409 out_of_stock, no order for a missing product',
+    refusedDelete.status === 409 && refusedDelete.body.details?.reason === 'out_of_stock', refusedDelete.body);
+  createdProducts.splice(createdProducts.indexOf(doomed.id), 1);
+
+  check('neither refused order was stored', (await storedOrderCount()) === before, null);
+
+  // the other direction: an order holding the lock makes the admin delete wait, and then see it
+  const sold = await makeProduct('raceSold', { name: 'מוצר מרוץ נמכר', price: 20, sku: 'TEST-ORD-RACE-3' });
+  const buyer = await pool.connect();
+  let deletion;
+  try {
+    await buyer.query('BEGIN');
+    await buyer.query('SELECT id FROM products WHERE id = $1 FOR SHARE', [sold.id]);
+    deletion = call('DELETE', `/products/${sold.id}`);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    await buyer.query(
+      `INSERT INTO orders (customer_name, customer_phone, delivery_method, items, subtotal, total)
+       VALUES ('race', '0500000000', 'pickup', $1::jsonb, 20, 20)`,
+      [JSON.stringify([{ id: sold.id, name: sold.name, price: 20, quantity: 1 }])]
+    );
+    await buyer.query('COMMIT');
+  } finally {
+    buyer.release();
+  }
+  const blocked = await deletion;
+  check('delete waiting on an in-flight order → 409 has_orders, product kept',
+    blocked.status === 409 && blocked.body.details?.reason === 'has_orders', blocked.body);
+  const { rows: [raceOrder] } = await pool.query("SELECT id FROM orders WHERE customer_name = 'race'");
+  created.push(raceOrder.id);
+
+  // multi-product orders listing the products in opposite orders, while the admin changes both:
+  // the locks are taken in id order, so none of them may deadlock (PostgreSQL 40P01 would be a 500)
+  const a = await makeProduct('lockA', { name: 'מוצר נעילה א', price: 20, sku: 'TEST-ORD-LOCK-A' });
+  const b = await makeProduct('lockB', { name: 'מוצר נעילה ב', price: 20, sku: 'TEST-ORD-LOCK-B' });
+  const requests = [];
+  for (let i = 0; i < 12; i++) {
+    const items = i % 2 === 0 ? [line(a), line(b)] : [line(b), line(a)];
+    requests.push(call('POST', '/orders', { ...validOrder(), items }));
+    requests.push(call('PUT', `/products/${i % 2 === 0 ? a.id : b.id}`, { description: `d${i}` }));
+  }
+  const results = await Promise.all(requests);
+  const orders = results.filter((r, i) => i % 2 === 0);
+  created.push(...orders.map((r) => r.body.id));
+  check('12 concurrent two-product orders in opposite line order, with admin updates: all 201, no deadlock',
+    orders.every((r) => r.status === 201) && results.every((r) => r.status < 500), results.map((r) => r.status));
+}
+
+/** selectedColor and selectedSize must be options of the product; null stays allowed. */
+async function testProductOptions() {
+  console.log('\n── product options (colour and size)');
+
+  const paint = (extra) => ({
+    id: P.paint.id, name: P.paint.name, price: 100, quantity: 1, selectedColor: 'לבן', selectedSize: '5 ליטר', ...extra,
+  });
+  const order = (items) => ({ ...validOrder(), items });
+  const before = await storedOrderCount();
+
+  const valid = await call('POST', '/orders', order([paint()]));
+  created.push(valid.body.id);
+  check('an option the product defines → 201', valid.status === 201, `${valid.status} ${valid.body.error || ''}`);
+
+  const bundle = await call('POST', '/orders', order([paint({ selectedColor: null, selectedSize: null })]));
+  created.push(bundle.body.id);
+  check('null colour and size (a calculator bundle line) → 201', bundle.status === 201, `${bundle.status} ${bundle.body.error || ''}`);
+  const omitted = await call('POST', '/orders', order([{ id: P.paint.id, name: P.paint.name, price: 100, quantity: 1 }]));
+  created.push(omitted.body.id);
+  check('options left out → 201', omitted.status === 201, omitted.status);
+
+  const badColor = await call('POST', '/orders', order([paint({ selectedColor: 'ירוק' })]));
+  check('a colour the product does not have → 409', badColor.status === 409, `${badColor.status} ${badColor.body.error || ''}`);
+  check('details.reason = option_unavailable', badColor.body.details?.reason === 'option_unavailable', badColor.body.details);
+  const listedLine = badColor.body.details?.unavailable?.[0];
+  check('details.unavailable names the line', listedLine?.id === P.paint.id && listedLine.selectedColor === 'ירוק'
+    && listedLine.selectedSize === '5 ליטר' && listedLine.name === P.paint.name, badColor.body.details);
+  check('body stays { error, details }', Object.keys(badColor.body).sort().join() === 'details,error', Object.keys(badColor.body));
+
+  const badSize = await call('POST', '/orders', order([paint({ selectedSize: '99 ליטר' })]));
+  check('a size the product does not have → 409', badSize.status === 409 && badSize.body.details?.reason === 'option_unavailable', badSize.status);
+
+  const noOptions = await call('POST', '/orders', order([{ id: P.brush.id, name: P.brush.name, price: 30, quantity: 1, selectedColor: 'לבן' }]));
+  check('a colour on a product that defines none → 409', noOptions.status === 409, noOptions.status);
+
+  const many = await call('POST', '/orders', order([paint({ selectedColor: 'ירוק' }), paint({ selectedSize: 'x' }), paint()]));
+  check('every bad line is listed, the good one is not', many.status === 409 && many.body.details?.unavailable?.length === 2, many.body.details);
+
+  const staleToo = await call('POST', '/orders', order([paint({ selectedColor: 'ירוק', price: 1 })]));
+  check('an option is reported before a changed price', staleToo.body.details?.reason === 'option_unavailable', staleToo.body.details);
+
+  const long = await call('POST', '/orders', order([paint({ selectedColor: 'א'.repeat(101) })]));
+  check('an over-long option → 400', long.status === 400, long.status);
+
+  check('rejected orders stored nothing', (await storedOrderCount()) === before + 3, null);
+
+  // an order saved with an option the catalog no longer has stays readable
+  const read = await call('GET', `/orders/${valid.body.id}`);
+  await call('PUT', `/products/${P.paint.id}`, { colors: [{ name: 'כחול', hex: '#0000ff' }] });
+  const reread = await call('GET', `/orders/${valid.body.id}`);
+  check('an existing order keeps its option after the catalog changes',
+    reread.status === 200 && reread.body.items[0].selectedColor === read.body.items[0].selectedColor, reread.body.items);
+  await call('PUT', `/products/${P.paint.id}`, { colors: [{ name: 'לבן', hex: '#ffffff' }] });
+}
+
+/**
+ * The public order lookup is gone (P8.2): no route matches it, with or without the admin cookie and
+ * under any spelling of the path, and every order route that remains is for the admin only.
+ */
+async function testNoPublicLookup(id) {
+  console.log('\n── no public order lookup');
+  const saved = authCookie;
+  const phone = '0500000000';
+
+  const paths = [
+    `/orders/by-phone/${phone}`, `/orders/by-phone/050-000-0000`, `/orders/by-phone/${phone}/`,
+    `/orders/by-phone/${phone}?phone=${phone}`, `/orders/BY-PHONE/${phone}`, `/orders/lookup/${phone}`,
+    `/orders/phone/${phone}`, `/orders/by-phone/${phone}/${id}`,
+  ];
+  for (const withAdmin of [false, true]) {
+    authCookie = withAdmin ? saved : null;
+    for (const path of paths) {
+      const res = await call('GET', path);
+      check(`GET ${path} → 404${withAdmin ? ' (admin)' : ''}`, res.status === 404 && !Array.isArray(res.body), `${res.status}`);
+      check(`GET ${path} returns no order data${withAdmin ? ' (admin)' : ''}`,
+        !JSON.stringify(res.body).includes('customer_'), Object.keys(res.body));
+    }
+    const post = await call('POST', `/orders/by-phone/${phone}`, { phone });
+    check(`POST /orders/by-phone → 404${withAdmin ? ' (admin)' : ''}`, post.status === 404, post.status);
+    const lookup = await call('POST', '/orders/lookup', { order_id: id, phone });
+    check(`POST /orders/lookup → 404${withAdmin ? ' (admin)' : ''}`, lookup.status === 404, lookup.status);
+  }
+
+  // A one-segment path can only match /:id, which is admin only: never data, with or without a session.
+  authCookie = null;
+  const bare = await call('GET', '/orders/by-phone');
+  check('GET /orders/by-phone matches only /:id: 401 without a session', bare.status === 401, bare.status);
+  authCookie = saved;
+  const bareAdmin = await call('GET', '/orders/by-phone');
+  check('GET /orders/by-phone as admin is a bad id (400), not a list',
+    bareAdmin.status === 400 && !Array.isArray(bareAdmin.body), bareAdmin.status);
+
+  // the remaining order routes still need the admin session
+  authCookie = null;
+  const admin = [
+    ['GET', '/orders'], ['GET', '/orders?phone=' + phone], ['GET', '/orders/stats'], ['GET', `/orders/${id}`],
+    ['PUT', `/orders/${id}`, { notes: 'x' }], ['PUT', `/orders/${id}/status`, { status: 'processing' }],
+    ['PUT', `/orders/${id}/items/0/picked`, { picked: true }], ['DELETE', `/orders/${id}`],
+  ];
+  for (const [method, path, body] of admin) {
+    const res = await call(method, path, body);
+    check(`${method} ${path} without a session → 401`, res.status === 401 && !JSON.stringify(res.body).includes('customer_'), res.status);
+  }
+  authCookie = saved;
+  const still = await call('GET', `/orders/${id}`);
+  check('the order is untouched and the admin still reads it', still.status === 200 && still.body.id === id, still.status);
 }
 
 /** מוחק את כל מה שהבדיקה יצרה ומאמת שלא נשארו שאריות. */
@@ -573,17 +1022,25 @@ async function main() {
   await testVariantPricing();
   await testDecimalPricing();
   await testSavedTotalsMatch();
+  await testAvailability();
+  await testOrderLimits();
+  await testProductOptions();
+  await testIdempotency();
+  await testConcurrentIdempotency();
+  await testAdminChangeRacesOrder();
   await testUpdate(deliveryId);
   await testPicked(deliveryId);
+  await testNoPublicLookup(deliveryId);
   await cleanup();
 
   console.log(`\n${failed === 0 ? '✓' : '✗'} עברו ${passed}, נכשלו ${failed}`);
   process.exitCode = failed === 0 ? 0 : 1;
 }
 
-main().catch(async (err) => {
-  console.error('הבדיקה קרסה:', err);
+runHttpSuite(async (baseUrl) => {
+  BASE = baseUrl + '/api';
+  await main();
+}, async () => {
   for (const id of created) if (id) await call('DELETE', `/orders/${id}`).catch(() => {});
   for (const id of createdProducts) if (id) await call('DELETE', `/products/${id}`).catch(() => {});
-  process.exit(1);
 });

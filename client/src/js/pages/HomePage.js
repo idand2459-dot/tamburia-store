@@ -2,7 +2,8 @@
  * עמוד הבית: כרזה ורצועת היתרונות מתחתיה, בחירת קטגוריה, למה אנחנו,
  * שני המחשבונים, חוות הדעת ושאלות נפוצות.
  */
-import { useState, useEffect, useRef, Fragment } from 'react';
+import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
+import { useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Crown, Star, ArrowDown, PaintRoller } from 'lucide-react';
 import CategoryGrid from '../features/home/CategoryGrid';
@@ -13,11 +14,10 @@ import FeaturesBanner from '../features/home/FeaturesBanner';
 import ReviewsCarousel from '../features/catalog/ReviewsCarousel';
 import FAQ from '../features/home/FAQ';
 import Reveal from '../components/Reveal';
-import { useStore } from '../context/storeContext';
+import { addBundle } from '../store/cart/cartActions';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { formatRating } from '../utils/rating';
-import scrollToSection from '../utils/scrollToSection';
-import { CATEGORIES_SELECTOR, PAINT_CALC_SELECTOR } from '../utils/sections';
+import { CATEGORIES_SELECTOR, PAINT_CALC_SELECTOR, scrollToSection } from '../utils/sections';
 import { getReviewStats } from '../services/reviewService';
 import heroWide from '../../assets/images/sections/hero-tools-1916.webp';
 import heroMid from '../../assets/images/sections/hero-tools-1600.webp';
@@ -47,7 +47,8 @@ function useScrollToSection(state) {
 function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addBundleToCart } = useStore();
+  const dispatch = useDispatch();
+  const addBundleToCart = useCallback((items) => dispatch(addBundle(items)), [dispatch]);
   // null: כותרת הבית מ-index.html. המגירות שנפתחות מעל העמוד הזה
   // קובעות את שלהן ומחזירות את זו בסגירה.
   usePageTitle(null);

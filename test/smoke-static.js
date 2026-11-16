@@ -2,7 +2,9 @@
  * בודק את הגשת אפליקציית React, את כותרות האבטחה,
  * ושאף קובץ פנימי אינו נחשף דרך הדפדפן.
  */
-const BASE = process.env.NEW_URL || 'http://127.0.0.1:3100';
+const { runHttpSuite } = require('./lib/testServer');
+// Set by runHttpSuite: the suite talks only to the server it started itself.
+let BASE;
 
 let passed = 0;
 let failed = 0;
@@ -47,7 +49,6 @@ async function testClient() {
     '/product/216',
     '/cart',
     '/checkout',
-    '/orders/lookup',
     '/admin/orders',
     '/route/that/does/not/exist',
   ];
@@ -222,7 +223,7 @@ async function main() {
   process.exitCode = failed === 0 ? 0 : 1;
 }
 
-main().catch((err) => {
-  console.error('הבדיקה קרסה:', err);
-  process.exit(1);
+runHttpSuite(async (baseUrl) => {
+  BASE = baseUrl;
+  await main();
 });

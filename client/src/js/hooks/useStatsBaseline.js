@@ -11,8 +11,8 @@
  * כדי שאיפוס שנעשה בטלפון ייראה גם במחשב שבחנות. הביטול הוא PUT עם
  * value: null — השרת מוחק את השורה, וקריאה הבאה מחזירה null.
  *
- * מקבל את עוטף ה-fetch (api) כארגומנט, כמו שאר הוקי הניהול, כדי
- * שפקיעת התחברות תחזיר למסך הסיסמה.
+ * Receives the admin API (adminApi, see services/adminService.js) as an argument, so an
+ * expired session still returns the admin to the password screen.
  *
  * loading מוחזק כדי שהלשונית לא תצייר סיכומים לפני שידוע ממתי סופרים:
  * בלעדיו היו מהבהבים המספרים של כל ההיסטוריה ורק אחר כך המסוננים.
@@ -20,10 +20,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { errorMessageFrom, NETWORK_ERROR } from '../utils/apiErrors';
 
-const ENDPOINT = '/api/settings/stats-counting-from';
+const SETTING_KEY = 'stats-counting-from';
 
 /** מחזיר את נקודת ההתחלה, ואת שתי הפעולות שמשנות אותה. */
-export function useStatsBaseline(api) {
+export function useStatsBaseline(adminApi) {
   const [since, setSince] = useState(null);
   const [loading, setLoading] = useState(true);
   const [baselineError, setBaselineError] = useState('');
@@ -31,7 +31,7 @@ export function useStatsBaseline(api) {
   /** שולף את נקודת ההתחלה מהשרת. */
   const load = useCallback(async () => {
     try {
-      const res = await api(ENDPOINT);
+      const res = await adminApi.getSetting(SETTING_KEY);
       if (!res.ok) {
         // 401 כבר טופל בעוטף; כאן נשארת רק תקלה אמיתית
         setBaselineError(await errorMessageFrom(res, 'טעינת נקודת ההתחלה של הסיכומים נכשלה.'));
@@ -47,18 +47,14 @@ export function useStatsBaseline(api) {
       // הסיכומים המלאים, ולא להישאר על מסך המתנה.
       setLoading(false);
     }
-  }, [api]);
+  }, [adminApi]);
 
   useEffect(() => { load(); }, [load]);
 
   /** כותב ערך חדש, ומעדכן את המצב המקומי רק כשהשרת אישר. */
   const save = useCallback(async (value, failMessage) => {
     try {
-      const res = await api(ENDPOINT, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ value }),
-      });
+      const res = await adminApi.saveSetting(SETTING_KEY, value);
 
       if (!res.ok) {
         setBaselineError(await errorMessageFrom(res, failMessage));
@@ -72,7 +68,7 @@ export function useStatsBaseline(api) {
     } catch {
       setBaselineError(NETWORK_ERROR);
     }
-  }, [api]);
+  }, [adminApi]);
 
   /** קובע את הרגע הזה כנקודת ההתחלה של הסיכומים. */
   const resetStats = useCallback(() => (

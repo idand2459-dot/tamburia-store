@@ -10,7 +10,9 @@
  * את הסיכומים של המסך האמיתי.
  */
 const { login } = require('./helpers');
-const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
+const { runHttpSuite } = require('./lib/testServer');
+// Set by runHttpSuite: the suite talks only to the server it started itself.
+let BASE;
 const PATH = '/settings/stats-counting-from';
 
 let passed = 0;
@@ -146,8 +148,9 @@ async function main() {
   process.exitCode = failed === 0 ? 0 : 1;
 }
 
-main().catch(async (err) => {
-  console.error('הבדיקה קרסה:', err);
+runHttpSuite(async (baseUrl) => {
+  BASE = baseUrl + '/api';
+  await main();
+}, async () => {
   await call('PUT', PATH, { value: originalValue }).catch(() => {});
-  process.exit(1);
 });

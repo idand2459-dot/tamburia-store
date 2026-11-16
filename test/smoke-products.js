@@ -19,8 +19,10 @@ const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
 const { login } = require('./helpers');
+const { runHttpSuite } = require('./lib/testServer');
 const { findOriginal, removeOriginal } = require('../server/utils/originals');
-const BASE = (process.env.NEW_URL || 'http://127.0.0.1:3100') + '/api';
+// Set by runHttpSuite: the suite talks only to the server it started itself.
+let BASE;
 
 let passed = 0;
 let failed = 0;
@@ -759,7 +761,7 @@ async function testDelete() {
   const sold = await call('POST', '/products', { ...validProduct(), sku: 'TEST-DELETE-3', price: 15, image_url: shared });
   created.push(sold.body.id);
   const order = await publicCall('POST', '/orders', {
-    customer_name: 'בודק מחיקה', customer_phone: '050-000-0099', delivery_method: 'pickup',
+    customer_name: 'בודק מחיקה', customer_phone: '050-000-0000', delivery_method: 'pickup',
     items: [{ id: sold.body.id, name: sold.body.name, price: 15, quantity: 1 }],
   });
   check('נוצרה הזמנה על המוצר', order.status === 201, `${order.status} ${order.body.error || ''}`);
@@ -829,12 +831,13 @@ async function main() {
   process.exitCode = failed === 0 ? 0 : 1;
 }
 
-main().catch(async (err) => {
-  console.error('הבדיקה קרסה:', err);
+runHttpSuite(async (baseUrl) => {
+  BASE = baseUrl + '/api';
+  await main();
+}, async () => {
   for (const id of created) if (id) await call('DELETE', `/products/${id}`).catch(() => {});
   for (const name of uploadedFiles) {
     fs.rmSync(path.join(UPLOADS_DIR, name), { force: true });
     removeOriginal(name);
   }
-  process.exit(1);
 });

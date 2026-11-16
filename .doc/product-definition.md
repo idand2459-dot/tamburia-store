@@ -17,14 +17,14 @@ The shop needs a website that works like a real online store: customers browse p
   - S1 — Catalogue browsing by category and subcategory, with search, sorting, and stock status (`README.md:56`).
   - S2 — Product pages: image gallery, colour, size and variant selection, product reviews (`README.md:57`).
   - S3 — A cart kept in `localStorage`, pickup or delivery, with a delivery-area check (`README.md:58`).
-  - S4 — Wishlist, recently viewed products, and order lookup by phone number (`README.md:59`).
+  - S4 — Wishlist and recently viewed products (`README.md:59`).
   - S5 — Reviews of the store and of products; the home-page rating comes from approved reviews only (`README.md:60-61`).
   - S6 — Every page, filter, and modal has its own URL and survives a refresh (`README.md:62`).
   - S7 — An accessibility statement at `/accessibility` (`README.md:63`).
   - S8 — Paint calculator: walls minus openings, times coats, converted to litres and containers; 20 pigment shades with a live preview (`README.md:66-69`).
   - S9 — Project calculator: four job types that expand into a product checklist; both calculators add everything to the cart in one action (`README.md:70-71`).
   - S10 — Admin panel with six tabs, each with its own URL: statistics, orders, products, add/edit, CSV import, review moderation (`README.md:74-75`).
-  - S11 — A live order feed over WebSocket, with a chime (`README.md:76`).
+  - S11 — New-order notification by polling every 30 seconds while the tab is visible, with confetti and a chime (`README.md:76`).
   - S12 — Product management with up to 5 images per product, processed to square WebP; products are hidden, not deleted (`README.md:77-79`).
   - S13 — Bulk CSV import with a preview and per-row validation (`README.md:80`).
   - S14 — Order status changes that email the customer automatically (`README.md:81`).
