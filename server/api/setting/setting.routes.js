@@ -4,11 +4,12 @@
  */
 const express = require('express');
 const controller = require('./setting.controller');
-const { requireAdmin } = require('../../middleware/requireAdmin');
+const { requireAdmin, requireAdminRead } = require('../../middleware/requireAdmin');
 
 const router = express.Router();
 
-router.get('/:key', requireAdmin, controller.getOne);
+// Read: owner and viewer. The write is owner only.
+router.get('/:key', requireAdminRead, controller.getOne);
 router.put('/:key', requireAdmin, controller.update);
 
 module.exports = router;

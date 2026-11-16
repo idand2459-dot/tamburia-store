@@ -10,7 +10,7 @@ const express = require('express');
 const config = require('../../config/env');
 const controller = require('./order.controller');
 const { idParam } = require('../../middleware/validate');
-const { requireAdmin } = require('../../middleware/requireAdmin');
+const { requireAdmin, requireAdminRead } = require('../../middleware/requireAdmin');
 const { rateLimit } = require('../../middleware/rateLimit');
 
 const router = express.Router();
@@ -29,9 +29,10 @@ const createLimiter = rateLimit({
 
 router.post('/', createLimiter, controller.create);
 
-router.get('/stats', requireAdmin, controller.stats);
-router.get('/', requireAdmin, controller.list);
-router.get('/:id', requireAdmin, idParam, controller.getOne);
+// Reads: owner and viewer (the public read-only demo admin). Every other route below is owner only.
+router.get('/stats', requireAdminRead, controller.stats);
+router.get('/', requireAdminRead, controller.list);
+router.get('/:id', requireAdminRead, idParam, controller.getOne);
 router.put('/:id', requireAdmin, idParam, controller.update);
 router.delete('/:id', requireAdmin, idParam, controller.remove);
 

@@ -15,6 +15,9 @@ const {
 } = require('./order.rules');
 const { notFound, conflict, unprocessable } = require('../../utils/AppError');
 const { toAgorot, fromAgorot } = require('../../utils/money');
+const config = require('../../config/env');
+const demoService = require('../demo/demo.service');
+const { assertDemoOrder } = require('../demo/demo.rules');
 
 /** שולף הזמנה או זורק 404. משמש כל פעולה שדורשת הזמנה קיימת. */
 async function requireOrder(id) {
@@ -28,6 +31,8 @@ async function requireOrder(id) {
  * total מחושב רק כשהתבקש דפדוף, כדי לא להוסיף שאילתת ספירה מיותרת.
  */
 async function listOrders(options) {
+  // Demo mode: expired visitor orders go when an admin looks (throttled; does nothing otherwise).
+  await demoService.cleanupExpired();
   const orders = await orderRepository.list(options);
 
   const wantsPagination = options.limit !== undefined || options.offset !== undefined;
@@ -92,6 +97,10 @@ function replayOf(existing, hash) {
  * כשבקשה מקבילה ניצחה, ה-INSERT לא מחזיר שורה והתוצאה זהה.
  */
 async function createOrder(data) {
+  // Demo mode stores only the three fictional identities, so a visitor's real data never reaches the
+  // database. Checked first, on the normalized request, before anything is read or written.
+  if (config.demo.enabled) assertDemoOrder(data);
+
   const requestId = data.request_id || null;
   const hash = requestId ? requestHashOf(data) : null;
 
@@ -99,6 +108,10 @@ async function createOrder(data) {
     const existing = await orderRepository.findByRequestId(requestId);
     if (existing) return replayOf(existing, hash);
   }
+
+  // A new demo order only while fewer than DEMO_MAX_VISITOR_ORDERS are kept (after a cleanup).
+  // A replay above returns the stored order even at the cap.
+  await demoService.assertVisitorCapacity();
 
   // המחירים והסכומים נקבעים מהקטלוג ולא ממה שהגיע בבקשה, וזה נעשה
   // לפני הכתיבה: הזמנה שנדחתה על מחיר לא נשמרת ולא שולחת מייל.
@@ -146,6 +159,18 @@ async function updateOrder(id, data) {
   // מאותה סיבה: עדכון יכול להחליף את אופן הקבלה, את הסטטוס, או את
   // שניהם, ורק כאן ידוע מה יהיה הזיווג אחרי הכתיבה.
   if (data.status) assertStatusFitsDeliveryMethod(data.status, method);
+
+  // The owner's edit follows the same rule as a visitor's order, on the merged state.
+  if (config.demo.enabled) {
+    assertDemoOrder({
+      customer_name: data.customer_name ?? existing.customer_name,
+      customer_phone: data.customer_phone ?? existing.customer_phone,
+      customer_email: 'customer_email' in data ? data.customer_email : existing.customer_email,
+      delivery_method: method,
+      delivery_address: address,
+      notes: 'notes' in data ? data.notes : existing.notes,
+    });
+  }
 
   const order = await orderRepository.update(id, data);
 
@@ -205,6 +230,7 @@ async function removeOrder(id) {
 
 /** מחזיר סיכום הזמנות והכנסות לפי סטטוס, עם שורת סך-הכל. */
 async function getStats() {
+  await demoService.cleanupExpired();
   const byStatus = await orderRepository.statsByStatus();
 
   return {

@@ -4,7 +4,7 @@
 const express = require('express');
 const config = require('../../config/env');
 const controller = require('./auth.controller');
-const { requireAdmin } = require('../../middleware/requireAdmin');
+const { requireAdminRead } = require('../../middleware/requireAdmin');
 const { rateLimit } = require('../../middleware/rateLimit');
 
 const router = express.Router();
@@ -22,7 +22,11 @@ function exposeReset(req, res, next) {
 }
 
 router.post('/login', exposeReset, loginLimiter, controller.login);
+// The viewer session exists only in the portfolio demo: on a normal server this route is a 404.
+if (config.demo.enabled) {
+  router.post('/demo-login', loginLimiter, controller.demoLogin);
+}
 router.post('/logout', controller.logout);
-router.get('/me', requireAdmin, controller.me);
+router.get('/me', requireAdminRead, controller.me);
 
 module.exports = router;

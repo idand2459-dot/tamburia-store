@@ -8,7 +8,8 @@
  * זה נאכף שוב, כי זה הכלל ולא פרט של הפענוח).
  */
 const reviewRepository = require('./review.repository');
-const { notFound } = require('../../utils/AppError');
+const { notFound, AppError } = require('../../utils/AppError');
+const config = require('../../config/env');
 
 /** האם התבקש דפדוף — ורק אז שווה להריץ שאילתת ספירה. */
 const wantsPagination = (options) => options.limit !== undefined || options.offset !== undefined;
@@ -44,6 +45,10 @@ function getReview(id) {
 
 /** יוצר חוות דעת שממתינה לאישור. */
 function createReview(data) {
+  // The portfolio demo shows curated reviews only: a public one would store text a visitor typed.
+  if (config.demo.enabled) {
+    throw new AppError(403, 'באתר ההדגמה לא ניתן לשלוח חוות דעת', { reason: 'demo_disabled' });
+  }
   return reviewRepository.create({ ...data, approved: false });
 }
 
