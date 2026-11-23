@@ -11,9 +11,9 @@ Node process serves both the API and the React app.
 **How it is built, and why:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). It covers the
 layers, a request traced from a click to the database and back, and the design decisions.
 
-**Live demo:** not deployed yet. The demo mode is implemented and tested locally; the owner's
-steps to put it online are in [docs/demo-deployment.md](docs/demo-deployment.md), and the link
-goes here once the deployment has been done and checked. See [Portfolio demo](#portfolio-demo).
+**Live demo:** <https://tamburia-store.onrender.com/>. It runs on a free Render instance, so the
+first request after a quiet period can take about a minute while the service wakes up. How it was
+deployed is in [docs/demo-deployment.md](docs/demo-deployment.md). See [Portfolio demo](#portfolio-demo).
 
 ---
 
