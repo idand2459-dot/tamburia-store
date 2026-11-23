@@ -6,9 +6,9 @@
  */
 
 /**
- * The (category, subcategory) pairs the project calculator asks the catalogue for. A product must
- * exist for each, or the calculator shows "ask in the store". Copied from
- * client/src/js/features/calculators/ProjectCalculator.js; update both together.
+ * The (category, subcategory) pairs the demo catalogue must cover. They were the pairs the project
+ * calculator asked for; that calculator has been removed from the storefront, so the list is kept
+ * only as a catalogue-coverage floor and can be revisited separately.
  */
 const CALCULATOR_PAIRS = [
   ['adhesives', 'sealants'], ['bathroom', 'shower_curtains'], ['bathroom', 'towel_hooks'], ['bathroom', 'mirrors'],

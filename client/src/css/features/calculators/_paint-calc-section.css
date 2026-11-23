@@ -35,7 +35,7 @@
   overflow: hidden;
 }
 
-/* Both seams — with the WhyUs section above and the project calculator below —
+/* Both seams — with the WhyUs section above and the reviews section below —
    in one pseudo-element: the same red-to-purple hairline the features strip
    carries, as two 1px background layers pinned to the two edges. One element
    rather than two because ::before is taken (the mobile glow, at the bottom of
