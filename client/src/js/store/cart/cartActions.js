@@ -19,7 +19,7 @@ export function addItem(product, quantity = 1) {
   return { type: CART_ITEM_ADDED, product, quantity };
 }
 
-/** Adds everything the paint or project calculator worked out, in one action. */
+/** Adds everything the paint calculator worked out, in one action. */
 export function addBundle(items) {
   return { type: CART_BUNDLE_ADDED, items };
 }

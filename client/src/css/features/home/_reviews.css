@@ -3,10 +3,10 @@
    shop photograph and the review form that opens on it
 
    --color-blush-deep, the deeper of the two light tones, with
-   the project calculator's --color-blush above it and the FAQ's
-   --color-blush below. That half-step is the whole seam on both
-   sides: the red-to-purple hairline belongs to a dark/light
-   boundary and is drawn on the dark side of it, so the ::after
+   the dark paint calculator band above it and the FAQ's
+   --color-blush below. Against the FAQ that half-step is the whole
+   seam; against the paint band the red-to-purple hairline belongs
+   to the dark/light boundary and is drawn on the dark side of it, so the ::after
    this section used to carry on its top edge is gone, along
    with the purple glow on ::before and the stacking context the
    two needed.
